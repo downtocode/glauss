@@ -11,74 +11,87 @@
 
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
-int obj = 4;
+int obj = 6;
 int dimensions = 1;
-double forceconst[2] = {0, -9.81};
 
-int i, j, width = 1200, height = 480;
+
+int i, j, width = 1200, height = 600;
 float dt = 0.01;
+char text[25];
 
 
+typedef float v4sf __attribute__ ((vector_size (16)));
+v4sf forceconst = {0, -9.81};
 
-int integrate(double pos[][obj], double vel[][obj], double acc[][obj], double Ftot[][obj], double Fgrv[][obj], double Fele[][obj], double mass[obj]) {
-	double *accprev = malloc(dimensions * sizeof *accprev);
-	double *diff = malloc(dimensions * sizeof *diff);
+
+typedef struct{
+v4sf pos, vel, acc, Ftot, Fgrv, Fele;
+double mass;
+}data;
+
+data object[8];
+v4sf accprev, diff;
+
+
+int integrate() {
 	for(i = 1; i < obj + 1; i++) {
 		//setting the bounds for a box. Do want a periodic boundary sometime down the road though...
-		if(pos[i][0] > width || pos[i][0] < 0) {
-			vel[i][0] = -vel[i][0];
+		if(object[i].pos[0] > width || object[i].pos[0] < 0) {
+			object[i].vel[0] = -object[i].vel[0];
 		}
-		if(pos[i][1] < 0 || pos[i][1] > height) {
-			vel[i][1] = -vel[i][1];
+		if(object[i].pos[1] < 0 || object[i].pos[1] > height) {
+			object[i].vel[1] = -object[i].vel[1];
 		}
-		for(j = 0; j < dimensions + 1; j++) {
-			pos[i][j] = pos[i][j] + (vel[i][j]*dt) + (acc[i][j])*((dt*dt)/2);
-		}
-	}
-	for(i = 1; i < obj + 1; i++) {
-		for(j = 0; j < dimensions + 1; j++) {
-			Ftot[i][j] = forceconst[j];
-			//lets just naively assume this for now, k?
-		}
-	}
-	for(i = 1; i < obj + 1; i++) {
-		for(j = 0; j < dimensions + 1; j++) {
-			accprev[j] = acc[i][j];
-			acc[i][j] = (Ftot[i][j])/(mass[i]);
-			vel[i][j] = vel[i][j] + ((dt)/2)*(acc[i][j] + accprev[j]);
-			//Originally velocity was calculated in a loop below, but it's fine here and we save an extra dimension in accprev array.
-		}
+		
+		object[i].pos = object[i].pos + (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
+		
+		object[i].Ftot = forceconst;
+		//lets just naively assume this for now, k?
+		
+		accprev = object[i].acc;
+		object[i].acc = (object[i].Ftot);
+		object[i].vel = object[i].vel + ((dt)/2)*(object[i].acc + accprev);
 	}
 	return 0;
 }
 
 
 int main() {
-	double (*pos)[obj] = malloc(100*(obj*dimensions) * sizeof *pos);
-	double (*vel)[obj] = malloc(100*(obj*dimensions) * sizeof *vel);
-	double (*acc)[obj] = malloc(100*(obj*dimensions) * sizeof *acc);
-	double (*Ftot)[obj] = malloc(100*(obj*dimensions) * sizeof *Ftot);
-	double (*Fgrv)[obj] = malloc(100*(obj*dimensions) * sizeof *Fgrv);
-	double (*Fele)[obj] = malloc(100*(obj*dimensions) * sizeof *Fele);
-	double *mass = malloc(obj * sizeof *mass);
+	object[1].mass = 1;
+	object[1].pos[0] = 11;
+	object[1].pos[1] = 31;
+	object[1].vel[0] = 12;
+	object[1].vel[1] = 44;
 	
-	mass[1] = 1;
-	pos[1][0] = 11;
-	pos[1][1] = 31;
-	vel[1][0] = 12;
-	vel[1][1] = 44;
+	object[2].mass = 1;
+	object[2].pos[0] = 22;
+	object[2].pos[1] = 222;
+	object[2].vel[0] = 22;
+	object[2].vel[1] = 5;
 	
-	mass[2] = 1;
-	pos[2][0] = 22;
-	pos[2][1] = 222;
-	vel[2][0] = 22;
-	vel[2][1] = 5;
+	object[3].mass = 1;
+	object[3].pos[0] = 41;
+	object[3].pos[1] = 112;
+	object[3].vel[0] = 12;
+	object[3].vel[1] = 23;
 	
-	mass[3] = 1;
-	pos[3][0] = 41;
-	pos[3][1] = 112;
-	vel[3][0] = 122;
-	vel[3][1] = 23;
+	object[4].mass = 1;
+	object[4].pos[0] = 56;
+	object[4].pos[1] = 30;
+	object[4].vel[0] = -12;
+	object[4].vel[1] = -26;
+	
+	object[5].mass = 1;
+	object[5].pos[0] = 81;
+	object[5].pos[1] = 2;
+	object[5].vel[0] = -21;
+	object[5].vel[1] = 23;
+	
+	object[6].mass = 1;
+	object[6].pos[0] = 221;
+	object[6].pos[1] = 222;
+	object[6].vel[0] = 52;
+	object[6].vel[1] = 53;
 	
 	
 	
@@ -98,13 +111,12 @@ int main() {
 			atexit(TTF_Quit);
 		TTF_Font *font;
 		font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 20);
-		SDL_Surface *imgTxt ; // Store image of the text for blit
 		SDL_Rect txtRect ; // Store (x,y) of text for blit
 		SDL_Color fColor ; // Font color (R,G,B)
+		SDL_Surface *imgTxt;
 		
-		
-		txtRect.w = 200;
-		txtRect.h = 20;
+		txtRect.w = 100;
+		txtRect.h = 25;
 		fColor.r = 255;
 		fColor.g = 165;
 		fColor.b = 0;
@@ -133,7 +145,6 @@ int main() {
 						}
 					break;
 				case SDL_QUIT:
-					SDL_FreeSurface(imgTxt);
 					SDL_GL_DeleteContext(glcontext);
 					SDL_DestroyWindow(window);
 					SDL_Quit();
@@ -141,37 +152,37 @@ int main() {
 			}
 		}
 		glClear(GL_COLOR_BUFFER_BIT);
-		integrate(pos, vel, acc, Ftot, Fgrv, Fele, mass);
+		integrate();
 		
 		
 		
 		//MAIN OBJECTS, RECTANCLES, ETC.
 		glBegin(GL_POINTS);
 			for(i = 1; i < obj + 1; i++) {
-				glVertex3f( pos[i][0], pos[i][1], 1 );
+				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
 			}
 		glEnd();
 		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
-				glVertex3f( pos[i][0], pos[i][1], 1 );
-				glVertex3f( (pos[i][0] + vel[i][0]), (pos[i][1] + vel[i][1]), 1 );
+				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
+				glVertex3f( (object[i].pos[0] + object[i].vel[0]), (object[i].pos[1] + object[i].vel[1]), 1 );
 			}
 		glEnd();
 		
-		
-		//TEXT N STUFF GOES IN HERE.
-		txtRect.x = pos[1][0];
-		txtRect.y = pos[1][1];
-		printf("Obj1x = %f, Obj1y = %f\n", pos[1][0], pos[1][1]);
-		
-		imgTxt = TTF_RenderText_Blended( font , "HEAVY METAL" , fColor );
-		SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
-		
+		for(i = 1; i < obj + 1; i++) {
+			//TEXT N STUFF GOES IN HERE.
+			txtRect.x = object[i].pos[0];
+			txtRect.y = object[i].pos[1];
+			sprintf(text, "Ek: %0.2f", object[i].mass*(sqrt(object[i].vel[0]*object[i].vel[0] + object[i].vel[1]*object[i].vel[1]))/2);
+			imgTxt = TTF_RenderText_Blended( font , text , fColor );
+			SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
+			SDL_FreeSurface(imgTxt);
+			SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
+		}
 		
 		
 		
 	//MORE SDL RELATED STUFF.
-		SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
 		SDL_RenderPresent(renderer);
 		SDL_Delay(6);
 	//MORE SDL RELATED STUFF.
