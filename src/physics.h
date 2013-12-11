@@ -6,11 +6,11 @@ typedef float v4sf __attribute__ ((vector_size (16)));
 
 typedef struct {
 	v4sf pos, vel, acc, Ftot, Fgrv, Fele;
-	double mass;
+	long int mass;
 } data;
 
 
 int initphys(data** object);
-int integrate();
+int integrate(data* object);
 
 #endif

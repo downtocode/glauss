@@ -14,7 +14,6 @@ all: $(PROGRAM)
 
 $(PROGRAM): $(OBJS)
 	$(CC) $(LDFLAGS) $^ -o $@
-	rm ./src/*.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -c -o $@

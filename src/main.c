@@ -15,7 +15,7 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 int i, width = 1200, height = 600;
-int obj = 6;
+int obj = 4;
 
 //int i, width = 1200, height = 600;
 char text[25];
@@ -39,7 +39,7 @@ int main() {
 		SDL_Color fColor ; // Font color (R,G,B)
 		SDL_Surface *imgTxt;
 		
-		txtRect.w = 100;
+		txtRect.w = 137;
 		txtRect.h = 25;
 		fColor.r = 255;
 		fColor.g = 165;
@@ -53,6 +53,7 @@ int main() {
 		glMatrixMode( GL_PROJECTION );
 		glLoadIdentity();
 		glOrtho( 0.0, width, 0.0, height, 1.0, -1.0 );
+		glClear(GL_COLOR_BUFFER_BIT);
 	/*	SDL RELATED STUFF. JUST LOOK AT THE AMOUNT OF CODE.	*/
 	
 	
@@ -65,7 +66,6 @@ int main() {
 		initphys(&object);
 	
 	
-	//initphys();
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
@@ -80,6 +80,7 @@ int main() {
 						}
 					break;
 				case SDL_QUIT:
+					free(object);
 					TTF_Quit();
 					SDL_GL_DeleteContext(glcontext);
 					SDL_DestroyWindow(window);
@@ -89,10 +90,7 @@ int main() {
 		}
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		
-		
 		integrate(object);
-		
 		
 		
 		//MAIN OBJECTS, RECTANCLES, ETC.
@@ -108,21 +106,22 @@ int main() {
 			}
 		glEnd();
 		for(i = 1; i < obj + 1; i++) {
-			//TEXT N STUFF GOES IN HERE.
-			txtRect.x = object[i].pos[0];
-			txtRect.y = object[i].pos[1];
-			sprintf(text, "ID: %i", i);
-			imgTxt = TTF_RenderText_Blended( font , text , fColor );
-			SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
-			SDL_FreeSurface(imgTxt);
-			SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
+			if(i!=1) {
+				txtRect.x = object[i].pos[0];
+				txtRect.y = object[i].pos[1];
+				sprintf(text, "X: %0.2f, Y: %0.2f", object[i].pos[0], object[i].pos[1]);
+				imgTxt = TTF_RenderText_Blended( font , text , fColor );
+				SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
+				SDL_FreeSurface(imgTxt);
+				SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
+			}
 		}
 		
 		
 		
 	//MORE SDL RELATED STUFF.
 		SDL_RenderPresent(renderer);
-		SDL_Delay(6);
+		//SDL_Delay(2);
 	//MORE SDL RELATED STUFF.
 	
 	}
