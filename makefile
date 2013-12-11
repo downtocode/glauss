@@ -14,7 +14,6 @@ all: $(PROGRAM)
 
 $(PROGRAM): $(OBJS)
 	$(CC) $(LDFLAGS) $^ -o $@
-	./physengine
 	rm ./src/*.o
 
 %.o: %.c

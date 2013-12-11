@@ -14,14 +14,14 @@
 
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
-int obj = 6;
-float posytemp;
-
 int i, width = 1200, height = 600;
+int obj = 6;
+
+//int i, width = 1200, height = 600;
 char text[25];
 
 int main() {
-	//SDL RELATED STUFF. A PAIN TO DEAL WITH.
+	/*	SDL RELATED STUFF. A PAIN TO DEAL WITH.	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
 		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE);
@@ -32,9 +32,7 @@ int main() {
 		SDL_Event event;
 		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		
-		
 		TTF_Init();
-			atexit(TTF_Quit);
 		TTF_Font *font;
 		font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 20);
 		SDL_Rect txtRect ; // Store (x,y) of text for blit
@@ -55,8 +53,19 @@ int main() {
 		glMatrixMode( GL_PROJECTION );
 		glLoadIdentity();
 		glOrtho( 0.0, width, 0.0, height, 1.0, -1.0 );
-	//SDL RELATED STUFF. JUST LOOK AT THE AMOUNT OF CODE.
-	initphys();
+	/*	SDL RELATED STUFF. JUST LOOK AT THE AMOUNT OF CODE.	*/
+	
+	
+	
+	/*	PHYSICS RELATED STUFF.	*/
+		data* object;
+		/*	Okay, some explanation is needed. We want to make an array containing object parameters. So fine, we make it as a pointer.
+			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
+			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
+		initphys(&object);
+	
+	
+	//initphys();
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
@@ -71,6 +80,7 @@ int main() {
 						}
 					break;
 				case SDL_QUIT:
+					TTF_Quit();
 					SDL_GL_DeleteContext(glcontext);
 					SDL_DestroyWindow(window);
 					SDL_Quit();
@@ -78,12 +88,15 @@ int main() {
 			}
 		}
 		glClear(GL_COLOR_BUFFER_BIT);
-		posytemp = integrate();
+		
+		
+		
+		integrate(object);
 		
 		
 		
 		//MAIN OBJECTS, RECTANCLES, ETC.
-		/*glBegin(GL_POINTS);
+		glBegin(GL_POINTS);
 			for(i = 1; i < obj + 1; i++) {
 				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
 			}
@@ -94,12 +107,11 @@ int main() {
 				glVertex3f( (object[i].pos[0] + object[i].vel[0]), (object[i].pos[1] + object[i].vel[1]), 1 );
 			}
 		glEnd();
-		*/
 		for(i = 1; i < obj + 1; i++) {
 			//TEXT N STUFF GOES IN HERE.
-			txtRect.x = 222;
-			txtRect.y = posytemp;
-			sprintf(text, "Posy: %f", posytemp);
+			txtRect.x = object[i].pos[0];
+			txtRect.y = object[i].pos[1];
+			sprintf(text, "ID: %i", i);
 			imgTxt = TTF_RenderText_Blended( font , text , fColor );
 			SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
 			SDL_FreeSurface(imgTxt);

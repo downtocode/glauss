@@ -2,7 +2,15 @@
 #define FUNCTIONS_H_INCLUDED
 
 
-int initphys();
-float integrate();
+typedef float v4sf __attribute__ ((vector_size (16)));
+
+typedef struct {
+	v4sf pos, vel, acc, Ftot, Fgrv, Fele;
+	double mass;
+} data;
+
+
+int initphys(data** object);
+int integrate();
 
 #endif
