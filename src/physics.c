@@ -6,7 +6,7 @@
 
 int i, j, width, height;
 int obj;
-float mag, dt = 0.001, g = 6.67384, Gconst;
+float mag, dt = 0.01, g = 6.67384, Gconst;
 v4sf mtemp, accprev, vecdist, forceconst = {0, 0};
 
 int initphys(data** object) {

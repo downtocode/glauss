@@ -110,7 +110,7 @@ int main() {
 				txtRect.x = object[i].pos[0];
 				txtRect.y = object[i].pos[1];
 				sprintf(text, "X: %0.2f, Y: %0.2f", object[i].pos[0], object[i].pos[1]);
-				imgTxt = TTF_RenderText_Blended( font , text , fColor );
+				imgTxt = TTF_RenderText_Solid( font , text , fColor );
 				SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
 				SDL_FreeSurface(imgTxt);
 				SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
@@ -121,7 +121,7 @@ int main() {
 		
 	//MORE SDL RELATED STUFF.
 		SDL_RenderPresent(renderer);
-		//SDL_Delay(2);
+		SDL_Delay(5);
 	//MORE SDL RELATED STUFF.
 	
 	}
