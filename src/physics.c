@@ -63,14 +63,13 @@ int integrate(data* object) {
 		if(object[i].pos[1] < 0 || object[i].pos[1] > height) {
 			object[i].vel[1] = -object[i].vel[1];
 		}
-		object[i].pos = object[i].pos + (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
+		object[i].pos += (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
 		
 		for(j = 1; j < obj + 1; j++) {
 			if(i != j) {
-				vecdist[0] = object[j].pos[0] - object[i].pos[0];
-				vecdist[1] = object[j].pos[1] - object[i].pos[1];
+				vecdist = object[j].pos - object[i].pos;
 				mag = pow(3/2, (vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
-				object[i].Fgrv = object[i].Fgrv + vecdist*((float)(Gconst*object[i].mass*object[j].mass)/(mag));
+				object[i].Fgrv += vecdist*((float)(Gconst*object[i].mass*object[j].mass)/(mag));
 			}
 		}
 		
@@ -78,9 +77,8 @@ int integrate(data* object) {
 		accprev = object[i].acc;
 		
 		object[i].acc = (object[i].Ftot)/(mtemp);
-		object[i].vel = object[i].vel + ((dt)/2)*(object[i].acc + accprev);
-		object[i].Fgrv[0] = 0;
-		object[i].Fgrv[1] = 0;
+		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
+		object[i].Fgrv[0] = object[i].Fgrv[1] = 0;
 	}
 	return 0;
 }
