@@ -14,11 +14,11 @@
 
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
-int i, width = 1200, height = 600;
-int obj = 4;
+static int i;
+int obj = 11, width = 1200, height = 600;
 
 //int i, width = 1200, height = 600;
-char text[25];
+char text[100];
 
 int main() {
 	/*	SDL RELATED STUFF. A PAIN TO DEAL WITH.	*/
@@ -96,9 +96,12 @@ int main() {
 		//MAIN OBJECTS, RECTANCLES, ETC.
 		glBegin(GL_POINTS);
 			for(i = 1; i < obj + 1; i++) {
+				if( object[i].charge > 0 ) glColor3f(255,0,0);
+				else glColor3f(0,0,255);
 				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
 			}
 		glEnd();
+		glColor3f(255,255,255);
 		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
 				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
@@ -106,7 +109,6 @@ int main() {
 			}
 		glEnd();
 		for(i = 1; i < obj + 1; i++) {
-			if(i!=1) {
 				txtRect.x = object[i].pos[0];
 				txtRect.y = object[i].pos[1];
 				sprintf(text, "X: %0.2f, Y: %0.2f", object[i].pos[0], object[i].pos[1]);
@@ -114,7 +116,6 @@ int main() {
 				SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
 				SDL_FreeSurface(imgTxt);
 				SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
-			}
 		}
 		
 		
