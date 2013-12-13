@@ -20,49 +20,77 @@ int initphys(data** object) {
 	pi = acos(-1);
 	epsno = perm/pow(12, 10);
 	
-	for(i = 1; i < obj + 1; i++) {
+	/*for(i = 1; i < obj + 1; i++) {
 		(*object)[i].pos[0] = ((float)rand()/RAND_MAX)*width + 10*i;
 		(*object)[i].pos[1] = ((float)rand()/RAND_MAX)*height + 10*i;
 		(*object)[i].mass = 0.0001;
-		(*object)[i].charge = (400*elcharge)/pow(12, 10);
+		(*object)[i].charge = (400*elcharge)/pow(10, 10);
 		if( ((float)rand()/RAND_MAX) < 0.5 ) (*object)[i].charge *= -1;
-	}
+	}*/
 	
-	/*(*object)[1].mass = 1000000000;
+	
+	(*object)[1].mass = 0.001;
 	(*object)[1].pos[0] = width/2;
-	(*object)[1].pos[1] = height/2;
+	(*object)[1].pos[1] = 0;
 	(*object)[1].vel[0] = 0;
 	(*object)[1].vel[1] = 0;
+	(*object)[1].charge = (400*elcharge)/pow(10, 10);
 	
-	(*object)[2].mass = 0.1;
-	(*object)[2].pos[0] = width/4;
-	(*object)[2].pos[1] = height/2;
+	(*object)[2].mass = 0.001;
+	(*object)[2].pos[0] = width/2;
+	(*object)[2].pos[1] = 100;
 	(*object)[2].vel[0] = 0;
-	(*object)[2].vel[1] = 125;
+	(*object)[2].vel[1] = 0;
+	(*object)[2].charge = (400*elcharge)/pow(10, 10);
 	
-	(*object)[3].mass = 0.1;
-	(*object)[3].pos[0] = width/2.5;
-	(*object)[3].pos[1] = height/2;
+	(*object)[3].mass = 0.001;
+	(*object)[3].pos[0] = width/2;
+	(*object)[3].pos[1] = 200;
 	(*object)[3].vel[0] = 0;
-	(*object)[3].vel[1] = -125;
+	(*object)[3].vel[1] = 0;
+	(*object)[3].charge = (400*elcharge)/pow(10, 10);
 	
-	(*object)[4].mass = 0.1;
-	(*object)[4].pos[0] = width/4.01;
-	(*object)[4].pos[1] = height/2.01;
+	(*object)[4].mass = 0.001;
+	(*object)[4].pos[0] = width/2;
+	(*object)[4].pos[1] = 300;
 	(*object)[4].vel[0] = 0;
-	(*object)[4].vel[1] = -75;
+	(*object)[4].vel[1] = 0;
+	(*object)[4].charge = (400*elcharge)/pow(10, 10);
 	
-	(*object)[5].mass = 1;
-	(*object)[5].pos[0] = width/4;
-	(*object)[5].pos[1] = height/2.5;
+	(*object)[5].mass = 0.001;
+	(*object)[5].pos[0] = width/2;
+	(*object)[5].pos[1] = 400;
 	(*object)[5].vel[0] = 0;
-	(*object)[5].vel[1] = -125;
+	(*object)[5].vel[1] = 0;
+	(*object)[5].charge = (400*elcharge)/pow(10, 10);
 	
-	(*object)[6].mass = 1;
-	(*object)[6].pos[0] = width/2.2;
-	(*object)[6].pos[1] = height/2.2;
+	(*object)[6].mass = 0.001;
+	(*object)[6].pos[0] = width/2;
+	(*object)[6].pos[1] = 500;
 	(*object)[6].vel[0] = 0;
-	(*object)[6].vel[1] = 0;*/
+	(*object)[6].vel[1] = 0;
+	(*object)[6].charge = (400*elcharge)/pow(10, 10);
+	
+	(*object)[7].mass = 0.001;
+	(*object)[7].pos[0] = width/2;
+	(*object)[7].pos[1] = 600;
+	(*object)[7].vel[0] = 0;
+	(*object)[7].vel[1] = 0;
+	(*object)[7].charge = (400*elcharge)/pow(10, 10);
+	
+	(*object)[8].mass = 1000;
+	(*object)[8].pos[0] = width/1.5;
+	(*object)[8].pos[1] = height/2;
+	(*object)[8].vel[0] = 0;
+	(*object)[8].vel[1] = 0;
+	(*object)[8].charge = -(40000*elcharge)/pow(10, 10);
+	
+	(*object)[9].mass = 1000;
+	(*object)[9].pos[0] = width/3;
+	(*object)[9].pos[1] = height/2;
+	(*object)[9].vel[0] = 14;
+	(*object)[9].vel[1] = 10;
+	(*object)[9].charge = -(40000*elcharge)/pow(10, 10);
 	return 0;
 }
 

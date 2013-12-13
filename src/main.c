@@ -15,7 +15,7 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i;
-int obj = 11, width = 1200, height = 600;
+int obj = 9, width = 1200, height = 600;
 
 //int i, width = 1200, height = 600;
 char text[100];
@@ -108,7 +108,7 @@ int main() {
 				glVertex3f( (object[i].pos[0] + object[i].vel[0]), (object[i].pos[1] + object[i].vel[1]), 1 );
 			}
 		glEnd();
-		for(i = 1; i < obj + 1; i++) {
+		/*for(i = 1; i < obj + 1; i++) {
 				txtRect.x = object[i].pos[0];
 				txtRect.y = object[i].pos[1];
 				sprintf(text, "X: %0.2f, Y: %0.2f", object[i].pos[0], object[i].pos[1]);
@@ -116,7 +116,7 @@ int main() {
 				SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
 				SDL_FreeSurface(imgTxt);
 				SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
-		}
+		}*/
 		
 		
 		
