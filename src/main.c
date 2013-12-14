@@ -15,7 +15,8 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i;
-int obj = 9, width = 1200, height = 600;
+int obj = 72, width = 1200, height = 600;
+int mousex, mousey;
 
 //int i, width = 1200, height = 600;
 char text[100];
@@ -69,6 +70,10 @@ int main() {
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
+				case SDL_MOUSEBUTTONDOWN:
+					SDL_GetMouseState(&mousex , &mousey);
+					object[1].pos[0] = (float)mousex;
+					object[1].pos[1] = (float)mousey;
 				case SDL_WINDOWEVENT:
 					if( event.window.event == SDL_WINDOWEVENT_RESIZED ) {
 						width = event.window.data1;
@@ -91,6 +96,9 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		
 		integrate(object);
+		
+		
+		
 		
 		
 		//MAIN OBJECTS, RECTANCLES, ETC.

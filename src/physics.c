@@ -3,9 +3,9 @@
 #include <tgmath.h>
 #include "physics.h"
 
-#define perm 8.85418
+#define perm 8.854187817
 #define g 6.67384
-#define elcharge 1.60217657
+#define elcharge 1.602176565
 
 
 static int i, j;
@@ -20,77 +20,77 @@ int initphys(data** object) {
 	pi = acos(-1);
 	epsno = perm/pow(12, 10);
 	
-	/*for(i = 1; i < obj + 1; i++) {
+	for(i = 1; i < obj + 1; i++) {
 		(*object)[i].pos[0] = ((float)rand()/RAND_MAX)*width + 10*i;
 		(*object)[i].pos[1] = ((float)rand()/RAND_MAX)*height + 10*i;
-		(*object)[i].mass = 0.0001;
-		(*object)[i].charge = (400*elcharge)/pow(10, 10);
+		(*object)[i].mass = 0.000001;
+		(*object)[i].charge = (400*elcharge)/pow(19, 10);
 		if( ((float)rand()/RAND_MAX) < 0.5 ) (*object)[i].charge *= -1;
-	}*/
+	}
 	
 	
-	(*object)[1].mass = 0.001;
+	(*object)[1].mass = 10;
 	(*object)[1].pos[0] = width/2;
-	(*object)[1].pos[1] = 0;
+	(*object)[1].pos[1] = height/2;
 	(*object)[1].vel[0] = 0;
 	(*object)[1].vel[1] = 0;
-	(*object)[1].charge = (400*elcharge)/pow(10, 10);
+	(*object)[1].charge = -(400000*elcharge)/pow(19, 10);
 	
-	(*object)[2].mass = 0.001;
-	(*object)[2].pos[0] = width/2;
-	(*object)[2].pos[1] = 100;
-	(*object)[2].vel[0] = 0;
-	(*object)[2].vel[1] = 0;
-	(*object)[2].charge = (400*elcharge)/pow(10, 10);
+	/*(*object)[2].mass = 1;
+	(*object)[2].pos[0] = 1200;
+	(*object)[2].pos[1] = 1;
+	(*object)[2].vel[0] = -23;
+	(*object)[2].vel[1] = 12;
+	(*object)[2].charge = (elcharge)/pow(19, 10);
 	
-	(*object)[3].mass = 0.001;
+	(*object)[3].mass = 0.5;
 	(*object)[3].pos[0] = width/2;
 	(*object)[3].pos[1] = 200;
-	(*object)[3].vel[0] = 0;
-	(*object)[3].vel[1] = 0;
-	(*object)[3].charge = (400*elcharge)/pow(10, 10);
+	(*object)[3].vel[0] = 5;
+	(*object)[3].vel[1] = 74;
+	(*object)[3].charge = -(elcharge)/pow(19, 10);
 	
 	(*object)[4].mass = 0.001;
 	(*object)[4].pos[0] = width/2;
 	(*object)[4].pos[1] = 300;
 	(*object)[4].vel[0] = 0;
 	(*object)[4].vel[1] = 0;
-	(*object)[4].charge = (400*elcharge)/pow(10, 10);
+	(*object)[4].charge = (400*elcharge)/pow(19, 10);
 	
 	(*object)[5].mass = 0.001;
 	(*object)[5].pos[0] = width/2;
 	(*object)[5].pos[1] = 400;
 	(*object)[5].vel[0] = 0;
 	(*object)[5].vel[1] = 0;
-	(*object)[5].charge = (400*elcharge)/pow(10, 10);
+	(*object)[5].charge = (400*elcharge)/pow(19, 10);
 	
 	(*object)[6].mass = 0.001;
 	(*object)[6].pos[0] = width/2;
 	(*object)[6].pos[1] = 500;
 	(*object)[6].vel[0] = 0;
 	(*object)[6].vel[1] = 0;
-	(*object)[6].charge = (400*elcharge)/pow(10, 10);
+	(*object)[6].charge = (400*elcharge)/pow(19, 10);
 	
 	(*object)[7].mass = 0.001;
 	(*object)[7].pos[0] = width/2;
 	(*object)[7].pos[1] = 600;
 	(*object)[7].vel[0] = 0;
 	(*object)[7].vel[1] = 0;
-	(*object)[7].charge = (400*elcharge)/pow(10, 10);
+	(*object)[7].charge = (400*elcharge)/pow(19, 10);
 	
 	(*object)[8].mass = 1000;
 	(*object)[8].pos[0] = width/1.5;
 	(*object)[8].pos[1] = height/2;
 	(*object)[8].vel[0] = 0;
 	(*object)[8].vel[1] = 0;
-	(*object)[8].charge = -(40000*elcharge)/pow(10, 10);
+	(*object)[8].charge = -(40000*elcharge)/pow(19, 10);
 	
 	(*object)[9].mass = 1000;
 	(*object)[9].pos[0] = width/3;
 	(*object)[9].pos[1] = height/2;
 	(*object)[9].vel[0] = 14;
 	(*object)[9].vel[1] = 10;
-	(*object)[9].charge = -(40000*elcharge)/pow(10, 10);
+	(*object)[9].charge = -(40000*elcharge)/pow(19, 10);*/
 	return 0;
 }
 
@@ -110,6 +110,7 @@ int integrate(data* object) {
 		for(j = 1; j < obj + 1; j++) {
 			if(i != j) {
 				vecdist = object[j].pos - object[i].pos;
+				//Why 3/2? We're multiplying both Fgrv and Fele by a vector which we normalize, so we just need to calculate this once.
 				mag = pow(3/2, (vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
 				object[i].Fgrv += vecdist*((float)(Gconst*object[i].mass*object[j].mass)/(mag));
 				object[i].Fele += -vecdist*((object[i].charge*object[j].charge)/(4*pi*epsno*mag));
