@@ -14,6 +14,7 @@ static int i, j;
 
 //Using black magic to transfer this data between.
 int obj, width, height;
+float spring = 3;
 
 //Using float precision results in a much reduced CPU activity. For a 100 objects it goes down from 15(double) to barely 4(float).
 float mag, dist, dt = 0.01, Gconst, pi, epsno;
@@ -39,24 +40,24 @@ int initphys(data** object) {
 	(*object)[1].mass = 1;
 	(*object)[1].pos[0] = 20 + width/2;
 	(*object)[1].pos[1] = height/2;
-	(*object)[1].vel[0] = 52;
-	(*object)[1].vel[1] = 0;
+	(*object)[1].vel[0] = 12;
+	(*object)[1].vel[1] = 6;
 	(*object)[1].charge = 0;
 	(*object)[1].link = 2;
 	
 	(*object)[2].mass = 1;
 	(*object)[2].pos[0] = width/2;
 	(*object)[2].pos[1] = height/2;
-	(*object)[2].vel[0] = -52;
-	(*object)[2].vel[1] = 24;
+	(*object)[2].vel[0] = 0;
+	(*object)[2].vel[1] = 0;
 	(*object)[2].charge = 0;
 	(*object)[2].link = 0;
 	
 	(*object)[3].mass = 1;
 	(*object)[3].pos[0] = width/2;
 	(*object)[3].pos[1] = 20 + height/2;
-	(*object)[3].vel[0] = 0;
-	(*object)[3].vel[1] = 0;
+	(*object)[3].vel[0] = 6;
+	(*object)[3].vel[1] = 12;
 	(*object)[3].charge = 0;
 	(*object)[3].link = 2;
 	
@@ -125,7 +126,7 @@ int integrate(data* object) {
 				object[i].Fele += -vecdist*((object[i].charge*object[j].charge)/(4*pi*epsno*mag));
 				if(object[i].link == j) {
 					//Super secret link feature disabled.
-					//object[i].Flink += -(vecdist/dist)*(-dist + 30);
+					object[i].Flink += (vecdist/dist)*((spring)*(dist - 20));
 				}
 			}
 		}
@@ -135,7 +136,7 @@ int integrate(data* object) {
 		
 		object[i].acc = (object[i].Ftot)/(mtemp);
 		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
-		object[i].Fgrv[0] = object[i].Fgrv[1] = object[i].Fele[0] = object[i].Fele[1] = 0;
+		object[i].Fgrv[0] = object[i].Fgrv[1] = object[i].Fele[0] = object[i].Fele[1] = object[i].Flink[0] = object[i].Flink[1] = 0;
 	}
 	return 0;
 }
