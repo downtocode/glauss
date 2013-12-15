@@ -15,7 +15,7 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i;
-int obj = 72, width = 1200, height = 600;
+int obj = 3, width = 1200, height = 600;
 int mousex, mousey;
 
 //int i, width = 1200, height = 600;
@@ -104,8 +104,9 @@ int main() {
 		//MAIN OBJECTS, RECTANCLES, ETC.
 		glBegin(GL_POINTS);
 			for(i = 1; i < obj + 1; i++) {
+				if( object[i].charge < 0 ) glColor3f(0,0,255);
+				if( object[i].charge == 0 ) glColor3f(255,255,255);
 				if( object[i].charge > 0 ) glColor3f(255,0,0);
-				else glColor3f(0,0,255);
 				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
 			}
 		glEnd();
