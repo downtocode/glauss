@@ -37,29 +37,34 @@ int initphys(data** object) {
 	}*/
 	
 	
-	(*object)[1].mass = 1;
-	(*object)[1].pos[0] = 20 + width/2;
-	(*object)[1].pos[1] = height/2;
-	(*object)[1].vel[0] = 12;
-	(*object)[1].vel[1] = 6;
-	(*object)[1].charge = 0;
-	(*object)[1].link = 2;
+	for(i = 1; i < obj + 1; i++) {
+	(*object)[i+1].mass = 1;
+	(*object)[i+1].pos[0] = ((float)rand()/RAND_MAX)*width;
+	(*object)[i+1].pos[1] = ((float)rand()/RAND_MAX)*height;
+	(*object)[i+1].vel[0] = 33;
+	(*object)[i+1].vel[1] = 33;
+	(*object)[i+1].charge = -(8000*elcharge)/pow(10, 10);
+	(*object)[i+1].link = 0;
 	
-	(*object)[2].mass = 1;
-	(*object)[2].pos[0] = width/2;
-	(*object)[2].pos[1] = height/2;
-	(*object)[2].vel[0] = 0;
-	(*object)[2].vel[1] = 0;
-	(*object)[2].charge = 0;
-	(*object)[2].link = 0;
 	
-	(*object)[3].mass = 1;
-	(*object)[3].pos[0] = width/2;
-	(*object)[3].pos[1] = 20 + height/2;
-	(*object)[3].vel[0] = 6;
-	(*object)[3].vel[1] = 12;
-	(*object)[3].charge = 0;
-	(*object)[3].link = 2;
+	(*object)[i].mass = 1;
+	(*object)[i].pos[0] = 20 + (*object)[i+1].pos[0];
+	(*object)[i].pos[1] = (*object)[i+1].pos[1];
+	(*object)[i].vel[0] = 12;
+	(*object)[i].vel[1] = 6;
+	(*object)[i].charge = (8000*elcharge)/pow(10, 10);
+	(*object)[i].link = i+1;
+	
+	
+	(*object)[i+2].mass = 1;
+	(*object)[i+2].pos[0] = (*object)[i+1].pos[0];
+	(*object)[i+2].pos[1] = 20 + (*object)[i+1].pos[1];
+	(*object)[i+2].vel[0] = 6;
+	(*object)[i+2].vel[1] = 12;
+	(*object)[i+2].charge = (8000*elcharge)/pow(10, 10);
+	(*object)[i+2].link = i+1;
+	i = i+2;
+	}
 	
 	/*(*object)[4].mass = 0.001;
 	(*object)[4].pos[0] = width/2;
@@ -109,8 +114,11 @@ int initphys(data** object) {
 int integrate(data* object) {
 	for(i = 1; i < obj + 1; i++) {
 		mtemp[0] = mtemp[1] = object[i].mass;
-		if(object[i].pos[0] > width) object[i].pos[0] = 0;
-		if(object[i].pos[0] < 0) object[i].pos[0] = width;
+		//if(object[i].pos[0] > width) object[i].pos[0] = 0;
+		//if(object[i].pos[0] < 0) object[i].pos[0] = width;
+		if(object[i].pos[0] < 0 || object[i].pos[0] > width) {
+			object[i].vel[0] = -object[i].vel[0];
+		}
 		if(object[i].pos[1] < 0 || object[i].pos[1] > height) {
 			object[i].vel[1] = -object[i].vel[1];
 		}
@@ -136,7 +144,7 @@ int integrate(data* object) {
 		
 		object[i].acc = (object[i].Ftot)/(mtemp);
 		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
-		object[i].Fgrv[0] = object[i].Fgrv[1] = object[i].Fele[0] = object[i].Fele[1] = object[i].Flink[0] = object[i].Flink[1] = 0;
+		object[i].Fgrv = object[i].Fele = object[i].Flink = (v4sf){0, 0};
 	}
 	return 0;
 }

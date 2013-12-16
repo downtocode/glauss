@@ -15,11 +15,15 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i;
-int obj = 3, width = 1200, height = 600;
+int obj = 36, width = 1200, height = 600;
 int mousex, mousey;
 
 //int i, width = 1200, height = 600;
 char text[100];
+
+float k = 1.3806488;
+float v2 = 0;
+v4sf vectemp;
 
 int main() {
 	/*	SDL RELATED STUFF. A PAIN TO DEAL WITH.	*/
@@ -40,11 +44,13 @@ int main() {
 		SDL_Color fColor ; // Font color (R,G,B)
 		SDL_Surface *imgTxt;
 		
-		txtRect.w = 137;
+		txtRect.w = 237;
 		txtRect.h = 25;
 		fColor.r = 255;
 		fColor.g = 165;
 		fColor.b = 0;
+		txtRect.x = 20;
+		txtRect.y = height - 30;
 		
 		glClearColor(0,0,0,1);
 		glPointSize(12.0);
@@ -57,7 +63,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 	/*	SDL RELATED STUFF. JUST LOOK AT THE AMOUNT OF CODE.	*/
 	
-	
+	k = k/pow(1, 10);
 	
 	/*	PHYSICS RELATED STUFF.	*/
 		data* object;
@@ -113,19 +119,33 @@ int main() {
 		glColor3f(255,255,255);
 		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
-				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
-				glVertex3f( (object[i].pos[0] + object[i].vel[0]), (object[i].pos[1] + object[i].vel[1]), 1 );
+				if( object[i].link != 0 ) { 
+					vectemp =  object[object[i].link].pos - object[i].pos;
+					glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
+					glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), 1 );
+				}
+				else {
+					glColor3f(255,0,0);
+					glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
+					glVertex3f( (object[i].pos[0] + object[i].vel[0]), (object[i].pos[1] + object[i].vel[1]), 1 );
+				}
+				glColor3f(255,255,255);
 			}
 		glEnd();
-		/*for(i = 1; i < obj + 1; i++) {
-				txtRect.x = object[i].pos[0];
-				txtRect.y = object[i].pos[1];
-				sprintf(text, "X: %0.2f, Y: %0.2f", object[i].pos[0], object[i].pos[1]);
-				imgTxt = TTF_RenderText_Solid( font , text , fColor );
-				SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
-				SDL_FreeSurface(imgTxt);
-				SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
-		}*/
+		
+		
+		for(i = 1; i < obj + 1; i++) {
+			v2 += (object[i].vel[0]*object[i].vel[0] + object[i].vel[1]*object[i].vel[1]);
+		}
+		
+		v2 = (v2*object[1].mass)/(obj*3*k);
+		
+		
+		sprintf(text, "Objects: %i    Temperature: %0.2f", obj, v2);
+		imgTxt = TTF_RenderText_Solid( font , text , fColor );
+		SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
+		SDL_FreeSurface(imgTxt);
+		SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
 		
 		
 		
