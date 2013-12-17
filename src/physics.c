@@ -14,16 +14,16 @@ static int i, j;
 
 //Using black magic to transfer this data between.
 int obj, width, height;
-float spring = 4000;
+float spring = 20;
 
 //Using float precision results in a much reduced CPU activity. For a 100 objects it goes down from 15(double) to barely 4(float).
-float mag, dist, dt = 0.07, Gconst, pi, epsno;
+float mag, dist, dt = 0.01, Gconst, pi, epsno;
 v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
 	
-	//We malloc the entire
+	//We malloc the entire pointer to the struct rendering it array-like. That's why I really like malloc, it's so damn powerful.
 	*object = malloc((1000*obj) * sizeof(object));
 	
 	Gconst = g/pow(12, 10);
@@ -40,75 +40,33 @@ int initphys(data** object) {
 	
 	
 	for(i = 1; i < obj + 1; i++) {
-	(*object)[i+1].mass = 1;
-	(*object)[i+1].pos[0] = ((float)rand()/RAND_MAX)*width;
-	(*object)[i+1].pos[1] = ((float)rand()/RAND_MAX)*height;
-	(*object)[i+1].vel[0] = 33;
-	(*object)[i+1].vel[1] = 33;
-	(*object)[i+1].charge = -(8000*elcharge)/pow(9, 10);
-	(*object)[i+1].linkwith = 0;
+		(*object)[i+1].mass = 1;
+		(*object)[i+1].pos[0] = ((float)rand()/RAND_MAX)*(width-24);
+		(*object)[i+1].pos[1] = ((float)rand()/RAND_MAX)*(height-24);
+		(*object)[i+1].vel[0] = 33;
+		(*object)[i+1].vel[1] = 33;
+		(*object)[i+1].charge = -(8000*elcharge)/pow(10, 10);
+		(*object)[i+1].linkwith = 0;
 	
 	
-	(*object)[i].mass = 1;
-	(*object)[i].pos[0] = 20 + (*object)[i+1].pos[0];
-	(*object)[i].pos[1] = (*object)[i+1].pos[1];
-	(*object)[i].vel[0] = 12;
-	(*object)[i].vel[1] = 6;
-	(*object)[i].charge = (8000*elcharge)/pow(9, 10);
-	(*object)[i].linkwith = i+1;
+		(*object)[i].mass = 1;
+		(*object)[i].pos[0] = 20 + 	(*object)[i+1].pos[0];
+		(*object)[i].pos[1] = 	(*object)[i+1].pos[1];
+		(*object)[i].vel[0] = 12;
+		(*object)[i].vel[1] = 6;
+		(*object)[i].charge = (8000*elcharge)/pow(10, 10);
+		(*object)[i].linkwith = i+1;
 	
 	
-	(*object)[i+2].mass = 1;
-	(*object)[i+2].pos[0] = (*object)[i+1].pos[0];
-	(*object)[i+2].pos[1] = 20 + (*object)[i+1].pos[1];
-	(*object)[i+2].vel[0] = 6;
-	(*object)[i+2].vel[1] = 12;
-	(*object)[i+2].charge = (8000*elcharge)/pow(9, 10);
-	(*object)[i+2].linkwith = i+1;
-	i = i+2;
+		(*object)[i+2].mass = 1;
+		(*object)[i+2].pos[0] = 	(*object)[i+1].pos[0];
+		(*object)[i+2].pos[1] = 20 + 	(*object)[i+1].pos[1];
+		(*object)[i+2].vel[0] = 6;
+		(*object)[i+2].vel[1] = 12;
+		(*object)[i+2].charge = (8000*elcharge)/pow(10, 10);
+		(*object)[i+2].linkwith = i+1;
+		i = i+2;
 	}
-	
-	/*(*object)[4].mass = 0.001;
-	(*object)[4].pos[0] = width/2;
-	(*object)[4].pos[1] = 300;
-	(*object)[4].vel[0] = 0;
-	(*object)[4].vel[1] = 0;
-	(*object)[4].charge = (400*elcharge)/pow(19, 10);
-	
-	(*object)[5].mass = 0.001;
-	(*object)[5].pos[0] = width/2;
-	(*object)[5].pos[1] = 400;
-	(*object)[5].vel[0] = 0;
-	(*object)[5].vel[1] = 0;
-	(*object)[5].charge = (400*elcharge)/pow(19, 10);
-	
-	(*object)[6].mass = 0.001;
-	(*object)[6].pos[0] = width/2;
-	(*object)[6].pos[1] = 500;
-	(*object)[6].vel[0] = 0;
-	(*object)[6].vel[1] = 0;
-	(*object)[6].charge = (400*elcharge)/pow(19, 10);
-	
-	(*object)[7].mass = 0.001;
-	(*object)[7].pos[0] = width/2;
-	(*object)[7].pos[1] = 600;
-	(*object)[7].vel[0] = 0;
-	(*object)[7].vel[1] = 0;
-	(*object)[7].charge = (400*elcharge)/pow(19, 10);
-	
-	(*object)[8].mass = 1000;
-	(*object)[8].pos[0] = width/1.5;
-	(*object)[8].pos[1] = height/2;
-	(*object)[8].vel[0] = 0;
-	(*object)[8].vel[1] = 0;
-	(*object)[8].charge = -(40000*elcharge)/pow(19, 10);
-	
-	(*object)[9].mass = 1000;
-	(*object)[9].pos[0] = width/3;
-	(*object)[9].pos[1] = height/2;
-	(*object)[9].vel[0] = 14;
-	(*object)[9].vel[1] = 10;
-	(*object)[9].charge = -(40000*elcharge)/pow(19, 10);*/
 	return 0;
 }
 
@@ -130,6 +88,7 @@ int integrate(data* object) {
 			if(i != j) {
 				vecdist = object[j].pos - object[i].pos;
 				//Why 3/2? We're multiplying both Fgrv and Fele by a vector which we normalize, so we just need to calculate this once.
+				//Really need to find a better way of doing the distance measurements and normalisations. I think SSE has something.
 				mag = pow(3/2, (vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
 				dist = sqrt((vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
 				object[i].Fgrv += vecdist*((float)(Gconst*object[i].mass*object[j].mass)/(mag));
