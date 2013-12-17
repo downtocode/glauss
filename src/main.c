@@ -141,11 +141,11 @@ int main() {
 		v2 = (v2*object[1].mass)/(obj*3*k);
 		
 		
-		sprintf(text, "Objects: %i    Temperature: %0.2f", obj, v2);
-		imgTxt = TTF_RenderText_Solid( font , text , fColor );
-		SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
-		SDL_FreeSurface(imgTxt);
-		SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
+		//sprintf(text, "Objects: %i", obj);
+		//imgTxt = TTF_RenderText_Solid( font , text , fColor );
+		//SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgTxt);
+		//SDL_FreeSurface(imgTxt);
+		//SDL_RenderCopyEx(renderer, texture, NULL, &txtRect, 0, NULL, SDL_FLIP_VERTICAL);
 		
 		
 		

@@ -14,10 +14,10 @@ static int i, j;
 
 //Using black magic to transfer this data between.
 int obj, width, height;
-float spring = 3;
+float spring = 4000;
 
 //Using float precision results in a much reduced CPU activity. For a 100 objects it goes down from 15(double) to barely 4(float).
-float mag, dist, dt = 0.01, Gconst, pi, epsno;
+float mag, dist, dt = 0.07, Gconst, pi, epsno;
 v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
 
 
@@ -45,7 +45,7 @@ int initphys(data** object) {
 	(*object)[i+1].pos[1] = ((float)rand()/RAND_MAX)*height;
 	(*object)[i+1].vel[0] = 33;
 	(*object)[i+1].vel[1] = 33;
-	(*object)[i+1].charge = -(8000*elcharge)/pow(10, 10);
+	(*object)[i+1].charge = -(8000*elcharge)/pow(9, 10);
 	(*object)[i+1].linkwith = 0;
 	
 	
@@ -54,7 +54,7 @@ int initphys(data** object) {
 	(*object)[i].pos[1] = (*object)[i+1].pos[1];
 	(*object)[i].vel[0] = 12;
 	(*object)[i].vel[1] = 6;
-	(*object)[i].charge = (8000*elcharge)/pow(10, 10);
+	(*object)[i].charge = (8000*elcharge)/pow(9, 10);
 	(*object)[i].linkwith = i+1;
 	
 	
@@ -63,7 +63,7 @@ int initphys(data** object) {
 	(*object)[i+2].pos[1] = 20 + (*object)[i+1].pos[1];
 	(*object)[i+2].vel[0] = 6;
 	(*object)[i+2].vel[1] = 12;
-	(*object)[i+2].charge = (8000*elcharge)/pow(10, 10);
+	(*object)[i+2].charge = (8000*elcharge)/pow(9, 10);
 	(*object)[i+2].linkwith = i+1;
 	i = i+2;
 	}
