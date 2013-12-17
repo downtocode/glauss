@@ -119,8 +119,8 @@ int main() {
 		glColor3f(255,255,255);
 		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
-				if( object[i].link != 0 ) { 
-					vectemp =  object[object[i].link].pos - object[i].pos;
+				if( object[i].linkwith != 0 ) { 
+					vectemp =  object[object[i].linkwith].pos - object[i].pos;
 					glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
 					glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), 1 );
 				}

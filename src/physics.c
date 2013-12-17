@@ -22,6 +22,8 @@ v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
+	
+	//We malloc the entire
 	*object = malloc((1000*obj) * sizeof(object));
 	
 	Gconst = g/pow(12, 10);
@@ -44,7 +46,7 @@ int initphys(data** object) {
 	(*object)[i+1].vel[0] = 33;
 	(*object)[i+1].vel[1] = 33;
 	(*object)[i+1].charge = -(8000*elcharge)/pow(10, 10);
-	(*object)[i+1].link = 0;
+	(*object)[i+1].linkwith = 0;
 	
 	
 	(*object)[i].mass = 1;
@@ -53,7 +55,7 @@ int initphys(data** object) {
 	(*object)[i].vel[0] = 12;
 	(*object)[i].vel[1] = 6;
 	(*object)[i].charge = (8000*elcharge)/pow(10, 10);
-	(*object)[i].link = i+1;
+	(*object)[i].linkwith = i+1;
 	
 	
 	(*object)[i+2].mass = 1;
@@ -62,7 +64,7 @@ int initphys(data** object) {
 	(*object)[i+2].vel[0] = 6;
 	(*object)[i+2].vel[1] = 12;
 	(*object)[i+2].charge = (8000*elcharge)/pow(10, 10);
-	(*object)[i+2].link = i+1;
+	(*object)[i+2].linkwith = i+1;
 	i = i+2;
 	}
 	
@@ -132,7 +134,7 @@ int integrate(data* object) {
 				dist = sqrt((vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
 				object[i].Fgrv += vecdist*((float)(Gconst*object[i].mass*object[j].mass)/(mag));
 				object[i].Fele += -vecdist*((object[i].charge*object[j].charge)/(4*pi*epsno*mag));
-				if(object[i].link == j) {
+				if(object[i].linkwith == j) {
 					//Super secret link feature disabled.
 					object[i].Flink += (vecdist/dist)*((spring)*(dist - 20));
 				}
