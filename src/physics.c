@@ -112,7 +112,6 @@ int integrate(data* object) {
 				object[i].Fgrv += vecdist*((float)(Gconst*object[i].mass*object[j].mass)/(mag));
 				object[i].Fele += -vecdist*((object[i].charge*object[j].charge)/(4*pi*epsno*mag));
 				if( object[i].linkwith[j] == 1) {
-					//Super secret link feature disabled.
 					object[i].Flink += (vecdist/dist)*((spring)*(dist - 20));
 				}
 			}

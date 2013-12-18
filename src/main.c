@@ -37,7 +37,7 @@ int main() {
 		SDL_Event event;
 		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		
-		TTF_Init();
+		/*TTF_Init();
 		TTF_Font *font;
 		font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 20);
 		SDL_Rect txtRect ; // Store (x,y) of text for blit
@@ -50,7 +50,7 @@ int main() {
 		fColor.g = 165;
 		fColor.b = 0;
 		txtRect.x = 20;
-		txtRect.y = height - 30;
+		txtRect.y = height - 30;*/
 		
 		glClearColor(0,0,0,1);
 		glPointSize(12.0);
