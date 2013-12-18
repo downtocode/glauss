@@ -15,7 +15,7 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i;
-int obj = 36, width = 1200, height = 600;
+int obj = 15, width = 1200, height = 600;
 int mousex, mousey;
 
 //int i, width = 1200, height = 600;
@@ -117,7 +117,7 @@ int main() {
 			}
 		glEnd();
 		glColor3f(255,255,255);
-		glBegin(GL_LINES);
+		/*glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
 				if( object[i].linkwith != 0 ) { 
 					vectemp =  object[object[i].linkwith].pos - object[i].pos;
@@ -131,7 +131,7 @@ int main() {
 				}
 				glColor3f(255,255,255);
 			}
-		glEnd();
+		glEnd();*/
 		
 		
 		for(i = 1; i < obj + 1; i++) {
