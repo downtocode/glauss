@@ -15,7 +15,7 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i;
-int obj = 15, width = 1200, height = 600;
+int obj = 20, width = 1200, height = 600;
 int mousex, mousey;
 
 //int i, width = 1200, height = 600;
