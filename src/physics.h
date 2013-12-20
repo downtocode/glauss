@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 //Add 4 to the vector size for every dimension.
-typedef float v4sf __attribute__ ((vector_size (8)));
+typedef float v4sf __attribute__ ((vector_size (16)));
 
 typedef struct {
 	v4sf pos, vel, acc, Ftot, Fgrv, Fele, Flink;
-	float mass, charge;
+	long double mass, charge;
 	bool linkwith[20];
 } data;
 

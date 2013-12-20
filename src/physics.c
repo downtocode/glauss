@@ -4,27 +4,31 @@
 #include "physics.h"
 
 
-//Constants
+/* Constants */
 #define perm 8.854187817
 #define g 6.67384
 #define elcharge 1.602176565
 
-//Static because you might want to call integrate in a for loop and then you'd be in trouble.
+/* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
 static int i, j;
 
-//Using black magic to transfer this data between.
+/* Using black magic to transfer this data between. */
 int obj, width, height;
-float spring = 20;
+float spring = 20, dt = 0.01, dist;
 
-//Using float precision results in a much reduced CPU activity. For a 100 objects it goes down from 15(double) to barely 4(float).
-float mag, dist, dt = 0.01, Gconst, pi, epsno;
+/* Using float precision results in a much reduced CPU activity. For a 100 objects it goes down from 15(double) to barely 4(float). */
+
+long double mag, Gconst, pi, epsno;
+/* Switching to long double because we really need the precision. Heck, maybe I'll even have to use libquadmath because damn is 10^-27 a small number.
+From what I've read it's completely platform/compiler depentent, but if you're using sane compilers and C libraries(read: not microsoft) you should be fine. */
+
 v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
 	
-	//We malloc the entire pointer to the struct rendering it array-like. That's why I really like malloc, it's so damn powerful.
-	*object = malloc(5*obj * (72*8 + 2*sizeof(float) + obj*sizeof(bool)));
+	/* We malloc the entire pointer to the struct rendering it array-like. That's why I really like malloc, it's so damn powerful. */
+	*object = malloc(6*obj * (72*8 + 2*sizeof(float) + obj*sizeof(bool)));
 	
 	Gconst = g/pow(12, 10);
 	pi = acos(-1);
@@ -99,8 +103,8 @@ int integrate(data* object) {
 				//Really need to find a better way of doing the distance measurements and normalisations. I think SSE has something.
 				mag = pow(3/2, (vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
 				dist = sqrt((vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
-				object[i].Fgrv += vecdist*((float)(Gconst*object[i].mass*object[j].mass)/(mag));
-				object[i].Fele += -vecdist*((object[i].charge*object[j].charge)/(4*pi*epsno*mag));
+				object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag)));
+				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag)));
 				if( object[i].linkwith[j] == 1) {
 					object[i].Flink += (vecdist/dist)*((spring)*(dist - 20));
 				}
