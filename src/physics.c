@@ -30,10 +30,10 @@ int initphys(data** object) {
 	/* We malloc the entire pointer to the struct rendering it array-like. That's why I really like malloc, it's so damn powerful. */
 	*object = malloc(6*obj * (72*8 + 2*sizeof(float) + obj*sizeof(bool)));
 	
-	Gconst = g/pow(11, 10);
+	Gconst = g/pow(10, 10);
 	pi = acos(-1);
-	epsno = perm/pow(12, 10);
-	massu = dalton/pow(27, 10);
+	epsno = perm/pow(10, 12);
+	massu = dalton/pow(10, 27);
 	
 	return 0;
 }
@@ -54,13 +54,11 @@ int integrate(data* object) {
 		for(j = 1; j < obj + 1; j++) {
 			if(i != j) {
 				vecdist = object[j].pos - object[i].pos;
-				mag = sqrt(pow((long double)vecdist[0], 2) + pow((long double)vecdist[1], 2));
+				mag = sqrt((long double)(vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
 				vecdist /= (float)mag;
-				
 				
 				object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag*mag)));
 				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
-				
 				
 				if( object[i].linkwith[j] == 1) {
 					object[i].Flink += vecdist*((spring)*((float)mag - 20));

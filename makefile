@@ -5,8 +5,8 @@ OBJS=$(subst .c,.o,$(SOURCES))
 
 CC=cc
 PROGRAM=physengine
-LDFLAGS=-lm -lGL -lSDL2 -lSDL2_ttf
-CFLAGS=-Wall -pedantic -std=c99 -O3 -msse4.1 -g
+LDFLAGS=-lm -lGL -lSDL2
+CFLAGS=-Wall -pedantic -std=c99 -O3 -msse -g
 
 vpath %.c ./src/
 

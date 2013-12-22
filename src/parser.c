@@ -31,12 +31,11 @@ int parser(data** object) {
 			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %s", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
 				&(*object)[i+1].vel[0], &(*object)[i+1].vel[1], &(*object)[i+1].acc[0], &(*object)[i+1].acc[1], \
 				&(*object)[i+1].mass, &chargetemp, links);
-				(*object)[i].charge = (chargetemp*elcharge)/pow(7, 10);
+				(*object)[i].charge = (chargetemp*elcharge)/pow(10, 7);
 				
 				linkstr = strtok(links,",");
 				while(linkstr != NULL) {
 					sscanf(linkstr, "%i", &link);
-					printf("OBJ ID = %i, LINK = %i\n", i, link);
 					(*object)[i].linkwith[link] = 1;
 					linkstr = strtok(NULL,",");
 				}
