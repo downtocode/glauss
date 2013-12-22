@@ -23,7 +23,7 @@ long double mag, Gconst, pi, epsno, massu;
 /* Switching to long double because we really need the precision. Heck, maybe I'll even have to use libquadmath because damn is 10^-27 a small number.
 From what I've read it's completely platform/compiler depentent, but if you're using sane compilers and C libraries(read: not microsoft) you should be fine. */
 
-v4sf mtemp, accprev, vecdist, forceconst = {0, 0};
+v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
@@ -36,51 +36,6 @@ int initphys(data** object) {
 	epsno = perm/pow(12, 10);
 	massu = dalton/pow(27, 10);
 	
-	/*for(i = 1; i < obj + 1; i++) {
-		(*object)[i].pos[0] = ((float)rand()/RAND_MAX)*width + 10*i;
-		(*object)[i].pos[1] = ((float)rand()/RAND_MAX)*height + 10*i;
-		(*object)[i].mass = 0.000001;
-		(*object)[i].charge = (400*elcharge)/pow(19, 10);
-		if( ((float)rand()/RAND_MAX) < 0.5 ) (*object)[i].charge *= -1;
-	}*/
-	
-	
-	for(i = 1; i < obj + 1; i++) {
-		(*object)[i+1].mass = 1;
-		(*object)[i+1].pos = (v4sf){ ((float)rand()/RAND_MAX)*(width-24), ((float)rand()/RAND_MAX)*(height-24) };
-		(*object)[i+1].vel = (v4sf){ 33, 33 };
-		(*object)[i+1].charge = -(16000*elcharge)/pow(10, 10);
-		(*object)[i+1].linkwith[i] = 1;
-		(*object)[i+1].linkwith[i+2] = 1;
-		(*object)[i+1].linkwith[i+3] = 1;
-		(*object)[i+1].linkwith[i+4] = 1;
-		
-		
-		(*object)[i].mass = 0.1;
-		(*object)[i].pos = (v4sf){ (*object)[i+1].pos[0] - 20, (*object)[i+1].pos[1] };
-		(*object)[i].vel = (v4sf){ 0, 0 };
-		(*object)[i].charge = (4000*elcharge)/pow(10, 10);
-		(*object)[i].linkwith[i+1] = 1;
-	
-		(*object)[i+2].mass = 0.1;
-		(*object)[i+2].pos = (v4sf){ (*object)[i+1].pos[0], (*object)[i+1].pos[1] - 20 };
-		(*object)[i+2].vel = (v4sf){ 0, 0 };
-		(*object)[i+2].charge = (400*elcharge)/pow(10, 10);
-		(*object)[i+2].linkwith[i+1] = 1;
-		
-		(*object)[i+3].mass = 0.1;
-		(*object)[i+3].pos = (v4sf){ (*object)[i+1].pos[0] + 20, (*object)[i+1].pos[1] };
-		(*object)[i+3].vel = (v4sf){ 0, 0 };
-		(*object)[i+3].charge = (4000*elcharge)/pow(10, 10);
-		(*object)[i+3].linkwith[i+1] = 1;
-		
-		(*object)[i+4].mass = 0.1;
-		(*object)[i+4].pos = (v4sf){ (*object)[i+1].pos[0], (*object)[i+1].pos[1] + 20 };
-		(*object)[i+4].vel = (v4sf){ 0, 0 };
-		(*object)[i+4].charge = (4000*elcharge)/pow(10, 10);
-		(*object)[i+4].linkwith[i+1] = 1;
-		i = i+4;
-	}
 	return 0;
 }
 

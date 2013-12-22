@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef FUNCTIONS_J_INCLUDED
+#define FUNCTIONS_J_INCLUDED
 
 int parser(data** object);
 

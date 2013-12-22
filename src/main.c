@@ -16,7 +16,7 @@
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i;
-int obj = 20, width = 1200, height = 600;
+int obj = 5, width = 1200, height = 600;
 int mousex, mousey;
 
 //int i, width = 1200, height = 600;
@@ -71,9 +71,8 @@ int main() {
 		/*	Okay, some explanation is needed. We want to make an array containing object parameters. So fine, we make it as a pointer.
 			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
-		parser(&object);
 		initphys(&object);
-	
+		parser(&object);
 	
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
