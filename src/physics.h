@@ -2,7 +2,7 @@
 #define FUNCTIONS_H_INCLUDED
 
 #include <stdbool.h>
-//Add 4 to the vector size for every dimension.
+//Vector size must be a power of 2 and big enough to contain the dimensions
 typedef float v4sf __attribute__ ((vector_size (16)));
 
 typedef struct {

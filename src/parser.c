@@ -4,7 +4,6 @@
 #include "physics.h"
 #include "parser.h"
 
-#define linkmax 100
 #define elcharge 1.602176565
 
 int preparser() {
@@ -23,16 +22,24 @@ int preparser() {
 
 int parser(data** object) {
 	FILE *in = fopen ( "posdata.dat", "r" );
-	int i, links;
+	int i, link;
 	long double chargetemp;
-	char str[200];
-	while(fgets (str, 200, in)!=NULL) {
+	char str[200], links[500];
+	char *linkstr;
+	while(fgets (str, 200, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %i", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
+			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %s", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
 				&(*object)[i+1].vel[0], &(*object)[i+1].vel[1], &(*object)[i+1].acc[0], &(*object)[i+1].acc[1], \
-				&(*object)[i+1].mass, &chargetemp, &links);
+				&(*object)[i+1].mass, &chargetemp, links);
 				(*object)[i].charge = (chargetemp*elcharge)/pow(7, 10);
-				(*object)[i].linkwith[links] = 1;
+				
+				linkstr = strtok(links,",");
+				while(linkstr != NULL) {
+					sscanf(linkstr, "%i", &link);
+					printf("OBJ ID = %i, LINK = %i\n", i, link);
+					(*object)[i].linkwith[link] = 1;
+					linkstr = strtok(NULL,",");
+				}
 		}
 	}
 	fclose(in);
