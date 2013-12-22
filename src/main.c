@@ -13,12 +13,10 @@
 #include "parser.h"
 
 
-//For now, let's use obj-1 and dimensions-1. Hacky, but it works.
 static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey;
 
-//int i, width = 1200, height = 600;
 char text[100];
 
 v4sf vectemp;
@@ -62,10 +60,12 @@ int main() {
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
-				case SDL_MOUSEBUTTONDOWN:
+				case SDL_MOUSEMOTION:
 					SDL_GetMouseState(&mousex , &mousey);
-					object[1].pos[0] = (float)mousex;
-					object[1].pos[1] = (float)mousey;
+					object[9].pos[0] = (float)mousex;
+					object[9].pos[1] = ((float)height/2 - (float)mousey) + (float)height/2;
+					object[9].vel = (v4sf){0, 0};
+					break;
 				case SDL_QUIT:
 					free(object);
 					SDL_GL_DeleteContext(glcontext);
