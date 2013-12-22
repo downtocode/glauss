@@ -33,12 +33,15 @@ int parser(data** object) {
 				&(*object)[i+1].mass, &chargetemp, links);
 				(*object)[i].charge = (chargetemp*elcharge)/pow(10, 7);
 				
+				printf("Object %i links: ", i);
 				linkstr = strtok(links,",");
 				while(linkstr != NULL) {
 					sscanf(linkstr, "%i", &link);
+					printf("%i, ", link);
 					(*object)[i].linkwith[link] = 1;
 					linkstr = strtok(NULL,",");
 				}
+				printf(" \n");
 		}
 	}
 	fclose(in);

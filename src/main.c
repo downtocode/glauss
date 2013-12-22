@@ -17,7 +17,6 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey;
 
-char text[100];
 
 v4sf vectemp;
 
@@ -35,13 +34,8 @@ int main() {
 	/*	SDL.	*/
 		
 	/*	OpenGL.	*/
-		glClearColor(0,0,0,1);
-		glPointSize(12.0);
-		glEnable(GL_POINT_SMOOTH);
-		glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-		glViewport( 0,0, width, height );
-		glMatrixMode( GL_PROJECTION );
-		glLoadIdentity();
+		glClearColor(0.1,0.1,0.1,1);
+		glPointSize(11.0);
 		glOrtho( 0.0, width, 0.0, height, 1.0, -1.0 );
 		glClear(GL_COLOR_BUFFER_BIT);
 	/*	OpenGL.	*/
@@ -102,7 +96,7 @@ int main() {
 		
 		
 		SDL_RenderPresent(renderer);
-		SDL_Delay(5);
+		SDL_Delay(3);
 	
 	}
 return 0;
