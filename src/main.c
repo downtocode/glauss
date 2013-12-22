@@ -15,7 +15,7 @@
 
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
-static int i;
+static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey;
 
@@ -119,21 +119,17 @@ int main() {
 			}
 		glEnd();
 		glColor3f(255,255,255);
-		/*glBegin(GL_LINES);
+		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
-				if( object[i].linkwith != 0 ) { 
-					vectemp =  object[object[i].linkwith].pos - object[i].pos;
-					glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
-					glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), 1 );
+				for(j = 1; j < obj + 1; j++) {
+					if( object[i].linkwith[j] == 1 ) { 
+						vectemp =  object[j].pos - object[i].pos;
+						glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
+						glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), 1 );
+					}
 				}
-				else {
-					glColor3f(255,0,0);
-					glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
-					glVertex3f( (object[i].pos[0] + object[i].vel[0]), (object[i].pos[1] + object[i].vel[1]), 1 );
-				}
-				glColor3f(255,255,255);
 			}
-		glEnd();*/
+		glEnd();
 		
 		
 		for(i = 1; i < obj + 1; i++) {
