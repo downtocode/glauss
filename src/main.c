@@ -11,6 +11,7 @@
 
 //Functions.
 #include "physics.h"
+#include "parser.h"
 
 
 //For now, let's use obj-1 and dimensions-1. Hacky, but it works.
@@ -70,6 +71,7 @@ int main() {
 		/*	Okay, some explanation is needed. We want to make an array containing object parameters. So fine, we make it as a pointer.
 			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
+		parser(&object);
 		initphys(&object);
 	
 	

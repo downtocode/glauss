@@ -15,7 +15,7 @@ static int i, j;
 
 /* Using black magic to transfer this data between. */
 int obj, width, height;
-float spring = 20, dt = 0.001, dist;
+float spring = 20, dt = 0.01, dist;
 
 /* Using float precision results in a much reduced CPU activity. */
 
@@ -46,38 +46,38 @@ int initphys(data** object) {
 	
 	
 	for(i = 1; i < obj + 1; i++) {
-		(*object)[i+1].mass = 1*massu;
+		(*object)[i+1].mass = 1;
 		(*object)[i+1].pos = (v4sf){ ((float)rand()/RAND_MAX)*(width-24), ((float)rand()/RAND_MAX)*(height-24) };
 		(*object)[i+1].vel = (v4sf){ 33, 33 };
-		(*object)[i+1].charge = 0;
+		(*object)[i+1].charge = -(16000*elcharge)/pow(10, 10);
 		(*object)[i+1].linkwith[i] = 1;
 		(*object)[i+1].linkwith[i+2] = 1;
 		(*object)[i+1].linkwith[i+3] = 1;
 		(*object)[i+1].linkwith[i+4] = 1;
 		
 		
-		(*object)[i].mass = 18.998403*massu;
+		(*object)[i].mass = 0.1;
 		(*object)[i].pos = (v4sf){ (*object)[i+1].pos[0] - 20, (*object)[i+1].pos[1] };
 		(*object)[i].vel = (v4sf){ 0, 0 };
-		(*object)[i].charge = 0;
+		(*object)[i].charge = (4000*elcharge)/pow(10, 10);
 		(*object)[i].linkwith[i+1] = 1;
 	
-		(*object)[i+2].mass = 18.998403*massu;
+		(*object)[i+2].mass = 0.1;
 		(*object)[i+2].pos = (v4sf){ (*object)[i+1].pos[0], (*object)[i+1].pos[1] - 20 };
 		(*object)[i+2].vel = (v4sf){ 0, 0 };
-		(*object)[i+2].charge = 0;
+		(*object)[i+2].charge = (400*elcharge)/pow(10, 10);
 		(*object)[i+2].linkwith[i+1] = 1;
 		
-		(*object)[i+3].mass = 18.998403*massu;
+		(*object)[i+3].mass = 0.1;
 		(*object)[i+3].pos = (v4sf){ (*object)[i+1].pos[0] + 20, (*object)[i+1].pos[1] };
 		(*object)[i+3].vel = (v4sf){ 0, 0 };
-		(*object)[i+3].charge = 0;
+		(*object)[i+3].charge = (4000*elcharge)/pow(10, 10);
 		(*object)[i+3].linkwith[i+1] = 1;
 		
-		(*object)[i+4].mass = 18.998403*massu;
+		(*object)[i+4].mass = 0.1;
 		(*object)[i+4].pos = (v4sf){ (*object)[i+1].pos[0], (*object)[i+1].pos[1] + 20 };
 		(*object)[i+4].vel = (v4sf){ 0, 0 };
-		(*object)[i+4].charge = 0;
+		(*object)[i+4].charge = (4000*elcharge)/pow(10, 10);
 		(*object)[i+4].linkwith[i+1] = 1;
 		i = i+4;
 	}
@@ -105,11 +105,11 @@ int integrate(data* object) {
 				//Really need to find a better way of doing the distance measurements and normalisations. I think SSE has something.
 				mag = pow(3/2, ((long double)vecdist[0]*(long double)vecdist[0] + (long double)vecdist[1]*(long double)vecdist[1]));
 				dist = sqrt((vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
-				//object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag)));
+				object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag)));
 				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag)));
-				/*if( object[i].linkwith[j] == 1) {
+				if( object[i].linkwith[j] == 1) {
 					object[i].Flink += (vecdist/dist)*((spring)*(dist - 20));
-				}*/
+				}
 			}
 		}
 		
