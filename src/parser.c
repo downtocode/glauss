@@ -7,9 +7,23 @@
 #define linkmax 100
 #define elcharge 1.602176565
 
+int preparser() {
+	static int count = 0;
+	FILE *inprep = fopen ( "posdata.dat", "r" );
+	static char temp[200];
+	while(fgets (temp, 200, inprep)!=NULL) {
+		if (strstr(temp, "#") == NULL) {
+			count += 1;
+		}
+	}
+	printf("Objects: %i\n", count);
+	fclose(inprep);
+	return count;
+}
+
 int parser(data** object) {
 	FILE *in = fopen ( "posdata.dat", "r" );
-	int i, j, links, count = 0;
+	int i, links;
 	long double chargetemp;
 	char str[200];
 	while(fgets (str, 200, in)!=NULL) {
@@ -21,6 +35,6 @@ int parser(data** object) {
 				(*object)[i].linkwith[links] = 1;
 		}
 	}
-	return 0;
 	fclose(in);
+	return 0;
 }
