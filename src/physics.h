@@ -8,7 +8,7 @@ typedef float v4sf __attribute__ ((vector_size (16)));
 typedef struct {
 	v4sf pos, vel, acc, Ftot, Fgrv, Fele, Flink;
 	long double mass, charge;
-	bool linkwith[20];
+	bool linkwith[20], ignore;
 } data;
 
 

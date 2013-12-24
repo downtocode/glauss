@@ -15,14 +15,14 @@ static int i, j;
 
 /* Using black magic to transfer this data between. */
 int obj, width, height;
-float spring = 20, dt = 0.01;
+float spring = 500, dt = 0.01;
 
 /* Using float precision results in a much reduced CPU activity. */
 
 long double mag, Gconst, pi, epsno, massu;
 
 
-v4sf mtemp, accprev, vecdist, forceconst = {0, -1.81};
+v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
@@ -41,6 +41,7 @@ int initphys(data** object) {
 
 int integrate(data* object) {
 	for(i = 1; i < obj + 1; i++) {
+		if(object[i].ignore == 1) continue;
 		mtemp[0] = mtemp[1] = (float)object[i].mass;
 		
 		if(object[i].pos[0] < 0 || object[i].pos[0] > width) {
@@ -60,8 +61,8 @@ int integrate(data* object) {
 				object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag*mag)));
 				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
 				
-				if( object[i].linkwith[j] == 1) {
-					object[i].Flink += vecdist*((spring)*((float)mag - 20));
+				if( object[i].linkwith[j] == 1 ) {
+					object[i].Flink += vecdist*((spring)*((float)mag - 50));
 				}
 			}
 		}

@@ -7,10 +7,15 @@
 //Things you gotta get.
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#include <freetype2/ft2build.h>
+#include FT_FREETYPE_H
 
 //Functions.
 #include "physics.h"
 #include "parser.h"
+
+FT_Library  library;
+FT_Face face;
 
 
 static int i, j;
@@ -32,6 +37,22 @@ int main() {
 		SDL_Event event;
 		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 	/*	SDL.	*/
+	
+	FILE *out = fopen ( "phase.dat", "w" );
+	
+	/*	Freetype.	*/
+	if(FT_Init_FreeType(&library)) {
+		fprintf(stderr, "Could not init freetype library\n");
+		return 1;
+	}
+	
+	if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
+		fprintf(stderr, "Could not open font\n");
+		return 1;
+	}
+	FT_Set_Pixel_Sizes(face, 0, 48);
+	
+	/*	Freetype.	*/
 		
 	/*	OpenGL.	*/
 		glClearColor(0.1,0.1,0.1,1);
@@ -55,10 +76,11 @@ int main() {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
 				case SDL_MOUSEMOTION:
+					if( object[4].pos[0] == 0 || object[4].pos[1] == 0 ) break;
 					SDL_GetMouseState(&mousex , &mousey);
-					object[9].pos[0] = (float)mousex;
-					object[9].pos[1] = ((float)height/2 - (float)mousey) + (float)height/2;
-					object[9].vel = (v4sf){0, 0};
+					object[4].pos[0] = (float)mousex;
+					object[4].pos[1] = ((float)height/2 - (float)mousey) + (float)height/2;
+					object[4].vel = (v4sf){0, 0};
 					break;
 				case SDL_QUIT:
 					free(object);
@@ -94,9 +116,8 @@ int main() {
 			}
 		glEnd();
 		
-		
+		fprintf(out, "%f %f\n", object[3].pos[0], object[3].pos[1]);
 		SDL_RenderPresent(renderer);
-		SDL_Delay(3);
 	
 	}
 return 0;

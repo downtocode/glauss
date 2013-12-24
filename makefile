@@ -5,18 +5,18 @@ OBJS=$(subst .c,.o,$(SOURCES))
 
 CC=cc
 PROGRAM=physengine
-LDFLAGS=-lm -lGL -lSDL2
-CFLAGS=-Wall -pedantic -std=c99 -O3 -msse -g
+LDFLAGS=-lm -lGL -lSDL2 `freetype-config --libs`
+CFLAGS=-Wall -pedantic -std=c99 -O3 -msse -g `freetype-config --cflags`
 
 vpath %.c ./src/
 
 all: $(PROGRAM)
 
 $(PROGRAM): $(OBJS)
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $^ -o $@ $(LDFLAGS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $< -c -o $@
+	$(CC) $< -c -o $@ $(CFLAGS)
 
 .PHONY: all clean
 
