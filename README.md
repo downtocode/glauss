@@ -9,7 +9,7 @@ This physics engine uses the Velocity Verlet integration method to simulate part
 
 Compiling
 ---------
-You need make, a sane C compiler(which supports C99) and SDL2(and whatever that requires - like OpenGL dev libraries). Keep in mind many distributions like to place the SDL2 development libraries in a variety of sublocations within the /usr/include directory. In Debian's case, the headers were within a directory called "SDL2", so just take a look down at your headers directory and if required modify main.c which contains the only SDL2 includes.
+You need make, a sane C compiler(which supports C99), SDL2(and whatever that requires - like OpenGL dev libraries) and the freetype libarry. Keep in mind many distributions like to place the SDL2 development libraries in a variety of sublocations within the /usr/include directory. In Debian's case, the headers were within a directory called "SDL2", so just take a look down at your headers directory and if required modify main.c which contains the only SDL2 includes.
 Once you have those three things, run make.
 
 Running

@@ -38,7 +38,10 @@ int main() {
 		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 	/*	SDL.	*/
 	
-	FILE *out = fopen ( "phase.dat", "w" );
+	/*	I/0.	*/
+	//Uncomment if plotting something is required
+	//FILE *out = fopen ( "phase.dat", "w" );
+	/*	I/0.	*/
 	
 	/*	Freetype.	*/
 	if(FT_Init_FreeType(&library)) {
@@ -51,7 +54,6 @@ int main() {
 		return 1;
 	}
 	FT_Set_Pixel_Sizes(face, 0, 48);
-	
 	/*	Freetype.	*/
 		
 	/*	OpenGL.	*/
@@ -76,11 +78,11 @@ int main() {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
 				case SDL_MOUSEMOTION:
-					if( object[4].pos[0] == 0 || object[4].pos[1] == 0 ) break;
+					/*if( object[4].pos[0] == 0 || object[4].pos[1] == 0 ) break;
 					SDL_GetMouseState(&mousex , &mousey);
 					object[4].pos[0] = (float)mousex;
 					object[4].pos[1] = ((float)height/2 - (float)mousey) + (float)height/2;
-					object[4].vel = (v4sf){0, 0};
+					object[4].vel = (v4sf){0, 0};*/
 					break;
 				case SDL_QUIT:
 					free(object);
@@ -116,9 +118,9 @@ int main() {
 			}
 		glEnd();
 		
-		fprintf(out, "%f %f\n", object[3].pos[0], object[3].pos[1]);
+		//fprintf(out, "%f %f\n", object[3].pos[0], object[3].pos[1]);
 		SDL_RenderPresent(renderer);
-	
+		//SDL_Delay(5);
 	}
 return 0;
 }
