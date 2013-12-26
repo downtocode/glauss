@@ -28,9 +28,9 @@ int parser(data** object) {
 	char *linkstr;
 	while(fgets (str, 200, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %i %s", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
+			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %i %f %s", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
 				&(*object)[i+1].vel[0], &(*object)[i+1].vel[1], &(*object)[i+1].acc[0], &(*object)[i+1].acc[1], \
-				&(*object)[i+1].mass, &chargetemp, &(*object)[i+1].ignore, links);
+				&(*object)[i+1].mass, &chargetemp, &(*object)[i+1].ignore, &(*object)[i+1].equil, links);
 				(*object)[i].charge = (chargetemp*elcharge)/pow(10, 7);
 				
 				printf("Object %i links: ", i);

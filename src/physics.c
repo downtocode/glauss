@@ -62,7 +62,7 @@ int integrate(data* object) {
 				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
 				
 				if( object[i].linkwith[j] == 1 ) {
-					object[i].Flink += vecdist*((spring)*((float)mag - 50));
+					object[i].Flink += vecdist*((spring)*((float)mag - object[i].equil));
 				}
 			}
 		}
