@@ -25,11 +25,23 @@ int mousex, mousey;
 
 v4sf vectemp;
 
+float getFPS() {
+    static float fps = 0;
+    static float lastTime = 0;
+    float currentTime = SDL_GetTicks();
+    fps = fps*0.9+(100/(currentTime - lastTime));
+    lastTime = currentTime;
+    return fps;
+}
+
+
 int main() {
 	/*	SDL.	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
 		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE);
+		
+		char title[50];
 		
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 		SDL_GLContext glcontext = SDL_GL_CreateContext(window);
@@ -120,7 +132,10 @@ int main() {
 		
 		//fprintf(out, "%f %f\n", object[3].pos[0], object[3].pos[1]);
 		SDL_RenderPresent(renderer);
-		//SDL_Delay(5);
+		SDL_Delay(1);
+		
+		sprintf(title, "Physengine - %f FPS", getFPS() );
+		SDL_SetWindowTitle( window, title );
 	}
 return 0;
 }
