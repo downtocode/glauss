@@ -1,7 +1,7 @@
 physengine
 ================
 
-This program aims to implement a physics engine whilst aiming for maximum performance. Uses SDL2 and SDL2 TTF libraries for display. Implemented in pure C.
+This program aims to implement a physics engine whilst aiming for maximum performance. Uses SDL2 and the Freetype libraries for display. Implemented in pure C.
 
 Description
 -----------
