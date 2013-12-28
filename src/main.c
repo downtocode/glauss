@@ -22,12 +22,13 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey;
 
+static float fps;
+static float lastTime;
+
 
 v4sf vectemp;
 
 float getFPS() {
-    static float fps = 0;
-    static float lastTime = 0;
     float currentTime = SDL_GetTicks();
     fps = fps*0.9+(100/(currentTime - lastTime));
     lastTime = currentTime;
@@ -132,10 +133,12 @@ int main() {
 		
 		//fprintf(out, "%f %f\n", object[3].pos[0], object[3].pos[1]);
 		SDL_RenderPresent(renderer);
-		SDL_Delay(1);
+		SDL_Delay(10);
 		
-		sprintf(title, "Physengine - %f FPS", getFPS() );
-		SDL_SetWindowTitle( window, title );
+		if( rand() > 0.90 ) {
+			sprintf(title, "Physengine - %f FPS", getFPS() );
+			//SDL_SetWindowTitle( window, title );
+		}
 	}
 return 0;
 }
