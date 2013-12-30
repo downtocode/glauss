@@ -7,15 +7,15 @@
 //Things you gotta get.
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-#include <freetype2/ft2build.h>
-#include FT_FREETYPE_H
+//#include <freetype2/ft2build.h>
+//#include FT_FREETYPE_H
 
 //Functions.
 #include "physics.h"
 #include "parser.h"
 
-FT_Library  library;
-FT_Face face;
+//FT_Library  library;
+//FT_Face face;
 
 
 static int i, j;
@@ -56,7 +56,7 @@ int main() {
 	//FILE *out = fopen ( "phase.dat", "w" );
 	/*	I/0.	*/
 	
-	/*	Freetype.	*/
+	/*	Freetype.
 	if(FT_Init_FreeType(&library)) {
 		fprintf(stderr, "Could not init freetype library\n");
 		return 1;
@@ -67,7 +67,7 @@ int main() {
 		return 1;
 	}
 	FT_Set_Pixel_Sizes(face, 0, 48);
-	/*	Freetype.	*/
+	Freetype.	*/
 		
 	/*	OpenGL.	*/
 		glClearColor(0.1,0.1,0.1,1);
@@ -133,11 +133,11 @@ int main() {
 		
 		//fprintf(out, "%f %f\n", object[3].pos[0], object[3].pos[1]);
 		SDL_RenderPresent(renderer);
-		SDL_Delay(10);
+		SDL_Delay(1);
 		
-		if( rand() > 0.90 ) {
+		if( rand() > 0.9999999 ) {
 			sprintf(title, "Physengine - %f FPS", getFPS() );
-			//SDL_SetWindowTitle( window, title );
+			SDL_SetWindowTitle( window, title );
 		}
 	}
 return 0;
