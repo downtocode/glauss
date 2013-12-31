@@ -9,7 +9,8 @@ typedef struct {
 	v4sf pos, vel, acc, Ftot, Fgrv, Fele, Flink;
 	long double mass, charge;
 	float equil;
-	bool linkwith[20], ignore;
+	float linkwith[20];
+	bool ignore;
 } data;
 
 

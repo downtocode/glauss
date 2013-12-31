@@ -22,18 +22,7 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey;
 
-static float fps;
-static float lastTime;
-
-
 v4sf vectemp;
-
-float getFPS() {
-    float currentTime = SDL_GetTicks();
-    fps = fps*0.9+(100/(currentTime - lastTime));
-    lastTime = currentTime;
-    return fps;
-}
 
 
 int main() {
@@ -41,8 +30,6 @@ int main() {
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
 		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE);
-		
-		char title[50];
 		
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 		SDL_GLContext glcontext = SDL_GL_CreateContext(window);
@@ -90,7 +77,7 @@ int main() {
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
-				case SDL_MOUSEMOTION:
+				case SDL_MOUSEBUTTONDOWN:
 					if( object[9].pos[0] == 0 || object[9].pos[1] == 0 ) break;
 					SDL_GetMouseState(&mousex , &mousey);
 					object[9].pos[0] = (float)mousex;
@@ -122,7 +109,7 @@ int main() {
 		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
 				for(j = 1; j < obj + 1; j++) {
-					if( object[i].linkwith[j] == 1 ) { 
+					if( object[i].linkwith[j] != 0 ) { 
 						vectemp =  object[j].pos - object[i].pos;
 						glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
 						glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), 1 );
@@ -131,14 +118,9 @@ int main() {
 			}
 		glEnd();
 		
-		//fprintf(out, "%f %f\n", object[3].pos[0], object[3].pos[1]);
 		SDL_RenderPresent(renderer);
-		SDL_Delay(1);
+		SDL_Delay(5);
 		
-		if( rand() > 0.9999999 ) {
-			sprintf(title, "Physengine - %f FPS", getFPS() );
-			SDL_SetWindowTitle( window, title );
-		}
 	}
 return 0;
 }

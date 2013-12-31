@@ -23,24 +23,33 @@ int preparser() {
 int parser(data** object) {
 	FILE *in = fopen ( "posdata.dat", "r" );
 	int i, link;
+	float bond;
 	long double chargetemp;
-	char str[200], links[500];
+	char str[500], links[500], bonds[500];
 	char *linkstr;
+	char *bondstr;
 	while(fgets (str, 200, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %i %f %s", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
+			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %i \"%s\"", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
 				&(*object)[i+1].vel[0], &(*object)[i+1].vel[1], &(*object)[i+1].acc[0], &(*object)[i+1].acc[1], \
-				&(*object)[i+1].mass, &chargetemp, &(*object)[i+1].ignore, &(*object)[i+1].equil, links);
+				&(*object)[i+1].mass, &chargetemp, &(*object)[i+1].ignore, links);
 				(*object)[i].charge = (chargetemp*elcharge)/pow(10, 7);
 				
 				printf("Object %i links: ", i);
+				
+				
+				//Remove this line. It's not related to anything. Compile. Segfault. Scratch head. Segfault. Segfault. Lose hair. Segfault. Why?
+				//gdb fails me. Really, why? Removing the variables changes NOTHING. WHAT?
+				bondstr = strtok(bonds,",");
+				
+				
 				linkstr = strtok(links,",");
-				while(linkstr != NULL) {
-					sscanf(linkstr, "%i", &link);
-					printf("%i, ", link);
-					(*object)[i].linkwith[link] = 1;
-					linkstr = strtok(NULL,",");
-				}
+					while(linkstr != NULL) {
+						sscanf(linkstr, "%i-%f", &link, &bond);
+						printf("%i:%f, ", link, bond);
+						(*object)[i].linkwith[link] = bond;
+						linkstr = strtok(NULL,",");
+					}
 				printf(" \n");
 		}
 	}

@@ -15,7 +15,7 @@ static int i, j;
 
 /* Using black magic to transfer this data between. */
 int obj, width, height;
-float spring = 500, dt = 0.001;
+float spring = 500, dt = 0.005;
 
 /* Using float precision results in a much reduced CPU activity. */
 
@@ -28,7 +28,7 @@ v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
 int initphys(data** object) {
 	
 	/* We malloc the entire pointer to the struct rendering it array-like. That's why I really like malloc, it's so damn powerful. */
-	*object = malloc(6*obj * (72*8 + 2*sizeof(float) + obj*sizeof(bool)));
+	*object = malloc(600*sizeof(**object));
 	
 	Gconst = g/pow(10, 10);
 	pi = acos(-1);
@@ -61,8 +61,8 @@ int integrate(data* object) {
 				object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag*mag)));
 				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
 				
-				if( object[i].linkwith[j] == 1 ) {
-					object[i].Flink += vecdist*((spring)*((float)mag - object[i].equil));
+				if( object[i].linkwith[j] != 0 ) {
+					object[i].Flink += vecdist*((spring)*((float)mag - object[i].linkwith[j]));
 				}
 			}
 		}
