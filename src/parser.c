@@ -30,7 +30,7 @@ int parser(data** object) {
 	char *bondstr;
 	while(fgets (str, 200, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %i \"%s\"", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
+			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
 				&(*object)[i+1].vel[0], &(*object)[i+1].vel[1], &(*object)[i+1].acc[0], &(*object)[i+1].acc[1], \
 				&(*object)[i+1].mass, &chargetemp, &(*object)[i+1].ignore, links);
 				(*object)[i].charge = (chargetemp*elcharge)/pow(10, 7);
@@ -38,9 +38,16 @@ int parser(data** object) {
 				printf("Object %i links: ", i);
 				
 				
+				bonds[1] = 1;
+				bonds[2] = 1;
+				bonds[3] = 1;
+				bonds[4] = 1;
+				
 				//Remove this line. It's not related to anything. Compile. Segfault. Scratch head. Segfault. Segfault. Lose hair. Segfault. Why?
 				//gdb fails me. Really, why? Removing the variables changes NOTHING. WHAT?
 				bondstr = strtok(bonds,",");
+				
+				bondstr[1] = bonds[1];
 				
 				
 				linkstr = strtok(links,",");

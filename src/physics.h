@@ -1,7 +1,6 @@
 #ifndef FUNCTIONS_H_INCLUDED
 #define FUNCTIONS_H_INCLUDED
 
-#include <stdbool.h>
 //Vector size must be a power of 2 and big enough to contain the dimensions
 typedef float v4sf __attribute__ ((vector_size (16)));
 
@@ -10,7 +9,7 @@ typedef struct {
 	long double mass, charge;
 	float equil;
 	float linkwith[20];
-	bool ignore;
+	char ignore;
 } data;
 
 
