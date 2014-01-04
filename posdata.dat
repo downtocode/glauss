@@ -1,4 +1,4 @@
-#col1 = obj[ID], col2 = pos[X], col3 = pos[Y], col4 = vel[X], col5 = vel[Y], col6 = acc[X], col7 = acc[Y], col8 = mass, col9 = charge, col10 = ignore, col11 = links, col12 =  link equlibrium
+#col1 = obj[ID], col2 = pos[X], col3 = pos[Y], col4 = vel[X], col5 = vel[Y], col6 = acc[X], col7 = acc[Y], col8 = mass, col9 = charge, col10 = ignore, col11 = "link1-lenght,link2-lenght"
 #%i %f %f %f %f %f %f %Lf %Lf %i %s %s
 1 400 450 0 0 0 0 1 0 0 "2-50"
 2 450 450 0 0 0 0 1 0 0 "1-50,3-100"
