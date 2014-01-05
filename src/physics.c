@@ -22,7 +22,7 @@ float spring = 500, dt = 0.005;
 long double mag, Gconst, pi, epsno, massu;
 
 
-v4sf mtemp, accprev, vecdist, forceconst = {0, -9.81};
+v4sf accprev, vecdist, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
@@ -42,7 +42,6 @@ int initphys(data** object) {
 int integrate(data* object) {
 	for(i = 1; i < obj + 1; i++) {
 		if(object[i].ignore == 1) continue;
-		mtemp[0] = mtemp[1] = (float)object[i].mass;
 		
 		if(object[i].pos[0] < 0 || object[i].pos[0] > width) {
 			object[i].vel[0] = -object[i].vel[0];
@@ -70,7 +69,7 @@ int integrate(data* object) {
 		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fele + object[i].Flink;
 		accprev = object[i].acc;
 		
-		object[i].acc = (object[i].Ftot)/(mtemp);
+		object[i].acc = (object[i].Ftot)/(float)object[i].mass;
 		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
 		object[i].Fgrv = object[i].Fele = object[i].Flink = (v4sf){0, 0};
 	}
