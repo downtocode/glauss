@@ -20,7 +20,7 @@
 
 static int i, j;
 int obj, width = 1200, height = 600;
-int mousex, mousey;
+int mousex, mousey, chosen;
 
 v4sf vectemp;
 
@@ -78,11 +78,21 @@ int main() {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
 				case SDL_MOUSEBUTTONDOWN:
-					if( object[9].pos[0] == 0 || object[9].pos[1] == 0 ) break;
 					SDL_GetMouseState(&mousex , &mousey);
-					object[9].pos[0] = (float)mousex;
-					object[9].pos[1] = ((float)height/2 - (float)mousey) + (float)height/2;
-					object[9].vel = (v4sf){0, 0};
+					mousey = (int)((float)height/2 - (float)mousey) + (float)height/2;
+						for(i = 1; i < obj + 1; i++) {
+							if( abs( mousex - object[i].pos[0]) < 20 && abs( mousey - object[i].pos[1]) < 20 ) {
+								chosen = i;
+								printf("OBJ %i HAS BEEN CHOSEN!\n", chosen);
+								break;
+							}
+						}
+					if( object[chosen].pos[0] == 0 || object[chosen].pos[1] == 0 ) break;
+					else if ( chosen != 0 ) {
+						object[chosen].pos[0] = (float)mousex;
+						object[chosen].pos[1] = (float)mousey;
+						object[chosen].vel = (v4sf){0, 0};
+					}
 					break;
 				case SDL_QUIT:
 					free(object);
