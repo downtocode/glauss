@@ -19,7 +19,7 @@ float spring = 500, dt = 0.005;
 
 /* Using float precision results in a much reduced CPU activity. */
 
-long double mag, Gconst, pi, epsno, massu;
+long double mag, Gconst, pi, epsno;
 
 
 v4sf accprev, vecdist, forceconst = {0, -9.81};
@@ -33,7 +33,6 @@ int initphys(data** object) {
 	Gconst = g/pow(10, 10);
 	pi = acos(-1);
 	epsno = perm/pow(10, 12);
-	massu = dalton/pow(10, 27);
 	
 	return 0;
 }
@@ -66,10 +65,11 @@ int integrate(data* object) {
 				vecdist /= (float)mag;
 				
 				object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag*mag)));
+				//future:use whole joints instead of individual stuff
 				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
 				
 				if( object[i].linkwith[j] != 0 ) {
-					object[i].Flink += vecdist*((spring)*((float)mag - object[i].linkwith[j]));
+					object[i].Flink += vecdist*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
 				}
 			}
 		}

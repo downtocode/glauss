@@ -21,6 +21,7 @@
 static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey, chosen;
+int boxsize = 15;
 
 v4sf vectemp;
 
@@ -127,6 +128,23 @@ int main() {
 				}
 			}
 		glEnd();
+		
+		glColor3f(255,0,0);
+		glBegin(GL_LINES);
+			for(i = 1; i < obj + 1; i++) {
+				if(chosen==i) {
+					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] - boxsize, 1 );
+					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] + boxsize, 1 );
+					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] + boxsize, 1 );
+					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] + boxsize, 1 );
+					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] + boxsize, 1 );
+					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] - boxsize, 1 );
+					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] - boxsize, 1 );
+					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] - boxsize, 1 );
+				}
+			}
+		glEnd();
+		glColor3f(255,255,255);
 		
 		SDL_RenderPresent(renderer);
 		SDL_Delay(5);

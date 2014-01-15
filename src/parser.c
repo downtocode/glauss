@@ -25,9 +25,13 @@ int parser(data** object) {
 	int i, link;
 	float bond;
 	long double chargetemp;
-	char str[500], links[500], bonds[500];
+	char str[500], links[500];
 	char *linkstr;
-	char *bondstr;
+	char bonds[100] = "garbage";
+	//Remove this line. It's not related to anything. Compile. Segfault. Scratch head. Segfault. Segfault. Lose hair. Segfault. Why?
+	//gdb fails me. Really, why? Removing the variables changes NOTHING. WHAT?
+	char *bondstr = strtok(bonds,",");
+	
 	while(fgets (str, 200, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
 			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
@@ -36,20 +40,6 @@ int parser(data** object) {
 				(*object)[i].charge = (chargetemp*elcharge)/pow(10, 7);
 				
 				printf("Object %i links: ", i);
-				
-				
-				bonds[1] = 1;
-				bonds[2] = 1;
-				bonds[3] = 1;
-				bonds[4] = 1;
-				
-				//Remove this line. It's not related to anything. Compile. Segfault. Scratch head. Segfault. Segfault. Lose hair. Segfault. Why?
-				//gdb fails me. Really, why? Removing the variables changes NOTHING. WHAT?
-				bondstr = strtok(bonds,",");
-				
-				bondstr[1] = bonds[1];
-				
-				
 				linkstr = strtok(links,",");
 					while(linkstr != NULL) {
 						sscanf(linkstr, "%i-%f", &link, &bond);

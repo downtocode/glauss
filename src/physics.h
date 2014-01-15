@@ -12,7 +12,6 @@ typedef struct {
 	char ignore;
 } data;
 
-
 int initphys(data** object);
 int integrate(data* object);
 
