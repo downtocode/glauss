@@ -6,6 +6,7 @@
 
 #define elcharge 1.602176565
 
+
 int preparser() {
 	static int count = 0;
 	FILE *inprep = fopen ( "posdata.dat", "r" );
@@ -22,32 +23,37 @@ int preparser() {
 
 int parser(data** object) {
 	FILE *in = fopen ( "posdata.dat", "r" );
-	int i, link;
-	float bond;
-	long double chargetemp;
+	int i, j, link;
 	char str[500], links[500];
 	char *linkstr;
-	char bonds[100] = "garbage";
-	//Remove this line. It's not related to anything. Compile. Segfault. Scratch head. Segfault. Segfault. Lose hair. Segfault. Why?
-	//gdb fails me. Really, why? Removing the variables changes NOTHING. WHAT?
-	char *bondstr = strtok(bonds,",");
+	int dimensions = 2;
+	float pos[dimensions], vel[dimensions], acc[dimensions], bond;
+	long double mass, chargetemp;
+	char ignflag;
+	
 	
 	while(fgets (str, 200, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &(*object)[i+1].pos[0], &(*object)[i+1].pos[1], \
-				&(*object)[i+1].vel[0], &(*object)[i+1].vel[1], &(*object)[i+1].acc[0], &(*object)[i+1].acc[1], \
-				&(*object)[i+1].mass, &chargetemp, &(*object)[i+1].ignore, links);
-				(*object)[i].charge = (chargetemp*elcharge)/pow(10, 7);
-				
-				printf("Object %i links: ", i);
-				linkstr = strtok(links,",");
-					while(linkstr != NULL) {
-						sscanf(linkstr, "%i-%f", &link, &bond);
-						printf("%i:%f, ", link, bond);
-						(*object)[i].linkwith[link] = bond;
-						linkstr = strtok(NULL,",");
-					}
-				printf(" \n");
+			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &pos[0], &pos[1], &vel[0], \
+			&vel[1], &acc[0], &acc[1], &mass, &chargetemp, &ignflag, links);
+			for(j = 0; j < dimensions; j++) {
+				(*object)[i].pos[j] = pos[j];
+				(*object)[i].vel[j] = vel[j];
+				(*object)[i].acc[j] = acc[j];
+			}
+			(*object)[i].mass = mass;
+			(*object)[i].charge = (chargetemp*elcharge)/pow(10, 6);
+			(*object)[i].ignore = ignflag;
+			
+			printf("Object %i links: ", i);
+			linkstr = strtok(links,",");
+				while(linkstr != NULL) {
+					sscanf(linkstr, "%i-%f", &link, &bond);
+					printf("%i:%f, ", link, bond);
+					(*object)[i].linkwith[link] = bond;
+					linkstr = strtok(NULL,",");
+				}
+			printf(" \n");
 		}
 	}
 	fclose(in);

@@ -15,7 +15,7 @@ static int i, j;
 
 /* Using black magic to transfer this data between. */
 int obj, width, height;
-float spring = 500, dt = 0.005;
+float spring = 500, dt = 0.01;
 
 /* Using float precision results in a much reduced CPU activity. */
 

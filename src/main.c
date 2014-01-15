@@ -107,15 +107,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		
 		integrate(object);
-
-		glBegin(GL_POINTS);
-			for(i = 1; i < obj + 1; i++) {
-				if( object[i].charge < 0 ) glColor3f(0,0,255);
-				if( object[i].charge == 0 ) glColor3f(255,255,255);
-				if( object[i].charge > 0 ) glColor3f(255,0,0);
-				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
-			}
-		glEnd();
+		
 		glColor3f(255,255,255);
 		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
@@ -145,6 +137,15 @@ int main() {
 			}
 		glEnd();
 		glColor3f(255,255,255);
+		
+		glBegin(GL_POINTS);
+			for(i = 1; i < obj + 1; i++) {
+				if( object[i].charge < 0 ) glColor3f(0,0,255);
+				if( object[i].charge == 0 ) glColor3f(255,255,255);
+				if( object[i].charge > 0 ) glColor3f(255,0,0);
+				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
+			}
+		glEnd();
 		
 		SDL_RenderPresent(renderer);
 		SDL_Delay(5);
