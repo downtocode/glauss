@@ -25,7 +25,7 @@ int preparser() {
 int parser(data** object) {
 	FILE *in = fopen ( "posdata.dat", "r" );
 	static int i, j, link;
-	int dimensions = 2;
+	int dimensions = 3;
 	float pos[dimensions], vel[dimensions], acc[dimensions], bond;
 	long double mass, chargetemp;
 	char ignflag;
@@ -33,8 +33,8 @@ int parser(data** object) {
 	
 	while(fgets (str, 500, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &pos[0], &pos[1], &vel[0], \
-			&vel[1], &acc[0], &acc[1], &mass, &chargetemp, &ignflag, links);
+			sscanf(str, "%i %f %f %f %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &pos[0], &pos[1], &pos[2], &vel[0], \
+			&vel[1], &vel[2], &acc[0], &acc[1], &acc[2], &mass, &chargetemp, &ignflag, links);
 			for(j = 0; j < dimensions; j++) {
 				(*object)[i].pos[j] = pos[j];
 				(*object)[i].vel[j] = vel[j];

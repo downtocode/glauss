@@ -118,8 +118,8 @@ int main() {
 				for(j = 1; j < obj + 1; j++) {
 					if( object[i].linkwith[j] != 0 ) { 
 						vectemp =  object[j].pos - object[i].pos;
-						glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
-						glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), 1 );
+						glVertex3f( object[i].pos[0], object[i].pos[1], object[i].pos[2] );
+						glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), (object[i].pos[2] + vectemp[2]) );
 					}
 				}
 			}
@@ -147,7 +147,7 @@ int main() {
 				if( object[i].charge < 0 ) glColor3f(0,0,255);
 				if( object[i].charge == 0 ) glColor3f(255,255,255);
 				if( object[i].charge > 0 ) glColor3f(255,0,0);
-				glVertex3f( object[i].pos[0], object[i].pos[1], 1 );
+				glVertex3f( object[i].pos[0], object[i].pos[1], object[i].pos[2] );
 			}
 		glEnd();
 		
