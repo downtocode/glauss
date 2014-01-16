@@ -22,6 +22,7 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey, chosen;
 int boxsize = 15;
+bool pause;
 
 v4sf vectemp;
 
@@ -74,10 +75,13 @@ int main() {
 		parser(&object);
 	/*	PHYSICS.	*/
 	
-	
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
+				case SDL_KEYDOWN:
+					if( pause == 0 ) pause = 1;
+					else if( pause == 1 ) pause = 0;
+				break;
 				case SDL_MOUSEBUTTONDOWN:
 					SDL_GetMouseState(&mousex , &mousey);
 					mousey = (int)((float)height/2 - (float)mousey) + (float)height/2;
@@ -106,7 +110,7 @@ int main() {
 		
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		integrate(object);
+		if(pause == 0 ) integrate(object);
 		
 		glColor3f(255,255,255);
 		glBegin(GL_LINES);

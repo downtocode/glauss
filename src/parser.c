@@ -6,13 +6,14 @@
 
 #define elcharge 1.602176565
 
+static char str[500],links[100], *linkstr;
+
 
 int preparser() {
 	static int count = 0;
 	FILE *inprep = fopen ( "posdata.dat", "r" );
-	static char temp[200];
-	while(fgets (temp, 200, inprep)!=NULL) {
-		if (strstr(temp, "#") == NULL) {
+	while(fgets (str, 500, inprep)!=NULL) {
+		if (strstr(str, "#") == NULL) {
 			count += 1;
 		}
 	}
@@ -23,16 +24,14 @@ int preparser() {
 
 int parser(data** object) {
 	FILE *in = fopen ( "posdata.dat", "r" );
-	int i, j, link;
-	char str[500], links[500];
-	char *linkstr;
+	static int i, j, link;
 	int dimensions = 2;
 	float pos[dimensions], vel[dimensions], acc[dimensions], bond;
 	long double mass, chargetemp;
 	char ignflag;
 	
 	
-	while(fgets (str, 200, in)!= NULL) {
+	while(fgets (str, 500, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
 			sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &pos[0], &pos[1], &vel[0], \
 			&vel[1], &acc[0], &acc[1], &mass, &chargetemp, &ignflag, links);

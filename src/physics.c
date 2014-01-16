@@ -13,11 +13,8 @@
 /* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
 static int i, j;
 
-/* Using black magic to transfer this data between. */
 int obj, width, height;
 float spring = 500, dt = 0.01;
-
-/* Using float precision results in a much reduced CPU activity. */
 
 long double mag, Gconst, pi, epsno;
 
@@ -26,8 +23,7 @@ v4sf accprev, vecdist, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
-	
-	/* We malloc the entire pointer to the struct rendering it array-like. That's why I really like malloc, it's so damn powerful. */
+
 	*object = malloc(600*sizeof(**object));
 	
 	Gconst = g/pow(10, 10);
