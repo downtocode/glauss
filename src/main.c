@@ -143,6 +143,7 @@ int main() {
 				if( object[i].charge < 0 ) glColor3f(0,0,255);
 				if( object[i].charge == 0 ) glColor3f(255,255,255);
 				if( object[i].charge > 0 ) glColor3f(255,0,0);
+				if( object[i].center == 1 ) glColor3f(208,0,144);
 				glVertex3f( object[i].pos[0], object[i].pos[1], object[i].pos[2] );
 			}
 		glEnd();

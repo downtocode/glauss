@@ -38,8 +38,10 @@ int integrate(data* object) {
 	for(i = 1; i < obj + 1; i++) {
 		for(j = 1; j < obj + 1; j++) {
 			if( object[i].linkwith[j] != 0 ) {
-				centemp += object[j].pos;
 				objcount++;
+				centemp += object[i].pos;
+				//i = j;
+				//j = 0;
 			}
 		}
 	}
@@ -47,6 +49,7 @@ int integrate(data* object) {
 	centemp /= (float)objcount;
 	
 	object[11].pos = centemp;
+	object[11].center = 1;
 	objcount = 0;
 	object[11].ignore = 1;
 	
