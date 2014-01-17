@@ -13,13 +13,13 @@
 /* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
 static int i, j;
 
-int obj, width, height;
+int obj, width, height, objcount;
 float spring = 500, dt = 0.01;
 
 long double mag, Gconst, pi, epsno;
 
 
-v4sf accprev, vecdist, forceconst = {0, -9.81};
+v4sf accprev, vecdist, centemp, forceconst = {0, -9.81};
 
 
 int initphys(data** object) {
@@ -29,12 +29,27 @@ int initphys(data** object) {
 	Gconst = g/pow(10, 10);
 	pi = acos(-1);
 	epsno = perm/pow(10, 12);
-	
 	return 0;
 }
 
 
 int integrate(data* object) {
+	//Determine links to get the approximate centers:
+	for(i = 1; i < obj + 1; i++) {
+		for(j = 1; j < obj + 1; j++) {
+			if( object[i].linkwith[j] != 0 ) {
+				centemp += object[j].pos;
+				objcount++;
+			}
+		}
+	}
+	
+	centemp /= (float)objcount;
+	
+	object[11].pos = centemp;
+	objcount = 0;
+	object[11].ignore = 1;
+	
 	for(i = 1; i < obj + 1; i++) {
 		if(object[i].ignore == 1) continue;
 		
@@ -75,7 +90,7 @@ int integrate(data* object) {
 		
 		object[i].acc = (object[i].Ftot)/(float)object[i].mass;
 		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
-		object[i].Fgrv = object[i].Fele = object[i].Flink = (v4sf){0, 0};
+		object[i].Fgrv = object[i].Fele = centemp = object[i].Flink = (v4sf){0, 0};
 	}
 	return 0;
 }

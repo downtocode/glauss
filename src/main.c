@@ -1,21 +1,20 @@
 //Things you should all have anyway.
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <tgmath.h>
 
 //Things you gotta get.
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-//#include <freetype2/ft2build.h>
-//#include FT_FREETYPE_H
+#include <freetype2/ft2build.h>
+#include FT_FREETYPE_H
 
 //Functions.
 #include "physics.h"
 #include "parser.h"
 
-//FT_Library  library;
-//FT_Face face;
+FT_Library  library;
+FT_Face face;
 
 
 static int i, j;
@@ -40,23 +39,17 @@ int main() {
 		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 	/*	SDL.	*/
 	
-	/*	I/0.	*/
-	//Uncomment if plotting something is required
-	//FILE *out = fopen ( "phase.dat", "w" );
-	/*	I/0.	*/
-	
-	/*	Freetype.
-	if(FT_Init_FreeType(&library)) {
-		fprintf(stderr, "Could not init freetype library\n");
-		return 1;
-	}
-	
-	if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
-		fprintf(stderr, "Could not open font\n");
-		return 1;
-	}
-	FT_Set_Pixel_Sizes(face, 0, 48);
-	Freetype.	*/
+	/*	Freetype.	*/
+		if(FT_Init_FreeType(&library)) {
+			fprintf(stderr, "Could not init freetype library\n");
+			return 1;
+		}
+		
+		if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
+			fprintf(stderr, "Could not open font\n");
+		}
+		FT_Set_Pixel_Sizes(face, 0, 48);
+	/*	Freetype.	*/
 		
 	/*	OpenGL.	*/
 		glClearColor(0.1,0.1,0.1,1);
@@ -71,6 +64,7 @@ int main() {
 			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
 		obj = preparser();
+		obj = obj + 1;
 		initphys(&object);
 		parser(&object);
 	/*	PHYSICS.	*/
@@ -101,6 +95,8 @@ int main() {
 					break;
 				case SDL_QUIT:
 					free(object);
+					FT_Done_Face( face );
+					FT_Done_FreeType( library );
 					SDL_GL_DeleteContext(glcontext);
 					SDL_DestroyWindow(window);
 					SDL_Quit();
