@@ -16,6 +16,7 @@ typedef struct {
 } data;
 
 int initphys(data** object);
+int findstructs(data* object);
 int integrate(data* object);
 
 #endif

@@ -32,8 +32,7 @@ int initphys(data** object) {
 	return 0;
 }
 
-
-int integrate(data* object) {
+int findstructs(data* object) {
 	//Determine links to get the approximate centers:
 	for(i = 1; i < obj + 1; i++) {
 		for(j = 1; j < obj + 1; j++) {
@@ -45,13 +44,19 @@ int integrate(data* object) {
 			}
 		}
 	}
-	
 	centemp /= (float)objcount;
 	
 	object[11].pos = centemp;
 	object[11].center = 1;
 	objcount = 0;
 	object[11].ignore = 1;
+	return 0;
+}
+
+
+int integrate(data* object) {
+	
+	findstructs(object);
 	
 	for(i = 1; i < obj + 1; i++) {
 		if(object[i].ignore == 1) continue;
