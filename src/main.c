@@ -21,6 +21,7 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey, chosen;
 int boxsize = 15;
+float dt = 0.001;
 bool pause;
 
 v4sf vectemp;
@@ -71,8 +72,18 @@ int main() {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
 				case SDL_KEYDOWN:
-					if( pause == 0 ) pause = 1;
-					else if( pause == 1 ) pause = 0;
+					if(event.key.keysym.sym==SDLK_SPACE) {
+						if( pause == 0 ) pause = 1;
+						else if( pause == 1 ) pause = 0;
+					}
+					if(event.key.keysym.sym==SDLK_RIGHT) {
+						dt *= 2;
+						printf("dt = %f\n", dt);
+					}
+					if(event.key.keysym.sym==SDLK_LEFT) {
+						dt /= 2;
+						printf("dt = %f\n", dt);
+					}
 				break;
 				case SDL_MOUSEBUTTONDOWN:
 					SDL_GetMouseState(&mousex , &mousey);
@@ -146,8 +157,6 @@ int main() {
 		glEnd();
 		
 		SDL_GL_SwapWindow(window);
-		SDL_Delay(5);
-		
 	}
 return 0;
 }

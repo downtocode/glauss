@@ -14,7 +14,7 @@
 static int i, j;
 
 int obj, width, height, objcount;
-float spring = 500, dt = 0.01;
+float spring = 500, dt;
 
 long double mag, Gconst, pi, epsno;
 
