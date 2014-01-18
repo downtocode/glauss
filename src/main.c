@@ -30,11 +30,9 @@ int main() {
 	/*	SDL.	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
-		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE);
-		
-		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-		SDL_GLContext glcontext = SDL_GL_CreateContext(window);
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
+		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+		SDL_GL_SetSwapInterval(-1);
+		SDL_GL_CreateContext(window);
 		SDL_Event event;
 		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 	/*	SDL.	*/
@@ -97,7 +95,6 @@ int main() {
 					free(object);
 					FT_Done_Face( face );
 					FT_Done_FreeType( library );
-					SDL_GL_DeleteContext(glcontext);
 					SDL_DestroyWindow(window);
 					SDL_Quit();
 					return 0;
@@ -148,7 +145,7 @@ int main() {
 			}
 		glEnd();
 		
-		SDL_RenderPresent(renderer);
+		SDL_GL_SwapWindow(window);
 		SDL_Delay(5);
 		
 	}
