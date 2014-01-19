@@ -86,27 +86,32 @@ int main() {
 					}
 				break;
 				case SDL_MOUSEBUTTONDOWN:
-					SDL_GetMouseState(&mousex , &mousey);
-					mousey = (int)((float)height/2 - (float)mousey) + (float)height/2;
-						for(i = 1; i < obj + 1; i++) {
-							if( abs( mousex - object[i].pos[0]) < 20 && abs( mousey - object[i].pos[1]) < 20 ) {
-								chosen = i;
-								printf("OBJ %i HAS BEEN CHOSEN!\n", chosen);
-								break;
+					if( event.button.button == SDL_BUTTON_RIGHT ) {
+						chosen = 0;
+					}
+					if( event.button.button == SDL_BUTTON_LEFT ) {
+						SDL_GetMouseState(&mousex , &mousey);
+						mousey = ((float)height/2 - (float)mousey) + (float)height/2;
+							for(i = 1; i < obj + 1; i++) {
+								if( abs( mousex - object[i].pos[0]) < 20 && abs( mousey - object[i].pos[1]) < 20 ) {
+									chosen = i;
+									printf("OBJ %i HAS BEEN CHOSEN!\n", chosen);
+									break;
+								}
 							}
+						if( object[chosen].pos[0] == 0 || object[chosen].pos[1] == 0 ) break;
+						else if ( chosen != 0 ) {
+							object[chosen].pos[0] = (float)mousex;
+							object[chosen].pos[1] = (float)mousey;
+							object[chosen].vel = (v4sf){0, 0};
 						}
-					if( object[chosen].pos[0] == 0 || object[chosen].pos[1] == 0 ) break;
-					else if ( chosen != 0 ) {
-						object[chosen].pos[0] = (float)mousex;
-						object[chosen].pos[1] = (float)mousey;
-						object[chosen].vel = (v4sf){0, 0};
 					}
 					break;
 				case SDL_QUIT:
 					free(object);
 					FT_Done_Face( face );
 					FT_Done_FreeType( library );
-					SDL_DestroyWindow(window);
+					SDL_DestroyWindow( window );
 					SDL_Quit();
 					return 0;
 			}
