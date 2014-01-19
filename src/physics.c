@@ -33,23 +33,19 @@ int initphys(data** object) {
 }
 
 int findstructs(data* object) {
-	//Determine links to get the approximate centers:
+	//Determine links to get the approximate centers
+	
 	for(i = 1; i < obj + 1; i++) {
-		for(j = 1; j < obj + 1; j++) {
-			if( object[i].linkwith[j] != 0 ) {
-				objcount++;
-				centemp += object[i].pos;
-				//i = j;
-				//j = 0;
-			}
+		for( j = 1; j < obj + 1; j++ ) {
+			objcount++;
+			centemp += object[i].pos;
+			if( object[i].linkwith[j] == 0 ) break;
 		}
 	}
 	centemp /= (float)objcount;
-	
-	object[11].pos = centemp;
-	object[11].center = 1;
+	object[obj + 1].pos = centemp;
+	object[obj + 1].center = 1;
 	objcount = 0;
-	object[11].ignore = 1;
 	return 0;
 }
 

@@ -44,10 +44,10 @@ int main() {
 			return 1;
 		}
 		
-		if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
+		/*if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
 			fprintf(stderr, "Could not open font\n");
 		}
-		FT_Set_Pixel_Sizes(face, 0, 48);
+		FT_Set_Pixel_Sizes(face, 0, 48);*/
 	/*	Freetype.	*/
 		
 	/*	OpenGL.	*/
@@ -63,7 +63,7 @@ int main() {
 			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
 		obj = preparser();
-		obj = obj + 1;
+		obj = obj;
 		initphys(&object);
 		parser(&object);
 	/*	PHYSICS.	*/
@@ -147,7 +147,7 @@ int main() {
 		glColor3f(255,255,255);
 		
 		glBegin(GL_POINTS);
-			for(i = 1; i < obj + 1; i++) {
+			for(i = 1; i < obj + 2; i++) {
 				if( object[i].charge < 0 ) glColor3f(0,0,255);
 				if( object[i].charge == 0 ) glColor3f(255,255,255);
 				if( object[i].charge > 0 ) glColor3f(255,0,0);
