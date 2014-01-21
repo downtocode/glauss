@@ -5,7 +5,7 @@ This program aims to implement a physics engine whilst aiming for maximum perfor
 
 Description
 -----------
-This physics engine uses the Velocity Verlet integration method to simulate particle movement and SDL2 to display whatever's happening. Right now, Gravity and Electromagnetism are simulated, along with a basic spring link feature.
+This physics engine uses the Velocity Verlet integration method to simulate particle movement and SDL2 to display whatever's happening. Right now, Gravity and Electromagnetism are simulated, along with a spring link feature.
 
 Compiling
 ---------
@@ -15,6 +15,14 @@ Once you have those three things, run make.
 Running
 -------
 Just run the physengine executable. Modify the posdata.dat to whatever you want to simulate.
+
+Controls
+--------
+LMB   - Select object under cursor
+RMB   - Deselect
+Left  - Halve the time dt
+Right - Double the time dt
+Space - Pause
 
 posdata.dat
 -----------
@@ -27,4 +35,5 @@ You might see a lot of comments about black magic in commit messages and actual 
 
 Possible applications
 ---------------------
-Can be modified into a PONG clone in less than 10 minutes.
+Can be modified into a Space Invaders clone in less than 10 minutes.
+~~Can be modified into a PONG clone in less than 10 minutes.~~
