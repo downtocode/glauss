@@ -19,9 +19,13 @@ Just run the physengine executable. Modify the posdata.dat to whatever you want 
 Controls
 --------
 LMB   - Select object under cursor
+
 RMB   - Deselect
+
 Left  - Halve the time dt
+
 Right - Double the time dt
+
 Space - Pause
 
 posdata.dat
@@ -36,4 +40,5 @@ You might see a lot of comments about black magic in commit messages and actual 
 Possible applications
 ---------------------
 Can be modified into a Space Invaders clone in less than 10 minutes.
+
 ~~Can be modified into a PONG clone in less than 10 minutes.~~

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tgmath.h>
+#include <time.h>
 
 //Things you gotta get.
 #include <SDL2/SDL.h>
@@ -26,6 +27,10 @@ bool pause;
 
 v4sf vectemp;
 
+time_t start, end;
+double fps;
+unsigned int counter = 0;
+unsigned int sec;
 
 int main() {
 	/*	SDL.	*/
@@ -68,6 +73,8 @@ int main() {
 		parser(&object);
 	/*	PHYSICS.	*/
 	
+	time(&start);
+	
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
@@ -83,6 +90,9 @@ int main() {
 					if(event.key.keysym.sym==SDLK_LEFT) {
 						dt /= 2;
 						printf("dt = %f\n", dt);
+					}
+					if(event.key.keysym.sym==SDLK_ESCAPE) {
+						goto quit;
 					}
 				break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -108,12 +118,8 @@ int main() {
 					}
 					break;
 				case SDL_QUIT:
-					free(object);
-					FT_Done_Face( face );
-					FT_Done_FreeType( library );
-					SDL_DestroyWindow( window );
-					SDL_Quit();
-					return 0;
+					goto quit;
+					break;
 			}
 		}
 		
@@ -162,6 +168,21 @@ int main() {
 		glEnd();
 		
 		SDL_GL_SwapWindow(window);
+		
+		//FPS calculation.
+		time(&end);
+		++counter;
+		sec = difftime (end, start);
+		fps = (((float)counter)/((float)sec));
+		printf("FPS = %.2f\r", fps);
 	}
-return 0;
+	
+	quit:
+		free(object);
+		FT_Done_Face( face );
+		FT_Done_FreeType( library );
+		SDL_DestroyWindow( window );
+		SDL_Quit();
+		printf("Quitting!\n");
+		return 0;
 }
