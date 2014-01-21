@@ -49,17 +49,23 @@ int main() {
 			return 1;
 		}
 		
-		/*if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
+		if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
 			fprintf(stderr, "Could not open font\n");
 		}
-		FT_Set_Pixel_Sizes(face, 0, 48);*/
+		
+		FT_Set_Pixel_Sizes(face, 0, 12);
+		for (unsigned long u = 32; u < 128; u++) {
+			if (FT_Load_Char(face, u, FT_LOAD_RENDER)) {
+				fprintf(stderr, "Could not load character %lu\n", u);
+				continue;
+			}
+		}
 	/*	Freetype.	*/
 		
 	/*	OpenGL.	*/
 		glClearColor(0.1,0.1,0.1,1);
-		glPointSize(11.0);
+		glPointSize(8.0);
 		glOrtho( 0.0, width, 0.0, height, 1.0, -1.0 );
-		glClear(GL_COLOR_BUFFER_BIT);
 	/*	OpenGL.	*/
 	
 	/*	PHYSICS.	*/
@@ -113,7 +119,6 @@ int main() {
 						else if ( chosen != 0 ) {
 							object[chosen].pos[0] = (float)mousex;
 							object[chosen].pos[1] = (float)mousey;
-							object[chosen].vel = (v4sf){0, 0};
 						}
 					}
 					break;
