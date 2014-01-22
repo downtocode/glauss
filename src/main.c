@@ -22,7 +22,7 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey, chosen;
 int boxsize = 15;
-float dt = 0.001;
+float dt = 0.001, radius = 8.0;
 bool pause;
 
 v4sf vectemp;
@@ -64,7 +64,6 @@ int main() {
 		
 	/*	OpenGL.	*/
 		glClearColor(0.1,0.1,0.1,1);
-		glPointSize(8.0);
 		glOrtho( 0.0, width, 0.0, height, 1.0, -1.0 );
 	/*	OpenGL.	*/
 	
@@ -158,15 +157,24 @@ int main() {
 		glEnd();
 		glColor3f(255,255,255);
 		
-		glBegin(GL_POINTS);
-			for(i = 1; i < obj + 2; i++) {
-				if( object[i].charge < 0 ) glColor3f(0,0,255);
-				if( object[i].charge == 0 ) glColor3f(255,255,255);
-				if( object[i].charge > 0 ) glColor3f(255,0,0);
-				if( object[i].center == 1 ) glColor3f(208,0,144);
-				glVertex3f( object[i].pos[0], object[i].pos[1], object[i].pos[2] );
+		for(i = 1; i < obj + 2; i++) {
+			glBegin(GL_TRIANGLE_FAN);
+			radius = 8.0;
+			if( object[i].charge < 0 ) glColor3f(0,0,255);
+			if( object[i].charge == 0 ) glColor3f(255,255,255);
+			if( object[i].charge > 0 ) glColor3f(255,0,0);
+			if( object[i].center == 1 ) {
+				glColor3f(208,0,144);
+				radius = 4.0;
 			}
-		glEnd();
+			glVertex3f(object[i].pos[0], object[i].pos[1], object[i].pos[2]);
+			for( int r = 1; r < 361; r++ ) {
+				glVertex3f(object[i].pos[0] + sin((double)r) * radius, object[i].pos[1] + cos((double)r) * radius, object[i].pos[2]);
+			}
+			glEnd();
+		}
+		
+		glColor3f(255,255,255);
 		
 		SDL_GL_SwapWindow(window);
 		
