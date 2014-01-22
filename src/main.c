@@ -146,17 +146,13 @@ int main() {
 		glEnd();
 		
 		glColor3f(255,0,0);
-		glBegin(GL_LINES);
+		glBegin(GL_LINE_LOOP);
 			for(i = 1; i < obj + 1; i++) {
 				if(chosen==i) {
 					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] - boxsize, 1 );
 					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] + boxsize, 1 );
-					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] + boxsize, 1 );
-					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] + boxsize, 1 );
 					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] + boxsize, 1 );
 					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] - boxsize, 1 );
-					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] - boxsize, 1 );
-					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] - boxsize, 1 );
 				}
 			}
 		glEnd();
