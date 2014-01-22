@@ -22,7 +22,7 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey, chosen;
 int boxsize = 15;
-float dt = 0.001, radius = 8.0;
+float dt = 0.008, radius = 12.0;
 bool pause;
 
 v4sf vectemp;

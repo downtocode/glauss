@@ -14,7 +14,7 @@
 static int i, j;
 
 int obj, width, height, objcount;
-float spring = 500, dt;
+float spring = 500, dt, radius;
 
 long double mag, Gconst, pi, epsno;
 
@@ -85,6 +85,9 @@ int integrate(data* object) {
 				
 				if( object[i].linkwith[j] != 0 ) {
 					object[i].Flink += vecdist*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
+				}
+				if( mag < radius ) {
+					object[i].vel = -object[i].vel;
 				}
 			}
 		}
