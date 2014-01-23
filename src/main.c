@@ -64,6 +64,10 @@ int main() {
 		
 	/*	OpenGL.	*/
 		glClearColor(0.1,0.1,0.1,1);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glShadeModel(GL_SMOOTH);
+		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		glOrtho( 0.0, width, 0.0, height, 1.0, -1.0 );
 	/*	OpenGL.	*/
 	
@@ -127,7 +131,7 @@ int main() {
 			}
 		}
 		
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		if(pause == 0 ) integrate(object);
 		
@@ -192,6 +196,6 @@ int main() {
 		FT_Done_FreeType( library );
 		SDL_DestroyWindow( window );
 		SDL_Quit();
-		printf("Quitting!\n");
+		printf("\nQuitting!\n");
 		return 0;
 }

@@ -33,12 +33,11 @@ int parser(data** object) {
 	
 	while(fgets (str, 500, in)!= NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "%i %f %f %f %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &pos[0], &pos[1], &pos[2], &vel[0], \
-			&vel[1], &vel[2], &acc[0], &acc[1], &acc[2], &mass, &chargetemp, &ignflag, links);
+			sscanf(str, "%i %f %f %f %f %f %f %f %Lf %Lf %c \"%s\"", &i, &pos[0], &pos[1], &pos[2], &vel[0], \
+			&vel[1], &vel[2], &acc[0], &mass, &chargetemp, &ignflag, links);
 			for(j = 0; j < dimensions; j++) {
 				(*object)[i].pos[j] = pos[j];
 				(*object)[i].vel[j] = vel[j];
-				(*object)[i].acc[j] = acc[j];
 			}
 			(*object)[i].mass = mass;
 			(*object)[i].charge = (chargetemp*elcharge)/pow(10, 6);
