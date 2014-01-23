@@ -169,11 +169,10 @@ int main() {
 			if( object[i].charge > 0 ) glColor3f(255,0,0);
 			if( object[i].center == 1 ) {
 				glColor3f(208,0,144);
-				radius = 4.0;
 			}
 			glVertex3f(object[i].pos[0], object[i].pos[1], object[i].pos[2]);
 			for( int r = 1; r < 361; r++ ) {
-				glVertex3f(object[i].pos[0] + sin((double)r) * radius, object[i].pos[1] + cos((double)r) * radius, object[i].pos[2]);
+				glVertex3f(object[i].pos[0] + sin((double)r) * object[i].radius, object[i].pos[1] + cos((double)r) * object[i].radius, object[i].pos[2]);
 			}
 			glEnd();
 		}

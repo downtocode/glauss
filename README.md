@@ -30,12 +30,12 @@ Space - Pause
 
 posdata.dat
 -----------
-This file determines the positions, velocities, accerelation(current), mass, charge and particles that are linked. Currently, only two dimensions are supported, so for any vectorial parameter you have to provide the two components. Links must be seperated by commas without any spaces.
+This file determines the positions, velocities, mass, charge and particles that are linked. Currently, only two dimensions are supported, so for any vectorial parameter you have to provide the two components. Links must be seperated by commas without any spaces.
 
 Development comment
 -------------------
 Using SDL2 was a bother at the start as there is no proper tutorial(yet). SDL2_TTF was also used but due to a memory hole it created was eventually dropped completely out. Using freetype2 directly shall be used for OSD in the future.
-You might see a lot of comments about black magic in commit messages and actual comments, but worry not, this program contains 0% blasphemous code. Rather, those words were chosen because the author was unable to figure out how something works, like how global variables propagate throughout functions in different files.
+You might see a lot of comments about black magic in commit messages and actual comments, but worry not, this program contains 0% blasphemous code.
 
 Possible applications
 ---------------------

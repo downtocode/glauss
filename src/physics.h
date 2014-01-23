@@ -9,7 +9,7 @@ typedef float v4sf __attribute__ ((vector_size (16)));
 typedef struct {
 	v4sf pos, vel, acc, Ftot, Fgrv, Fele, Flink;
 	long double mass, charge;
-	float equil;
+	float radius;
 	float linkwith[20];
 	char ignore;
 	bool center;

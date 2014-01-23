@@ -14,7 +14,7 @@
 static int i, j;
 
 int obj, width, height, objcount;
-float spring = 500, dt, radius;
+float spring = 500, dt;
 
 long double mag, Gconst, pi, epsno;
 
@@ -45,13 +45,13 @@ int findstructs(data* object) {
 	centemp /= (float)objcount;
 	object[obj + 1].pos = centemp;
 	object[obj + 1].center = 1;
+	object[obj + 1].radius = 12;
 	objcount = 0;
 	return 0;
 }
 
 
 int integrate(data* object) {
-	
 	findstructs(object);
 	
 	for(i = 1; i < obj + 1; i++) {
@@ -86,7 +86,7 @@ int integrate(data* object) {
 				if( object[i].linkwith[j] != 0 ) {
 					object[i].Flink += vecdist*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
 				}
-				if( mag < radius ) {
+				if( mag < object[i].radius + object[j].radius ) {
 					object[i].vel = -object[i].vel;
 				}
 			}
