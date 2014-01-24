@@ -37,8 +37,10 @@ Development comment
 Using SDL2 was a bother at the start as there is no proper tutorial(yet). SDL2_TTF was also used but due to a memory hole it created was eventually dropped completely out. Using freetype2 directly shall be used for OSD in the future.
 You might see a lot of comments about black magic in commit messages and actual comments, but worry not, this program contains 0% blasphemous code.
 
-Possible applications
+Progress/Possible applications
 ---------------------
-Can be modified into a Space Invaders clone in less than 10 minutes.
+Can be modified into an Angry Birds clone in about an hour.
+
+~~Can be modified into a Space Invaders clone in less than 10 minutes.~~
 
 ~~Can be modified into a PONG clone in less than 10 minutes.~~
