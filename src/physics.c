@@ -8,7 +8,6 @@
 #define perm 8.854187817
 #define g 6.67384
 #define elcharge 1.602176565
-#define dalton 1.660538921
 
 /* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
 static int i, j;
@@ -24,7 +23,7 @@ v4sf accprev, vecdist, centemp, forceconst = {0, -9.81};
 
 int initphys(data** object) {
 
-	*object = malloc(600*sizeof(**object));
+	*object = malloc((obj+20)*sizeof(**object));
 	
 	Gconst = g/pow(10, 10);
 	pi = acos(-1);

@@ -40,7 +40,7 @@ int parser(data** object) {
 				(*object)[i].vel[j] = vel[j];
 			}
 			(*object)[i].mass = mass;
-			(*object)[i].charge = (chargetemp*elcharge)/pow(10, 6);
+			(*object)[i].charge = (chargetemp*elcharge)/pow(10, 5);
 			(*object)[i].ignore = ignflag;
 			(*object)[i].radius = radius;
 			
