@@ -6,12 +6,14 @@
 
 #define elcharge 1.602176565
 
-static char str[500],links[100], *linkstr;
+static char str[500], word[100], links[100], *linkstr;
+static float value;
 
 
-int preparser() {
+int preparser(float *dt, int *width, int *height, int *boxsize, char fontname[100]) {
 	static int count = 0;
 	FILE *inprep = fopen ( "posdata.dat", "r" );
+	FILE *inconf = fopen ( "simconf.conf", "r" );
 	while(fgets (str, 500, inprep)!=NULL) {
 		if (strstr(str, "#") == NULL) {
 			count += 1;
@@ -19,6 +21,27 @@ int preparser() {
 	}
 	printf("Objects: %i\n", count);
 	fclose(inprep);
+	
+	while(fgets (str, 200, inconf)!=NULL) {
+		sscanf(str, "%s = \"%f\"", word, &value);
+		if(strcmp(word, "dt") == 0) {
+			*dt = value;
+		}
+		if(strcmp(word, "width") == 0) {
+			*width = (int)value;
+		}
+		if(strcmp(word, "height") == 0) {
+			*height = (int)value;
+		}
+		if(strcmp(word, "boxsize") == 0) {
+			*boxsize = (int)value;
+		}
+		if(strcmp(word, "fontname") == 0) {
+			sscanf(str, "%s = \"%100[^\"]\"", word, fontname);
+		}
+	}
+	
+	fclose(inconf);
 	return count;
 }
 

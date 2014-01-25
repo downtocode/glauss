@@ -22,6 +22,7 @@ static int i, j;
 int obj, width = 1200, height = 600;
 int mousex, mousey, chosen;
 int boxsize = 15;
+char fontname[100] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 float dt = 0.008, radius = 12.0;
 bool pause;
 
@@ -33,9 +34,11 @@ unsigned int counter = 0;
 unsigned int sec;
 
 int main() {
+	obj = preparser(&dt, &width, &height, &boxsize, fontname);
+	
 	/*	SDL.	*/
 		SDL_Init(SDL_INIT_VIDEO);
-		SDL_Window* window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
+		SDL_Window* window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL );
 		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 		SDL_GL_SetSwapInterval(-1);
 		SDL_GL_CreateContext(window);
@@ -49,7 +52,7 @@ int main() {
 			return 1;
 		}
 		
-		if(FT_New_Face(library, "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 0, &face)) {
+		if(FT_New_Face(library, fontname, 0, &face)) {
 			fprintf(stderr, "Could not open font\n");
 		}
 		
@@ -76,8 +79,7 @@ int main() {
 		/*	Okay, some explanation is needed. We want to make an array containing object parameters. So fine, we make it as a pointer.
 			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
-		obj = preparser();
-		obj = obj;
+		printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%i, fontname=%s\n", dt, width, height, boxsize, fontname);
 		initphys(&object);
 		parser(&object);
 	/*	PHYSICS.	*/
