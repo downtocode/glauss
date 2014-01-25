@@ -18,7 +18,8 @@ float spring = 500, dt;
 long double mag, Gconst, pi, epsno;
 
 
-v4sf accprev, vecdist, centemp, forceconst = {0, -9.81};
+v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, -9.81};
+float v1norm, v1tang, v2norm, v2tang;
 
 
 int initphys(data** object) {
@@ -57,14 +58,9 @@ int integrate(data* object) {
 		if(object[i].ignore == 1) continue;
 		
 		
-		if(object[i].pos[0] < 0) {
-			object[i].pos[0] = width;
+		if(object[i].pos[0] < 0 || object[i].pos[0] > width) {
+			object[i].vel[0] = -object[i].vel[0];
 		}
-		
-		if(object[i].pos[0] > width) {
-			object[i].pos[0] = 0;
-		}
-		
 		
 		if(object[i].pos[1] < 0 || object[i].pos[1] > height) {
 			object[i].vel[1] = -object[i].vel[1];
@@ -74,19 +70,30 @@ int integrate(data* object) {
 		
 		for(j = 1; j < obj + 1; j++) {
 			if(i != j) {
-				vecdist = object[j].pos - object[i].pos;
-				mag = sqrt((long double)(vecdist[0]*vecdist[0] + vecdist[1]*vecdist[1]));
-				vecdist /= (float)mag;
+				vecnorm = object[j].pos - object[i].pos;
+				mag = sqrt((long double)(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1]));
+				vecnorm /= (float)mag;
 				
-				object[i].Fgrv += vecdist*((float)((Gconst*object[i].mass*object[j].mass)/(mag*mag)));
+				object[i].Fgrv += vecnorm*((float)((Gconst*object[i].mass*object[j].mass)/(mag*mag)));
 				//future:use whole joints instead of individual stuff
-				object[i].Fele += -vecdist*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
+				object[i].Fele += -vecnorm*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
 				
 				if( object[i].linkwith[j] != 0 ) {
-					object[i].Flink += vecdist*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
+					object[i].Flink += vecnorm*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
 				}
 				if( mag < object[i].radius + object[j].radius ) {
-					object[i].vel = -object[i].vel;
+					vectang[0] = -vecnorm[1];
+					vectang[1] = vecnorm[0];
+					v1norm = object[i].vel[0]*vecnorm[0] + object[i].vel[1]*vecnorm[1];
+					v1tang = object[i].vel[0]*vectang[0] + object[i].vel[1]*vectang[1];
+					v2norm = object[j].vel[0]*vecnorm[0] + object[j].vel[1]*vecnorm[1];
+					v2tang = object[j].vel[0]*vectang[0] + object[j].vel[1]*vectang[1];
+					
+					v1norm = (v1norm*(object[i].mass-object[j].mass) + 2*object[j].mass*v2norm)/(object[i].mass+object[j].mass);
+					v2norm = (v2norm*(object[j].mass-object[i].mass) + 2*object[i].mass*v1norm)/(object[j].mass+object[i].mass);
+					
+					object[i].vel[0] = v1norm;
+					object[i].vel[1] = v1tang;
 				}
 			}
 		}
