@@ -19,11 +19,16 @@ FT_Face face;
 
 
 static int i, j;
-int obj, width = 1200, height = 600;
 int mousex, mousey, chosen;
+
+//Default settings
+int obj, width = 1200, height = 600;
 int boxsize = 15;
 char fontname[100] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 float dt = 0.008, radius = 12.0;
+long double elcharge = 1.602176565;
+
+
 bool pause;
 
 v4sf vectemp;
@@ -34,7 +39,7 @@ unsigned int counter = 0;
 unsigned int sec;
 
 int main() {
-	obj = preparser(&dt, &width, &height, &boxsize, fontname);
+	obj = preparser(&dt, &elcharge, &width, &height, &boxsize, fontname);
 	
 	/*	SDL.	*/
 		SDL_Init(SDL_INIT_VIDEO);
@@ -80,6 +85,7 @@ int main() {
 			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
 		printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%i, fontname=%s\n", dt, width, height, boxsize, fontname);
+		printf("Constants: elcharge=%Lf\n", elcharge);
 		initphys(&object);
 		parser(&object);
 	/*	PHYSICS.	*/

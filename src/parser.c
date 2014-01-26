@@ -4,13 +4,13 @@
 #include "physics.h"
 #include "parser.h"
 
-#define elcharge 1.602176565
+long double elcharge;
 
 static char str[500], word[100], links[100], *linkstr;
 static float value;
 
 
-int preparser(float *dt, int *width, int *height, int *boxsize, char fontname[100]) {
+int preparser(float *dt, long double *elcharge, int *width, int *height, int *boxsize, char fontname[100]) {
 	static int count = 0;
 	FILE *inprep = fopen ( "posdata.dat", "r" );
 	FILE *inconf = fopen ( "simconf.conf", "r" );
@@ -26,6 +26,9 @@ int preparser(float *dt, int *width, int *height, int *boxsize, char fontname[10
 		sscanf(str, "%s = \"%f\"", word, &value);
 		if(strcmp(word, "dt") == 0) {
 			*dt = value;
+		}
+		if(strcmp(word, "elcharge") == 0) {
+			*elcharge = value;
 		}
 		if(strcmp(word, "width") == 0) {
 			*width = (int)value;

@@ -7,7 +7,6 @@
 /* Constants */
 #define perm 8.854187817
 #define g 6.67384
-#define elcharge 1.602176565
 
 /* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
 static int i, j;
@@ -15,7 +14,7 @@ static int i, j;
 int obj, width, height, objcount;
 float spring = 500, dt;
 
-long double mag, Gconst, pi, epsno;
+long double mag, Gconst, pi, epsno, elcharge;
 
 
 v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, -9.81};
