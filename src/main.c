@@ -27,6 +27,7 @@ int boxsize = 15;
 char fontname[100] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 1.602176565;
+bool novid = 0;
 
 
 bool pause;
@@ -38,15 +39,31 @@ double fps;
 unsigned int counter = 0;
 unsigned int sec;
 
-int main() {
+int main( int argc, char *argv[] ) {
 	obj = preparser(&dt, &elcharge, &width, &height, &boxsize, fontname);
+	
+	/*	ARGUMENT SETTING	*/
+	if( argc > 1 ) {
+		printf("Arguments: ");
+		for( i=1; i < argc; i++ ) {
+			printf("%s ", argv[i]);
+			if( !strcmp( "--no-vid", argv[i] ) ) {
+				novid = 1;
+			}
+		}
+		printf("\n");
+	}
+	/*	ARGUMENT SETTING	*/
 	
 	/*	SDL.	*/
 		SDL_Init(SDL_INIT_VIDEO);
-		SDL_Window* window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL );
-		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-		SDL_GL_SetSwapInterval(-1);
-		SDL_GL_CreateContext(window);
+		SDL_Window* window = NULL;
+		if( novid == 0 ) {
+			window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL );
+			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+			SDL_GL_SetSwapInterval(-1);
+			SDL_GL_CreateContext(window);
+		}
 		SDL_Event event;
 		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 	/*	SDL.	*/
