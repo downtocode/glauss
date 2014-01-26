@@ -159,6 +159,13 @@ int main( int argc, char *argv[] ) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		if(pause == 0 ) integrate(object);
+		//FPS calculation.
+		time(&end);
+		++counter;
+		sec = difftime (end, start);
+		fps = (((float)counter)/((float)sec));
+		printf("FPS = %.2f\r", fps);
+		if( novid == 1 ) continue;
 		
 		glColor3f(255,255,255);
 		glBegin(GL_LINES);
@@ -205,13 +212,6 @@ int main( int argc, char *argv[] ) {
 		glColor3f(255,255,255);
 		
 		SDL_GL_SwapWindow(window);
-		
-		//FPS calculation.
-		time(&end);
-		++counter;
-		sec = difftime (end, start);
-		fps = (((float)counter)/((float)sec));
-		printf("FPS = %.2f\r", fps);
 	}
 	
 	quit:
