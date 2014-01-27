@@ -6,7 +6,6 @@
 
 /* Constants */
 #define perm 8.854187817
-#define g 6.67384
 
 /* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
 static int i, j;
@@ -14,7 +13,7 @@ static int i, j;
 int obj, width, height, objcount;
 float spring = 500, dt;
 
-long double mag, Gconst, pi, epsno, elcharge;
+long double mag, gconst, pi, epsno, elcharge;
 
 
 v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, -9.81};
@@ -22,12 +21,8 @@ float v1norm, v1tang, v2norm, v2tang;
 
 
 int initphys(data** object) {
-
 	*object = malloc((obj+20)*sizeof(**object));
-	
-	Gconst = g/pow(10, 10);
 	pi = acos(-1);
-	epsno = perm/pow(10, 12);
 	return 0;
 }
 
@@ -73,7 +68,7 @@ int integrate(data* object) {
 				mag = sqrt((long double)(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1]));
 				vecnorm /= (float)mag;
 				
-				object[i].Fgrv += vecnorm*((float)((Gconst*object[i].mass*object[j].mass)/(mag*mag)));
+				object[i].Fgrv += vecnorm*((float)((gconst*object[i].mass*object[j].mass)/(mag*mag)));
 				//future:use whole joints instead of individual stuff
 				object[i].Fele += -vecnorm*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
 				

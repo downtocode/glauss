@@ -4,14 +4,15 @@
 #include "physics.h"
 #include "parser.h"
 
-long double elcharge;
+static long double elchargep;
+static long double anothervar;
 
-static char str[500], word[100], links[100], *linkstr;
-static float value;
+static char str[500], word[100], links[100], variable[100], *linkstr;
+static float value, base, power;
 bool quiet;
 
 
-int preparser(float *dt, long double *elcharge, int *width, int *height, int *boxsize, char fontname[100]) {
+int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[100]) {
 	static int count = 0;
 	FILE *inprep = fopen ( "posdata.dat", "r" );
 	FILE *inconf = fopen ( "simconf.conf", "r" );
@@ -28,7 +29,20 @@ int preparser(float *dt, long double *elcharge, int *width, int *height, int *bo
 			*dt = value;
 		}
 		if(strcmp(word, "elcharge") == 0) {
-			*elcharge = value;
+			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
+			sscanf(variable, "%Lfx%f^(%f)", &elchargep, &base, &power);
+			*elcharge = elchargep*pow(base, power);
+			elchargep = *elcharge;
+		}
+		if(strcmp(word, "gconst") == 0) {
+			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
+			sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
+			*gconst = anothervar*pow(base, power);
+		}
+		if(strcmp(word, "epsno") == 0) {
+			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
+			sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
+			*epsno = anothervar*pow(base, power);
 		}
 		if(strcmp(word, "width") == 0) {
 			*width = (int)value;
@@ -66,7 +80,7 @@ int parser(data** object) {
 				(*object)[i].vel[j] = vel[j];
 			}
 			(*object)[i].mass = mass;
-			(*object)[i].charge = (chargetemp*elcharge)/pow(10, 5);
+			(*object)[i].charge = chargetemp*elchargep;
 			(*object)[i].ignore = ignflag;
 			(*object)[i].radius = radius;
 			

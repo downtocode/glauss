@@ -22,16 +22,13 @@ static int i, j;
 int mousex, mousey, chosen;
 
 //Default settings
-int obj, width = 1200, height = 600;
+int obj = 0, width = 1200, height = 600;
 int boxsize = 15;
 char fontname[100] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 float dt = 0.008, radius = 12.0;
-long double elcharge = 1.602176565;
-bool novid = 0;
-bool quiet = 0;
+long double elcharge, gconst, epsno;
+bool novid = 0, quiet = 0, pause = 0;
 
-
-bool pause;
 
 v4sf vectemp;
 
@@ -41,7 +38,7 @@ unsigned int counter = 0;
 unsigned int sec;
 
 int main( int argc, char *argv[] ) {
-	obj = preparser(&dt, &elcharge, &width, &height, &boxsize, fontname);
+	obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname);
 	
 	/*	ARGUMENT SETTING	*/
 	if( argc > 1 ) {
@@ -109,7 +106,7 @@ int main( int argc, char *argv[] ) {
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
 		if( quiet == 0 ) {
 			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%i, fontname=%s\n", dt, width, height, boxsize, fontname);
-			printf("Constants: elcharge=%Lf\n", elcharge);
+			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n", elcharge, gconst, epsno);
 		}
 		initphys(&object);
 		parser(&object);
