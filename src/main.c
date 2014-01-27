@@ -28,6 +28,7 @@ char fontname[100] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 1.602176565;
 bool novid = 0;
+bool quiet = 0;
 
 
 bool pause;
@@ -50,6 +51,9 @@ int main( int argc, char *argv[] ) {
 			if( !strcmp( "--no-vid", argv[i] ) ) {
 				novid = 1;
 			}
+			if( !strcmp( "--quiet", argv[i] ) ) {
+				quiet = 1;
+			}
 		}
 		printf("\n");
 	}
@@ -65,7 +69,9 @@ int main( int argc, char *argv[] ) {
 			SDL_GL_CreateContext(window);
 		}
 		SDL_Event event;
-		printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+		if( quiet == 0 ) {
+			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+		}
 	/*	SDL.	*/
 	
 	/*	Freetype.	*/
@@ -101,8 +107,10 @@ int main( int argc, char *argv[] ) {
 		/*	Okay, some explanation is needed. We want to make an array containing object parameters. So fine, we make it as a pointer.
 			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
 			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
-		printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%i, fontname=%s\n", dt, width, height, boxsize, fontname);
-		printf("Constants: elcharge=%Lf\n", elcharge);
+		if( quiet == 0 ) {
+			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%i, fontname=%s\n", dt, width, height, boxsize, fontname);
+			printf("Constants: elcharge=%Lf\n", elcharge);
+		}
 		initphys(&object);
 		parser(&object);
 	/*	PHYSICS.	*/
@@ -128,7 +136,7 @@ int main( int argc, char *argv[] ) {
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
 					}
-				break;
+					break;
 				case SDL_MOUSEBUTTONDOWN:
 					if( event.button.button == SDL_BUTTON_RIGHT ) {
 						chosen = 0;
@@ -159,12 +167,14 @@ int main( int argc, char *argv[] ) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		if(pause == 0 ) integrate(object);
-		//FPS calculation.
-		time(&end);
-		++counter;
-		sec = difftime (end, start);
-		fps = (((float)counter)/((float)sec));
-		printf("FPS = %.2f\r", fps);
+		if( quiet == 0 ) {
+			//FPS calculation.
+			time(&end);
+			++counter;
+			sec = difftime (end, start);
+			fps = (((float)counter)/((float)sec));
+			printf("FPS = %.2f\r", fps);
+		}
 		if( novid == 1 ) continue;
 		
 		glColor3f(255,255,255);

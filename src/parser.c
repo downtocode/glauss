@@ -8,6 +8,7 @@ long double elcharge;
 
 static char str[500], word[100], links[100], *linkstr;
 static float value;
+bool quiet;
 
 
 int preparser(float *dt, long double *elcharge, int *width, int *height, int *boxsize, char fontname[100]) {
@@ -19,7 +20,6 @@ int preparser(float *dt, long double *elcharge, int *width, int *height, int *bo
 			count += 1;
 		}
 	}
-	printf("Objects: %i\n", count);
 	fclose(inprep);
 	
 	while(fgets (str, 200, inconf)!=NULL) {
@@ -70,15 +70,15 @@ int parser(data** object) {
 			(*object)[i].ignore = ignflag;
 			(*object)[i].radius = radius;
 			
-			printf("Object %i links: ", i);
+			if( quiet == 0 ) printf("Object %i links: ", i);
 			linkstr = strtok(links,",");
 				while(linkstr != NULL) {
 					sscanf(linkstr, "%i-%f", &link, &bond);
-					printf("%i:%f, ", link, bond);
+					if( quiet == 0 ) printf("%i:%f, ", link, bond);
 					(*object)[i].linkwith[link] = bond;
 					linkstr = strtok(NULL,",");
 				}
-			printf(" \n");
+			if( quiet == 0 ) printf(" \n");
 		}
 	}
 	fclose(in);
