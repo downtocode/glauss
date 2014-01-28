@@ -18,9 +18,9 @@ float v1norm, v1tang, v2norm, v2tang;
 
 
 int initphys(data** object) {
-	*object = malloc(sizeof(**object)*(obj+2));
+	*object = malloc(sizeof(**object)*(obj+3));
 	for( i = 0; i < obj + 1; i++ ) {
-		(*object)[i].linkwith = malloc(sizeof(float)*(obj+300));
+		(*object)[i].linkwith = malloc(sizeof(float)*(obj+400));
 	}
 	pi = acos(-1);
 	return 0;

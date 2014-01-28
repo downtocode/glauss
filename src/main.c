@@ -19,14 +19,14 @@ FT_Face face;
 
 
 static int i, j;
-int mousex, mousey, chosen;
+int mousex, mousey, chosen = 0;
 
 //Default settings
 int obj = 0, width = 1200, height = 600;
 int boxsize = 15;
 char fontname[100] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 float dt = 0.008, radius = 12.0;
-long double elcharge, gconst, epsno;
+long double elcharge = 0, gconst = 0, epsno = 0;
 bool novid = 0, quiet = 0, pause = 0;
 
 
@@ -222,8 +222,8 @@ int main( int argc, char *argv[] ) {
 	
 	quit:
 		free(object);
-		FT_Done_Face( face );
-		FT_Done_FreeType( library );
+		//FT_Done_Face( face );
+		//FT_Done_FreeType( library );
 		SDL_DestroyWindow( window );
 		SDL_Quit();
 		printf("\nQuitting!\n");

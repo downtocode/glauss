@@ -3,34 +3,23 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
-#include <limits.h>
 #include "physics.h"
 #include "parser.h"
 
 
-static long double elchargep;
 static long double anothervar;
+long double elcharge;
 
-static char str[500], word[100], links[100], variable[100], *linkstr;
+static char str[100], word[100], links[100], variable[100], *linkstr;
 static float value, base, power;
 bool quiet, random;
 int randobjs;
-float velmax;
+float velmax, massrand, chargerand, sizerand;
 
 
 int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[100]) {
-	srand(time(NULL));
-	
 	static int count = 0;
-	FILE *inprep = fopen ( "posdata.dat", "r" );
 	FILE *inconf = fopen ( "simconf.conf", "r" );
-	while(fgets (str, 500, inprep)!=NULL) {
-		if (strstr(str, "#") == NULL) {
-			count += 1;
-		}
-	}
-	fclose(inprep);
-	
 	while(fgets (str, 200, inconf)!=NULL) {
 		sscanf(str, "%s = \"%f\"", word, &value);
 		if(strcmp(word, "dt") == 0) {
@@ -38,9 +27,8 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 		}
 		if(strcmp(word, "elcharge") == 0) {
 			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
-			sscanf(variable, "%Lfx%f^(%f)", &elchargep, &base, &power);
-			*elcharge = elchargep*pow(base, power);
-			elchargep = *elcharge;
+			sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
+			*elcharge = anothervar*pow(base, power);
 		}
 		if(strcmp(word, "gconst") == 0) {
 			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
@@ -73,11 +61,32 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 		if(strcmp(word, "velmax") == 0) {
 			velmax = value;
 		}
+		if(strcmp(word, "massrand") == 0) {
+			massrand = value;
+		}
+		if(strcmp(word, "chargerand") == 0) {
+			chargerand = value;
+		}
+		if(strcmp(word, "sizerand") == 0) {
+			sizerand = value;
+		}
+	}
+	fclose(inconf);
+	
+	if( random == 1 ) {
+		srand(time(NULL));
+		count = randobjs;
+	} else { 
+		FILE *inprep = fopen ( "posdata.dat", "r" );
+		count = 0;
+		while(fgets (str, 500, inprep)!=NULL) {
+			if (strstr(str, "#") == NULL) {
+				count += 1;
+			}
+		}
+		fclose(inprep);
 	}
 	
-	if( random == 1 ) count = randobjs;
-	
-	fclose(inconf);
 	return count;
 }
 
@@ -89,7 +98,6 @@ int parser(data** object) {
 	long double mass, chargetemp;
 	char ignflag;
 	
-	
 	if( random == 0 ) {
 		while(fgets (str, 500, in)!= NULL) {
 			if (strstr(str, "#") == NULL) {
@@ -100,7 +108,7 @@ int parser(data** object) {
 					(*object)[i].vel[j] = vel[j];
 				}
 				(*object)[i].mass = mass;
-				(*object)[i].charge = chargetemp*elchargep;
+				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
 				(*object)[i].radius = radius;
 				
@@ -119,9 +127,9 @@ int parser(data** object) {
 		for(i = 1; i < randobjs + 1; i++) {
 			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX)*1000, ((float)rand()/(float)RAND_MAX)*600, 1};
 			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax, 0};
-			(*object)[i].mass = 1;
-			(*object)[i].charge = 0;
-			(*object)[i].radius = 7;
+			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
+			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;
+			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand + 1;
 		}
 	}
 	fclose(in);
