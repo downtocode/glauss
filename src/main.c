@@ -76,16 +76,15 @@ int main( int argc, char *argv[] ) {
 			fprintf(stderr, "Could not init freetype library\n");
 			return 1;
 		}
-		
 		if(FT_New_Face(library, fontname, 0, &face)) {
 			fprintf(stderr, "Could not open font\n");
-		}
-		
-		FT_Set_Pixel_Sizes(face, 0, 12);
-		for (unsigned long u = 32; u < 128; u++) {
-			if (FT_Load_Char(face, u, FT_LOAD_RENDER)) {
-				fprintf(stderr, "Could not load character %lu\n", u);
-				continue;
+		} else {
+			FT_Set_Pixel_Sizes(face, 0, 12);
+			for (unsigned long u = 32; u < 128; u++) {
+				if (FT_Load_Char(face, u, FT_LOAD_RENDER)) {
+					fprintf(stderr, "Could not load character %lu\n", u);
+					continue;
+				}
 			}
 		}
 	/*	Freetype.	*/

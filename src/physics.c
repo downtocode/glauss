@@ -4,9 +4,6 @@
 #include "physics.h"
 
 
-/* Constants */
-#define perm 8.854187817
-
 /* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
 static int i, j;
 
@@ -16,12 +13,15 @@ float spring = 500, dt;
 long double mag, gconst, pi, epsno, elcharge;
 
 
-v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, -9.81};
+v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, 0};
 float v1norm, v1tang, v2norm, v2tang;
 
 
 int initphys(data** object) {
-	*object = malloc((obj+20)*sizeof(**object));
+	*object = malloc(sizeof(**object)*(obj+2));
+	for( i = 0; i < obj + 1; i++ ) {
+		(*object)[i].linkwith = malloc(sizeof(float)*(obj+300));
+	}
 	pi = acos(-1);
 	return 0;
 }

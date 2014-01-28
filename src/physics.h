@@ -10,7 +10,7 @@ typedef struct {
 	v4sf pos, vel, acc, Ftot, Fgrv, Fele, Flink;
 	long double mass, charge;
 	float radius;
-	float linkwith[20];
+	float *linkwith;
 	char ignore;
 	bool center;
 } data;
