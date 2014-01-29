@@ -10,9 +10,16 @@ long double gconst, epsno, elcharge;
 
 //Static vars
 static int i, j;
-static v4sf accprev, vecnorm, centemp, forceconst = {0, 0};
+static v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, 0};
 static float spring = 500;
 static long double mag, pi;
+static float v1norm, v1tang, v2norm, v2tang;
+
+
+int dotprod( v4sf a, v4sf b ) {
+	float result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; 
+	return result;
+}
 
 int initphys(data** object) {
 	*object = malloc(sizeof(**object)*(obj+3));
@@ -72,17 +79,26 @@ int integrate(data* object) {
 					object[i].Flink += vecnorm*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
 				}
 				if( mag < object[i].radius + object[j].radius ) {
-					object[i].Fcoll += -vecnorm*(float)mag*spring;
+					vectang[0] = -vecnorm[1];
+					vectang[1] = vecnorm[0];
+					v1norm = dotprod( vecnorm, object[i].vel );
+					v1tang = dotprod( vectang, object[i].vel );
+					v2norm = dotprod( vecnorm, object[j].vel );
+					v2tang = dotprod( vectang, object[j].vel );
+					v1norm = (v1norm*(object[i].mass-object[j].mass) + 2*object[j].mass*v2norm)/(object[i].mass+object[j].mass);
+					v2norm = (v2norm*(object[j].mass-object[i].mass) + 2*object[i].mass*v1norm)/(object[j].mass+object[i].mass);
+					object[i].vel[0] = v1norm;
+					object[i].vel[1] = v1tang;
 				}
 			}
 		}
 		
-		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fcoll + object[i].Fele + object[i].Flink;
+		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fele + object[i].Flink;
 		accprev = object[i].acc;
 		
 		object[i].acc = (object[i].Ftot)/(float)object[i].mass;
 		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
-		object[i].Fgrv = object[i].Fcoll = object[i].Fele = centemp = object[i].Flink = (v4sf){0, 0};
+		object[i].Fgrv = object[i].Fele = centemp = object[i].Flink = (v4sf){0, 0};
 	}
 	return 0;
 }
