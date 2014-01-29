@@ -7,18 +7,20 @@
 #include "parser.h"
 
 
-static long double anothervar;
+//Global variables
+int obj;
 long double elcharge;
-
-static char str[100], word[100], links[100], variable[100], *linkstr;
-static float value, base, power;
 bool quiet, random;
-int randobjs;
-float velmax, massrand, chargerand, sizerand;
 
+//Static variables
+static char str[100];
+static float velmax, massrand, chargerand, sizerand;
 
 int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[100]) {
-	static int count = 0;
+	int count = 0;
+	char word[100], variable[100];
+	long double anothervar;
+	float value, base, power;
 	FILE *inconf = fopen ( "simconf.conf", "r" );
 	while(fgets (str, 200, inconf)!=NULL) {
 		sscanf(str, "%s = \"%f\"", word, &value);
@@ -56,7 +58,7 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 			random = (bool)value;
 		}
 		if(strcmp(word, "randobjs") == 0) {
-			randobjs = (int)value;
+			count = (int)value;
 		}
 		if(strcmp(word, "velmax") == 0) {
 			velmax = value;
@@ -75,7 +77,6 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 	
 	if( random == 1 ) {
 		srand(time(NULL));
-		count = randobjs;
 	} else { 
 		FILE *inprep = fopen ( "posdata.dat", "r" );
 		count = 0;
@@ -86,27 +87,28 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 		}
 		fclose(inprep);
 	}
-	
 	return count;
 }
 
 int parser(data** object) {
 	FILE *in = fopen ( "posdata.dat", "r" );
-	static int i, j, link;
-	int dimensions = 3;
-	float pos[dimensions], vel[dimensions], bond, radius;
+	int i, link;
+	char links[100], *linkstr, ignflag;
+	float posx, posy, posz, velx, vely, velz, bond, radius;
 	long double mass, chargetemp;
-	char ignflag;
 	
 	if( random == 0 ) {
 		while(fgets (str, 500, in)!= NULL) {
 			if (strstr(str, "#") == NULL) {
-				sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"", &i, &pos[0], &pos[1], &pos[2], &vel[0], \
-				&vel[1], &vel[2], &mass, &chargetemp, &radius, &ignflag, links);
-				for(j = 0; j < dimensions; j++) {
-					(*object)[i].pos[j] = pos[j];
-					(*object)[i].vel[j] = vel[j];
-				}
+				sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"", &i, &posx, &posy, &posz, &velx, \
+				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
+				
+				(*object)[i].pos[0] = posx;
+				(*object)[i].pos[1] = posy;
+				(*object)[i].pos[2] = posz;
+				(*object)[i].vel[0] = velx;
+				(*object)[i].vel[1] = vely;
+				(*object)[i].vel[2] = velz;
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
@@ -124,7 +126,7 @@ int parser(data** object) {
 			}
 		}
 	} else if ( random == 1 ) {
-		for(i = 1; i < randobjs + 1; i++) {
+		for(i = 1; i < obj + 1; i++) {
 			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX)*1000, ((float)rand()/(float)RAND_MAX)*600, 1};
 			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax, 0};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;

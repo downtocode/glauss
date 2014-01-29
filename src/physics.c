@@ -3,19 +3,16 @@
 #include <tgmath.h>
 #include "physics.h"
 
-
-/* Static because you might want to call integrate in a for loop and then you'd be in trouble. */
-static int i, j;
-
+//Global vars
 int obj, width, height, objcount;
-float spring = 500, dt;
+float dt;
+long double gconst, epsno, elcharge;
 
-long double mag, gconst, pi, epsno, elcharge;
-
-
-v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, 0};
-float v1norm, v1tang, v2norm, v2tang;
-
+//Static vars
+static int i, j;
+static v4sf accprev, vecnorm, centemp, forceconst = {0, 0};
+static float spring = 500;
+static long double mag, pi;
 
 int initphys(data** object) {
 	*object = malloc(sizeof(**object)*(obj+3));
@@ -28,7 +25,6 @@ int initphys(data** object) {
 
 int findstructs(data* object) {
 	//Determine links to get the approximate centers
-	
 	for(i = 1; i < obj + 1; i++) {
 		for( j = 1; j < obj + 1; j++ ) {
 			objcount++;
@@ -76,28 +72,17 @@ int integrate(data* object) {
 					object[i].Flink += vecnorm*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
 				}
 				if( mag < object[i].radius + object[j].radius ) {
-					vectang[0] = -vecnorm[1];
-					vectang[1] = vecnorm[0];
-					v1norm = object[i].vel[0]*vecnorm[0] + object[i].vel[1]*vecnorm[1];
-					v1tang = object[i].vel[0]*vectang[0] + object[i].vel[1]*vectang[1];
-					v2norm = object[j].vel[0]*vecnorm[0] + object[j].vel[1]*vecnorm[1];
-					v2tang = object[j].vel[0]*vectang[0] + object[j].vel[1]*vectang[1];
-					
-					v1norm = (v1norm*(object[i].mass-object[j].mass) + 2*object[j].mass*v2norm)/(object[i].mass+object[j].mass);
-					v2norm = (v2norm*(object[j].mass-object[i].mass) + 2*object[i].mass*v1norm)/(object[j].mass+object[i].mass);
-					
-					object[i].vel[0] = v1norm;
-					object[i].vel[1] = v1tang;
+					object[i].Fcoll += -vecnorm*(float)mag*spring;
 				}
 			}
 		}
 		
-		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fele + object[i].Flink;
+		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fcoll + object[i].Fele + object[i].Flink;
 		accprev = object[i].acc;
 		
 		object[i].acc = (object[i].Ftot)/(float)object[i].mass;
 		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
-		object[i].Fgrv = object[i].Fele = centemp = object[i].Flink = (v4sf){0, 0};
+		object[i].Fgrv = object[i].Fcoll = object[i].Fele = centemp = object[i].Flink = (v4sf){0, 0};
 	}
 	return 0;
 }
