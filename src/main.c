@@ -45,7 +45,7 @@ int main( int argc, char *argv[] ) {
 		printf("Arguments: ");
 		for( i=1; i < argc; i++ ) {
 			printf("%s ", argv[i]);
-			if( !strcmp( "--no-vid", argv[i] ) ) {
+			if( !strcmp( "--novid", argv[i] ) ) {
 				novid = 1;
 			}
 			if( !strcmp( "--quiet", argv[i] ) ) {
