@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <tgmath.h>
 #include <time.h>
+#include <unistd.h>
 
 //Things you gotta get.
 #include <SDL2/SDL.h>
@@ -25,9 +26,10 @@ int mousex, mousey, chosen = 0;
 int obj = 0, width = 1200, height = 600;
 int boxsize = 15;
 char fontname[100] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
+char filename[100] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, quiet = 0, pause = 0;
+bool novid = 0, quiet = 0, stop = 0;
 
 
 v4sf vectemp;
@@ -38,8 +40,6 @@ unsigned int counter = 0;
 unsigned int sec;
 
 int main( int argc, char *argv[] ) {
-	obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname);
-	
 	/*	ARGUMENT SETTING	*/
 	if( argc > 1 ) {
 		printf("Arguments: ");
@@ -51,10 +51,22 @@ int main( int argc, char *argv[] ) {
 			if( !strcmp( "--quiet", argv[i] ) ) {
 				quiet = 1;
 			}
+			if( !strcmp( "-f", argv[i] ) ) {
+				strcpy( filename, argv[i+1] );
+			}
 		}
 		printf("\n");
 	}
 	/*	ARGUMENT SETTING	*/
+	
+	obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname, filename);
+	
+	/*	Error handling.	*/
+	if( obj == 0 ) {
+		printf("ERROR! NO OBJECTS!\n");
+		return 1;
+	}
+	/*	Error handling.	*/
 	
 	/*	SDL.	*/
 		SDL_Init(SDL_INIT_VIDEO);
@@ -108,7 +120,7 @@ int main( int argc, char *argv[] ) {
 			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n", elcharge, gconst, epsno);
 		}
 		initphys(&object);
-		parser(&object);
+		parser(&object, filename);
 	/*	PHYSICS.	*/
 	
 	time(&start);
@@ -118,8 +130,8 @@ int main( int argc, char *argv[] ) {
 			switch( event.type ) {
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_SPACE) {
-						if( pause == 0 ) pause = 1;
-						else if( pause == 1 ) pause = 0;
+						if( stop == 0 ) stop = 1;
+						else if( stop == 1 ) stop = 0;
 					}
 					if(event.key.keysym.sym==SDLK_RIGHT) {
 						dt *= 2;
@@ -162,7 +174,7 @@ int main( int argc, char *argv[] ) {
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		if(pause == 0 ) integrate(object);
+		if(stop == 0 ) integrate(object);
 		if( quiet == 0 ) {
 			//FPS calculation.
 			time(&end);

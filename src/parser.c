@@ -2,6 +2,7 @@
 #include <tgmath.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include "physics.h"
 #include "parser.h"
@@ -16,9 +17,9 @@ bool quiet, random;
 static char str[100];
 static float velmax, massrand, chargerand, sizerand;
 
-int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[100]) {
+int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[100], char filename[100]) {
 	int count = 0;
-	char word[100], variable[100], filename[100] = "posdata.dat";
+	char word[100], variable[100], namebuff[100];
 	long double anothervar;
 	float value, base, power;
 	FILE *inconf = fopen ( "simconf.conf", "r" );
@@ -73,7 +74,7 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 			sizerand = value;
 		}
 		if(strcmp(word, "posdata") == 0) {
-			sscanf(str, "%s = \"%100[^\"]\"", word, filename);
+			sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
 		}
 	}
 	fclose(inconf);
@@ -81,8 +82,18 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 	if( random == 1 ) {
 		srand(time(NULL));
 	} else { 
-		FILE *inprep = fopen ( filename, "r" );
 		count = 0;
+		if( access( filename, F_OK ) == -1 ) {
+			fprintf( stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", filename, namebuff );
+			if( access( namebuff, F_OK ) == 0 ) {
+				strcpy( filename, namebuff );
+				fprintf( stderr, " Success!\n");
+			} else {
+				fprintf( stderr, " Fail!\n");
+				return 0;
+			}
+		}
+		FILE *inprep = fopen ( filename, "r" );
 		while(fgets (str, 500, inprep)!=NULL) {
 			if (strstr(str, "#") == NULL) {
 				count += 1;
@@ -93,12 +104,13 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 	return count;
 }
 
-int parser(data** object) {
-	FILE *in = fopen ( "posdata.dat", "r" );
+int parser(data** object, char filename[100]) {
 	int i, link;
 	char links[100], *linkstr, ignflag;
 	float posx, posy, posz, velx, vely, velz, bond, radius;
 	long double mass, chargetemp;
+	
+	FILE *in = fopen ( filename, "r" );
 	
 	if( random == 0 ) {
 		while(fgets (str, 500, in)!= NULL) {
