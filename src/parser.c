@@ -18,7 +18,7 @@ static float velmax, massrand, chargerand, sizerand;
 
 int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[100]) {
 	int count = 0;
-	char word[100], variable[100];
+	char word[100], variable[100], filename[100] = "posdata.dat";
 	long double anothervar;
 	float value, base, power;
 	FILE *inconf = fopen ( "simconf.conf", "r" );
@@ -72,13 +72,16 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 		if(strcmp(word, "sizerand") == 0) {
 			sizerand = value;
 		}
+		if(strcmp(word, "posdata") == 0) {
+			sscanf(str, "%s = \"%100[^\"]\"", word, filename);
+		}
 	}
 	fclose(inconf);
 	
 	if( random == 1 ) {
 		srand(time(NULL));
 	} else { 
-		FILE *inprep = fopen ( "posdata.dat", "r" );
+		FILE *inprep = fopen ( filename, "r" );
 		count = 0;
 		while(fgets (str, 500, inprep)!=NULL) {
 			if (strstr(str, "#") == NULL) {
