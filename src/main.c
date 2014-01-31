@@ -62,10 +62,10 @@ int main( int argc, char *argv[] ) {
 	obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname, filename);
 	
 	/*	Error handling.	*/
-	if( obj == 0 ) {
-		printf("ERROR! NO OBJECTS!\n");
-		return 1;
-	}
+		if( obj == 0 ) {
+			printf("ERROR! NO OBJECTS!\n");
+			return 1;
+		}
 	/*	Error handling.	*/
 	
 	/*	SDL.	*/
@@ -234,7 +234,7 @@ int main( int argc, char *argv[] ) {
 	
 	quit:
 		free(object);
-		//FT_Done_Face( face );
+		FT_Done_Face( face );
 		//FT_Done_FreeType( library );
 		SDL_DestroyWindow( window );
 		SDL_Quit();
