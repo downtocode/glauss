@@ -12,13 +12,17 @@ long double gconst, epsno, elcharge;
 static int i, j;
 static v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, 0};
 static float spring = 500;
-static long double mag, pi;
-static float v1norm, v1tang, v2norm, v2tang;
+static long double pi;
+static float mag, v1norm, v1tang, v2norm, v2tang;
 
 
-int dotprod( v4sf a, v4sf b ) {
+float dotprod( v4sf a, v4sf b ) {
 	float result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; 
 	return result;
+}
+float lenght( v4sf a ) {
+	float result = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
+	return sqrt(result);
 }
 
 int initphys(data** object) {
@@ -68,27 +72,28 @@ int integrate(data* object) {
 		for(j = 1; j < obj + 1; j++) {
 			if(i != j) {
 				vecnorm = object[j].pos - object[i].pos;
-				mag = sqrt((long double)(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1]));
-				vecnorm /= (float)mag;
+				mag = lenght(vecnorm);
+				vecnorm /= mag;
 				
 				object[i].Fgrv += vecnorm*((float)((gconst*object[i].mass*object[j].mass)/(mag*mag)));
 				//future:use whole joints instead of individual stuff
 				object[i].Fele += -vecnorm*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
 				
 				if( object[i].linkwith[j] != 0 ) {
-					object[i].Flink += vecnorm*((spring)*((float)mag - object[i].linkwith[j])*(float)0.2);
+					object[i].Flink += vecnorm*((spring)*(mag - object[i].linkwith[j])*(float)0.2);
 				}
 				if( mag < object[i].radius + object[j].radius ) {
-					vectang[0] = -vecnorm[1];
-					vectang[1] = vecnorm[0];
+					//fixme
+					vectang = (v4sf){-vecnorm[1], vecnorm[0]};
+
 					v1norm = dotprod( vecnorm, object[i].vel );
 					v1tang = dotprod( vectang, object[i].vel );
 					v2norm = dotprod( vecnorm, object[j].vel );
 					v2tang = dotprod( vectang, object[j].vel );
+
 					v1norm = (v1norm*(object[i].mass-object[j].mass) + 2*object[j].mass*v2norm)/(object[i].mass+object[j].mass);
 					v2norm = (v2norm*(object[j].mass-object[i].mass) + 2*object[i].mass*v1norm)/(object[j].mass+object[i].mass);
-					object[i].vel[0] = v1norm;
-					object[i].vel[1] = v1tang;
+					object[i].vel = (v4sf){v1norm, v1tang};
 				}
 			}
 		}

@@ -15,6 +15,8 @@ typedef struct {
 	bool center;
 } data;
 
+float dotprod( v4sf a, v4sf b );
+float lenght( v4sf a );
 int initphys(data** object);
 int findstructs(data* object);
 int integrate(data* object);
