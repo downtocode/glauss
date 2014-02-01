@@ -14,16 +14,16 @@ long double elcharge;
 bool quiet, random;
 
 //Static variables
-static char str[100];
+static char str[200];
 static float velmax, massrand, chargerand, sizerand;
 
-int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[100], char filename[100]) {
+int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[200], char filename[200]) {
 	int count = 0;
-	char word[100], variable[100], namebuff[100];
+	char word[200], variable[200], namebuff[200];
 	long double anothervar;
 	float value, base, power;
 	FILE *inconf = fopen ( "simconf.conf", "r" );
-	while(fgets (str, 200, inconf)!=NULL) {
+	while(fgets (str, sizeof(str), inconf)!=NULL) {
 		sscanf(str, "%s = \"%f\"", word, &value);
 		if(strcmp(word, "dt") == 0) {
 			*dt = value;
@@ -94,7 +94,7 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 			}
 		}
 		FILE *inprep = fopen ( filename, "r" );
-		while(fgets (str, 500, inprep)!=NULL) {
+		while(fgets (str, sizeof(str), inprep)!=NULL) {
 			if (strstr(str, "#") == NULL) {
 				count += 1;
 			}
@@ -104,16 +104,16 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 	return count;
 }
 
-int parser(data** object, char filename[100]) {
+int parser(data** object, char filename[200]) {
 	int i, link;
-	char links[100], *linkstr, ignflag;
+	char links[200], *linkstr, ignflag;
 	float posx, posy, posz, velx, vely, velz, bond, radius;
 	long double mass, chargetemp;
 	
 	FILE *in = fopen ( filename, "r" );
 	
 	if( random == 0 ) {
-		while(fgets (str, 500, in)!= NULL) {
+		while(fgets (str, sizeof(str), in)!= NULL) {
 			if (strstr(str, "#") == NULL) {
 				sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"", &i, &posx, &posy, &posz, &velx, \
 				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
@@ -128,7 +128,7 @@ int parser(data** object, char filename[100]) {
 				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
 				(*object)[i].center = 0;
-				(*object)[i].radius = radius/100;
+				(*object)[i].radius = radius;
 				
 				if( quiet == 0 ) printf("Object %i links: ", i);
 				linkstr = strtok(links,",");
