@@ -53,17 +53,17 @@ int findstructs(data* object) {
 
 
 int integrate(data* object) {
-	findstructs(object);
+	//findstructs(object);
 	
 	for(i = 1; i < obj + 1; i++) {
 		if(object[i].ignore == 1) continue;
 		
 		
-		if(object[i].pos[0] < 0 || object[i].pos[0] > width) {
+		if(object[i].pos[0] < 0 || object[i].pos[0] > 1) {
 			object[i].vel[0] = -object[i].vel[0];
 		}
 		
-		if(object[i].pos[1] < 0 || object[i].pos[1] > height) {
+		if(object[i].pos[1] < 0 || object[i].pos[1] > 1) {
 			object[i].vel[1] = -object[i].vel[1];
 		}
 		

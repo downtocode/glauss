@@ -10,6 +10,7 @@
 #include <SDL2/SDL_opengl.h>
 #include <freetype2/ft2build.h>
 #include FT_FREETYPE_H
+#include <GL/glut.h>
 
 //Functions.
 #include "physics.h"
@@ -103,11 +104,13 @@ int main( int argc, char *argv[] ) {
 		
 	/*	OpenGL.	*/
 		glClearColor(0.1,0.1,0.1,1);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(60.0, ((float)width/(float)height), 0.1, 100.0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		glShadeModel(GL_SMOOTH);
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		glOrtho( 0.0, width, 0.0, height, 1.0, -1.0 );
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 	/*	OpenGL.	*/
 	
 	/*	PHYSICS.	*/
@@ -124,6 +127,8 @@ int main( int argc, char *argv[] ) {
 	/*	PHYSICS.	*/
 	
 	time(&start);
+	
+	glTranslatef(0.0f, 0.0f, -6.0f);
 	
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
@@ -174,7 +179,9 @@ int main( int argc, char *argv[] ) {
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		if(stop == 0 ) integrate(object);
+		//glRotatef(0.0f, +1.0f, 0.0f, 0.0f);
+		
+		if( stop == 0 ) integrate(object);
 		if( quiet == 0 ) {
 			//FPS calculation.
 			time(&end);
@@ -211,7 +218,7 @@ int main( int argc, char *argv[] ) {
 		glEnd();
 		glColor3f(255,255,255);
 		
-		for(i = 1; i < obj + 2; i++) {
+		for(i = 1; i < obj + 1; i++) {
 			glBegin(GL_TRIANGLE_FAN);
 			radius = 8.0;
 			if( object[i].charge < 0 ) glColor3f(0,0,255);
@@ -222,7 +229,7 @@ int main( int argc, char *argv[] ) {
 			}
 			glVertex3f(object[i].pos[0], object[i].pos[1], object[i].pos[2]);
 			for( int r = 1; r < 361; r++ ) {
-				glVertex3f(object[i].pos[0] + sin((double)r) * object[i].radius, object[i].pos[1] + cos((double)r) * object[i].radius, object[i].pos[2]);
+				glVertex3f(object[i].pos[0] + sin((double)r) * (object[i].radius-object[i].pos[2]), object[i].pos[1] + cos((double)r) * (object[i].radius-object[i].pos[2]), object[i].pos[2]);
 			}
 			glEnd();
 		}
@@ -234,7 +241,7 @@ int main( int argc, char *argv[] ) {
 	
 	quit:
 		free(object);
-		FT_Done_Face( face );
+		//FT_Done_Face( face );
 		//FT_Done_FreeType( library );
 		SDL_DestroyWindow( window );
 		SDL_Quit();

@@ -5,7 +5,7 @@ OBJS=$(subst .c,.o,$(SOURCES))
 
 CC=cc
 PROGRAM=physengine
-LDFLAGS=-lm -lGL `freetype-config --libs` -lSDL2
+LDFLAGS=-lm -lGL -lGLU `freetype-config --libs` -lSDL2
 CFLAGS=-Wall -pedantic -std=c99 `freetype-config --cflags` -O3 -msse -g
 
 

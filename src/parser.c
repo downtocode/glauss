@@ -127,7 +127,8 @@ int parser(data** object, char filename[100]) {
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
-				(*object)[i].radius = radius;
+				(*object)[i].center = 0;
+				(*object)[i].radius = radius/100;
 				
 				if( quiet == 0 ) printf("Object %i links: ", i);
 				linkstr = strtok(links,",");
