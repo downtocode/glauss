@@ -1,20 +1,20 @@
 physengine
-================
+=================
 
-This program aims to implement a physics engine whilst aiming for maximum performance. Uses SDL2 and the Freetype libraries for display. Implemented in pure C.
+This program aims to implement a physics simulations engine whilst aiming for maximum performance. Written in C, using the OpenGL, SDL 2 and the Freetype 2 libraries.
 
 Description
 -----------
-This physics engine uses the Velocity Verlet integration method to simulate particle movement and SDL2 to display whatever's happening. Right now, Gravity and Electromagnetism are simulated, along with a spring link feature.
+This physics engine uses a variant of the Velocity Verlet integration method to simulate object movement and SDL2 to display whatever's happening. The forces capable of being simulated are: gravitational, electrostatic and bonding.
 
 Compiling
 ---------
-You need make, a sane C compiler(which supports C99), SDL2(and whatever that requires - like OpenGL dev libraries) and the freetype libarry. Keep in mind many distributions like to place the SDL2 development libraries in a variety of sublocations within the /usr/include directory. In Debian's case, the headers were within a directory called "SDL2", so just take a look down at your headers directory and if required modify main.c which contains the only SDL2 includes.
+You need make, a sane C compiler(which supports C99), SDL2(and whatever that requires - like OpenGL dev libraries) and the freetype library. Keep in mind many distributions like to place the SDL2 development libraries in a variety of sublocations within the /usr/include directory. In Debian's case, the headers were within a directory called "SDL2", so just take a look down at your headers directory and if required modify main.c which contains the only SDL2 includes.
 Once you have those three things, run make.
 
 Running
 -------
-Just run the physengine executable. Modify the posdata.dat to whatever you want to simulate.
+Just run the physengine executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated.
 
 Controls
 --------
@@ -28,18 +28,32 @@ Right - Double the time dt
 
 Space - Pause
 
+Mouse wheel - zoom in and out (and sideways, if supported)
+
+Command line arguments
+----------------------
+**--quiet** - Suppresses most informational messages. Errors are still printed to stderr
+**--novid** - Disables SDL window creation and any OpenGL functions in the main loop. OpenGL and Freetype are still initialized.
+**-f (filename)** - Specifies a posdata.dat to use. In case no such file exists, the configuration file's posdata option is used. If both are missing, the program exists before anything has been initialized.
+
+simconf.conf
+------------
+This file contains the program configuration. Each option has to have its value in quotation marks.
+
 posdata.dat
 -----------
-This file determines the positions, velocities, mass, charge and particles that are linked. Currently, only two dimensions are supported, so for any vectorial parameter you have to provide the two components. Links must be seperated by commas without any spaces.
+This file determines the positions, velocities, mass, charge and particles that are linked. Links must be seperated by commas without any spaces. Keep in mind that in case there are two objects in the same place/a line is duplicated, the physics engine will silently scatter all the objects to infinity.
 
-Development comment
--------------------
-Using SDL2 was a bother at the start as there is no proper tutorial(yet). SDL2_TTF was also used but due to a memory hole it created was eventually dropped completely out. Using freetype2 directly shall be used for OSD in the future.
-You might see a lot of comments about black magic in commit messages and actual comments, but worry not, this program contains 0% blasphemous code.
+Planned features
+----------------
+Right now getting basic molecular dynamics simulations and an N-body system of orbiting bodies is the aim of the project. In the future, getting a binary space partitioning would be nice.
+Being developed right now is an algorithm to determine the linked objects, find their center of mass/charge and use that center to reduce the interobject force calculations.
 
 Progress/Possible applications
----------------------
-Can be modified into an Angry Birds clone in about an hour.
+------------------------------
+Could probably be modified into a Doom clone in a week.
+
+~~Can be modified into an Angry Birds clone in about an hour.~~
 
 ~~Can be modified into a Space Invaders clone in less than 10 minutes.~~
 

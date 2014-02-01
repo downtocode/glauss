@@ -187,7 +187,7 @@ int main( int argc, char *argv[] ) {
 			++counter;
 			sec = difftime (end, start);
 			fps = (((float)counter)/((float)sec));
-			//printf("FPS = %.2f\r", fps);
+			printf("FPS = %.2f\r", fps);
 		}
 		if( novid == 1 ) continue;
 		
