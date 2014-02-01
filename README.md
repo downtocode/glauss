@@ -33,7 +33,9 @@ Mouse wheel - zoom in and out (and sideways, if supported)
 Command line arguments
 ----------------------
 **--quiet** - Suppresses most informational messages. Errors are still printed to stderr
+
 **--novid** - Disables SDL window creation and any OpenGL functions in the main loop. OpenGL and Freetype are still initialized.
+
 **-f (filename)** - Specifies a posdata.dat to use. In case no such file exists, the configuration file's posdata option is used. If both are missing, the program exists before anything has been initialized.
 
 simconf.conf
