@@ -106,7 +106,7 @@ int main( int argc, char *argv[] ) {
 		glClearColor(0.1,0.1,0.1,1);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		gluPerspective(60.0, ((float)width/(float)height), 0.1, 100.0);
+		gluPerspective(90.0, ((float)width/(float)height), 0.0, 10.0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		glMatrixMode(GL_MODELVIEW);
@@ -171,15 +171,14 @@ int main( int argc, char *argv[] ) {
 						}
 					}
 					break;
+				case SDL_MOUSEWHEEL:
+					glTranslatef(0.0f, 0.0f, (float)event.wheel.y);
+					break;
 				case SDL_QUIT:
 					goto quit;
 					break;
 			}
 		}
-		
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		//glRotatef(0.0f, +1.0f, 0.0f, 0.0f);
 		
 		if( stop == 0 ) integrate(object);
 		if( quiet == 0 ) {
@@ -188,11 +187,14 @@ int main( int argc, char *argv[] ) {
 			++counter;
 			sec = difftime (end, start);
 			fps = (((float)counter)/((float)sec));
-			printf("FPS = %.2f\r", fps);
+			//printf("FPS = %.2f\r", fps);
 		}
 		if( novid == 1 ) continue;
 		
-		glColor3f(255,255,255);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glRotatef(0.1f, 0.1f, 0.1f, 0.1f);
+		
+		//Drawing lines for every link.
 		glBegin(GL_LINES);
 			for(i = 1; i < obj + 1; i++) {
 				for(j = 1; j < obj + 1; j++) {
@@ -203,8 +205,10 @@ int main( int argc, char *argv[] ) {
 					}
 				}
 			}
+			glColor3f(255,255,255);
 		glEnd();
 		
+		//Drawing choseon object's red box.
 		glColor3f(255,0,0);
 		glBegin(GL_LINE_LOOP);
 			for(i = 1; i < obj + 1; i++) {
@@ -215,9 +219,11 @@ int main( int argc, char *argv[] ) {
 					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] - boxsize, 1 );
 				}
 			}
+			glColor3f(255,255,255);
 		glEnd();
-		glColor3f(255,255,255);
 		
+		
+		//Drawing the objects.
 		for(i = 1; i < obj + 1; i++) {
 			glBegin(GL_TRIANGLE_FAN);
 			radius = 8.0;
@@ -232,9 +238,8 @@ int main( int argc, char *argv[] ) {
 				glVertex3f(object[i].pos[0] + sin((double)r) * (object[i].radius-object[i].pos[2]), object[i].pos[1] + cos((double)r) * (object[i].radius-object[i].pos[2]), object[i].pos[2]);
 			}
 			glEnd();
+			glColor3f(255,255,255);
 		}
-		
-		glColor3f(255,255,255);
 		
 		SDL_GL_SwapWindow(window);
 	}
