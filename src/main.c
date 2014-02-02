@@ -15,6 +15,9 @@
 #include "physics.h"
 #include "parser.h"
 
+//Definitions
+#define spheredetail 30
+
 FT_Library  library;
 FT_Face face;
 
@@ -38,6 +41,16 @@ time_t start, end;
 double fps;
 unsigned int counter = 0;
 unsigned int sec;
+
+void sphere(float x, float y, float z, float radius,int subdivisions) {
+	GLUquadricObj *quadric=gluNewQuadric();
+	gluQuadricNormals(quadric, GLU_FLAT);
+	glPushMatrix();
+	glTranslatef( x,y,z );
+	gluSphere(quadric, radius, subdivisions,subdivisions);
+	glPopMatrix();
+	gluDeleteQuadric(quadric);
+}
 
 int main( int argc, char *argv[] ) {
 	/*	ARGUMENT SETTING	*/
@@ -235,7 +248,6 @@ int main( int argc, char *argv[] ) {
 		
 		//Drawing the objects.
 		for(i = 1; i < obj + 1; i++) {
-			glBegin(GL_TRIANGLE_FAN);
 			radius = 8.0;
 			if( object[i].charge < 0 ) glColor3f(0,0,255);
 			if( object[i].charge == 0 ) glColor3f(255,255,255);
@@ -243,11 +255,7 @@ int main( int argc, char *argv[] ) {
 			if( object[i].center == 1 ) {
 				glColor3f(208,0,144);
 			}
-			glVertex3f(object[i].pos[0], object[i].pos[1], object[i].pos[2]);
-			for( int r = 1; r < 361; r++ ) {
-				glVertex3f(object[i].pos[0] + sin((double)r) * (object[i].radius), object[i].pos[1] + cos((double)r) * (object[i].radius), object[i].pos[2]);
-			}
-			glEnd();
+			sphere(object[i].pos[0], object[i].pos[1], object[i].pos[2], object[i].radius, spheredetail);
 			glColor3f(255,255,255);
 		}
 		
