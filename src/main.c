@@ -1,16 +1,15 @@
 //Things you should all have anyway.
 #include <stdio.h>
-#include <stdlib.h>
+
 #include <tgmath.h>
 #include <time.h>
-#include <unistd.h>
 
 //Things you gotta get.
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#include <GL/glut.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <GL/glut.h>
 
 //Functions.
 #include "physics.h"
@@ -138,16 +137,28 @@ int main( int argc, char *argv[] ) {
 						if( stop == 0 ) stop = 1;
 						else if( stop == 1 ) stop = 0;
 					}
-					if(event.key.keysym.sym==SDLK_RIGHT) {
+					if(event.key.keysym.sym==SDLK_KP_PLUS) {
 						dt *= 2;
 						printf("dt = %f\n", dt);
 					}
-					if(event.key.keysym.sym==SDLK_LEFT) {
+					if(event.key.keysym.sym==SDLK_KP_MINUS) {
 						dt /= 2;
 						printf("dt = %f\n", dt);
 					}
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
+					}
+					if(event.key.keysym.sym==SDLK_UP) {
+						glRotatef(1.1f, 5.0f, 0.0f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_DOWN) {
+						glRotatef(-1.1f, 5.0f, 0.0f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_RIGHT) {
+						glRotatef(-1.1f, 0.0f, 5.0f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_LEFT) {
+						glRotatef(-1.1f, 0.0f, -5.0f, 0.0f);
 					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -192,7 +203,6 @@ int main( int argc, char *argv[] ) {
 		if( novid == 1 ) continue;
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glRotatef(0.1f, 0.1f, 0.1f, 0.1f);
 		
 		//Drawing lines for every link.
 		glBegin(GL_LINES);
@@ -235,7 +245,7 @@ int main( int argc, char *argv[] ) {
 			}
 			glVertex3f(object[i].pos[0], object[i].pos[1], object[i].pos[2]);
 			for( int r = 1; r < 361; r++ ) {
-				glVertex3f(object[i].pos[0] + sin((double)r) * (object[i].radius-object[i].pos[2]), object[i].pos[1] + cos((double)r) * (object[i].radius-object[i].pos[2]), object[i].pos[2]);
+				glVertex3f(object[i].pos[0] + sin((double)r) * (object[i].radius), object[i].pos[1] + cos((double)r) * (object[i].radius), object[i].pos[2]);
 			}
 			glEnd();
 			glColor3f(255,255,255);

@@ -22,13 +22,17 @@ LMB   - Select object under cursor
 
 RMB   - Deselect
 
-Left  - Halve the time dt
+Left/Right  - Rotate camera CW/CCW around the Y axis
 
-Right - Double the time dt
+Up/Down - Rotate camera CW/CCW around the X axis
+
+Mouse wheel - Move camera on the Z axis.
+
+Keypad +  - Halve the time dt
+
+Keypad - - Double the time dt
 
 Space - Pause
-
-Mouse wheel - zoom in and out (and sideways, if supported)
 
 Command line arguments
 ----------------------
