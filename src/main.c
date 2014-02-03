@@ -127,14 +127,15 @@ int main( int argc, char *argv[] ) {
 	
 	/*	PHYSICS.	*/
 		data* object;
-		/*	Okay, some explanation is needed. We want to make an array containing object parameters. So fine, we make it as a pointer.
-			Then we call a parser program to read in our object data and dump it into the struct of object parameters. We pass the memory
-			address to it so it can screw around with it. Then after it does whatever it's supposed to, we run the integration in the main loop.	*/
 		if( quiet == 0 ) {
 			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%i, fontname=%s\n", dt, width, height, boxsize, fontname);
 			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n", elcharge, gconst, epsno);
 		}
+		
+		//Malloc the objects
 		initphys(&object);
+		
+		//Use objects as an array of structs inside the main program and as a pointer when passed on to other functions
 		parser(&object, filename);
 	/*	PHYSICS.	*/
 	
@@ -161,17 +162,35 @@ int main( int argc, char *argv[] ) {
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
 					}
-					if(event.key.keysym.sym==SDLK_UP) {
+					if(event.key.keysym.sym==SDLK_w) {
 						glRotatef(1.1f, 5.0f, 0.0f, 0.0f);
 					}
-					if(event.key.keysym.sym==SDLK_DOWN) {
+					if(event.key.keysym.sym==SDLK_s) {
 						glRotatef(-1.1f, 5.0f, 0.0f, 0.0f);
 					}
-					if(event.key.keysym.sym==SDLK_RIGHT) {
+					if(event.key.keysym.sym==SDLK_d) {
 						glRotatef(-1.1f, 0.0f, 5.0f, 0.0f);
 					}
-					if(event.key.keysym.sym==SDLK_LEFT) {
+					if(event.key.keysym.sym==SDLK_a) {
 						glRotatef(-1.1f, 0.0f, -5.0f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_LEFT) {
+						glTranslatef(0.1f, 0.0f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_RIGHT) {
+						glTranslatef(-0.1f, 0.0f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_UP) {
+						glTranslatef(0.0f, 0.1f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_DOWN) {
+						glTranslatef(0.0f, -0.1f, 0.0f);
+					}
+					if(event.key.keysym.sym==SDLK_q) {
+						glRotatef(1.1f, 0.0f, 0.0f, 5.0f);
+					}
+					if(event.key.keysym.sym==SDLK_e) {
+						glRotatef(-1.1f, 0.0f, 0.0f, 5.0f);
 					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:

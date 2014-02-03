@@ -22,11 +22,11 @@ LMB   - Select object under cursor
 
 RMB   - Deselect
 
-Left/Right  - Rotate camera CW/CCW around the Y axis
+Left/Right/Up/Down - Translate camera around the X and Y axis.
 
-Up/Down - Rotate camera CW/CCW around the X axis
+Mouse wheel - Translate camera on the Z axis.
 
-Mouse wheel - Move camera on the Z axis.
+WS/AD/QE - Rotate camera around the point set by translation.
 
 Keypad +  - Halve the time dt
 
