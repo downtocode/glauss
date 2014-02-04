@@ -112,22 +112,17 @@ int parser(data** object, char filename[200]) {
 	
 	FILE *in = fopen ( filename, "r" );
 	
-	if( quiet == 0 ) {
-		printf("	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
-	}
-	
 	if( random == 0 ) {
+		if( quiet == 0 ) {
+			printf("	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
+		}
 		while(fgets (str, sizeof(str), in)!= NULL) {
 			if (strstr(str, "#") == NULL) {
 				sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"", &i, &posx, &posy, &posz, &velx, \
 				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
 				
-				(*object)[i].pos[0] = posx;
-				(*object)[i].pos[1] = posy;
-				(*object)[i].pos[2] = posz;
-				(*object)[i].vel[0] = velx;
-				(*object)[i].vel[1] = vely;
-				(*object)[i].vel[2] = velz;
+				(*object)[i].pos = (v4sf){ posx, posy, posz };
+				(*object)[i].vel = (v4sf){ velx, vely, velz };
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
@@ -151,11 +146,13 @@ int parser(data** object, char filename[200]) {
 		}
 	} else if ( random == 1 ) {
 		for(i = 1; i < obj + 1; i++) {
-			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX)*1000, ((float)rand()/(float)RAND_MAX)*600, 1};
-			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax, 0};
+			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX), ((float)rand()/(float)RAND_MAX), ((float)rand()/(float)RAND_MAX)};
+			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
 			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;
-			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand + 1;
+			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand + 0.07;
+			(*object)[i].center = 0;
+			(*object)[i].ignore = 0;
 		}
 	}
 	fclose(in);

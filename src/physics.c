@@ -57,14 +57,16 @@ int integrate(data* object) {
 	
 	for(i = 1; i < obj + 1; i++) {
 		if(object[i].ignore == 1) continue;
-		
-		
-		if(object[i].pos[0] < 0 || object[i].pos[0] > 1) {
+		if(object[i].pos[0] < -1 || object[i].pos[0] > 1) {
 			object[i].vel[0] = -object[i].vel[0];
 		}
 		
-		if(object[i].pos[1] < 0 || object[i].pos[1] > 1) {
+		if(object[i].pos[1] < -1 || object[i].pos[1] > 1) {
 			object[i].vel[1] = -object[i].vel[1];
+		}
+		
+		if(object[i].pos[2] < -1 || object[i].pos[2] > 1) {
+			object[i].vel[2] = -object[i].vel[2];
 		}
 		
 		object[i].pos += (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
