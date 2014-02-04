@@ -112,6 +112,10 @@ int parser(data** object, char filename[200]) {
 	
 	FILE *in = fopen ( filename, "r" );
 	
+	if( quiet == 0 ) {
+		printf("	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
+	}
+	
 	if( random == 0 ) {
 		while(fgets (str, sizeof(str), in)!= NULL) {
 			if (strstr(str, "#") == NULL) {
@@ -131,16 +135,14 @@ int parser(data** object, char filename[200]) {
 				(*object)[i].radius = radius;
 				
 				if( quiet == 0 ) {
-					printf("Object %i:\n", i);
-					printf("	Position=(%f, %f, %f), Velocity=(%f, %f, %f)\n", (*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], (*object)[i].vel[2]);
-					printf("	Mass=%LE, Charge=%LE, Radius=%f, Ignore=%c\n", (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
-					printf("	Links: ");
+					printf("(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", (*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
+					(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
 				}
 				
 				linkstr = strtok(links,",");
 				while(linkstr != NULL) {
 					sscanf(linkstr, "%i-%f", &link, &bond);
-					if( quiet == 0 ) printf("Obj:%i - Eqil:%f, ", link, bond);
+					if( quiet == 0 ) printf("%i - %f ", link, bond);
 					(*object)[i].linkwith[link] = bond;
 					linkstr = strtok(NULL,",");
 				}
