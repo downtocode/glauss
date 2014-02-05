@@ -8,8 +8,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <GL/glut.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 
 //Functions.
 #include "physics.h"
@@ -17,9 +15,6 @@
 
 //Definitions
 #define spheredetail 30
-
-FT_Library  library;
-FT_Face face;
 
 
 static int i, j;
@@ -97,24 +92,6 @@ int main( int argc, char *argv[] ) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
 	/*	SDL.	*/
-	
-	/*	Freetype.	*/
-		if(FT_Init_FreeType(&library)) {
-			fprintf(stderr, "Could not init freetype library\n");
-			return 1;
-		}
-		if(FT_New_Face(library, fontname, 0, &face)) {
-			fprintf(stderr, "Could not open font\n");
-		} else {
-			FT_Set_Pixel_Sizes(face, 0, 12);
-			for (unsigned long u = 32; u < 128; u++) {
-				if (FT_Load_Char(face, u, FT_LOAD_RENDER)) {
-					fprintf(stderr, "Could not load character %lu\n", u);
-					continue;
-				}
-			}
-		}
-	/*	Freetype.	*/
 		
 	/*	OpenGL.	*/
 		glMatrixMode(GL_PROJECTION);
@@ -282,8 +259,6 @@ int main( int argc, char *argv[] ) {
 	
 	quit:
 		free(object);
-		//FT_Done_Face( face );
-		//FT_Done_FreeType( library );
 		SDL_DestroyWindow( window );
 		SDL_Quit();
 		printf("\nQuitting!\n");
