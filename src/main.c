@@ -67,12 +67,14 @@ int main( int argc, char *argv[] ) {
 			if( !strcmp( "-f", argv[i] ) ) {
 				strcpy( filename, argv[i+1] );
 			}
+			if( !strcmp( "--help", argv[i] ) ) {
+				printf("Possible arguments: --novid to disable video, --quiet to disable text output, -f (filename) to specify a posdata file\n");
+			}
 		}
 		printf("\n");
 	}
-	/*	ARGUMENT SETTING	*/
-	
 	obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname, filename);
+	/*	ARGUMENT SETTING	*/
 	
 	/*	Error handling.	*/
 		if( obj == 0 ) {
@@ -115,14 +117,11 @@ int main( int argc, char *argv[] ) {
 	/*	Freetype.	*/
 		
 	/*	OpenGL.	*/
-		glClearColor(0.1,0.1,0.1,1);
 		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective(90.0, ((float)width/(float)height), 0.0, 10.0);
+		gluPerspective(45.0, ((float)width/(float)height), 0.0, 10.0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
 	/*	OpenGL.	*/
 	
 	/*	PHYSICS.	*/
