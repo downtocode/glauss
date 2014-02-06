@@ -7,6 +7,8 @@
 //Things you gotta get.
 #include <SDL2/SDL.h>
 #include <ft2build.h>
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
 #include FT_FREETYPE_H
 
 //Functions.
@@ -39,6 +41,8 @@ time_t start, end;
 double fps;
 unsigned int counter = 0;
 unsigned int sec;
+
+
 
 int main( int argc, char *argv[] ) {
 	/*	ARGUMENT SETTING	*/
@@ -74,6 +78,17 @@ int main( int argc, char *argv[] ) {
 	/*	SDL.	*/
 		SDL_Event event;
 	/*	SDL.	*/
+	
+	/*	OGL && EGL	*/
+		int vint1, vint2;
+		EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+		if( !eglInitialize( display, &vint1, &vint2 ) ) fprintf(stderr, "Unable to init EGL\n");
+		printf("EGL version: %i.%i\n", vint1, vint2);
+		EGLSurface surface;
+		EGLContext context;
+		if( !eglMakeCurrent( display, surface, surface, context ) ) fprintf(stderr, "eglMakeCurrent failed\n");
+		
+	/*	OGL && EGL	*/
 	
 	/*	Freetype.	*/
 		if(FT_Init_FreeType(&library)) {
@@ -245,11 +260,12 @@ int main( int argc, char *argv[] ) {
 			glColor3f(255,255,255);
 		}*/
 		
-		
+		eglSwapBuffers(display, surface);
 	}
 	
 	quit:
 		free(object);
+		eglTerminate( display );
 		//FT_Done_Face( face );
 		//FT_Done_FreeType( library );
 		SDL_Quit();
