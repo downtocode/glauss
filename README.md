@@ -1,5 +1,7 @@
-physengine
+physengine -- OPENGL-OLD
 =================
+
+**THIS IS A BACKUP, CHECK OUT THE PREVIOUS COMMITS BEFORE OGL WAS CUT**
 
 This program aims to implement a physics simulations engine whilst aiming for maximum performance. Written in C, using the OpenGL, SDL 2 and the Freetype 2 libraries.
 
