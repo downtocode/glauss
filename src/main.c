@@ -6,8 +6,10 @@
 
 //Things you gotta get.
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <GL/glut.h>
+#include <ft2build.h>
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#include FT_FREETYPE_H
 
 //Functions.
 #include "physics.h"
@@ -15,6 +17,9 @@
 
 //Definitions
 #define spheredetail 30
+
+FT_Library  library;
+FT_Face face;
 
 
 static int i, j;
@@ -37,15 +42,7 @@ double fps;
 unsigned int counter = 0;
 unsigned int sec;
 
-void sphere(float x, float y, float z, float radius,int subdivisions) {
-	GLUquadricObj *quadric=gluNewQuadric();
-	gluQuadricNormals(quadric, GLU_FLAT);
-	glPushMatrix();
-	glTranslatef( x,y,z );
-	gluSphere(quadric, radius, subdivisions,subdivisions);
-	glPopMatrix();
-	gluDeleteQuadric(quadric);
-}
+
 
 int main( int argc, char *argv[] ) {
 	/*	ARGUMENT SETTING	*/
@@ -79,27 +76,37 @@ int main( int argc, char *argv[] ) {
 	/*	Error handling.	*/
 	
 	/*	SDL.	*/
-		SDL_Init(SDL_INIT_VIDEO);
-		SDL_Window* window = NULL;
-		if( novid == 0 ) {
-			window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL );
-			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-			SDL_GL_SetSwapInterval(-1);
-			SDL_GL_CreateContext(window);
-		}
 		SDL_Event event;
-		if( quiet == 0 ) {
-			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
-		}
 	/*	SDL.	*/
+	
+	/*	OGL && EGL	*/
+		int vint1, vint2;
+		EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+		if( !eglInitialize( display, &vint1, &vint2 ) ) fprintf(stderr, "Unable to init EGL\n");
+		printf("EGL version: %i.%i\n", vint1, vint2);
+		EGLSurface surface;
+		EGLContext context;
+		if( !eglMakeCurrent( display, surface, surface, context ) ) fprintf(stderr, "eglMakeCurrent failed\n");
 		
-	/*	OpenGL.	*/
-		glMatrixMode(GL_PROJECTION);
-		gluPerspective(45.0, ((float)width/(float)height), 0.0, 10.0);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-		glMatrixMode(GL_MODELVIEW);
-	/*	OpenGL.	*/
+	/*	OGL && EGL	*/
+	
+	/*	Freetype.	*/
+		if(FT_Init_FreeType(&library)) {
+			fprintf(stderr, "Could not init freetype library\n");
+			return 1;
+		}
+		if(FT_New_Face(library, fontname, 0, &face)) {
+			fprintf(stderr, "Could not open font\n");
+		} else {
+			FT_Set_Pixel_Sizes(face, 0, 12);
+			for (unsigned long u = 32; u < 128; u++) {
+				if (FT_Load_Char(face, u, FT_LOAD_RENDER)) {
+					fprintf(stderr, "Could not load character %lu\n", u);
+					continue;
+				}
+			}
+		}
+	/*	Freetype.	*/
 	
 	/*	PHYSICS.	*/
 		data* object;
@@ -117,7 +124,6 @@ int main( int argc, char *argv[] ) {
 	
 	time(&start);
 	
-	glTranslatef(0.0f, 0.0f, -6.0f);
 	
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
@@ -138,7 +144,7 @@ int main( int argc, char *argv[] ) {
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
 					}
-					if(event.key.keysym.sym==SDLK_w) {
+					/*if(event.key.keysym.sym==SDLK_w) {
 						glRotatef(1.1f, 5.0f, 0.0f, 0.0f);
 					}
 					if(event.key.keysym.sym==SDLK_s) {
@@ -167,7 +173,7 @@ int main( int argc, char *argv[] ) {
 					}
 					if(event.key.keysym.sym==SDLK_e) {
 						glRotatef(-1.1f, 0.0f, 0.0f, 5.0f);
-					}
+					}*/
 					break;
 				case SDL_MOUSEBUTTONDOWN:
 					if( event.button.button == SDL_BUTTON_RIGHT ) {
@@ -190,9 +196,9 @@ int main( int argc, char *argv[] ) {
 						}
 					}
 					break;
-				case SDL_MOUSEWHEEL:
+				/*case SDL_MOUSEWHEEL:
 					glTranslatef((float)event.wheel.x, 0.0f, (float)event.wheel.y);
-					break;
+					break;*/
 				case SDL_QUIT:
 					goto quit;
 					break;
@@ -210,7 +216,7 @@ int main( int argc, char *argv[] ) {
 		}
 		if( novid == 1 ) continue;
 		
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		/*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		//Drawing lines for every link.
 		glBegin(GL_LINES);
@@ -252,14 +258,16 @@ int main( int argc, char *argv[] ) {
 			}
 			sphere(object[i].pos[0], object[i].pos[1], object[i].pos[2], object[i].radius, spheredetail);
 			glColor3f(255,255,255);
-		}
+		}*/
 		
-		SDL_GL_SwapWindow(window);
+		eglSwapBuffers(display, surface);
 	}
 	
 	quit:
 		free(object);
-		SDL_DestroyWindow( window );
+		eglTerminate( display );
+		//FT_Done_Face( face );
+		//FT_Done_FreeType( library );
 		SDL_Quit();
 		printf("\nQuitting!\n");
 		return 0;
