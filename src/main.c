@@ -14,6 +14,11 @@
 //Functions.
 #include "physics.h"
 #include "parser.h"
+#include "x11disp.h"
+
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
 
 //Definitions
 #define spheredetail 30
@@ -75,20 +80,24 @@ int main( int argc, char *argv[] ) {
 		}
 	/*	Error handling.	*/
 	
+	/*	OGL && EGL	*/
+		Display *x_display = XOpenDisplay(NULL);
+		Window win;
+		EGLSurface egl_surf;
+		EGLContext egl_ctx;
+		EGLDisplay egl_dpy = eglGetDisplay(x_display);
+		EGLint eglv1, eglv2;
+		
+		eglInitialize(egl_dpy, &eglv1, &eglv2);
+		x11disp(x_display, egl_dpy, "Physengine", 0, 0, width, height, &win, &egl_ctx, &egl_surf);
+		XMapWindow(x_display, win);
+		eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx);
+	/*	OGL && EGL	*/
+	
 	/*	SDL.	*/
+		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Event event;
 	/*	SDL.	*/
-	
-	/*	OGL && EGL	*/
-		int vint1, vint2;
-		EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-		if( !eglInitialize( display, &vint1, &vint2 ) ) fprintf(stderr, "Unable to init EGL\n");
-		printf("EGL version: %i.%i\n", vint1, vint2);
-		EGLSurface surface;
-		EGLContext context;
-		if( !eglMakeCurrent( display, surface, surface, context ) ) fprintf(stderr, "eglMakeCurrent failed\n");
-		
-	/*	OGL && EGL	*/
 	
 	/*	Freetype.	*/
 		if(FT_Init_FreeType(&library)) {
@@ -260,12 +269,12 @@ int main( int argc, char *argv[] ) {
 			glColor3f(255,255,255);
 		}*/
 		
-		eglSwapBuffers(display, surface);
+		//eglSwapBuffers(display, surface);
 	}
 	
 	quit:
 		free(object);
-		eglTerminate( display );
+		//eglTerminate( display );
 		//FT_Done_Face( face );
 		//FT_Done_FreeType( library );
 		SDL_Quit();
