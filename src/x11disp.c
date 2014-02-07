@@ -1,10 +1,7 @@
-#include <stdio.h>
 #include <assert.h>
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/keysym.h>
 
 void x11disp(Display *x_dpy, EGLDisplay egl_dpy, const char *name, int x, int y, int width, int height, Window *winRet, EGLContext *ctxRet, EGLSurface *surfRet) {
 	static const EGLint attribs[] = {
@@ -21,7 +18,7 @@ void x11disp(Display *x_dpy, EGLDisplay egl_dpy, const char *name, int x, int y,
 		EGL_NONE
 	};
 	
-	int scrnum = DefaultScreen( x_dpy );;
+	int scrnum = DefaultScreen( x_dpy );
 	XSetWindowAttributes attr;
 	unsigned long mask;
 	Window root = RootWindow( x_dpy, scrnum );
@@ -34,7 +31,7 @@ void x11disp(Display *x_dpy, EGLDisplay egl_dpy, const char *name, int x, int y,
 	EGLint vid;
 	
 	
-	eglChooseConfig( egl_dpy, attribs, &config, 1, &num_configs);
+	eglChooseConfig( egl_dpy, attribs, &config, 1, &num_configs );
 	
 	assert(config);
 	assert(num_configs > 0);
@@ -50,9 +47,7 @@ void x11disp(Display *x_dpy, EGLDisplay egl_dpy, const char *name, int x, int y,
 	attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
 	mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 	
-	win = XCreateWindow( x_dpy, root, 0, 0, width, height,
-	0, visInfo->depth, InputOutput,
-	visInfo->visual, mask, &attr );
+	win = XCreateWindow( x_dpy, root, 0, 0, width, height, 0, visInfo->depth, InputOutput, visInfo->visual, mask, &attr );
 	
 	XSizeHints sizehints;
 	sizehints.x = x;
@@ -61,8 +56,7 @@ void x11disp(Display *x_dpy, EGLDisplay egl_dpy, const char *name, int x, int y,
 	sizehints.height = height;
 	sizehints.flags = USSize | USPosition;
 	XSetNormalHints(x_dpy, win, &sizehints);
-	XSetStandardProperties(x_dpy, win, name, name,
-	None, (char **)NULL, 0, &sizehints);
+	XSetStandardProperties(x_dpy, win, name, name, None, (char **)NULL, 0, &sizehints);
 	
 	eglBindAPI(EGL_OPENGL_ES_API);
 	

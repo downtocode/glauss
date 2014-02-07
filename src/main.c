@@ -16,10 +16,6 @@
 #include "parser.h"
 #include "x11disp.h"
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/keysym.h>
-
 //Definitions
 #define spheredetail 30
 
@@ -95,7 +91,7 @@ int main( int argc, char *argv[] ) {
 	/*	OGL && EGL	*/
 	
 	/*	SDL.	*/
-		SDL_Init(SDL_INIT_VIDEO);
+		SDL_Init(SDL_INIT_EVERYTHING);
 		SDL_Event event;
 	/*	SDL.	*/
 	
@@ -269,14 +265,14 @@ int main( int argc, char *argv[] ) {
 			glColor3f(255,255,255);
 		}*/
 		
-		//eglSwapBuffers(display, surface);
+		eglSwapBuffers(egl_dpy, egl_surf );
 	}
 	
 	quit:
 		free(object);
-		//eglTerminate( display );
-		//FT_Done_Face( face );
-		//FT_Done_FreeType( library );
+		eglTerminate( egl_dpy );
+		FT_Done_Face( face );
+		FT_Done_FreeType( library );
 		SDL_Quit();
 		printf("\nQuitting!\n");
 		return 0;
