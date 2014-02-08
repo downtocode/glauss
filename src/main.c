@@ -16,14 +16,12 @@
 #include "parser.h"
 #include "x11disp.h"
 
-//Definitions
-#define spheredetail 30
 
 FT_Library  library;
 FT_Face face;
 
 
-static int i, j;
+static int i, j, linkcount;
 int mousex, mousey, chosen = 0;
 
 //Default settings
@@ -36,13 +34,165 @@ long double elcharge = 0, gconst = 0, epsno = 0;
 bool novid = 0, quiet = 0, stop = 0;
 
 
-v4sf vectemp;
 
 time_t start, end;
 double fps;
 unsigned int counter = 0;
 unsigned int sec;
 
+
+//CLEANUPFROMONWARDS
+
+
+GLfloat verts[2][2] = {
+      { -1, -1 },
+      {  1, -1 }
+   };
+GLfloat colors[3][3] = {
+      { 1, 0, 0 },
+      { 0, 1, 0 },
+      { 0, 0, 1 }
+   };
+
+
+static GLfloat view_rotx = 0.0, view_roty = 0.0;
+static GLint u_matrix = -1;
+static GLint attr_pos = 0, attr_color = 1;
+
+
+static void
+make_z_rot_matrix(GLfloat angle, GLfloat *m)
+{
+   float c = cos(angle * acos(-1) / 180.0);
+   float s = sin(angle * acos(-1) / 180.0);
+   int i;
+   for (i = 0; i < 16; i++)
+      m[i] = 0.0;
+   m[0] = m[5] = m[10] = m[15] = 1.0;
+
+   m[0] = c;
+   m[1] = s;
+   m[4] = -s;
+   m[5] = c;
+}
+
+static void
+make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
+{
+   int i;
+   for (i = 0; i < 16; i++)
+      m[i] = 0.0;
+   m[0] = xs;
+   m[5] = ys;
+   m[10] = zs;
+   m[15] = 1.0;
+}
+
+
+static void
+mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
+{
+#define A(row,col)  a[(col<<2)+row]
+#define B(row,col)  b[(col<<2)+row]
+#define P(row,col)  p[(col<<2)+row]
+	GLfloat p[16];
+	GLint i;
+	for (i = 0; i < 4; i++) {
+		const GLfloat ai0=A(i,0),  ai1=A(i,1),  ai2=A(i,2),  ai3=A(i,3);
+		P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
+		P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
+		P(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
+		P(i,3) = ai0 * B(0,3) + ai1 * B(1,3) + ai2 * B(2,3) + ai3 * B(3,3);
+	}
+	memcpy(prod, p, sizeof(p));
+#undef A
+#undef B
+#undef PROD
+}
+
+
+void draw(void) {
+	GLfloat mat[16], rot[16], scale[16];
+	
+	/* Set modelview/projection matrix */
+	make_z_rot_matrix(view_rotx, rot);
+	make_scale_matrix(0.5, 0.5, 0.5, scale);
+	mul_matrix(mat, rot, scale);
+	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
+}
+
+
+void create_shaders(void) {
+   static const char *fragShaderText =
+      "precision mediump float;\n"
+      "varying vec4 v_color;\n"
+      "void main() {\n"
+      "   gl_FragColor = v_color;\n"
+      "}\n";
+   static const char *vertShaderText =
+      "uniform mat4 modelviewProjection;\n"
+      "attribute vec4 pos;\n"
+      "attribute vec4 color;\n"
+      "varying vec4 v_color;\n"
+      "void main() {\n"
+      "   gl_Position = modelviewProjection * pos;\n"
+      "   v_color = vec4(1,1,1,1);\n"
+      "}\n";
+
+   GLuint fragShader, vertShader, program;
+   GLint stat;
+
+   fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+   glShaderSource(fragShader, 1, (const char **) &fragShaderText, NULL);
+   glCompileShader(fragShader);
+   glGetShaderiv(fragShader, GL_COMPILE_STATUS, &stat);
+   if (!stat) {
+      printf("Error: fragment shader did not compile!\n");
+      exit(1);
+   }
+
+   vertShader = glCreateShader(GL_VERTEX_SHADER);
+   glShaderSource(vertShader, 1, (const char **) &vertShaderText, NULL);
+   glCompileShader(vertShader);
+   glGetShaderiv(vertShader, GL_COMPILE_STATUS, &stat);
+   if (!stat) {
+      printf("Error: vertex shader did not compile!\n");
+      exit(1);
+   }
+
+   program = glCreateProgram();
+   glAttachShader(program, fragShader);
+   glAttachShader(program, vertShader);
+   glLinkProgram(program);
+
+   glGetProgramiv(program, GL_LINK_STATUS, &stat);
+   if (!stat) {
+      char log[1000];
+      GLsizei len;
+      glGetProgramInfoLog(program, 1000, &len, log);
+      printf("Error: linking:\n%s\n", log);
+      exit(1);
+   }
+
+   glUseProgram(program);
+
+   if (1) {
+      /* test setting attrib locations */
+      glBindAttribLocation(program, attr_pos, "pos");
+      glBindAttribLocation(program, attr_color, "color");
+      glLinkProgram(program);  /* needed to put attribs into effect */
+   }
+   else {
+      /* test automatic attrib locations */
+      attr_pos = glGetAttribLocation(program, "pos");
+      attr_color = glGetAttribLocation(program, "color");
+   }
+
+   u_matrix = glGetUniformLocation(program, "modelviewProjection");
+   printf("Uniform modelviewProjection at %d\n", u_matrix);
+   printf("Attrib pos at %d\n", attr_pos);
+   printf("Attrib color at %d\n", attr_color);
+}
 
 
 int main( int argc, char *argv[] ) {
@@ -88,10 +238,13 @@ int main( int argc, char *argv[] ) {
 		x11disp(x_display, egl_dpy, "Physengine", 0, 0, width, height, &win, &egl_ctx, &egl_surf);
 		XMapWindow(x_display, win);
 		eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx);
+		
+		glViewport(0, 0, (GLint) width, (GLint) height);
+		create_shaders();
 	/*	OGL && EGL	*/
 	
 	/*	SDL.	*/
-		SDL_Init(SDL_INIT_EVERYTHING);
+		//SDL_Init(SDL_INIT_EVERYTHING);
 		SDL_Event event;
 	/*	SDL.	*/
 	
@@ -131,6 +284,7 @@ int main( int argc, char *argv[] ) {
 	
 	
 	while( 1 ) {
+		
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
 				case SDL_KEYDOWN:
@@ -178,9 +332,9 @@ int main( int argc, char *argv[] ) {
 					}
 					if(event.key.keysym.sym==SDLK_e) {
 						glRotatef(-1.1f, 0.0f, 0.0f, 5.0f);
-					}*/
-					break;
-				case SDL_MOUSEBUTTONDOWN:
+					}
+					break;*/
+				/*case SDL_MOUSEBUTTONDOWN:
 					if( event.button.button == SDL_BUTTON_RIGHT ) {
 						chosen = 0;
 					}
@@ -201,7 +355,7 @@ int main( int argc, char *argv[] ) {
 						}
 					}
 					break;
-				/*case SDL_MOUSEWHEEL:
+				case SDL_MOUSEWHEEL:
 					glTranslatef((float)event.wheel.x, 0.0f, (float)event.wheel.y);
 					break;*/
 				case SDL_QUIT:
@@ -221,22 +375,41 @@ int main( int argc, char *argv[] ) {
 		}
 		if( novid == 1 ) continue;
 		
-		/*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		//Drawing lines for every link.
-		glBegin(GL_LINES);
-			for(i = 1; i < obj + 1; i++) {
-				for(j = 1; j < obj + 1; j++) {
-					if( object[i].linkwith[j] != 0 ) {
-						vectemp =  object[j].pos - object[i].pos;
-						glVertex3f( object[i].pos[0], object[i].pos[1], object[i].pos[2] );
-						glVertex3f( (object[i].pos[0] + vectemp[0]), (object[i].pos[1] + vectemp[1]), (object[i].pos[2] + vectemp[2]) );
-					}
+		draw();
+		
+		GLfloat link[4][2];
+		//Drawing lines for every link.;
+		for(i = 1; i < obj + 1; i++) {
+			for(j = 1; j < obj + 1; j++) {
+				if( i == j ) continue;
+				if( object[i].linkwith[j] != 0 ) {
 				}
 			}
-			glColor3f(255,255,255);
-		glEnd();
+		}
 		
+		link[0][0] = object[1].pos[0];
+		link[0][1] = object[1].pos[1];
+		link[1][0] = object[2].pos[0];
+		link[1][1] = object[2].pos[1];
+		link[2][0] = object[3].pos[0];
+		link[2][1] = object[3].pos[1];
+		link[3][0] = object[4].pos[0];
+		link[3][1] = object[4].pos[1];
+		
+		linkcount = 0;
+		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, link);
+		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
+		glEnableVertexAttribArray(attr_pos);
+		glEnableVertexAttribArray(attr_color);
+		
+		glDrawArrays(GL_LINES, 0, 4);
+		
+		glDisableVertexAttribArray(attr_pos);
+		glDisableVertexAttribArray(attr_color);
+		
+		/*
 		//Drawing choseon object's red box.
 		glColor3f(255,0,0);
 		glBegin(GL_LINE_LOOP);
@@ -265,12 +438,22 @@ int main( int argc, char *argv[] ) {
 			glColor3f(255,255,255);
 		}*/
 		
-		eglSwapBuffers(egl_dpy, egl_surf );
+		verts[0][0] = object[1].pos[0];
+		verts[0][1] = object[1].pos[1];
+		verts[1][0] = object[2].pos[0];
+		verts[1][1] = object[2].pos[1];
+		
+		draw();
+		eglSwapBuffers(egl_dpy, egl_surf);
 	}
 	
 	quit:
 		free(object);
-		eglTerminate( egl_dpy );
+		eglDestroyContext(egl_dpy, egl_ctx);
+		eglDestroySurface(egl_dpy, egl_surf);
+		eglTerminate(egl_dpy);
+		XDestroyWindow(x_display, win);
+		XCloseDisplay(x_display);
 		FT_Done_Face( face );
 		FT_Done_FreeType( library );
 		SDL_Quit();
