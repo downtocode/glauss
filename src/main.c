@@ -31,7 +31,7 @@ char fontname[200] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, quiet = 0, stop = 0;
+bool novid = 0, vsync = 1, quiet = 0, stop = 0;
 
 
 
@@ -198,9 +198,7 @@ void create_shaders(void) {
 int main( int argc, char *argv[] ) {
 	/*	ARGUMENT SETTING	*/
 	if( argc > 1 ) {
-		printf("Arguments: ");
 		for( i=1; i < argc; i++ ) {
-			printf("%s ", argv[i]);
 			if( !strcmp( "--novid", argv[i] ) ) {
 				novid = 1;
 			}
@@ -210,11 +208,19 @@ int main( int argc, char *argv[] ) {
 			if( !strcmp( "-f", argv[i] ) ) {
 				strcpy( filename, argv[i+1] );
 			}
+			if( !strcmp( "--nosync", argv[i] ) ) {
+				vsync = 0;
+			}
 			if( !strcmp( "--help", argv[i] ) ) {
-				printf("Possible arguments: --novid to disable video, --quiet to disable text output, -f (filename) to specify a posdata file\n");
+				printf("Possible arguments:\n");
+				printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
+				printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
+				printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
+				printf("	--quiet 		Disable any terminal output except errors.\n"); 
+				printf("	--help  		What you're reading.\n");
+				return 0;
 			}
 		}
-		printf("\n");
 	}
 	obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname, filename);
 	/*	ARGUMENT SETTING	*/
@@ -234,13 +240,17 @@ int main( int argc, char *argv[] ) {
 		EGLDisplay egl_dpy = eglGetDisplay(x_display);
 		EGLint eglv1, eglv2;
 		
-		eglInitialize(egl_dpy, &eglv1, &eglv2);
-		x11disp(x_display, egl_dpy, "Physengine", 0, 0, width, height, &win, &egl_ctx, &egl_surf);
-		XMapWindow(x_display, win);
-		eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx);
-		
-		glViewport(0, 0, (GLint) width, (GLint) height);
-		create_shaders();
+		if(novid == 0) {
+			eglInitialize(egl_dpy, &eglv1, &eglv2);
+			x11disp(x_display, egl_dpy, "Physengine", 0, 0, width, height, &win, &egl_ctx, &egl_surf);
+			XMapWindow(x_display, win);
+			eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx);
+			
+			glViewport(0, 0, (GLint) width, (GLint) height);
+			create_shaders();
+			
+			eglSwapInterval(egl_dpy, vsync);
+		}
 	/*	OGL && EGL	*/
 	
 	/*	SDL.	*/
@@ -379,26 +389,33 @@ int main( int argc, char *argv[] ) {
 		
 		draw();
 		
-		GLfloat link[4][2];
+		
 		//Drawing lines for every link.;
 		for(i = 1; i < obj + 1; i++) {
 			for(j = 1; j < obj + 1; j++) {
 				if( i == j ) continue;
 				if( object[i].linkwith[j] != 0 ) {
+					linkcount++;
 				}
 			}
 		}
-		
-		link[0][0] = object[1].pos[0];
-		link[0][1] = object[1].pos[1];
-		link[1][0] = object[2].pos[0];
-		link[1][1] = object[2].pos[1];
-		link[2][0] = object[3].pos[0];
-		link[2][1] = object[3].pos[1];
-		link[3][0] = object[4].pos[0];
-		link[3][1] = object[4].pos[1];
-		
+		GLfloat link[linkcount][2];
 		linkcount = 0;
+		for(i = 1; i < obj + 1; i++) {
+			for(j = 1; j < obj + 1; j++) {
+				if( i == j ) continue;
+				if( object[i].linkwith[j] != 0 ) {
+					link[linkcount][0] = object[i].pos[0];
+					link[linkcount][1] = object[i].pos[1];
+					linkcount++;
+					link[linkcount][0] = object[j].pos[0];
+					link[linkcount][1] = object[j].pos[1];
+					linkcount++;
+				}
+			}
+		}
+		linkcount = 0;
+		
 		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, link);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
@@ -438,10 +455,6 @@ int main( int argc, char *argv[] ) {
 			glColor3f(255,255,255);
 		}*/
 		
-		verts[0][0] = object[1].pos[0];
-		verts[0][1] = object[1].pos[1];
-		verts[1][0] = object[2].pos[0];
-		verts[1][1] = object[2].pos[1];
 		
 		draw();
 		eglSwapBuffers(egl_dpy, egl_surf);
