@@ -60,8 +60,7 @@ static GLint u_matrix = -1;
 static GLint attr_pos = 0, attr_color = 1;
 
 
-static void
-make_z_rot_matrix(GLfloat angle, GLfloat *m)
+static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
    float c = cos(angle * acos(-1) / 180.0);
    float s = sin(angle * acos(-1) / 180.0);
@@ -76,8 +75,7 @@ make_z_rot_matrix(GLfloat angle, GLfloat *m)
    m[5] = c;
 }
 
-static void
-make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
+static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 {
    int i;
    for (i = 0; i < 16; i++)
@@ -89,8 +87,7 @@ make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 }
 
 
-static void
-mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
+static void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 {
 #define A(row,col)  a[(col<<2)+row]
 #define B(row,col)  b[(col<<2)+row]
@@ -111,7 +108,8 @@ mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 }
 
 
-void draw(void) {
+void draw(void)
+{
 	GLfloat mat[16], rot[16], scale[16];
 	
 	/* Set modelview/projection matrix */
@@ -122,7 +120,8 @@ void draw(void) {
 }
 
 
-void create_shaders(void) {
+void create_shaders(void)
+{
    static const char *fragShaderText =
       "precision mediump float;\n"
       "varying vec4 v_color;\n"
@@ -195,7 +194,8 @@ void create_shaders(void) {
 }
 
 
-int main( int argc, char *argv[] ) {
+int main( int argc, char *argv[] )
+{
 	/*	ARGUMENT SETTING	*/
 	if( argc > 1 ) {
 		for( i=1; i < argc; i++ ) {

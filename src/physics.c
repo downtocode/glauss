@@ -16,16 +16,19 @@ static long double pi;
 static float mag, v1norm, v1tang, v2norm, v2tang;
 
 
-float dotprod( v4sf a, v4sf b ) {
+float dotprod( v4sf a, v4sf b )
+{
 	float result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; 
 	return result;
 }
-float lenght( v4sf a ) {
+float lenght( v4sf a )
+{
 	float result = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
 	return sqrt(result);
 }
 
-int initphys(data** object) {
+int initphys(data** object)
+{
 	*object = malloc(sizeof(**object)*(obj+3));
 	for( i = 0; i < obj + 1; i++ ) {
 		(*object)[i].linkwith = malloc(sizeof(float)*(obj+400));
@@ -34,7 +37,8 @@ int initphys(data** object) {
 	return 0;
 }
 
-int findstructs(data* object) {
+int findstructs(data* object)
+{
 	//Determine links to get the approximate centers
 	for(i = 1; i < obj + 1; i++) {
 		for( j = 1; j < obj + 1; j++ ) {
@@ -52,7 +56,8 @@ int findstructs(data* object) {
 }
 
 
-int integrate(data* object) {
+int integrate(data* object)
+{
 	//findstructs(object);
 	
 	for(i = 1; i < obj + 1; i++) {

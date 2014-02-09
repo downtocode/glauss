@@ -3,7 +3,8 @@
 #include <EGL/egl.h>
 #include <X11/Xlib.h>
 
-void x11disp(Display *x_dpy, EGLDisplay egl_dpy, const char *name, int x, int y, int width, int height, Window *winRet, EGLContext *ctxRet, EGLSurface *surfRet) {
+void x11disp(Display *x_dpy, EGLDisplay egl_dpy, const char *name, int x, int y, int width, int height, Window *winRet, EGLContext *ctxRet, EGLSurface *surfRet)
+{
 	static const EGLint attribs[] = {
 		EGL_RED_SIZE, 1,
 		EGL_GREEN_SIZE, 1,

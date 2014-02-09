@@ -17,7 +17,8 @@ bool quiet, random;
 static char str[200];
 static float velmax, massrand, chargerand, sizerand;
 
-int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[200], char filename[200]) {
+int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[200], char filename[200])
+{
 	int count = 0;
 	char word[200], variable[200], namebuff[200];
 	long double anothervar;
@@ -104,7 +105,8 @@ int preparser(float *dt, long double *elcharge, long double *gconst, long double
 	return count;
 }
 
-int parser(data** object, char filename[200]) {
+int parser(data** object, char filename[200])
+{
 	int i, link;
 	char links[200], *linkstr, ignflag;
 	float posx, posy, posz, velx, vely, velz, bond, radius;
