@@ -401,7 +401,7 @@ int main( int argc, char *argv[] )
 		}
 		GLfloat link[linkcount][2];
 		linkcount = 0;
-		for(i = 1; i < obj + 1; i++) {
+		/*for(i = 1; i < obj + 1; i++) {
 			for(j = 1; j < obj + 1; j++) {
 				if( i == j ) continue;
 				if( object[i].linkwith[j] != 0 ) {
@@ -413,18 +413,29 @@ int main( int argc, char *argv[] )
 					linkcount++;
 				}
 			}
-		}
+		}*/
 		linkcount = 0;
+		
+					link[1][0] = object[1].pos[0];
+					link[1][1] = object[1].pos[1];
+					link[2][0] = object[2].pos[0];
+					link[2][1] = object[2].pos[1];
+					link[3][0] = object[3].pos[0];
+					link[3][1] = object[3].pos[1];
+					link[4][0] = object[4].pos[0];
+					link[4][1] = object[4].pos[1];
+		
 		
 		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, link);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
 		
-		glDrawArrays(GL_LINES, 0, 4);
+		glDrawArrays(GL_LINES, 1, 4);
 		
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
+		
 		
 		/*
 		//Drawing choseon object's red box.
@@ -439,21 +450,24 @@ int main( int argc, char *argv[] )
 				}
 			}
 			glColor3f(255,255,255);
-		glEnd();
+		glEnd();*/
 		
-		
+		GLfloat points[obj+1][2];
 		//Drawing the objects.
 		for(i = 1; i < obj + 1; i++) {
-			radius = 8.0;
-			if( object[i].charge < 0 ) glColor3f(0,0,255);
-			if( object[i].charge == 0 ) glColor3f(255,255,255);
-			if( object[i].charge > 0 ) glColor3f(255,0,0);
-			if( object[i].center == 1 ) {
-				glColor3f(208,0,144);
-			}
-			sphere(object[i].pos[0], object[i].pos[1], object[i].pos[2], object[i].radius, spheredetail);
-			glColor3f(255,255,255);
-		}*/
+			points[i][0] = object[i].pos[0];
+			points[i][1] = object[i].pos[1];
+		}
+		
+		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, points);
+		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
+		glEnableVertexAttribArray(attr_pos);
+		glEnableVertexAttribArray(attr_color);
+		
+		glDrawArrays(GL_POINTS, 1, obj+1);
+		
+		glDisableVertexAttribArray(attr_pos);
+		glDisableVertexAttribArray(attr_color);
 		
 		
 		draw();
