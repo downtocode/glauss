@@ -43,11 +43,6 @@ unsigned int sec;
 
 //CLEANUPFROMONWARDS
 
-
-GLfloat verts[2][2] = {
-      { -1, -1 },
-      {  1, -1 }
-   };
 GLfloat colors[3][3] = {
       { 1, 0, 0 },
       { 0, 1, 0 },
@@ -286,7 +281,6 @@ int main( int argc, char *argv[] )
 		//Malloc the objects
 		initphys(&object);
 		
-		//Use objects as an array of structs inside the main program and as a pointer when passed on to other functions
 		parser(&object, filename);
 	/*	PHYSICS.	*/
 	
@@ -387,9 +381,9 @@ int main( int argc, char *argv[] )
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		draw();
 		
 		
+		/*	Point/object drawing	*/
 		//Drawing lines for every link.;
 		for(i = 1; i < obj + 1; i++) {
 			for(j = 1; j < obj + 1; j++) {
@@ -416,25 +410,23 @@ int main( int argc, char *argv[] )
 		}*/
 		linkcount = 0;
 		
-					link[1][0] = object[1].pos[0];
-					link[1][1] = object[1].pos[1];
-					link[2][0] = object[2].pos[0];
-					link[2][1] = object[2].pos[1];
-					link[3][0] = object[3].pos[0];
-					link[3][1] = object[3].pos[1];
-					link[4][0] = object[4].pos[0];
-					link[4][1] = object[4].pos[1];
-		
+		link[1][0] = object[1].pos[0];
+		link[1][1] = object[1].pos[1];
+		link[2][0] = object[2].pos[0];
+		link[2][1] = object[2].pos[1];
+		link[3][0] = object[3].pos[0];
+		link[3][1] = object[3].pos[1];
+		link[4][0] = object[4].pos[0];
+		link[4][1] = object[4].pos[1];
 		
 		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, link);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
-		
 		glDrawArrays(GL_LINES, 1, 4);
-		
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
+		/*	Point/object drawing	*/
 		
 		
 		/*
@@ -452,22 +444,22 @@ int main( int argc, char *argv[] )
 			glColor3f(255,255,255);
 		glEnd();*/
 		
-		GLfloat points[obj+1][2];
-		//Drawing the objects.
+		/*	Point/object drawing	*/
+		GLfloat points[obj+1][3];
 		for(i = 1; i < obj + 1; i++) {
 			points[i][0] = object[i].pos[0];
 			points[i][1] = object[i].pos[1];
+			points[i][2] = object[i].pos[2];
 		}
 		
-		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, points);
+		glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, points);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
-		
 		glDrawArrays(GL_POINTS, 1, obj+1);
-		
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
+		/*	Point/object drawing	*/
 		
 		
 		draw();
