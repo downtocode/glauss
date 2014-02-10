@@ -1,11 +1,9 @@
 //Things you should all have anyway.
 #include <stdio.h>
-
 #include <tgmath.h>
 #include <time.h>
 
 //Things you gotta get.
-#include <SDL2/SDL.h>
 #include <ft2build.h>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -22,7 +20,6 @@ FT_Face face;
 
 
 static int i, j, linkcount;
-int mousex, mousey, chosen = 0;
 
 //Default settings
 int obj = 0, width = 1200, height = 600;
@@ -207,7 +204,7 @@ int main( int argc, char *argv[] )
 				vsync = 0;
 			}
 			if( !strcmp( "--help", argv[i] ) ) {
-				printf("Possible arguments:\n");
+				printf("Usage:\n");
 				printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 				printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
 				printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
@@ -248,11 +245,6 @@ int main( int argc, char *argv[] )
 		}
 	/*	OGL && EGL	*/
 	
-	/*	SDL.	*/
-		//SDL_Init(SDL_INIT_EVERYTHING);
-		SDL_Event event;
-	/*	SDL.	*/
-	
 	/*	Freetype.	*/
 		if(FT_Init_FreeType(&library)) {
 			fprintf(stderr, "Could not init freetype library\n");
@@ -289,85 +281,6 @@ int main( int argc, char *argv[] )
 	
 	while( 1 ) {
 		
-		while( SDL_PollEvent( &event ) ) {
-			switch( event.type ) {
-				case SDL_KEYDOWN:
-					if(event.key.keysym.sym==SDLK_SPACE) {
-						if( stop == 0 ) stop = 1;
-						else if( stop == 1 ) stop = 0;
-					}
-					if(event.key.keysym.sym==SDLK_KP_PLUS) {
-						dt *= 2;
-						printf("dt = %f\n", dt);
-					}
-					if(event.key.keysym.sym==SDLK_KP_MINUS) {
-						dt /= 2;
-						printf("dt = %f\n", dt);
-					}
-					if(event.key.keysym.sym==SDLK_ESCAPE) {
-						goto quit;
-					}
-					/*if(event.key.keysym.sym==SDLK_w) {
-						glRotatef(1.1f, 5.0f, 0.0f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_s) {
-						glRotatef(-1.1f, 5.0f, 0.0f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_d) {
-						glRotatef(-1.1f, 0.0f, 5.0f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_a) {
-						glRotatef(-1.1f, 0.0f, -5.0f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_LEFT) {
-						glTranslatef(0.1f, 0.0f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_RIGHT) {
-						glTranslatef(-0.1f, 0.0f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_UP) {
-						glTranslatef(0.0f, 0.1f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_DOWN) {
-						glTranslatef(0.0f, -0.1f, 0.0f);
-					}
-					if(event.key.keysym.sym==SDLK_q) {
-						glRotatef(1.1f, 0.0f, 0.0f, 5.0f);
-					}
-					if(event.key.keysym.sym==SDLK_e) {
-						glRotatef(-1.1f, 0.0f, 0.0f, 5.0f);
-					}
-					break;*/
-				/*case SDL_MOUSEBUTTONDOWN:
-					if( event.button.button == SDL_BUTTON_RIGHT ) {
-						chosen = 0;
-					}
-					if( event.button.button == SDL_BUTTON_LEFT ) {
-						SDL_GetMouseState(&mousex , &mousey);
-						mousey = ((float)height/2 - (float)mousey) + (float)height/2;
-							for(i = 1; i < obj + 1; i++) {
-								if( abs( mousex - object[i].pos[0]) < 20 && abs( mousey - object[i].pos[1]) < 20 ) {
-									chosen = i;
-									printf("OBJ %i HAS BEEN CHOSEN!\n", chosen);
-									break;
-								}
-							}
-						if( object[chosen].pos[0] == 0 || object[chosen].pos[1] == 0 ) break;
-						else if ( chosen != 0 ) {
-							object[chosen].pos[0] = (float)mousex;
-							object[chosen].pos[1] = (float)mousey;
-						}
-					}
-					break;
-				case SDL_MOUSEWHEEL:
-					glTranslatef((float)event.wheel.x, 0.0f, (float)event.wheel.y);
-					break;*/
-				case SDL_QUIT:
-					goto quit;
-					break;
-			}
-		}
-		
 		if( stop == 0 ) integrate(object);
 		if( quiet == 0 ) {
 			//FPS calculation.
@@ -383,50 +296,31 @@ int main( int argc, char *argv[] )
 		
 		
 		
-		/*	Point/object drawing	*/
-		//Drawing lines for every link.;
+		/*	Link drawing	*/
+		GLfloat link[linkcount][2];
 		for(i = 1; i < obj + 1; i++) {
 			for(j = 1; j < obj + 1; j++) {
 				if( i == j ) continue;
 				if( object[i].linkwith[j] != 0 ) {
 					linkcount++;
-				}
-			}
-		}
-		GLfloat link[linkcount][2];
-		linkcount = 0;
-		/*for(i = 1; i < obj + 1; i++) {
-			for(j = 1; j < obj + 1; j++) {
-				if( i == j ) continue;
-				if( object[i].linkwith[j] != 0 ) {
 					link[linkcount][0] = object[i].pos[0];
 					link[linkcount][1] = object[i].pos[1];
 					linkcount++;
 					link[linkcount][0] = object[j].pos[0];
 					link[linkcount][1] = object[j].pos[1];
-					linkcount++;
 				}
 			}
-		}*/
-		linkcount = 0;
-		
-		link[1][0] = object[1].pos[0];
-		link[1][1] = object[1].pos[1];
-		link[2][0] = object[2].pos[0];
-		link[2][1] = object[2].pos[1];
-		link[3][0] = object[3].pos[0];
-		link[3][1] = object[3].pos[1];
-		link[4][0] = object[4].pos[0];
-		link[4][1] = object[4].pos[1];
+		}
 		
 		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, link);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
-		glDrawArrays(GL_LINES, 1, 4);
+		glDrawArrays(GL_LINES, 1, linkcount);
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
-		/*	Point/object drawing	*/
+		linkcount = 0;
+		/*	Link drawing	*/
 		
 		
 		/*
@@ -466,7 +360,7 @@ int main( int argc, char *argv[] )
 		eglSwapBuffers(egl_dpy, egl_surf);
 	}
 	
-	quit:
+	//quit:
 		free(object);
 		eglDestroyContext(egl_dpy, egl_ctx);
 		eglDestroySurface(egl_dpy, egl_surf);
@@ -475,7 +369,6 @@ int main( int argc, char *argv[] )
 		XCloseDisplay(x_display);
 		FT_Done_Face( face );
 		FT_Done_FreeType( library );
-		SDL_Quit();
 		printf("\nQuitting!\n");
 		return 0;
 }
