@@ -1,7 +1,7 @@
 physengine
 =================
 
-This program aims to implement a physics simulations engine whilst aiming for maximum performance. Written in C, using the OpenGL ES 2.0 and the Freetype 2 libraries.
+This program aims to implement a physics simulations engine whilst aiming for maximum performance. Written in C, using the SDL 2, OpenGL ES 2.0 and the Freetype 2 libraries.
 
 Description
 -----------

@@ -7,6 +7,7 @@
 #include <ft2build.h>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
+#include <SDL2/SDL.h>
 #include FT_FREETYPE_H
 
 //Functions.
@@ -260,7 +261,6 @@ int main( int argc, char *argv[] )
 		glDisableVertexAttribArray(attr_color);
 		linkcount = 0;
 		/*	Link drawing	*/
-		
 		
 		/*
 		//Drawing choseon object's red box.
