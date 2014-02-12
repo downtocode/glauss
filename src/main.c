@@ -8,12 +8,13 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
 #include FT_FREETYPE_H
 
 //Functions.
 #include "physics.h"
 #include "parser.h"
-#include "x11disp.h"
+//#include "x11disp.h"
 
 
 FT_Library  library;
@@ -40,7 +41,6 @@ unsigned int sec;
 
 
 //CLEANUPFROMONWARDS
-
 GLfloat colors[3][3] = {
       { 1, 0, 0 },
       { 0, 1, 0 },
@@ -49,25 +49,78 @@ GLfloat colors[3][3] = {
 
 static GLint u_matrix = -1;
 static GLint attr_pos = 0, attr_color = 1;
+static GLfloat view_rotx = 0.0, view_roty = 0.0;
 
+
+static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
+{
+   float c = cos(angle * acos(-1) / 180.0);
+   float s = sin(angle * acos(-1) / 180.0);
+   int i;
+   for (i = 0; i < 16; i++)
+      m[i] = 0.0;
+   m[0] = m[5] = m[10] = m[15] = 1.0;
+
+   m[0] = c;
+   m[1] = s;
+   m[4] = -s;
+   m[5] = c;
+}
+
+static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
+{
+   int i;
+   for (i = 0; i < 16; i++)
+      m[i] = 0.0;
+   m[0] = xs;
+   m[5] = ys;
+   m[10] = zs;
+   m[15] = 1.0;
+}
+
+
+static void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
+{
+#define A(row,col)  a[(col<<2)+row]
+#define B(row,col)  b[(col<<2)+row]
+#define P(row,col)  p[(col<<2)+row]
+	GLfloat p[16];
+	GLint i;
+	for (i = 0; i < 4; i++) {
+		const GLfloat ai0=A(i,0),  ai1=A(i,1),  ai2=A(i,2),  ai3=A(i,3);
+		P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
+		P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
+		P(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
+		P(i,3) = ai0 * B(0,3) + ai1 * B(1,3) + ai2 * B(2,3) + ai3 * B(3,3);
+	}
+	memcpy(prod, p, sizeof(p));
+#undef A
+#undef B
+#undef PROD
+}
+
+
+void draw(void)
+{
+	GLfloat mat[16], rot[16], scale[16];
+
+	/* Set modelview/projection matrix */
+	make_z_rot_matrix(view_rotx, rot);
+	make_scale_matrix(0.5, 0.5, 0.5, scale);
+	mul_matrix(mat, rot, scale);
+	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
+}
 
 
 void create_shaders(void)
 {
    static const char *fragShaderText =
-      "precision mediump float;\n"
-      "varying vec4 v_color;\n"
       "void main() {\n"
-      "   gl_FragColor = v_color;\n"
+      "   gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"
       "}\n";
    static const char *vertShaderText =
-      "uniform mat4 modelviewProjection;\n"
-      "attribute vec4 pos;\n"
-      "attribute vec4 color;\n"
-      "varying vec4 v_color;\n"
       "void main() {\n"
-      "   gl_Position = modelviewProjection * pos;\n"
-      "   v_color = vec4(1,1,1,1);\n"
+      "   gl_Position = gl_Vertex;\n"
       "}\n";
 
    GLuint fragShader, vertShader, program;
@@ -165,24 +218,20 @@ int main( int argc, char *argv[] )
 	/*	Error handling.	*/
 	
 	/*	OGL && EGL	*/
-		Display *x_display = XOpenDisplay(NULL);
-		Window win;
-		EGLSurface egl_surf;
-		EGLContext egl_ctx;
-		EGLDisplay egl_dpy = eglGetDisplay(x_display);
-		EGLint eglv1, eglv2;
-		
-		if(novid == 0) {
-			eglInitialize(egl_dpy, &eglv1, &eglv2);
-			x11disp(x_display, egl_dpy, "Physengine", 0, 0, width, height, &win, &egl_ctx, &egl_surf);
-			XMapWindow(x_display, win);
-			eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx);
-			
-			glViewport(0, 0, (GLint) width, (GLint) height);
-			create_shaders();
-			
-			eglSwapInterval(egl_dpy, vsync);
+		SDL_Init(SDL_INIT_VIDEO);
+		SDL_Window* window = NULL;
+		if( novid == 0 ) {
+			window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL );
+			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+			SDL_GL_SetSwapInterval(-1);
+			SDL_GL_CreateContext(window);
 		}
+		SDL_Event event;
+		if( quiet == 0 ) {
+			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+		}
+		glViewport(0, 0, (GLint) width, (GLint) height);
+		create_shaders();
 	/*	OGL && EGL	*/
 	
 	/*	Freetype.	*/
@@ -220,7 +269,14 @@ int main( int argc, char *argv[] )
 	
 	
 	while( 1 ) {
-		
+		while( SDL_PollEvent( &event ) ) {
+			switch( event.type ) {
+				case SDL_QUIT:
+					goto quit;
+					break;
+			}
+		}
+			
 		if( stop == 0 ) integrate(object);
 		if( quiet == 0 ) {
 			//FPS calculation.
@@ -235,28 +291,21 @@ int main( int argc, char *argv[] )
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		
+		draw();
 		
 		/*	Link drawing	*/
 		GLfloat link[linkcount][2];
-		for(i = 1; i < obj + 1; i++) {
-			for(j = 1; j < obj + 1; j++) {
-				if( i == j ) continue;
-				if( object[i].linkwith[j] != 0 ) {
-					linkcount++;
-					link[linkcount][0] = object[i].pos[0];
-					link[linkcount][1] = object[i].pos[1];
-					linkcount++;
-					link[linkcount][0] = object[j].pos[0];
-					link[linkcount][1] = object[j].pos[1];
-				}
-			}
-		}
+		
+		link[1][0] = object[1].pos[0];
+		link[1][1] = object[1].pos[1];
+		link[2][0] = object[2].pos[0];
+		link[2][1] = object[2].pos[1];
 		
 		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, link);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
-		glDrawArrays(GL_LINES, 1, linkcount);
+		glDrawArrays(GL_LINES, 1, 2);
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
 		linkcount = 0;
@@ -293,17 +342,14 @@ int main( int argc, char *argv[] )
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
 		/*	Point/object drawing	*/
+
 		
-		eglSwapBuffers(egl_dpy, egl_surf);
+		SDL_GL_SwapWindow(window);
 	}
 	
-	//quit:
+	quit:
 		free(object);
-		eglDestroyContext(egl_dpy, egl_ctx);
-		eglDestroySurface(egl_dpy, egl_surf);
-		eglTerminate(egl_dpy);
-		XDestroyWindow(x_display, win);
-		XCloseDisplay(x_display);
+		SDL_Quit();
 		FT_Done_Face( face );
 		FT_Done_FreeType( library );
 		printf("\nQuitting!\n");
