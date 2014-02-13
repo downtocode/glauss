@@ -29,7 +29,7 @@ float lenght( v4sf a )
 
 int initphys(data** object)
 {
-	*object = malloc(sizeof(**object)*(obj+3));
+	*object = malloc(sizeof(**object)*(obj+3000));
 	for( i = 0; i < obj + 1; i++ ) {
 		(*object)[i].linkwith = malloc(sizeof(float)*(obj+400));
 	}

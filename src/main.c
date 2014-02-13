@@ -33,7 +33,6 @@ long double elcharge = 0, gconst = 0, epsno = 0;
 bool novid = 0, vsync = 1, quiet = 0, stop = 0;
 
 
-
 time_t start, end;
 double fps;
 unsigned int counter = 0;
@@ -44,11 +43,19 @@ GLint attr_pos = 0, attr_color = 1;
 GLfloat view_rotx = 0.0, view_roty = 0.0;
 
 //CLEANUPFROMONWARDS
-GLfloat colors[3][3] = {
-      { 1, 0, 0 },
-      { 0, 1, 0 },
-      { 0, 0, 1 }
-   };
+
+GLfloat points[9] = {
+   0.0f,  0.5f,  0.0f,
+   0.5f, -0.5f,  0.0f,
+  -0.5f, -0.5f,  0.0f
+};
+
+GLfloat colors[9] = {
+  1.0f, 0.0f,  0.0f,
+  0.0f, 1.0f,  0.0f,
+  0.0f, 0.0f,  1.0f
+};
+
 
 int main( int argc, char *argv[] )
 {
@@ -139,6 +146,14 @@ int main( int argc, char *argv[] )
 	time(&start);
 	
 	
+	/*unsigned int points_vbo = 0;
+	glGenBuffers (1, &points_vbo);
+	glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
+	glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (float), points, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray (0);*/
+	
+	
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
@@ -147,7 +162,6 @@ int main( int argc, char *argv[] )
 					break;
 			}
 		}
-			
 		if( stop == 0 ) integrate(object);
 		if( quiet == 0 ) {
 			//FPS calculation.
@@ -163,6 +177,11 @@ int main( int argc, char *argv[] )
 		
 		
 		draw();
+		
+		/*points[1] = object[2].pos[0];
+		printf("DICS = %f\n", object[2].pos[0]);
+		glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (float), points, GL_DYNAMIC_DRAW);
+		glDrawArrays (GL_TRIANGLES, 0, 3);*/
 		
 		/*	Link drawing	*/
 		GLfloat link[linkcount][2];
@@ -198,22 +217,21 @@ int main( int argc, char *argv[] )
 		glEnd();*/
 		
 		/*	Point/object drawing	*/
-		GLfloat points[obj+1][3];
+		/*GLfloat points[obj+1][3];
 		for(i = 1; i < obj + 1; i++) {
 			points[i][0] = object[i].pos[0];
 			points[i][1] = object[i].pos[1];
 			points[i][2] = object[i].pos[2];
-		}
+		}*/
 		
-		glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, points);
+		/*glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, points);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
 		glDrawArrays(GL_POINTS, 1, obj+1);
 		glDisableVertexAttribArray(attr_pos);
-		glDisableVertexAttribArray(attr_color);
+		glDisableVertexAttribArray(attr_color);*/
 		/*	Point/object drawing	*/
-
 		
 		SDL_GL_SwapWindow(window);
 	}
