@@ -65,17 +65,38 @@ void draw(void)
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
 }
 
+char* file_read(const char* filename)
+{
+	FILE* input = fopen(filename, "r");
+	if(input == NULL) return NULL;
+	
+	if(fseek(input, 0, SEEK_END) == -1) return NULL;
+	long size = ftell(input);
+	if(size == -1) return NULL;
+	if(fseek(input, 0, SEEK_SET) == -1) return NULL;
+	
+	/*if using c-compiler: dont cast malloc's return value*/
+	char *content = (char*) malloc( (size_t) size +1  ); 
+	if(content == NULL) return NULL;
+	
+	fread(content, 1, (size_t)size, input);
+	if(ferror(input)) {
+		free(content);
+		return NULL;
+	}
+	
+	fclose(input);
+	content[size] = '\0';
+	return content;
+}
+
+static const char *fragShaderText;
+static const char *vertShaderText;
 
 void create_shaders(void)
 {
-	static const char *fragShaderText =
-		"void main() {\n"
-		"   gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"
-		"}\n";
-	static const char *vertShaderText =
-		"void main() {\n"
-		"   gl_Position = gl_Vertex;\n"
-		"}\n";
+	fragShaderText = file_read("shaders/shader.frag");
+	vertShaderText = file_read("shaders/shader.vert");
 	
 	GLuint fragShader, vertShader, program;
 	GLint stat;
