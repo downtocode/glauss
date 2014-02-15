@@ -144,6 +144,8 @@ int parser(data** object, char filename[200])
 					linkstr = strtok(NULL,",");
 				}
 				if( quiet == 0 ) printf(" \n");
+				
+				bond = 0;
 			}
 		}
 	} else if ( random == 1 ) {
