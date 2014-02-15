@@ -17,7 +17,8 @@ bool quiet, random;
 static char str[200];
 static float velmax, massrand, chargerand, sizerand;
 
-int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, int *height, int *boxsize, char fontname[200], char filename[200])
+int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, \
+int *height, int *boxsize, char fontname[200], char filename[200])
 {
 	int count = 0;
 	char word[200], variable[200], namebuff[200];
@@ -132,26 +133,31 @@ int parser(data** object, char filename[200])
 				(*object)[i].radius = radius;
 				
 				if( quiet == 0 ) {
-					printf("(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", (*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
+					printf("(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
+					(*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
 					(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
 				}
 				
-				linkstr = strtok(links,",");
-				while(linkstr != NULL) {
-					sscanf(linkstr, "%i-%f", &link, &bond);
-					if( quiet == 0 ) printf("%i - %f ", link, bond);
-					(*object)[i].linkwith[link] = bond;
-					linkstr = strtok(NULL,",");
+				if( links[0] != 0 ) {
+					linkstr = strtok(links,",");
+					while(linkstr != NULL) {
+						sscanf(linkstr, "%i-%f", &link, &bond);
+						if( quiet == 0 ) printf("%i - %f ", link, bond);
+						(*object)[i].linkwith[link] = bond;
+						linkstr = strtok(NULL,",");
+					}
+					bond = link = 0;
+					memset(links, 0, sizeof(links));
 				}
-				if( quiet == 0 ) printf(" \n");
 				
-				bond = 0;
+				if( quiet == 0 ) printf(" \n");
 			}
 		}
 	} else if ( random == 1 ) {
 		for(i = 1; i < obj + 1; i++) {
 			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX), ((float)rand()/(float)RAND_MAX), ((float)rand()/(float)RAND_MAX)};
-			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
+			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
+			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
 			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;
 			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand + 0.07;
