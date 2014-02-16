@@ -18,7 +18,7 @@ static char str[200];
 static float velmax, massrand, chargerand, sizerand;
 
 int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, \
-int *height, int *boxsize, char fontname[200], char filename[200])
+int *height, float *boxsize, char fontname[200], char filename[200])
 {
 	int count = 0;
 	char word[200], variable[200], namebuff[200];
@@ -52,7 +52,7 @@ int *height, int *boxsize, char fontname[200], char filename[200])
 			*height = (int)value;
 		}
 		if(strcmp(word, "boxsize") == 0) {
-			*boxsize = (int)value;
+			*boxsize = value;
 		}
 		if(strcmp(word, "fontname") == 0) {
 			sscanf(str, "%s = \"%100[^\"]\"", word, fontname);

@@ -25,7 +25,7 @@ static int i, j, linkcount;
 
 //Default settings
 int obj = 0, width = 1200, height = 600;
-int boxsize = 15;
+float boxsize = 0.1;
 char fontname[200] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
@@ -126,7 +126,7 @@ int main( int argc, char *argv[] )
 		data* object;
 		if( quiet == 0 ) {
 			printf("Objects: %i\n", obj);
-			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%i, fontname=%s\n", dt, width, height, boxsize, fontname);
+			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%f, fontname=%s\n", dt, width, height, boxsize, fontname);
 			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n", elcharge, gconst, epsno);
 		}
 		
@@ -192,20 +192,31 @@ int main( int argc, char *argv[] )
 		glDisableVertexAttribArray(attr_color);
 		/*	Link drawing	*/
 		
-		/*
-		//Drawing choseon object's red box.
-		glColor3f(255,0,0);
-		glBegin(GL_LINE_LOOP);
-			for(i = 1; i < obj + 1; i++) {
-				if(chosen==i) {
-					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] - boxsize, 1 );
-					glVertex3f( object[i].pos[0] - boxsize, object[i].pos[1] + boxsize, 1 );
-					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] + boxsize, 1 );
-					glVertex3f( object[i].pos[0] + boxsize, object[i].pos[1] - boxsize, 1 );
-				}
+		/*	Selected object's red box	*/
+		GLfloat redbox[4][2];
+		
+		for(i = 1; i < obj + 1; i++) {
+			if(1==i) {
+				redbox[0][0] = object[i].pos[0] - boxsize;
+				redbox[0][1] = object[i].pos[1] - boxsize;
+				redbox[1][0] = object[i].pos[0] - boxsize;
+				redbox[1][1] = object[i].pos[1] + boxsize;
+				redbox[2][0] = object[i].pos[0] + boxsize;
+				redbox[2][1] = object[i].pos[1] + boxsize;
+				redbox[3][0] = object[i].pos[0] + boxsize;
+				redbox[3][1] = object[i].pos[1] - boxsize;
 			}
-			glColor3f(255,255,255);
-		glEnd();*/
+		}
+		
+		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, redbox);
+		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
+		glEnableVertexAttribArray(attr_pos);
+		glEnableVertexAttribArray(attr_color);
+		glDrawArrays(GL_LINE_LOOP, 0, 4);
+		glDisableVertexAttribArray(attr_pos);
+		glDisableVertexAttribArray(attr_color);
+		
+		/*	Selected object's red box	*/
 		
 		/*	Point/object drawing	*/
 		GLfloat points[obj+1][2];
