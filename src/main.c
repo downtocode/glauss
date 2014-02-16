@@ -93,7 +93,7 @@ int main( int argc, char *argv[] )
 		if( novid == 0 ) {
 			window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL );
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-			SDL_GL_SetSwapInterval(-1);
+			SDL_GL_SetSwapInterval(vsync);
 			SDL_GL_CreateContext(window);
 		}
 		SDL_Event event;
