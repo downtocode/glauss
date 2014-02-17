@@ -37,10 +37,12 @@ time_t start, end;
 double fps;
 unsigned int counter = 0;
 unsigned int sec;
+unsigned int chosen;
 
 GLint u_matrix = -1;
 GLint attr_pos = 0, attr_color = 1;
 GLfloat view_rotx = 0.0, view_roty = 0.0;
+GLfloat chosenbox[4][2];
 
 
 GLfloat colors[9] = {
@@ -143,6 +145,37 @@ int main( int argc, char *argv[] )
 	while( 1 ) {
 		while( SDL_PollEvent( &event ) ) {
 			switch( event.type ) {
+				case SDL_KEYDOWN:
+					if(event.key.keysym.sym==SDLK_SPACE) {
+						if( stop == 0 ) stop = 1;
+						else if( stop == 1 ) stop = 0;
+					}
+					if(event.key.keysym.sym==SDLK_ESCAPE || event.key.keysym.sym==SDLK_q) {
+						goto quit;
+					}
+					if(event.key.keysym.sym==SDLK_RIGHTBRACKET) {
+						dt *= 2;
+						printf("dt = %f\n", dt);
+					}
+					if(event.key.keysym.sym==SDLK_LEFTBRACKET) {
+						dt /= 2;
+						printf("dt = %f\n", dt);
+					}
+					if(event.key.keysym.sym==SDLK_1) {
+						if( chosen == 1 ) chosen = 0;
+						else {
+							chosen = 1;
+							printf("OBJ 1 HAS BEEN CHOSEN!\n");
+						}
+					}
+					if(event.key.keysym.sym==SDLK_2) {
+						if( chosen == 2 ) chosen = 0;
+						else {
+							chosen = 2;
+							printf("OBJ 1 HAS BEEN CHOSEN!\n");
+						}
+					}
+					break;
 				case SDL_QUIT:
 					goto quit;
 					break;
@@ -193,27 +226,28 @@ int main( int argc, char *argv[] )
 		/*	Link drawing	*/
 		
 		/*	Selected object's red box	*/
-		GLfloat redbox[4][2];
 		for(i = 1; i < obj + 1; i++) {
-			if(1==i) {
-				redbox[0][0] = object[i].pos[0] - boxsize;
-				redbox[0][1] = object[i].pos[1] - boxsize;
-				redbox[1][0] = object[i].pos[0] - boxsize;
-				redbox[1][1] = object[i].pos[1] + boxsize;
-				redbox[2][0] = object[i].pos[0] + boxsize;
-				redbox[2][1] = object[i].pos[1] + boxsize;
-				redbox[3][0] = object[i].pos[0] + boxsize;
-				redbox[3][1] = object[i].pos[1] - boxsize;
+			if(chosen==i) {
+				chosenbox[0][0] = object[i].pos[0] - boxsize;
+				chosenbox[0][1] = object[i].pos[1] - boxsize;
+				chosenbox[1][0] = object[i].pos[0] - boxsize;
+				chosenbox[1][1] = object[i].pos[1] + boxsize;
+				chosenbox[2][0] = object[i].pos[0] + boxsize;
+				chosenbox[2][1] = object[i].pos[1] + boxsize;
+				chosenbox[3][0] = object[i].pos[0] + boxsize;
+				chosenbox[3][1] = object[i].pos[1] - boxsize;
 			}
 		}
 		
-		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, redbox);
-		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
-		glEnableVertexAttribArray(attr_pos);
-		glEnableVertexAttribArray(attr_color);
-		glDrawArrays(GL_LINE_LOOP, 0, 4);
-		glDisableVertexAttribArray(attr_pos);
-		glDisableVertexAttribArray(attr_color);
+		if( chosen != 0 ) {
+			glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, chosenbox);
+			glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
+			glEnableVertexAttribArray(attr_pos);
+			glEnableVertexAttribArray(attr_color);
+			glDrawArrays(GL_LINE_LOOP, 0, 4);
+			glDisableVertexAttribArray(attr_pos);
+			glDisableVertexAttribArray(attr_color);
+		}
 		/*	Selected object's red box	*/
 		
 		/*	Point/object drawing	*/
