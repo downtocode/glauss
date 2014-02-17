@@ -100,7 +100,7 @@ int main( int argc, char *argv[] )
 		if( quiet == 0 ) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
-		glViewport(0, 0, (GLint) width, (GLint) height);
+		glViewport(0, 0, width, height);
 		create_shaders();
 	/*	OGL && EGL	*/
 	
@@ -194,7 +194,6 @@ int main( int argc, char *argv[] )
 		
 		/*	Selected object's red box	*/
 		GLfloat redbox[4][2];
-		
 		for(i = 1; i < obj + 1; i++) {
 			if(1==i) {
 				redbox[0][0] = object[i].pos[0] - boxsize;
@@ -215,7 +214,6 @@ int main( int argc, char *argv[] )
 		glDrawArrays(GL_LINE_LOOP, 0, 4);
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
-		
 		/*	Selected object's red box	*/
 		
 		/*	Point/object drawing	*/

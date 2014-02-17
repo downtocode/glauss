@@ -71,8 +71,8 @@ void draw(void)
 
 void create_shaders(void)
 {
-	fragShaderText = readshader("shaders/shader.frag");
-	vertShaderText = readshader("shaders/shader.vert");
+	fragShaderText = readshader("shaders/object.frag");
+	vertShaderText = readshader("shaders/object.vert");
 	
 	GLuint fragShader, vertShader, program;
 	GLint stat;
