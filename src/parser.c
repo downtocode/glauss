@@ -26,60 +26,66 @@ int *height, float *boxsize, char fontname[200], char filename[200])
 	float value, base, power;
 	FILE *inconf = fopen ( "simconf.conf", "r" );
 	while(fgets (str, sizeof(str), inconf)!=NULL) {
-		sscanf(str, "%s = \"%f\"", word, &value);
-		if(strcmp(word, "dt") == 0) {
-			*dt = value;
-		}
-		if(strcmp(word, "elcharge") == 0) {
-			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
-			sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-			*elcharge = anothervar*pow(base, power);
-		}
-		if(strcmp(word, "gconst") == 0) {
-			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
-			sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-			*gconst = anothervar*pow(base, power);
-		}
-		if(strcmp(word, "epsno") == 0) {
-			sscanf(str, "%s = \"%100[^\"]\"", word, variable);
-			sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-			*epsno = anothervar*pow(base, power);
-		}
-		if(strcmp(word, "width") == 0) {
-			*width = (int)value;
-		}
-		if(strcmp(word, "height") == 0) {
-			*height = (int)value;
-		}
-		if(strcmp(word, "boxsize") == 0) {
-			*boxsize = value;
-		}
-		if(strcmp(word, "fontname") == 0) {
-			sscanf(str, "%s = \"%100[^\"]\"", word, fontname);
-		}
-		if(strcmp(word, "random") == 0) {
-			random = (bool)value;
-		}
-		if(strcmp(word, "randobjs") == 0) {
-			count = (int)value;
-		}
-		if(strcmp(word, "velmax") == 0) {
-			velmax = value;
-		}
-		if(strcmp(word, "massrand") == 0) {
-			massrand = value;
-		}
-		if(strcmp(word, "chargerand") == 0) {
-			chargerand = value;
-		}
-		if(strcmp(word, "sizerand") == 0) {
-			sizerand = value;
-		}
-		if(strcmp(word, "posdata") == 0) {
-			sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
+		if (strstr(str, "#") == NULL) {
+			sscanf(str, "%s = \"%f\"", word, &value);
+			if(strcmp(word, "dt") == 0) {
+				*dt = value;
+			}
+			if(strcmp(word, "elcharge") == 0) {
+				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
+				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
+				*elcharge = anothervar*pow(base, power);
+			}
+			if(strcmp(word, "gconst") == 0) {
+				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
+				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
+				*gconst = anothervar*pow(base, power);
+			}
+			if(strcmp(word, "epsno") == 0) {
+				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
+				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
+				*epsno = anothervar*pow(base, power);
+			}
+			if(strcmp(word, "width") == 0) {
+				*width = (int)value;
+			}
+			if(strcmp(word, "height") == 0) {
+				*height = (int)value;
+			}
+			if(strcmp(word, "boxsize") == 0) {
+				*boxsize = value;
+			}
+			if(strcmp(word, "fontname") == 0) {
+				sscanf(str, "%s = \"%100[^\"]\"", word, fontname);
+			}
+			if(strcmp(word, "random") == 0) {
+				random = (bool)value;
+			}
+			if(strcmp(word, "randobjs") == 0) {
+				count = (int)value;
+			}
+			if(strcmp(word, "velmax") == 0) {
+				velmax = value;
+			}
+			if(strcmp(word, "massrand") == 0) {
+				massrand = value;
+			}
+			if(strcmp(word, "chargerand") == 0) {
+				chargerand = value;
+			}
+			if(strcmp(word, "sizerand") == 0) {
+				sizerand = value;
+			}
+			if(strcmp(word, "posdata") == 0) {
+				sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
+			}
+		} else {
+			memset(str, 0, sizeof(str));
 		}
 	}
 	fclose(inconf);
+	
+	memset(str, 0, sizeof(str));
 	
 	if( random == 1 ) {
 		srand(time(NULL));
@@ -103,6 +109,7 @@ int *height, float *boxsize, char fontname[200], char filename[200])
 		}
 		fclose(inprep);
 	}
+	memset(str, 0, sizeof(str));
 	return count;
 }
 
@@ -151,6 +158,9 @@ int parser(data** object, char filename[200])
 				}
 				
 				if( quiet == 0 ) printf(" \n");
+			} else {
+				/*	Wipe string in case last line didn't have a newline char.	*/
+				memset(str, 0, sizeof(str));
 			}
 		}
 	} else if ( random == 1 ) {
