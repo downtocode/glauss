@@ -150,7 +150,7 @@ int main( int argc, char *argv[] )
 						if( stop == 0 ) stop = 1;
 						else if( stop == 1 ) stop = 0;
 					}
-					if(event.key.keysym.sym==SDLK_ESCAPE || event.key.keysym.sym==SDLK_q) {
+					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
 					}
 					if(event.key.keysym.sym==SDLK_RIGHTBRACKET) {
@@ -160,6 +160,12 @@ int main( int argc, char *argv[] )
 					if(event.key.keysym.sym==SDLK_LEFTBRACKET) {
 						dt /= 2;
 						printf("dt = %f\n", dt);
+					}
+					if(event.key.keysym.sym==SDLK_q) {
+						view_rotx += 5.0;
+					}
+					if(event.key.keysym.sym==SDLK_e) {
+						view_rotx -= 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_1) {
 						if( chosen == 1 ) chosen = 0;
