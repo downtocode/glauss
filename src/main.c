@@ -209,7 +209,7 @@ int main( int argc, char *argv[] )
 		
 		for(i = 1; i < obj + 1; i++) {
 			for(j = 1; j < obj + 1; j++) {
-				if( j==i ) continue;
+				if( j==i || j > i ) continue;
 				if( object[i].linkwith[j] != 0 ) {
 					link[linkcount][0] = object[i].pos[0];
 					link[linkcount][1] = object[i].pos[1];
@@ -226,7 +226,7 @@ int main( int argc, char *argv[] )
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
-		glDrawArrays(GL_LINES, 0, (int)((linkcount+1)/2));
+		glDrawArrays(GL_LINES, 0, linkcount);
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
 		/*	Link drawing	*/
