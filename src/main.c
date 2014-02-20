@@ -1,7 +1,7 @@
 //Things you should all have anyway.
 #include <stdio.h>
 #include <tgmath.h>
-#include <time.h>
+#include <sys/time.h>
 
 //Things you gotta get.
 #include <ft2build.h>
@@ -20,7 +20,6 @@
 FT_Library  library;
 FT_Face face;
 
-
 static int i, j, linkcount;
 
 //Default settings
@@ -31,13 +30,20 @@ char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
 bool novid = 0, vsync = 1, quiet = 0, stop = 0;
+unsigned int chosen = 0;
 
+/*	Was not properly defined in my sys/time.h. WTF.	*/
+struct timezone {
+    int tz_minuteswest;     /* minutes west of Greenwich */
+    int tz_dsttime;         /* type of DST correction */
+};
 
-time_t start, end;
-double fps;
-unsigned int counter = 0;
-unsigned int sec;
-unsigned int chosen;
+struct timeval t1, t2;
+struct timezone tz;
+float deltatime;
+float totaltime = 0.0f;
+unsigned int frames = 0;
+char title[40];
 
 GLint u_matrix = -1;
 GLint attr_pos = 0, attr_color = 1;
@@ -138,7 +144,7 @@ int main( int argc, char *argv[] )
 		parser(&object, filename);
 	/*	PHYSICS.	*/
 	
-	time(&start);
+	gettimeofday ( &t1 , &tz );
 	
 	linkcount = obj*2;
 	
@@ -189,12 +195,21 @@ int main( int argc, char *argv[] )
 		}
 		if( stop == 0 ) integrate(object);
 		if( quiet == 0 ) {
-			//FPS calculation.
-			time(&end);
-			++counter;
-			sec = difftime (end, start);
-			fps = (((float)counter)/((float)sec));
-			printf("FPS = %.2f\r", fps);
+			gettimeofday(&t2, &tz);
+			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
+			t1 = t2;
+			totaltime += deltatime;
+			frames++;
+			if (totaltime >  2.0f) {
+				if( novid == 0 ) {
+					sprintf(title, "Physengine - %3.2f FPS", frames/totaltime);
+					SDL_SetWindowTitle(window, title);
+				} else {
+					printf("Current FPS = %3.2f\n", frames/totaltime);
+				}
+				totaltime -= 2.0f;
+				frames = 0;
+			}
 		}
 		if( novid == 1 ) continue;
 		
@@ -277,6 +292,7 @@ int main( int argc, char *argv[] )
 	
 	quit:
 		free(object);
+		SDL_DestroyWindow( window );
 		SDL_Quit();
 		FT_Done_Face( face );
 		FT_Done_FreeType( library );
