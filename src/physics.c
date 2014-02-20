@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <tgmath.h>
 #include "physics.h"
@@ -15,6 +16,9 @@ static float spring = 500;
 static long double pi;
 static float mag, v1norm, v1tang, v2norm, v2tang;
 
+//Sticking to 2 threads for now. Probably will use arrays in the future (is it even possible with pthreads?).
+pthread_t thread1, thread2;
+int iret1, iret2;
 
 float dotprod( v4sf a, v4sf b )
 {
@@ -55,6 +59,36 @@ int findstructs(data* object)
 	return 0;
 }
 
+void resolveforces(data* object) {
+	for(j = 1; j < obj + 1; j++) {
+		if(i != j) {
+			vecnorm = object[j].pos - object[i].pos;
+			mag = lenght(vecnorm);
+			vecnorm /= mag;
+			
+			object[i].Fgrv += vecnorm*((float)((gconst*object[i].mass*object[j].mass)/(mag*mag)));
+			//future:use whole joints instead of individual stuff
+			object[i].Fele += -vecnorm*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
+			
+			if( object[i].linkwith[j] != 0 ) {
+				object[i].Flink += vecnorm*((spring)*(mag - object[i].linkwith[j])*(float)0.2);
+			}
+			if( mag < object[i].radius + object[j].radius ) {
+				//fixme
+				vectang = (v4sf){-vecnorm[1], vecnorm[0]};
+
+				v1norm = dotprod( vecnorm, object[i].vel );
+				v1tang = dotprod( vectang, object[i].vel );
+				v2norm = dotprod( vecnorm, object[j].vel );
+				v2tang = dotprod( vectang, object[j].vel );
+
+				v1norm = (v1norm*(object[i].mass-object[j].mass) + 2*object[j].mass*v2norm)/(object[i].mass+object[j].mass);
+				v2norm = (v2norm*(object[j].mass-object[i].mass) + 2*object[i].mass*v1norm)/(object[j].mass+object[i].mass);
+				object[i].vel = (v4sf){v1norm, v1tang};
+			}
+		}
+	}
+}
 
 int integrate(data* object)
 {
@@ -76,34 +110,9 @@ int integrate(data* object)
 		
 		object[i].pos += (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
 		
-		for(j = 1; j < obj + 1; j++) {
-			if(i != j) {
-				vecnorm = object[j].pos - object[i].pos;
-				mag = lenght(vecnorm);
-				vecnorm /= mag;
-				
-				object[i].Fgrv += vecnorm*((float)((gconst*object[i].mass*object[j].mass)/(mag*mag)));
-				//future:use whole joints instead of individual stuff
-				object[i].Fele += -vecnorm*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
-				
-				if( object[i].linkwith[j] != 0 ) {
-					object[i].Flink += vecnorm*((spring)*(mag - object[i].linkwith[j])*(float)0.2);
-				}
-				if( mag < object[i].radius + object[j].radius ) {
-					//fixme
-					vectang = (v4sf){-vecnorm[1], vecnorm[0]};
-
-					v1norm = dotprod( vecnorm, object[i].vel );
-					v1tang = dotprod( vectang, object[i].vel );
-					v2norm = dotprod( vecnorm, object[j].vel );
-					v2tang = dotprod( vectang, object[j].vel );
-
-					v1norm = (v1norm*(object[i].mass-object[j].mass) + 2*object[j].mass*v2norm)/(object[i].mass+object[j].mass);
-					v2norm = (v2norm*(object[j].mass-object[i].mass) + 2*object[i].mass*v1norm)/(object[j].mass+object[i].mass);
-					object[i].vel = (v4sf){v1norm, v1tang};
-				}
-			}
-		}
+		resolveforces(object);
+		//iret1 = pthread_create(thread1, NULL, resolveforces, (void *) &object);
+		//pthread_join( thread1, NULL);
 		
 		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fele + object[i].Flink;
 		accprev = object[i].acc;

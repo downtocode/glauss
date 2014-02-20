@@ -19,6 +19,7 @@ float dotprod( v4sf a, v4sf b );
 float lenght( v4sf a );
 int initphys(data** object);
 int findstructs(data* object);
+void resolveforces(data* object);
 int integrate(data* object);
 
 #endif
