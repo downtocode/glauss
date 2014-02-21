@@ -4,6 +4,9 @@
 #include <tgmath.h>
 #include "physics.h"
 
+//Definitions
+#define threads 2
+
 //Global vars
 int obj, width, height, objcount;
 float dt;
@@ -19,6 +22,9 @@ static float mag, v1norm, v1tang, v2norm, v2tang;
 //Sticking to 2 threads for now. Probably will use arrays in the future (is it even possible with pthreads?).
 pthread_t thread1, thread2;
 int iret1, iret2;
+
+data *objalt;
+int looplimit1[8], looplimit2[8];
 
 float dotprod( v4sf a, v4sf b )
 {
@@ -38,56 +44,48 @@ int initphys(data** object)
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
 	pi = acos(-1);
+	
+	objalt = *object;
+	
+	
+	looplimit1[0] = 1;
+	looplimit2[0] = (int)((float)obj/threads);
+	looplimit1[1] = looplimit2[1-1] + 1;
+	looplimit2[1] = obj;
+	
 	return 0;
 }
 
-int findstructs(data* object)
-{
-	//Determine links to get the approximate centers
-	for(i = 1; i < obj + 1; i++) {
-		for( j = 1; j < obj + 1; j++ ) {
-			objcount++;
-			centemp += object[i].pos;
-			if( object[i].linkwith[j] == 0 ) break;
-		}
-	}
-	centemp /= (float)objcount;
-	object[obj + 1].pos = centemp;
-	object[obj + 1].center = 1;
-	object[obj + 1].radius = 12;
-	objcount = 0;
-	return 0;
-}
-
-void resolveforces(data* object) {
-	for(j = 1; j < obj + 1; j++) {
+void *resolveforces(void *arg) {
+	for(j = looplimit1[(long)arg]; j < looplimit2[(long)arg] + 1; j++) {
 		if(i != j) {
-			vecnorm = object[j].pos - object[i].pos;
+			vecnorm = objalt[j].pos - objalt[i].pos;
 			mag = lenght(vecnorm);
 			vecnorm /= mag;
 			
-			object[i].Fgrv += vecnorm*((float)((gconst*object[i].mass*object[j].mass)/(mag*mag)));
+			objalt[i].Fgrv += vecnorm*((float)((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag)));
 			//future:use whole joints instead of individual stuff
-			object[i].Fele += -vecnorm*((float)((object[i].charge*object[j].charge)/(4*pi*epsno*mag*mag)));
+			objalt[i].Fele += -vecnorm*((float)((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag)));
 			
-			if( object[i].linkwith[j] != 0 ) {
-				object[i].Flink += vecnorm*((spring)*(mag - object[i].linkwith[j])*(float)0.2);
+			if( objalt[i].linkwith[j] != 0 ) {
+				objalt[i].Flink += vecnorm*((spring)*(mag - objalt[i].linkwith[j])*(float)0.2);
 			}
-			if( mag < object[i].radius + object[j].radius ) {
+			if( mag < objalt[i].radius + objalt[j].radius ) {
 				//fixme
 				vectang = (v4sf){-vecnorm[1], vecnorm[0]};
 
-				v1norm = dotprod( vecnorm, object[i].vel );
-				v1tang = dotprod( vectang, object[i].vel );
-				v2norm = dotprod( vecnorm, object[j].vel );
-				v2tang = dotprod( vectang, object[j].vel );
+				v1norm = dotprod( vecnorm, objalt[i].vel );
+				v1tang = dotprod( vectang, objalt[i].vel );
+				v2norm = dotprod( vecnorm, objalt[j].vel );
+				v2tang = dotprod( vectang, objalt[j].vel );
 
-				v1norm = (v1norm*(object[i].mass-object[j].mass) + 2*object[j].mass*v2norm)/(object[i].mass+object[j].mass);
-				v2norm = (v2norm*(object[j].mass-object[i].mass) + 2*object[i].mass*v1norm)/(object[j].mass+object[i].mass);
-				object[i].vel = (v4sf){v1norm, v1tang};
+				v1norm = (v1norm*(objalt[i].mass-objalt[j].mass) + 2*objalt[j].mass*v2norm)/(objalt[i].mass+objalt[j].mass);
+				v2norm = (v2norm*(objalt[j].mass-objalt[i].mass) + 2*objalt[i].mass*v1norm)/(objalt[j].mass+objalt[i].mass);
+				objalt[i].vel = (v4sf){v1norm, v1tang};
 			}
 		}
 	}
+	return 0;
 }
 
 int integrate(data* object)
@@ -110,9 +108,11 @@ int integrate(data* object)
 		
 		object[i].pos += (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
 		
-		resolveforces(object);
-		//iret1 = pthread_create(thread1, NULL, resolveforces, (void *) &object);
-		//pthread_join( thread1, NULL);
+		iret1 = pthread_create(&thread1, NULL, resolveforces, (void*)0);
+		iret1 = pthread_create(&thread2, NULL, resolveforces, (void*)1);
+		
+		pthread_join( thread1, NULL);
+		pthread_join( thread2, NULL);
 		
 		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fele + object[i].Flink;
 		accprev = object[i].acc;
