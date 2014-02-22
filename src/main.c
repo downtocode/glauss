@@ -1,9 +1,9 @@
-//Things you should all have anyway.
+/*	Standard header files	*/
 #include <stdio.h>
 #include <tgmath.h>
 #include <sys/time.h>
 
-//Things you gotta get.
+/*	Dependencies	*/
 #include <ft2build.h>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -11,7 +11,7 @@
 #include <SDL2/SDL_opengl.h>
 #include FT_FREETYPE_H
 
-//Functions.
+/*	Functions	*/
 #include "physics.h"
 #include "parser.h"
 #include "glfun.h"
@@ -22,24 +22,19 @@ FT_Face face;
 
 static int i, j, linkcount;
 
-//Default settings
+/*	Default settings.	*/
 int obj = 0, width = 1200, height = 600;
 float boxsize = 0.1;
 char fontname[200] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, vsync = 1, quiet = 0, stop = 0;
+bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0;
 unsigned int chosen = 0;
+unsigned short int avail_cores = 0;
 
-/*	Was not properly defined in my sys/time.h. WTF.	*/
-struct timezone {
-    int tz_minuteswest;     /* minutes west of Greenwich */
-    int tz_dsttime;         /* type of DST correction */
-};
-
+/*	FPS Measurement	*/
 struct timeval t1, t2;
-struct timezone tz;
 float deltatime;
 float totaltime = 0.0f;
 unsigned int frames = 0;
@@ -50,35 +45,39 @@ GLint attr_pos = 0, attr_color = 1;
 GLfloat view_rotx = 0.0, view_roty = 0.0;
 GLfloat chosenbox[4][2];
 
+GLfloat colors[3] = {1.0f, 1.0f,  1.0f};
 
-GLfloat colors[9] = {
-  1.0f, 0.0f,  0.0f,
-  0.0f, 1.0f,  0.0f,
-  0.0f, 0.0f,  1.0f
-};
-
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
 	/*	ARGUMENT SETTING	*/
-	if( argc > 1 ) {
-		for( i=1; i < argc; i++ ) {
-			if( !strcmp( "--novid", argv[i] ) ) {
+	if(argc > 1) {
+		for(i=1; i < argc; i++) {
+			if(!strcmp( "--novid", argv[i])) {
 				novid = 1;
 			}
-			if( !strcmp( "--quiet", argv[i] ) ) {
+			if(!strcmp( "--quiet", argv[i])) {
 				quiet = 1;
 			}
-			if( !strcmp( "-f", argv[i] ) ) {
-				strcpy( filename, argv[i+1] );
+			if(!strcmp( "-f", argv[i] ) ) {
+				strcpy( filename, argv[i+1]);
 			}
-			if( !strcmp( "--nosync", argv[i] ) ) {
+			if(!strcmp( "--nosync", argv[i])) {
 				vsync = 0;
 			}
-			if( !strcmp( "--help", argv[i] ) ) {
+			if(!strcmp("--threads", argv[i])) {
+				sscanf(argv[i+1], "%hu", &avail_cores);
+				if(avail_cores == 0) {
+					fprintf(stderr, "WARNING! Running with 0 cores disables all force calculations. Press Enter to continue.");
+					while(getchar() != '\n');
+					enforced = 1;
+				}
+			}
+			if( !strcmp("--help", argv[i])) {
 				printf("Usage:\n");
 				printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 				printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
 				printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
+				printf("	--threads (int)		Make the program run with this many threads.\n"); 
 				printf("	--quiet 		Disable any terminal output except errors.\n"); 
 				printf("	--help  		What you're reading.\n");
 				return 0;
@@ -89,7 +88,7 @@ int main( int argc, char *argv[] )
 	/*	ARGUMENT SETTING	*/
 	
 	/*	Error handling.	*/
-		if( obj == 0 ) {
+		if(obj == 0) {
 			printf("ERROR! NO OBJECTS!\n");
 			return 1;
 		}
@@ -98,14 +97,14 @@ int main( int argc, char *argv[] )
 	/*	OGL && EGL	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
-		if( novid == 0 ) {
-			window = SDL_CreateWindow( "Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL );
+		if(novid == 0) {
+			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			SDL_GL_SetSwapInterval(vsync);
 			SDL_GL_CreateContext(window);
 		}
 		SDL_Event event;
-		if( quiet == 0 ) {
+		if(quiet == 0) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
 		glViewport(0, 0, width, height);
@@ -132,25 +131,25 @@ int main( int argc, char *argv[] )
 	
 	/*	PHYSICS.	*/
 		data* object;
-		if( quiet == 0 ) {
+		if(quiet == 0) {
 			printf("Objects: %i\n", obj);
 			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%f, fontname=%s\n", dt, width, height, boxsize, fontname);
 			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n", elcharge, gconst, epsno);
 		}
 		
-		//Malloc the objects
+		/*	Mallocs and wipes	*/
 		initphys(&object);
 		
 		parser(&object, filename);
 	/*	PHYSICS.	*/
 	
-	gettimeofday ( &t1 , &tz );
+	gettimeofday (&t1 , NULL);
 	
 	linkcount = obj*2;
 	
 	while( 1 ) {
-		while( SDL_PollEvent( &event ) ) {
-			switch( event.type ) {
+		while(SDL_PollEvent(&event)) {
+			switch(event.type) {
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_SPACE) {
 						if( stop == 0 ) stop = 1;
@@ -173,19 +172,15 @@ int main( int argc, char *argv[] )
 					if(event.key.keysym.sym==SDLK_e) {
 						view_rotx -= 5.0;
 					}
-					if(event.key.keysym.sym==SDLK_1) {
-						if( chosen == 1 ) chosen = 0;
-						else {
-							chosen = 1;
-							printf("OBJ 1 HAS BEEN CHOSEN!\n");
-						}
+					if(event.key.keysym.sym==SDLK_n) {
+						if(nowipe == 1) nowipe = 0;
+						else nowipe = 1;
 					}
 					if(event.key.keysym.sym==SDLK_2) {
-						if( chosen == 2 ) chosen = 0;
-						else {
-							chosen = 2;
-							printf("OBJ 1 HAS BEEN CHOSEN!\n");
-						}
+						chosen++;
+					}
+					if(event.key.keysym.sym==SDLK_1) {
+						chosen--;
 					}
 					break;
 				case SDL_QUIT:
@@ -193,15 +188,15 @@ int main( int argc, char *argv[] )
 					break;
 			}
 		}
-		if( stop == 0 ) integrate(object);
-		if( quiet == 0 ) {
-			gettimeofday(&t2, &tz);
+		if(stop == 0) integrate(object);
+		if(quiet == 0) {
+			gettimeofday(&t2, NULL);
 			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
 			t1 = t2;
 			totaltime += deltatime;
 			frames++;
 			if (totaltime >  2.0f) {
-				if( novid == 0 ) {
+				if(novid == 0) {
 					sprintf(title, "Physengine - %3.2f FPS", frames/totaltime);
 					SDL_SetWindowTitle(window, title);
 				} else {
@@ -211,15 +206,14 @@ int main( int argc, char *argv[] )
 				frames = 0;
 			}
 		}
-		if( novid == 1 ) continue;
+		if(novid == 1) continue;
 		
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
+		if(nowipe == 0) glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		draw();
 		
 		/*	Link drawing	*/
-		GLfloat link[linkcount][2];
+		GLfloat link[linkcount][3];
 		linkcount = 0;
 		
 		for(i = 1; i < obj + 1; i++) {
@@ -228,16 +222,18 @@ int main( int argc, char *argv[] )
 				if( object[i].linkwith[j] != 0 ) {
 					link[linkcount][0] = object[i].pos[0];
 					link[linkcount][1] = object[i].pos[1];
+					link[linkcount][2] = object[i].pos[2];
 					linkcount++;
 					link[linkcount][0] = object[j].pos[0];
 					link[linkcount][1] = object[j].pos[1];
+					link[linkcount][2] = object[j].pos[2];
 					linkcount++;
 				}
 			}
 		}
 		
 		
-		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, link);
+		glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, link);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
@@ -260,7 +256,7 @@ int main( int argc, char *argv[] )
 			}
 		}
 		
-		if( chosen != 0 ) {
+		if(chosen != 0) {
 			glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, chosenbox);
 			glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 			glEnableVertexAttribArray(attr_pos);
@@ -272,13 +268,14 @@ int main( int argc, char *argv[] )
 		/*	Selected object's red box	*/
 		
 		/*	Point/object drawing	*/
-		GLfloat points[obj+1][2];
+		GLfloat points[obj+1][3];
 		for(i = 1; i < obj + 1; i++) {
 			points[i-1][0] = object[i].pos[0];
 			points[i-1][1] = object[i].pos[1];
+			points[i-1][2] = object[i].pos[2];
 		}
 		
-		glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, points);
+		glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, points);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
@@ -291,11 +288,12 @@ int main( int argc, char *argv[] )
 	}
 	
 	quit:
-		free(object);
-		SDL_DestroyWindow( window );
+		FT_Done_Face(face);
+		FT_Done_FreeType(library);
+		SDL_DestroyWindow(window);
 		SDL_Quit();
-		FT_Done_Face( face );
-		FT_Done_FreeType( library );
-		printf("\nQuitting!\n");
+		printf("Quitting!\n");
+		pthread_exit(NULL);
+		free(object);
 		return 0;
 }

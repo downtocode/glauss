@@ -1,37 +1,39 @@
 #include <stdio.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <tgmath.h>
+#include <unistd.h>
 #include "physics.h"
 
-//Definitions
-#define threads 2
+#define failsafe_cores 2
 
-//Global vars
+/*	Global vars	*/
 int obj, width, height, objcount;
 float dt;
 long double gconst, epsno, elcharge;
+bool enforced;
 
-//Static vars
-static int i, j;
-static v4sf accprev, vecnorm, vectang, centemp, forceconst = {0, 0};
+/*	Static vars	*/
+static int i;
+static v4sf accprev, forceconst = {0, 0};
 static float spring = 500;
 static long double pi;
-static float mag, v1norm, v1tang, v2norm, v2tang;
 
-//Sticking to 2 threads for now. Probably will use arrays in the future (is it even possible with pthreads?).
-pthread_t thread1, thread2;
-int iret1, iret2;
+/*	Indexing of cores = 1, 2, 3...	*/
+unsigned short int avail_cores;
+pthread_t *threads;
+pthread_attr_t thread_attribs;
+struct sched_param parameters;
+
 
 data *objalt;
 int looplimit1[8], looplimit2[8];
 
-float dotprod( v4sf a, v4sf b )
+float dotprod(v4sf a, v4sf b)
 {
 	float result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; 
 	return result;
 }
-float lenght( v4sf a )
+float lenght(v4sf a)
 {
 	float result = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
 	return sqrt(result);
@@ -47,79 +49,113 @@ int initphys(data** object)
 	
 	objalt = *object;
 	
+	int online_cores = 0;
 	
-	looplimit1[0] = 1;
-	looplimit2[0] = (int)((float)obj/threads);
-	looplimit1[1] = looplimit2[1-1] + 1;
-	looplimit2[1] = obj;
+	#ifdef __linux__
+		online_cores = sysconf(_SC_NPROCESSORS_ONLN);
+	#endif
 	
+	if(avail_cores == 0 && online_cores != 0 && enforced == 0) {
+		avail_cores = online_cores;
+		printf("System has %i processors, running program with %i threads\n", online_cores, avail_cores);
+	} else if( avail_cores != 0 && online_cores != 0 && online_cores > avail_cores ) {
+		printf("System has %i processors, running program with %i threads. You've got %i processors/threads free.\n", \
+		online_cores, avail_cores, online_cores - avail_cores);
+	} else if(avail_cores == 1) {
+		printf("Running program in a single thread.\n");
+	} else if(avail_cores > 1) {
+		printf("Running program with %i threads\n", avail_cores);
+	} else if(avail_cores == 0 && enforced == 0) {
+		/*	Poor Mac OS...	*/
+		avail_cores = failsafe_cores;
+		printf("Unable to automatically determine processors, running with %i threads.\n", avail_cores);
+	} else {
+		printf("Running program without force calculations.\n");
+	}
+	threads = calloc(avail_cores, sizeof(pthread_t));
+	
+	/*	Poorly documented. Just set an arbitrary value. IBM's documents use 3, so I figure 2's fine as well.	*/
+	parameters.sched_priority = 2;
+	pthread_attr_init(&thread_attribs);
+	pthread_attr_setinheritsched(&thread_attribs, PTHREAD_INHERIT_SCHED);
+	/*	Currently using Round-Robin scheduling, you can change it to SCHED_FIFO, but it doesn't seem make much difference.	*/
+	pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
+	pthread_attr_setschedparam(&thread_attribs, &parameters);
+	
+	
+	/*	Split objects equally between cores	*/
+	int totcore = (int)((float)obj/avail_cores);
+	for(int k = 1; k < avail_cores + 1; k++) {
+		looplimit1[k] = looplimit2[k-1] + 1;
+		looplimit2[k] = looplimit1[k] + totcore - 1;
+		if(k == avail_cores) {
+			/*	Takes care of rounding problems with odd numbers. Unfair to the last thread	*/
+			looplimit2[k] += obj - looplimit2[k];
+		}
+		/*	A loop with an end value of 0 won't execute, so it's fine	*/
+		if(looplimit2[k] != 0) printf("Processor %i's objects = [%i,%i]\n", k, looplimit1[k], looplimit2[k]);
+	}
 	return 0;
 }
 
 void *resolveforces(void *arg) {
-	for(j = looplimit1[(long)arg]; j < looplimit2[(long)arg] + 1; j++) {
+	v4sf vecnorm, grv = {0,0,0} , ele = {0,0,0}, link = {0,0,0};
+	float mag;
+	
+	for(int j = looplimit1[(long)arg]; j < looplimit2[(long)arg] + 1; j++) {
 		if(i != j) {
 			vecnorm = objalt[j].pos - objalt[i].pos;
 			mag = lenght(vecnorm);
 			vecnorm /= mag;
 			
-			objalt[i].Fgrv += vecnorm*((float)((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag)));
-			//future:use whole joints instead of individual stuff
-			objalt[i].Fele += -vecnorm*((float)((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag)));
+			grv += vecnorm*((float)((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag)));
+			/*	future:use whole joints instead of individual stuff	*/
+			ele += -vecnorm*((float)((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag)));
 			
 			if( objalt[i].linkwith[j] != 0 ) {
-				objalt[i].Flink += vecnorm*((spring)*(mag - objalt[i].linkwith[j])*(float)0.2);
+				link += vecnorm*((spring)*(mag - objalt[i].linkwith[j])*(float)0.2);
 			}
+			if(j > i) continue;
 			if( mag < objalt[i].radius + objalt[j].radius ) {
-				//fixme
-				vectang = (v4sf){-vecnorm[1], vecnorm[0]};
-
-				v1norm = dotprod( vecnorm, objalt[i].vel );
-				v1tang = dotprod( vectang, objalt[i].vel );
-				v2norm = dotprod( vecnorm, objalt[j].vel );
-				v2tang = dotprod( vectang, objalt[j].vel );
-
-				v1norm = (v1norm*(objalt[i].mass-objalt[j].mass) + 2*objalt[j].mass*v2norm)/(objalt[i].mass+objalt[j].mass);
-				v2norm = (v2norm*(objalt[j].mass-objalt[i].mass) + 2*objalt[i].mass*v1norm)/(objalt[j].mass+objalt[i].mass);
-				objalt[i].vel = (v4sf){v1norm, v1tang};
+				/*	Removed real elastic collision code due to it being incomplete. Still need to do the math for 3D collisions.	*/
+				link = -vecnorm*spring;
 			}
 		}
 	}
+	objalt[i].Ftot = forceconst + grv + ele + link;
 	return 0;
 }
 
 int integrate(data* object)
 {
-	//findstructs(object);
-	
 	for(i = 1; i < obj + 1; i++) {
 		if(object[i].ignore == 1) continue;
-		if(object[i].pos[0] < -1 || object[i].pos[0] > 1) {
+		if(object[i].pos[0] < -2 || object[i].pos[0] > 2) {
 			object[i].vel[0] = -object[i].vel[0];
 		}
 		
-		if(object[i].pos[1] < -1 || object[i].pos[1] > 1) {
+		if(object[i].pos[1] < -2 || object[i].pos[1] > 2) {
 			object[i].vel[1] = -object[i].vel[1];
 		}
 		
-		if(object[i].pos[2] < -1 || object[i].pos[2] > 1) {
+		if(object[i].pos[2] < -2 || object[i].pos[2] > 2) {
 			object[i].vel[2] = -object[i].vel[2];
 		}
 		
 		object[i].pos += (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
 		
-		iret1 = pthread_create(&thread1, NULL, resolveforces, (void*)0);
-		iret1 = pthread_create(&thread2, NULL, resolveforces, (void*)1);
 		
-		pthread_join( thread1, NULL);
-		pthread_join( thread2, NULL);
+		for(int k = 1; k < avail_cores + 1; k++) {
+			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
+		}
+		for(int k = 1; k < avail_cores + 1; k++) {
+			pthread_join(threads[k], NULL);
+		}
 		
-		object[i].Ftot = forceconst + object[i].Fgrv + object[i].Fele + object[i].Flink;
 		accprev = object[i].acc;
 		
 		object[i].acc = (object[i].Ftot)/(float)object[i].mass;
 		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
-		object[i].Fgrv = object[i].Fele = centemp = object[i].Flink = (v4sf){0, 0};
 	}
 	return 0;
 }

@@ -22,6 +22,8 @@ Keypad [  - Halve the time dt
 
 Keypad ] - Double the time dt
 
+n - Toggle nowipe mode, do not clean buffer up each frame. Useful for viewing trajectories.
+
 Space - Pause
 
 Command line arguments
@@ -33,6 +35,8 @@ Command line arguments
 **-f (filename)** - Specifies a posdata.dat to use. In case no such file exists, the configuration file's posdata option is used. If both are missing, the program exists before anything has been initialized.
 
 **--nosync** - Disables vertical synchronization.
+
+**--threads (int)** - Make the program run with this many threads. Letting the kernel deal with how it distributes the load between cores/processors.
 
 **--help** - Print possible arguments and exit.
 

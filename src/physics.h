@@ -2,12 +2,13 @@
 #define FUNCTIONS_H_INCLUDED
 
 #include <stdbool.h>
+#include <pthread.h>
 
-//Vector size must be a power of 2 and big enough to contain the dimensions
+/*	Vector size must be a power of 2 and big enough to contain the dimensions	*/
 typedef float v4sf __attribute__ ((vector_size (16)));
 
 typedef struct {
-	v4sf pos, vel, acc, Ftot, Fgrv, Fele, Flink;
+	v4sf pos, vel, acc, Ftot;
 	long double mass, charge;
 	float radius;
 	float *linkwith;
@@ -15,8 +16,8 @@ typedef struct {
 	bool center;
 } data;
 
-float dotprod( v4sf a, v4sf b );
-float lenght( v4sf a );
+float dotprod(v4sf a, v4sf b);
+float lenght(v4sf a);
 int initphys(data** object);
 void *resolveforces(void *arg);
 int integrate(data* object);

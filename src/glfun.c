@@ -81,7 +81,7 @@ void create_shaders(void)
 	glShaderSource(fragShader, 1, (const char **) &fragShaderText, NULL);
 	glCompileShader(fragShader);
 	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &stat);
-	if (!stat) {
+	if(!stat) {
 		printf("Error: fragment shader did not compile!\n");
 		exit(1);
 	}
@@ -90,7 +90,7 @@ void create_shaders(void)
 	glShaderSource(vertShader, 1, (const char **) &vertShaderText, NULL);
 	glCompileShader(vertShader);
 	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &stat);
-	if (!stat) {
+	if(!stat) {
 		printf("Error: vertex shader did not compile!\n");
 		exit(1);
 	}
@@ -101,7 +101,7 @@ void create_shaders(void)
 	glLinkProgram(program);
 	
 	glGetProgramiv(program, GL_LINK_STATUS, &stat);
-	if (!stat) {
+	if(!stat) {
 		char log[1000];
 		GLsizei len;
 		glGetProgramInfoLog(program, 1000, &len, log);
@@ -111,7 +111,7 @@ void create_shaders(void)
 	
 	glUseProgram(program);
 	
-	if (1) {
+	if(1) {
 		/* test setting attrib locations */
 		glBindAttribLocation(program, attr_pos, "pos");
 		glBindAttribLocation(program, attr_color, "color");

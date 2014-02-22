@@ -8,12 +8,12 @@
 #include "parser.h"
 
 
-//Global variables
+/*	Global variables	*/
 int obj;
 long double elcharge;
 bool quiet, random;
 
-//Static variables
+/*	Static variables	*/
 static char str[200];
 static float velmax, massrand, chargerand, sizerand;
 
@@ -91,18 +91,18 @@ int *height, float *boxsize, char fontname[200], char filename[200])
 		srand(time(NULL));
 	} else { 
 		count = 0;
-		if( access( filename, F_OK ) == -1 ) {
-			fprintf( stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", filename, namebuff );
-			if( access( namebuff, F_OK ) == 0 ) {
-				strcpy( filename, namebuff );
-				fprintf( stderr, " Success!\n");
+		if( access(filename, F_OK) == -1 ) {
+			fprintf(stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", filename, namebuff);
+			if( access(namebuff, F_OK ) == 0) {
+				strcpy(filename, namebuff);
+				fprintf(stderr, " Success!\n");
 			} else {
-				fprintf( stderr, " Fail!\n");
+				fprintf(stderr, " Fail!\n");
 				return 0;
 			}
 		}
-		FILE *inprep = fopen ( filename, "r" );
-		while(fgets (str, sizeof(str), inprep)!=NULL) {
+		FILE *inprep = fopen(filename, "r");
+		while(fgets(str, sizeof(str), inprep)!=NULL) {
 			if (strstr(str, "#") == NULL) {
 				count += 1;
 			}
@@ -122,8 +122,8 @@ int parser(data** object, char filename[200])
 	
 	FILE *in = fopen ( filename, "r" );
 	
-	if( random == 0 ) {
-		if( quiet == 0 ) {
+	if(random == 0) {
+		if(quiet == 0) {
 			printf("	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
 		}
 		while(fgets (str, sizeof(str), in)!= NULL) {
@@ -163,7 +163,7 @@ int parser(data** object, char filename[200])
 				memset(str, 0, sizeof(str));
 			}
 		}
-	} else if ( random == 1 ) {
+	} else if (random == 1) {
 		for(i = 1; i < obj + 1; i++) {
 			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5};
 			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
