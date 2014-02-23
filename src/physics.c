@@ -4,13 +4,14 @@
 #include <unistd.h>
 #include "physics.h"
 
+/*	Default threads to use when system != linux. Everyone should have 2 physical CPUS now	*/
 #define failsafe_cores 2
 
 /*	Global vars	*/
 int obj, width, height, objcount;
 float dt;
 long double gconst, epsno, elcharge;
-bool enforced;
+bool enforced, quiet;
 
 /*	Static vars	*/
 static int i;
@@ -45,6 +46,9 @@ int initphys(data** object)
 	for( i = 0; i < obj + 1; i++ ) {
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
+	
+	printf("Allocated %lu bytes to object array.\n", (obj+1)*sizeof(**object)+(obj+1)*sizeof(float));
+	
 	pi = acos(-1);
 	
 	objalt = *object;
@@ -70,7 +74,7 @@ int initphys(data** object)
 		avail_cores = failsafe_cores;
 		printf("Unable to automatically determine processors, running with %i threads.\n", avail_cores);
 	} else {
-		printf("Running program without force calculations.\n");
+		fprintf(stderr, "Running program without force calculations.\n");
 	}
 	threads = calloc(avail_cores, sizeof(pthread_t));
 	
@@ -93,7 +97,7 @@ int initphys(data** object)
 			looplimit2[k] += obj - looplimit2[k];
 		}
 		/*	A loop with an end value of 0 won't execute, so it's fine	*/
-		if(looplimit2[k] != 0) printf("Processor %i's objects = [%i,%i]\n", k, looplimit1[k], looplimit2[k]);
+		if(looplimit2[k] != 0 && quiet == 0) printf("Processor %i's objects = [%i,%i]\n", k, looplimit1[k], looplimit2[k]);
 	}
 	return 0;
 }
@@ -115,10 +119,9 @@ void *resolveforces(void *arg) {
 			if( objalt[i].linkwith[j] != 0 ) {
 				link += vecnorm*((spring)*(mag - objalt[i].linkwith[j])*(float)0.2);
 			}
-			if(j > i) continue;
 			if( mag < objalt[i].radius + objalt[j].radius ) {
 				/*	Removed real elastic collision code due to it being incomplete. Still need to do the math for 3D collisions.	*/
-				link = -vecnorm*spring;
+				link = -vecnorm*spring*3;
 			}
 		}
 	}
@@ -130,15 +133,15 @@ int integrate(data* object)
 {
 	for(i = 1; i < obj + 1; i++) {
 		if(object[i].ignore == 1) continue;
-		if(object[i].pos[0] < -2 || object[i].pos[0] > 2) {
+		if(object[i].pos[0] - object[i].radius < -2 || object[i].pos[0] + object[i].radius > 2) {
 			object[i].vel[0] = -object[i].vel[0];
 		}
 		
-		if(object[i].pos[1] < -2 || object[i].pos[1] > 2) {
+		if(object[i].pos[1] - object[i].radius < -2 || object[i].pos[1] + object[i].radius > 2) {
 			object[i].vel[1] = -object[i].vel[1];
 		}
 		
-		if(object[i].pos[2] < -2 || object[i].pos[2] > 2) {
+		if(object[i].pos[2] - object[i].radius < -2 || object[i].pos[2] + object[i].radius > 2) {
 			object[i].vel[2] = -object[i].vel[2];
 		}
 		

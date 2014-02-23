@@ -3,16 +3,22 @@
 #include <string.h>
 #include <tgmath.h>
 #include <GLES2/gl2.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include "glfun.h"
 #include "physics.h"
 #include "parser.h"
 
 GLint u_matrix;
-GLint attr_pos, attr_color;
+GLint attr_pos, attr_color, attr_texcoord, attr_tex;
 GLfloat view_rotx, view_roty;
+FT_GlyphSlot g;
+FT_Face face;
 
 static const char *fragShaderText;
 static const char *vertShaderText;
+
+GLfloat colors[3];
 
 void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
@@ -58,7 +64,7 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 #undef PROD
 }
 
-void draw(void)
+void adjust_rot(void)
 {
 	GLfloat mat[16], rot[16], scale[16];
 
@@ -69,10 +75,63 @@ void draw(void)
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
 }
 
+void render_text(const char *text, float x, float y, float sx, float sy) {
+	const char *p;
+	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnableVertexAttribArray(attr_pos);
+	glVertexAttribPointer(attr_pos, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	for(p = text; *p; p++) {
+		if(FT_Load_Char(face, *p, FT_LOAD_RENDER)) continue;
+		
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, g->bitmap.width, g->bitmap.rows, 0, GL_ALPHA,GL_UNSIGNED_BYTE, g->bitmap.buffer);
+		
+		float x2 = x + g->bitmap_left * sx;
+		float y2 = -y - g->bitmap_top * sy;
+		float w = g->bitmap.width * sx;
+		float h = g->bitmap.rows * sy;
+		
+		GLfloat box[4][4] = {
+			{x2,     -y2    , 0, 0},
+			{x2 + w, -y2    , 1, 0},
+			{x2,     -y2 - h, 0, 1},
+			{x2 + w, -y2 - h, 1, 1},
+		};
+			
+		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		
+		x += (g->advance.x >> 6) * sx;
+		y += (g->advance.y >> 6) * sy;
+	}
+	glDisableVertexAttribArray(attr_pos);
+	glDisable(GL_BLEND);
+}
+
+void drawcircle(float posx, float posy, float radius) {
+	int circle_precision = 60;
+	GLfloat points[circle_precision][2];
+	
+	for(int j = 0; j < circle_precision + 1; j++) {
+		float radical = ((float)j/circle_precision)*2*acos(-1);
+		points[j][0] = posx + radius*cos(radical);
+		points[j][1] = posy + radius*sin(radical);
+	}
+	
+	glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, points);
+	glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
+	glEnableVertexAttribArray(attr_pos);
+	glEnableVertexAttribArray(attr_color);
+	glDrawArrays(GL_LINE_LOOP, 1, circle_precision);
+	glDisableVertexAttribArray(attr_pos);
+	glDisableVertexAttribArray(attr_color);
+}
+
 void create_shaders(void)
 {
-	fragShaderText = readshader("shaders/object.frag");
-	vertShaderText = readshader("shaders/object.vert");
+	fragShaderText = readshader("./resources/shaders/object.frag");
+	vertShaderText = readshader("./resources/shaders/object.vert");
 	
 	GLuint fragShader, vertShader, program;
 	GLint stat;
@@ -111,20 +170,12 @@ void create_shaders(void)
 	
 	glUseProgram(program);
 	
-	if(1) {
-		/* test setting attrib locations */
-		glBindAttribLocation(program, attr_pos, "pos");
-		glBindAttribLocation(program, attr_color, "color");
-		glLinkProgram(program);  /* needed to put attribs into effect */
-	}
-	else {
-		/* test automatic attrib locations */
-		attr_pos = glGetAttribLocation(program, "pos");
-		attr_color = glGetAttribLocation(program, "color");
-	}
 	
+	glBindAttribLocation(program, attr_pos, "pos");
+	glBindAttribLocation(program, attr_texcoord, "texcoord");
+	glBindAttribLocation(program, attr_color, "color");
+	glBindAttribLocation(program, attr_tex, "tex");
+	glLinkProgram(program);  /* needed to put attribs into effect */
+
 	u_matrix = glGetUniformLocation(program, "modelviewProjection");
-	printf("Uniform modelviewProjection at %d\n", u_matrix);
-	printf("Attrib pos at %d\n", attr_pos);
-	printf("Attrib color at %d\n", attr_color);
 }

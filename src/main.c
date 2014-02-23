@@ -4,28 +4,17 @@
 #include <sys/time.h>
 
 /*	Dependencies	*/
-#include <ft2build.h>
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include FT_FREETYPE_H
 
 /*	Functions	*/
 #include "physics.h"
 #include "parser.h"
 #include "glfun.h"
 
-
-FT_Library  library;
-FT_Face face;
-
-static int i, j, linkcount;
-
 /*	Default settings.	*/
 int obj = 0, width = 1200, height = 600;
 float boxsize = 0.1;
-char fontname[200] = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
+char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
@@ -33,59 +22,63 @@ bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0;
 unsigned int chosen = 0;
 unsigned short int avail_cores = 0;
 
-/*	FPS Measurement	*/
-struct timeval t1, t2;
-float deltatime;
-float totaltime = 0.0f;
-unsigned int frames = 0;
-char title[40];
 
 GLint u_matrix = -1;
-GLint attr_pos = 0, attr_color = 1;
+GLint attr_pos = 0, attr_color = 1, attr_texcoord = 2, attr_tex = 3;
 GLfloat view_rotx = 0.0, view_roty = 0.0;
+GLfloat rotatex = 0.0, rotatey = 0.0;
 GLfloat chosenbox[4][2];
 
-GLfloat colors[3] = {1.0f, 1.0f,  1.0f};
+GLfloat colors[3] = {1.0f, 1.0f, 1.0f};
+
 
 int main(int argc, char *argv[])
 {
-	/*	ARGUMENT SETTING	*/
-	if(argc > 1) {
-		for(i=1; i < argc; i++) {
-			if(!strcmp( "--novid", argv[i])) {
-				novid = 1;
-			}
-			if(!strcmp( "--quiet", argv[i])) {
-				quiet = 1;
-			}
-			if(!strcmp( "-f", argv[i] ) ) {
-				strcpy( filename, argv[i+1]);
-			}
-			if(!strcmp( "--nosync", argv[i])) {
-				vsync = 0;
-			}
-			if(!strcmp("--threads", argv[i])) {
-				sscanf(argv[i+1], "%hu", &avail_cores);
-				if(avail_cores == 0) {
-					fprintf(stderr, "WARNING! Running with 0 cores disables all force calculations. Press Enter to continue.");
-					while(getchar() != '\n');
-					enforced = 1;
+	/*	Main function vars	*/
+		int linkcount;
+		struct timeval t1, t2;
+		float deltatime, totaltime = 0.0f, fps;
+		unsigned int frames = 0;
+		char osdtext[500] = "";
+	/*	Main function vars	*/
+	
+	/*	Arguments	*/
+		if(argc > 1) {
+			for(int i=1; i < argc; i++) {
+				if(!strcmp( "--novid", argv[i])) {
+					novid = 1;
+				}
+				if(!strcmp( "--quiet", argv[i])) {
+					quiet = 1;
+				}
+				if(!strcmp( "-f", argv[i] ) ) {
+					strcpy( filename, argv[i+1]);
+				}
+				if(!strcmp( "--nosync", argv[i])) {
+					vsync = 0;
+				}
+				if(!strcmp("--threads", argv[i])) {
+					sscanf(argv[i+1], "%hu", &avail_cores);
+					if(avail_cores == 0) {
+						fprintf(stderr, "WARNING! Running with 0 cores disables all force calculations. Press Enter to continue.");
+						while(getchar() != '\n');
+						enforced = 1;
+					}
+				}
+				if( !strcmp("--help", argv[i])) {
+					printf("Usage:\n");
+					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
+					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
+					printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
+					printf("	--threads (int)		Make the program run with this many threads.\n"); 
+					printf("	--quiet 		Disable any terminal output except errors.\n"); 
+					printf("	--help  		What you're reading.\n");
+					return 0;
 				}
 			}
-			if( !strcmp("--help", argv[i])) {
-				printf("Usage:\n");
-				printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
-				printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
-				printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
-				printf("	--threads (int)		Make the program run with this many threads.\n"); 
-				printf("	--quiet 		Disable any terminal output except errors.\n"); 
-				printf("	--help  		What you're reading.\n");
-				return 0;
-			}
 		}
-	}
-	obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname, filename);
-	/*	ARGUMENT SETTING	*/
+		obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname, filename);
+	/*	Arguments	*/
 	
 	/*	Error handling.	*/
 		if(obj == 0) {
@@ -94,42 +87,47 @@ int main(int argc, char *argv[])
 		}
 	/*	Error handling.	*/
 	
-	/*	OGL && EGL	*/
+	/*	OpenGL ES 2.0 + SDL2	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(novid == 0) {
 			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
+			SDL_GL_CreateContext(window);
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			SDL_GL_SetSwapInterval(vsync);
-			SDL_GL_CreateContext(window);
+			glViewport(0, 0, width, height);
+			create_shaders();
 		}
 		SDL_Event event;
 		if(quiet == 0) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
-		glViewport(0, 0, width, height);
-		create_shaders();
-	/*	OGL && EGL	*/
+		glClearColor(0.1, 0.1, 0.1, 1);
+		
+		GLuint tex, vbo;
+		glActiveTexture(GL_TEXTURE0);
+		glGenBuffers(1, &vbo);
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glUniform1i(attr_tex, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	/*	OpenGL ES 2.0 + SDL2	*/
 	
 	/*	Freetype.	*/
 		if(FT_Init_FreeType(&library)) {
 			fprintf(stderr, "Could not init freetype library\n");
 			return 1;
 		}
-		if(FT_New_Face(library, fontname, 0, &face)) {
-			fprintf(stderr, "Could not open font\n");
-		} else {
-			FT_Set_Pixel_Sizes(face, 0, 12);
-			for (unsigned long u = 32; u < 128; u++) {
-				if (FT_Load_Char(face, u, FT_LOAD_RENDER)) {
-					fprintf(stderr, "Could not load character %lu\n", u);
-					continue;
-				}
-			}
-		}
+		if(FT_New_Face(library, fontname, 0, &face)) fprintf(stderr, "Could not open font\n");
+		FT_Set_Pixel_Sizes(face, 0, 37);
+		g = face->glyph;
 	/*	Freetype.	*/
 	
-	/*	PHYSICS.	*/
+	/*	Physics.	*/
 		data* object;
 		if(quiet == 0) {
 			printf("Objects: %i\n", obj);
@@ -141,7 +139,7 @@ int main(int argc, char *argv[])
 		initphys(&object);
 		
 		parser(&object, filename);
-	/*	PHYSICS.	*/
+	/*	Physics.	*/
 	
 	gettimeofday (&t1 , NULL);
 	
@@ -167,10 +165,16 @@ int main(int argc, char *argv[])
 						printf("dt = %f\n", dt);
 					}
 					if(event.key.keysym.sym==SDLK_q) {
-						view_rotx += 5.0;
+						rotatex -= 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_e) {
-						view_rotx -= 5.0;
+						rotatex += 5.0;
+					}
+					if(event.key.keysym.sym==SDLK_w) {
+						rotatey -= 5.0;
+					}
+					if(event.key.keysym.sym==SDLK_s) {
+						rotatey += 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_n) {
 						if(nowipe == 1) nowipe = 0;
@@ -196,28 +200,33 @@ int main(int argc, char *argv[])
 			totaltime += deltatime;
 			frames++;
 			if (totaltime >  2.0f) {
+				fps = frames/totaltime;
 				if(novid == 0) {
-					sprintf(title, "Physengine - %3.2f FPS", frames/totaltime);
-					SDL_SetWindowTitle(window, title);
+					sprintf(osdtext, "FPS = %3.2f", fps);
 				} else {
-					printf("Current FPS = %3.2f\n", frames/totaltime);
+					printf("Current FPS = %3.2f\n", fps);
 				}
 				totaltime -= 2.0f;
 				frames = 0;
 			}
 		}
 		if(novid == 1) continue;
-		
 		if(nowipe == 0) glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		draw();
+		/*	Rotation control	*/
+		view_rotx = rotatex;
+		view_roty = rotatey;
+		
+		glUniform4fv(attr_color, 1, colors);
+		
+		adjust_rot();
 		
 		/*	Link drawing	*/
 		GLfloat link[linkcount][3];
 		linkcount = 0;
 		
-		for(i = 1; i < obj + 1; i++) {
-			for(j = 1; j < obj + 1; j++) {
+		for(int i = 1; i < obj + 1; i++) {
+			for(int j = 1; j < obj + 1; j++) {
 				if( j==i || j > i ) continue;
 				if( object[i].linkwith[j] != 0 ) {
 					link[linkcount][0] = object[i].pos[0];
@@ -232,7 +241,6 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		
 		glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, link);
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
@@ -243,7 +251,7 @@ int main(int argc, char *argv[])
 		/*	Link drawing	*/
 		
 		/*	Selected object's red box	*/
-		for(i = 1; i < obj + 1; i++) {
+		for(int i = 1; i < obj + 1; i++) {
 			if(chosen==i) {
 				chosenbox[0][0] = object[i].pos[0] - boxsize;
 				chosenbox[0][1] = object[i].pos[1] - boxsize;
@@ -268,21 +276,17 @@ int main(int argc, char *argv[])
 		/*	Selected object's red box	*/
 		
 		/*	Point/object drawing	*/
-		GLfloat points[obj+1][3];
-		for(i = 1; i < obj + 1; i++) {
-			points[i-1][0] = object[i].pos[0];
-			points[i-1][1] = object[i].pos[1];
-			points[i-1][2] = object[i].pos[2];
-		}
-		
-		glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, points);
-		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
-		glEnableVertexAttribArray(attr_pos);
-		glEnableVertexAttribArray(attr_color);
-		glDrawArrays(GL_POINTS, 0, obj);
-		glDisableVertexAttribArray(attr_pos);
-		glDisableVertexAttribArray(attr_color);
+		for(int i = 1; i < obj + 1; i++) drawcircle(object[i].pos[0], object[i].pos[1], object[i].radius);
 		/*	Point/object drawing	*/
+		
+		/*	Text drawing	*/
+		view_rotx = view_roty = 0;
+		adjust_rot();
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		render_text(osdtext, -1.9, 1.8, 2.0/width, 2.0/height);
+		render_text("Object 1", object[1].pos[0] + object[1].radius, object[1].pos[1] + object[1].radius, 1.0/width, 1.0/height);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		/*	Text drawing	*/
 		
 		SDL_GL_SwapWindow(window);
 	}
