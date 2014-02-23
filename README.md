@@ -8,7 +8,7 @@ This program aims to implement a physics simulation engine capable of doing simu
 Compiling
 ---------
 Dependencies: libsdl2, libfreetype, and their header(development) files.
-To compile, run make in the current folder. An executable called physengine shall be created.
+To compile, run make in the current folder. An executable called physengine will be created.
 
 Running
 -------
@@ -36,7 +36,7 @@ Command line arguments
 
 **--nosync** - Disables vertical synchronization.
 
-**--threads (int)** - Make the program run with this many threads. Letting the kernel deal with how it distributes the load between cores/processors.
+**--threads (int)** - Run the physics engine with (int) amount of threads. The objects are split equally between them. Currently using Round-Robin algorithm for synchronization.
 
 **--help** - Print possible arguments and exit.
 
@@ -47,10 +47,6 @@ This file contains the program configuration. Each option has to have its value 
 posdata.dat
 -----------
 This file determines the properties of all the objects to be simulated. The comment at the top describes the correct order and structure. Currently, no error detection is present, therefore should the objects misbehave, inspect the file for any oddities.
-
-Planned features
-----------------
-Currently, the focus is on the frontend. Having a good visual output is of top importance when debugging the simulations and tweaking.
 
 Progress/Possible applications
 ------------------------------
