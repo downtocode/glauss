@@ -9,51 +9,60 @@
 
 
 /*	Global variables	*/
-int obj;
-long double elcharge;
-bool quiet, random;
+int obj, width, height;
+float boxsize;
+char fontname[200];
+char filename[200];
+float dt, radius;
+long double elcharge, gconst, epsno;
+bool novid, vsync, quiet, stop, enforced, nowipe, random;
+unsigned int chosen;
+unsigned short int avail_cores;
 
 /*	Static variables	*/
 static char str[200];
 static float velmax, massrand, chargerand, sizerand;
 
-int preparser(float *dt, long double *elcharge, long double *gconst, long double *epsno, int *width, \
-int *height, float *boxsize, char fontname[200], char filename[200])
+
+int preparser()
 {
 	int count = 0;
 	char word[200], variable[200], namebuff[200];
 	long double anothervar;
 	float value, base, power;
-	FILE *inconf = fopen ( "simconf.conf", "r" );
+	FILE *inconf = fopen ("simconf.ini", "r");
 	while(fgets (str, sizeof(str), inconf)!=NULL) {
 		if (strstr(str, "#") == NULL) {
 			sscanf(str, "%s = \"%f\"", word, &value);
 			if(strcmp(word, "dt") == 0) {
-				*dt = value;
+				dt = value;
+			}
+			if(strcmp(word, "threads") == 0) {
+				avail_cores = value;
 			}
 			if(strcmp(word, "elcharge") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				*elcharge = anothervar*pow(base, power);
+				elcharge = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "gconst") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				*gconst = anothervar*pow(base, power);
+				gconst = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "epsno") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				*epsno = anothervar*pow(base, power);
+				epsno = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "width") == 0) {
-				*width = (int)value;
+				width = (int)value;
 			}
 			if(strcmp(word, "height") == 0) {
-				*height = (int)value;
+				height = (int)value;
 			}
 			if(strcmp(word, "boxsize") == 0) {
-				*boxsize = value;
+				boxsize = value;
 			}
 			if(strcmp(word, "fontname") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, fontname);
@@ -91,9 +100,9 @@ int *height, float *boxsize, char fontname[200], char filename[200])
 		srand(time(NULL));
 	} else { 
 		count = 0;
-		if( access(filename, F_OK) == -1 ) {
+		if(access(filename, F_OK) == -1 ) {
 			fprintf(stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", filename, namebuff);
-			if( access(namebuff, F_OK ) == 0) {
+			if(access(namebuff, F_OK) == 0) {
 				strcpy(filename, namebuff);
 				fprintf(stderr, " Success!\n");
 			} else {

@@ -18,7 +18,7 @@ char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0;
+bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0, random = 1;
 unsigned int chosen = 0;
 unsigned short int avail_cores = 0;
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-		obj = preparser(&dt, &elcharge, &gconst, &epsno, &width, &height, &boxsize, fontname, filename);
+		obj = preparser();
 	/*	Arguments	*/
 	
 	/*	Error handling.	*/

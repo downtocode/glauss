@@ -123,7 +123,7 @@ void drawcircle(float posx, float posy, float radius) {
 	glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 	glEnableVertexAttribArray(attr_pos);
 	glEnableVertexAttribArray(attr_color);
-	glDrawArrays(GL_LINE_LOOP, 1, circle_precision);
+	glDrawArrays(GL_TRIANGLE_FAN, 1, circle_precision);
 	glDisableVertexAttribArray(attr_pos);
 	glDisableVertexAttribArray(attr_color);
 }
