@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		if(FT_New_Face(library, fontname, 0, &face)) fprintf(stderr, "Could not open font\n");
-		FT_Set_Pixel_Sizes(face, 0, 37);
+		FT_Set_Pixel_Sizes(face, 0, 42);
 		g = face->glyph;
 	/*	Freetype.	*/
 	
@@ -284,7 +284,37 @@ int main(int argc, char *argv[])
 		adjust_rot();
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		render_text(osdtext, -1.9, 1.8, 2.0/width, 2.0/height);
-		render_text("Object 1", object[1].pos[0] + object[1].radius, object[1].pos[1] + object[1].radius, 1.0/width, 1.0/height);
+		for(int i = 1; i < obj + 1; i++) {
+			if(chosen==i) {
+				char osdstr[500];
+				sprintf(osdstr, "Object %i", i);
+				
+				render_text(osdstr, object[i].pos[0] + object[i].radius, \
+				object[i].pos[1] + object[i].radius, 1.0/width, 1.0/height);
+				
+				
+				unsigned int counter = 0;
+				unsigned int links[obj+1];
+				
+				for(int j = 1; j < obj + 1; j++) {
+					if(object[i].linkwith[j] != 0) {
+						counter++;
+						links[counter] = j;
+					}
+				}
+				if(counter != 0) {
+					memset(osdstr, 0, sizeof(osdstr));
+					char linkcount[obj+1];
+					sprintf(osdstr, "Links: ");
+					for(int j = 1; j < counter + 1; j++) {
+						sprintf(linkcount, "%u, ", links[j]);
+						strcat(osdstr, linkcount);
+					}
+					render_text(osdstr, object[i].pos[0] + object[i].radius, \
+					object[i].pos[i] + object[i].radius, 1.0/width, 1.0/height);
+				}
+			}
+		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
 		
