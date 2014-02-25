@@ -1,0 +1,17 @@
+language: c
+
+compiler:
+  - gcc
+  - clang
+branches:
+  only:
+    - master
+
+before_install: sudo apt-get update
+install: sudo apt-get install libsdl2-dev libfreetype6-dev
+script:
+  - make
+
+notifications-policy: &notifications-policy
+  on_success: change
+  on_failure: always
