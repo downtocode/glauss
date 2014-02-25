@@ -47,7 +47,7 @@ int initphys(data** object)
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
 	
-	printf("Allocated %lu bytes to object array.\n", (obj+1)*sizeof(**object)+(obj+1)*sizeof(float));
+	if(quiet == 0) printf("Allocated %lu bytes to object array.\n", (obj+1)*sizeof(**object)+(obj+1)*sizeof(float));
 	
 	pi = acos(-1);
 	
@@ -61,13 +61,13 @@ int initphys(data** object)
 	
 	if(avail_cores == 0 && online_cores != 0 && enforced == 0) {
 		avail_cores = online_cores;
-		printf("System has %i processors, running program with %i threads\n", online_cores, avail_cores);
+		if(quiet == 0) printf("System has %i processors, running program with %i threads\n", online_cores, avail_cores);
 	} else if( avail_cores != 0 && online_cores != 0 && online_cores > avail_cores ) {
-		printf("System has %i processors, running program with %i threads. You've got %i processors/threads free.\n", \
+		if(quiet == 0) printf("System has %i processors, running program with %i threads. You've got %i processors/threads free.\n", \
 		online_cores, avail_cores, online_cores - avail_cores);
-	} else if(avail_cores == 1) {
+	} else if(avail_cores == 1 && quiet == 0) {
 		printf("Running program in a single thread.\n");
-	} else if(avail_cores > 1) {
+	} else if(avail_cores > 1 && quiet == 0) {
 		printf("Running program with %i threads\n", avail_cores);
 	} else if(avail_cores == 0 && enforced == 0) {
 		/*	Poor Mac OS...	*/

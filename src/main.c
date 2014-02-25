@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
-		printf("Quitting!\n");
+		if(quiet == 0) printf("Quitting!\n");
 		pthread_exit(NULL);
 		free(object);
 		return 0;
