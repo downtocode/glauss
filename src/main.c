@@ -88,6 +88,8 @@ int main(int argc, char *argv[])
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
+		GLuint tex, vbo;
+		
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(novid == 0) {
@@ -97,6 +99,16 @@ int main(int argc, char *argv[])
 			SDL_GL_SetSwapInterval(vsync);
 			glViewport(0, 0, width, height);
 			create_shaders();
+			glActiveTexture(GL_TEXTURE0);
+			glGenBuffers(1, &vbo);
+			glGenTextures(1, &tex);
+			glBindTexture(GL_TEXTURE_2D, tex);
+			glUniform1i(attr_tex, 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		}
 		SDL_Event event;
 		if(quiet == 0) {
@@ -104,17 +116,6 @@ int main(int argc, char *argv[])
 		}
 		glClearColor(0.1, 0.1, 0.1, 1);
 		
-		GLuint tex, vbo;
-		glActiveTexture(GL_TEXTURE0);
-		glGenBuffers(1, &vbo);
-		glGenTextures(1, &tex);
-		glBindTexture(GL_TEXTURE_2D, tex);
-		glUniform1i(attr_tex, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
 	/*	Freetype.	*/
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		if(FT_New_Face(library, fontname, 0, &face)) fprintf(stderr, "Could not open font\n");
-		FT_Set_Pixel_Sizes(face, 0, 42);
+		FT_Set_Pixel_Sizes(face, 0, 50);
 		g = face->glyph;
 	/*	Freetype.	*/
 	
@@ -311,7 +312,7 @@ int main(int argc, char *argv[])
 						strcat(osdstr, linkcount);
 					}
 					render_text(osdstr, object[i].pos[0] + object[i].radius, \
-					object[i].pos[i] + object[i].radius, 1.0/width, 1.0/height);
+					object[i].pos[1] + object[i].radius - 0.075, 1.0/width, 1.0/height);
 				}
 			}
 		}
