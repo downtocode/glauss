@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint tex, textvbo;
+		GLuint tex, textvbo, linevbo;
 		
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
 			create_shaders();
 			glActiveTexture(GL_TEXTURE0);
 			glGenBuffers(1, &textvbo);
+			glGenBuffers(1, &linevbo);
 			glGenTextures(1, &tex);
 			glBindTexture(GL_TEXTURE_2D, tex);
 			glUniform1i(attr_tex, 0);
@@ -266,13 +267,13 @@ int main(int argc, char *argv[])
 		}
 		
 		if(chosen != 0) {
-			glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, chosenbox);
-			glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
+			glBindBuffer(GL_ARRAY_BUFFER, linevbo);
 			glEnableVertexAttribArray(attr_pos);
-			glEnableVertexAttribArray(attr_color);
+			glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
+			glBufferData(GL_ARRAY_BUFFER, sizeof chosenbox, chosenbox, GL_STATIC_DRAW);
 			glDrawArrays(GL_LINE_LOOP, 0, 4);
 			glDisableVertexAttribArray(attr_pos);
-			glDisableVertexAttribArray(attr_color);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 		/*	Selected object's red box	*/
 		
