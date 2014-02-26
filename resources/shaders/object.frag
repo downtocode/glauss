@@ -1,5 +1,5 @@
 #version 120
- 
+
 varying vec2 texcoord;
 uniform vec4 color;
 uniform sampler2D tex;

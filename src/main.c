@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint tex, vbo;
+		GLuint tex, textvbo;
 		
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 			glViewport(0, 0, width, height);
 			create_shaders();
 			glActiveTexture(GL_TEXTURE0);
-			glGenBuffers(1, &vbo);
+			glGenBuffers(1, &textvbo);
 			glGenTextures(1, &tex);
 			glBindTexture(GL_TEXTURE_2D, tex);
 			glUniform1i(attr_tex, 0);
@@ -109,12 +109,12 @@ int main(int argc, char *argv[])
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glClearColor(0.1, 0.1, 0.1, 1);
 		}
 		SDL_Event event;
 		if(quiet == 0) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
-		glClearColor(0.1, 0.1, 0.1, 1);
 		
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
@@ -182,10 +182,10 @@ int main(int argc, char *argv[])
 						else nowipe = 1;
 					}
 					if(event.key.keysym.sym==SDLK_2) {
-						chosen++;
+						if(chosen < obj) chosen++;
 					}
 					if(event.key.keysym.sym==SDLK_1) {
-						chosen--;
+						if(chosen > 0) chosen--;
 					}
 					break;
 				case SDL_QUIT:
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 		/*	Text drawing	*/
 		view_rotx = view_roty = 0;
 		adjust_rot();
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
 		render_text(osdtext, -1.9, 1.8, 2.0/width, 2.0/height);
 		for(int i = 1; i < obj + 1; i++) {
 			if(chosen==i) {
