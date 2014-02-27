@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tgmath.h>
-#include <GLES2/gl2.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "glfun.h"
@@ -18,7 +17,7 @@ FT_Face face;
 static const char *fragShaderText;
 static const char *vertShaderText;
 
-GLfloat colors[3];
+static GLfloat colors[] = {1.0f, 1.0f, 1.0f};
 
 void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
@@ -99,7 +98,7 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 			{x2 + w, -y2 - h, 1, 1},
 		};
 			
-		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		
 		x += (g->advance.x >> 6) * sx;
@@ -110,7 +109,7 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 }
 
 void drawcircle(float posx, float posy, float radius) {
-	int circle_precision = 60;
+	int circle_precision = 30;
 	GLfloat points[circle_precision][2];
 	
 	for(int j = 0; j < circle_precision + 1; j++) {
@@ -119,11 +118,12 @@ void drawcircle(float posx, float posy, float radius) {
 		points[j][1] = posy + radius*sin(radical);
 	}
 	
-	glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, points);
-	glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
+	glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(attr_pos);
+	glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 	glEnableVertexAttribArray(attr_color);
-	glDrawArrays(GL_TRIANGLE_FAN, 1, circle_precision);
+	glBufferData(GL_ARRAY_BUFFER, sizeof points, points, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, circle_precision);
 	glDisableVertexAttribArray(attr_pos);
 	glDisableVertexAttribArray(attr_color);
 }
@@ -173,7 +173,7 @@ void create_shaders(void)
 	
 	glBindAttribLocation(program, attr_pos, "pos");
 	glBindAttribLocation(program, attr_texcoord, "texcoord");
-	glBindAttribLocation(program, attr_color, "color");
+	glBindAttribLocation(program, attr_color, "colors");
 	glBindAttribLocation(program, attr_tex, "tex");
 	glLinkProgram(program);  /* needed to put attribs into effect */
 

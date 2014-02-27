@@ -1,28 +1,27 @@
 language: c
 
 compiler:
-	- gcc
-	- clang
+  - gcc
 branches:
 only:
-	- master
+  - master
 
 before_install: 
-	sudo apt-get update
-	sudo apt-get install libfreetype6-dev
-	wget http://libsdl.org/release/SDL2-2.0.1.tar.gz
-	tar xfz SDL2-2.0.1.tar.gz
-	cd SDL2-2.0.1
-	./autogen.sh
-	./configure
-	make
-	sudo make install
-	cd ..
+  - sudo apt-get update
+  - sudo apt-get install libfreetype6-dev libgles1-mesa libgles1-mesa-dev libegl1-mesa-dev
+  - wget http://libsdl.org/release/SDL2-2.0.1.tar.gz
+  - tar xfz SDL2-2.0.1.tar.gz
+  - cd SDL2-2.0.1
+  - ./autogen.sh
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
 install:
-	
+  
 script:
-	- make
+  - make
 
 notifications-policy: &notifications-policy
-	on_success: change
-	on_failure: always
+  on_success: change
+  on_failure: always

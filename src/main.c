@@ -29,7 +29,7 @@ GLfloat view_rotx = 0.0, view_roty = 0.0;
 GLfloat rotatex = 0.0, rotatey = 0.0;
 GLfloat chosenbox[4][2];
 
-GLfloat colors[3] = {1.0f, 1.0f, 1.0f};
+static GLfloat colors[] = {1.0f, 1.0f, 1.0f};
 
 
 int main(int argc, char *argv[])
@@ -88,20 +88,26 @@ int main(int argc, char *argv[])
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint tex, textvbo, linevbo;
+		GLuint tex, textvbo, linevbo, pointvbo;
 		
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(novid == 0) {
+			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+			/*	SDL bugs again. Set the line below to anything and you'll render on only half of your screen.	*/
+			/*	For now, sticking to regular, good, awesome OpenGL.	*/
+			/*	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);	*/
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
 			SDL_GL_CreateContext(window);
-			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			SDL_GL_SetSwapInterval(vsync);
 			glViewport(0, 0, width, height);
 			create_shaders();
 			glActiveTexture(GL_TEXTURE0);
 			glGenBuffers(1, &textvbo);
 			glGenBuffers(1, &linevbo);
+			glGenBuffers(1, &pointvbo);
 			glGenTextures(1, &tex);
 			glBindTexture(GL_TEXTURE_2D, tex);
 			glUniform1i(attr_tex, 0);
@@ -270,7 +276,7 @@ int main(int argc, char *argv[])
 			glBindBuffer(GL_ARRAY_BUFFER, linevbo);
 			glEnableVertexAttribArray(attr_pos);
 			glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
-			glBufferData(GL_ARRAY_BUFFER, sizeof chosenbox, chosenbox, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof chosenbox, chosenbox, GL_DYNAMIC_DRAW);
 			glDrawArrays(GL_LINE_LOOP, 0, 4);
 			glDisableVertexAttribArray(attr_pos);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -278,7 +284,9 @@ int main(int argc, char *argv[])
 		/*	Selected object's red box	*/
 		
 		/*	Point/object drawing	*/
+		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
 		for(int i = 1; i < obj + 1; i++) drawcircle(object[i].pos[0], object[i].pos[1], object[i].radius);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Point/object drawing	*/
 		
 		/*	Text drawing	*/

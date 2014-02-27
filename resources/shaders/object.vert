@@ -1,4 +1,6 @@
-#version 120
+#version 100
+
+precision mediump float;
  
 varying vec2 texcoord;
 uniform mat4 modelviewProjection;

@@ -1,9 +1,11 @@
-#version 120
+#version 100
+
+precision mediump float;
 
 varying vec2 texcoord;
-uniform vec4 color;
+uniform vec4 colors;
 uniform sampler2D tex;
 
 void main() {
-		gl_FragColor = vec4(color.x, color.y, color.z, texture2D(tex, texcoord).a);
+		gl_FragColor = vec4(colors.x, colors.y, colors.z, texture2D(tex, texcoord).a);
 }
