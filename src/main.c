@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 			/*	For now, sticking to regular, good, awesome OpenGL.	*/
 			/*	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);	*/
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(vsync);

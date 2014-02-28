@@ -109,7 +109,7 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 }
 
 void drawcircle(float posx, float posy, float radius) {
-	int circle_precision = 30;
+	int circle_precision = 9;
 	GLfloat points[circle_precision][2];
 	
 	for(int j = 0; j < circle_precision + 1; j++) {

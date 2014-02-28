@@ -174,14 +174,14 @@ int parser(data** object, char filename[200])
 		}
 	} else if (random == 1) {
 		for(i = 1; i < obj + 1; i++) {
-			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5};
+			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5, 0};
 			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
-			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
+			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, 0};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
 			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;
-			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand + 0.07;
+			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
 			(*object)[i].center = 0;
-			(*object)[i].ignore = 0;
+			(*object)[i].ignore = '0';
 		}
 	}
 	fclose(in);
@@ -191,6 +191,7 @@ int parser(data** object, char filename[200])
 char* readshader(const char* filename)
 {
 	FILE* input = fopen(filename, "r");
+	size_t bytes_read;
 	if(input == NULL) return NULL;
 	
 	if(fseek(input, 0, SEEK_END) == -1) return NULL;
@@ -201,7 +202,7 @@ char* readshader(const char* filename)
 	char *content = malloc((size_t)size +1); 
 	if(content == NULL) return NULL;
 	
-	fread(content, 1, (size_t)size, input);
+	bytes_read = fread(content, 1, (size_t)size, input);
 	if(ferror(input)) {
 		free(content);
 		return NULL;

@@ -1,6 +1,8 @@
 physengine
 =================
 
+[![Build Status](https://travis-ci.org/atomnuker/physengine.png?branch=master)](https://travis-ci.org/atomnuker/physengine)
+
 Description
 -----------
 This program aims to implement a physics simulation engine capable of doing simulations on various scales, from molecular dynamics to planetary motion, all whilst maintaining maximum performance. Implemented using the SDL2, Freetype 2 and the OpenGL ES 2.0 libraries and written in C. Using standard POSIX threads to implement multithreading.

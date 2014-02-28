@@ -15,7 +15,7 @@ bool enforced, quiet;
 
 /*	Static vars	*/
 static int i;
-static v4sf accprev, forceconst = {0, 0};
+static v4sf accprev, forceconst = {0, 0, 0};
 static float spring = 500;
 static long double pi;
 
@@ -36,7 +36,7 @@ float dotprod(v4sf a, v4sf b)
 }
 float lenght(v4sf a)
 {
-	float result = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
+	float result = a[0]*a[0] + a[1]*a[1];
 	return sqrt(result);
 }
 
@@ -104,24 +104,28 @@ int initphys(data** object)
 
 void *resolveforces(void *arg) {
 	v4sf vecnorm, grv = {0,0,0} , ele = {0,0,0}, link = {0,0,0};
-	float mag;
+	long double mag, grvmag, elemag, springmag;
 	
 	for(int j = looplimit1[(long)arg]; j < looplimit2[(long)arg] + 1; j++) {
 		if(i != j) {
 			vecnorm = objalt[j].pos - objalt[i].pos;
 			mag = lenght(vecnorm);
-			vecnorm /= mag;
+			vecnorm /= (v4sf){mag, mag, mag};
 			
-			grv += vecnorm*((float)((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag)));
+			grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
+			elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
+			
+			grv += vecnorm*(v4sf){grvmag,grvmag,grvmag};
 			/*	future:use whole joints instead of individual stuff	*/
-			ele += -vecnorm*((float)((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag)));
+			ele += -vecnorm*(v4sf){elemag,elemag,elemag};
 			
 			if( objalt[i].linkwith[j] != 0 ) {
-				link += vecnorm*((spring)*(mag - objalt[i].linkwith[j])*(float)0.2);
+				springmag = (spring)*(mag - objalt[i].linkwith[j])*0.1;
+				link += vecnorm*(v4sf){springmag, springmag, springmag};
 			}
 			if( mag < objalt[i].radius + objalt[j].radius ) {
 				/*	Removed real elastic collision code due to it being incomplete. Still need to do the math for 3D collisions.	*/
-				link = -vecnorm*spring*3;
+				link = -vecnorm*(v4sf){spring*3, spring*3, spring*3};
 			}
 		}
 	}
@@ -132,7 +136,7 @@ void *resolveforces(void *arg) {
 int integrate(data* object)
 {
 	for(i = 1; i < obj + 1; i++) {
-		if(object[i].ignore == 1) continue;
+		if(object[i].ignore != '0') continue;
 		if(object[i].pos[0] - object[i].radius < -2 || object[i].pos[0] + object[i].radius > 2) {
 			object[i].vel[0] = -object[i].vel[0];
 		}
@@ -145,20 +149,24 @@ int integrate(data* object)
 			object[i].vel[2] = -object[i].vel[2];
 		}
 		
-		object[i].pos += (object[i].vel*dt) + (object[i].acc)*((dt*dt)/2);
+		/*	Move to a new position	*/
+			object[i].pos += (object[i].vel*(v4sf){dt,dt,dt}) + (object[i].acc)*(v4sf){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
+		/*	Move to a new position	*/
 		
+		/*	Calculate forces	*/
+			for(int k = 1; k < avail_cores + 1; k++) {
+				pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
+			}
+			for(int k = 1; k < avail_cores + 1; k++) {
+				pthread_join(threads[k], NULL);
+			}
+		/*	Calculate forces	*/
 		
-		for(int k = 1; k < avail_cores + 1; k++) {
-			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
-		}
-		for(int k = 1; k < avail_cores + 1; k++) {
-			pthread_join(threads[k], NULL);
-		}
-		
-		accprev = object[i].acc;
-		
-		object[i].acc = (object[i].Ftot)/(float)object[i].mass;
-		object[i].vel += ((dt)/2)*(object[i].acc + accprev);
+		/*	Calculate new velocity	*/
+			accprev = object[i].acc;
+			object[i].acc = (object[i].Ftot)/(v4sf){object[i].mass,object[i].mass};
+			object[i].vel += (object[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
+		/*	Calculate new velocity	*/
 	}
 	return 0;
 }

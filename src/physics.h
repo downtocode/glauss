@@ -12,6 +12,7 @@ typedef struct {
 	long double mass, charge;
 	float radius;
 	float *linkwith;
+	/*	Set this to 0. No, not like that. Like '0' or (char)0.	*/
 	char ignore;
 	bool center;
 } data;

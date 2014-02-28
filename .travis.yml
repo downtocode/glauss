@@ -2,6 +2,7 @@ language: c
 
 compiler:
   - gcc
+  - clang
 branches:
 only:
   - master
@@ -22,6 +23,5 @@ install:
 script:
   - make
 
-notifications-policy: &notifications-policy
-  on_success: change
-  on_failure: always
+notifications:
+  email: false
