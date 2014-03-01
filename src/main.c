@@ -25,8 +25,8 @@ unsigned short int avail_cores = 0;
 
 GLint u_matrix = -1;
 GLint attr_pos = 0, attr_color = 1, attr_texcoord = 2, attr_tex = 3;
-GLfloat view_rotx = 0.0, view_roty = 0.0;
-GLfloat rotatex = 0.0, rotatey = 0.0;
+GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz;
+GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 GLfloat chosenbox[4][2];
 
 static GLfloat colors[] = {1.0f, 1.0f, 1.0f};
@@ -172,17 +172,17 @@ int main(int argc, char *argv[])
 						dt /= 2;
 						printf("dt = %f\n", dt);
 					}
-					if(event.key.keysym.sym==SDLK_q) {
-						rotatex -= 5.0;
-					}
-					if(event.key.keysym.sym==SDLK_e) {
+					if(event.key.keysym.sym==SDLK_w) {
 						rotatex += 5.0;
 					}
-					if(event.key.keysym.sym==SDLK_w) {
-						rotatey -= 5.0;
-					}
 					if(event.key.keysym.sym==SDLK_s) {
+						rotatex -= 5.0;
+					}
+					if(event.key.keysym.sym==SDLK_a) {
 						rotatey += 5.0;
+					}
+					if(event.key.keysym.sym==SDLK_d) {
+						rotatey -= 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_n) {
 						if(nowipe == 1) nowipe = 0;
@@ -224,6 +224,7 @@ int main(int argc, char *argv[])
 		/*	Rotation control	*/
 		view_rotx = rotatex;
 		view_roty = rotatey;
+		view_rotz = rotatez;
 		
 		glUniform4fv(attr_color, 1, colors);
 		
@@ -253,7 +254,7 @@ int main(int argc, char *argv[])
 		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
 		glEnableVertexAttribArray(attr_pos);
 		glEnableVertexAttribArray(attr_color);
-		glDrawArrays(GL_LINES, 0, linkcount);
+		glDrawArrays(GL_LINES, 0, linkcount+1);
 		glDisableVertexAttribArray(attr_pos);
 		glDisableVertexAttribArray(attr_color);
 		/*	Link drawing	*/
@@ -290,10 +291,10 @@ int main(int argc, char *argv[])
 		/*	Point/object drawing	*/
 		
 		/*	Text drawing	*/
-		view_rotx = view_roty = 0;
+		view_rotx = view_roty = view_rotz = 0;
 		adjust_rot();
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		render_text(osdtext, -1.9, 1.8, 2.0/width, 2.0/height);
+		render_text(osdtext, -1.4, 0, 2.0/width, 2.0/height);
 		for(int i = 1; i < obj + 1; i++) {
 			if(chosen==i) {
 				char osdstr[500];

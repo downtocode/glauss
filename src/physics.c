@@ -36,7 +36,7 @@ float dotprod(v4sf a, v4sf b)
 }
 float lenght(v4sf a)
 {
-	float result = a[0]*a[0] + a[1]*a[1];
+	float result = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
 	return sqrt(result);
 }
 
@@ -164,7 +164,7 @@ int integrate(data* object)
 		
 		/*	Calculate new velocity	*/
 			accprev = object[i].acc;
-			object[i].acc = (object[i].Ftot)/(v4sf){object[i].mass,object[i].mass};
+			object[i].acc = (object[i].Ftot)/(v4sf){object[i].mass,object[i].mass,object[i].mass};
 			object[i].vel += (object[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
 		/*	Calculate new velocity	*/
 	}

@@ -11,6 +11,8 @@ FT_GlyphSlot g;
 
 
 void render_text(const char *text, float x, float y, float sx, float sy);
+void make_x_rot_matrix(GLfloat angle, GLfloat *m);
+void make_y_rot_matrix(GLfloat angle, GLfloat *m);
 void make_z_rot_matrix(GLfloat angle, GLfloat *m);
 void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m);
 void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b);

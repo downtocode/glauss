@@ -10,7 +10,7 @@
 
 GLint u_matrix;
 GLint attr_pos, attr_color, attr_texcoord, attr_tex;
-GLfloat view_rotx, view_roty;
+GLfloat view_rotx, view_roty, view_rotz;
 FT_GlyphSlot g;
 FT_Face face;
 
@@ -23,23 +23,37 @@ void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
 	float c = cos(angle * acos(-1) / 180.0);
 	float s = sin(angle * acos(-1) / 180.0);
-	int i;
-	for (i = 0; i < 16; i++) m[i] = 0.0;
-	m[0] = m[5] = m[10] = m[15] = 1.0;
 	m[0] = c;
 	m[1] = s;
 	m[4] = -s;
 	m[5] = c;
 }
 
+void make_x_rot_matrix(GLfloat angle, GLfloat *m)
+{
+	float c = cos(angle * acos(-1) / 180.0);
+	float s = sin(angle * acos(-1) / 180.0);
+	m[5] = c;
+	m[6] = s;
+	m[9] = -s;
+	m[10] = c;
+}
+
+void make_y_rot_matrix(GLfloat angle, GLfloat *m)
+{
+	float c = cos(angle * acos(-1) / 180.0);
+	float s = sin(angle * acos(-1) / 180.0);
+	m[0] = c;
+	m[2] = -s;
+	m[8] = s;
+	m[10] = c;
+}
+
 void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 {
-	int i;
-	for (i = 0; i < 16; i++) m[i] = 0.0;
 	m[0] = xs;
 	m[5] = ys;
 	m[10] = zs;
-	m[15] = 1.0;
 }
 
 
@@ -49,8 +63,7 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 #define B(row,col)  b[(col<<2)+row]
 #define P(row,col)  p[(col<<2)+row]
 	GLfloat p[16];
-	GLint i;
-	for (i = 0; i < 4; i++) {
+	for(int i = 0; i < 4; i++) {
 		const GLfloat ai0=A(i,0),  ai1=A(i,1),  ai2=A(i,2),  ai3=A(i,3);
 		P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
 		P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
@@ -65,12 +78,21 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 
 void adjust_rot(void)
 {
-	GLfloat mat[16], rot[16], scale[16];
-
+	GLfloat mat[16], rotx[16], roty[16], rotz[16], scale[16];
+	mat[0] = mat[5] = mat[10] = mat[15] = 1;
+	rotx[0] = rotx[5] = rotx[10] = rotx[15] = 1;
+	roty[0] = roty[5] = roty[10] = roty[15] = 1;
+	rotz[0] = rotz[5] = rotz[10] = rotz[15] = 1;
+	scale[0] = scale[5] = scale[10] = scale[15] = 1;
+	
 	/* Set modelview/projection matrix */
-	make_z_rot_matrix(view_rotx, rot);
-	make_scale_matrix(0.5, 0.5, 0.5, scale);
-	mul_matrix(mat, rot, scale);
+	make_x_rot_matrix(view_rotx, rotx);
+	make_y_rot_matrix(view_roty, roty);
+	make_z_rot_matrix(view_rotz, rotz);
+	make_scale_matrix(0.5, 1, 1, scale);
+	mul_matrix(mat, roty, rotx);
+	mul_matrix(mat, mat, rotz);
+	mul_matrix(mat, mat, scale);
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
 }
 
