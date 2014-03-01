@@ -1,5 +1,5 @@
 #col1 - id, col2,3,4 - pos, col5,6,7 - vel, col8 - mass, col9 - charge, col10 - radius, col11 - ignore, col12(links) - "id-lenght,id-lenght,..."
-#%i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"
+#Format: %i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"
 1 0 0 0 0 0 0 0.4 1 0.1 0 "2-0.49"
 2 0.5 0 0 0 0 0 0.4 -1 0.1 1 "1-0.49,5-0.49"
 3 -0.5 0 0 0 0 0 0.4 0.1 0.1 1 "4-0.74"

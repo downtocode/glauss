@@ -47,7 +47,7 @@ int initphys(data** object)
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
 	
-	if(quiet == 0) printf("Allocated %lu bytes to object array.\n", (obj+1)*sizeof(**object)+(obj+1)*sizeof(float));
+	if(quiet == 0) printf("Allocated %lu bytes to object array.\n", ((obj+1)*sizeof(**object)+(obj+1)*sizeof(float)));
 	
 	pi = acos(-1);
 	

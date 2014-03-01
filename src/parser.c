@@ -191,7 +191,6 @@ int parser(data** object, char filename[200])
 char* readshader(const char* filename)
 {
 	FILE* input = fopen(filename, "r");
-	size_t bytes_read;
 	if(input == NULL) return NULL;
 	
 	if(fseek(input, 0, SEEK_END) == -1) return NULL;
@@ -202,7 +201,8 @@ char* readshader(const char* filename)
 	char *content = malloc((size_t)size +1); 
 	if(content == NULL) return NULL;
 	
-	bytes_read = fread(content, 1, (size_t)size, input);
+	fread(content, 1, (size_t)size, input);
+	
 	if(ferror(input)) {
 		free(content);
 		return NULL;
