@@ -18,18 +18,23 @@ char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0, random = 1;
+bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0, random = 1, flicked = 0;
 unsigned int chosen = 0;
 unsigned short int avail_cores = 0;
 
 
+//Object shader global vars
+GLuint programObj = 3;
 GLint u_matrix = -1;
-GLint attr_pos = 0, attr_color = 1, attr_texcoord = 2, attr_tex = 3;
-GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz;
+GLint objattr_pos = 0, objattr_color = 1;
+
+//Text shader global vars
+GLuint programText = 6;
+GLint textattr_coord = 2, textattr_texcoord = 4, textattr_tex = 3, textattr_color = 5;
+
+GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 1.0;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 GLfloat chosenbox[4][2];
-
-static GLfloat colors[] = {1.0f, 1.0f, 1.0f};
 
 
 int main(int argc, char *argv[])
@@ -39,7 +44,7 @@ int main(int argc, char *argv[])
 		struct timeval t1, t2;
 		float deltatime, totaltime = 0.0f, fps;
 		unsigned int frames = 0;
-		char osdtext[500] = "";
+		char osdtext[500] = "FPS = inf";
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -96,7 +101,7 @@ int main(int argc, char *argv[])
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			/*	SDL bugs again. Set the line below to anything and you'll render on only half of your screen.	*/
 			/*	For now, sticking to regular, good, awesome OpenGL.	*/
-			/*	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);	*/
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
@@ -110,7 +115,7 @@ int main(int argc, char *argv[])
 			glGenBuffers(1, &pointvbo);
 			glGenTextures(1, &tex);
 			glBindTexture(GL_TEXTURE_2D, tex);
-			glUniform1i(attr_tex, 0);
+			glUniform1i(textattr_tex, 0);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -118,7 +123,9 @@ int main(int argc, char *argv[])
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glClearColor(0.1, 0.1, 0.1, 1);
 		}
+		
 		SDL_Event event;
+		int mousex, mousey, initmousex, initmousey;
 		if(quiet == 0) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
@@ -131,7 +138,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		if(FT_New_Face(library, fontname, 0, &face)) fprintf(stderr, "Could not open font\n");
-		FT_Set_Pixel_Sizes(face, 0, 50);
+		FT_Set_Pixel_Sizes(face, 0, 40);
 		g = face->glyph;
 	/*	Freetype.	*/
 	
@@ -145,7 +152,6 @@ int main(int argc, char *argv[])
 		
 		/*	Mallocs and wipes	*/
 		initphys(&object);
-		
 		parser(&object, filename);
 	/*	Physics.	*/
 	
@@ -156,6 +162,25 @@ int main(int argc, char *argv[])
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
 			switch(event.type) {
+				case SDL_MOUSEBUTTONDOWN:
+					if (event.button.button == SDL_BUTTON_LEFT) {
+						flicked = 1;
+						SDL_ShowCursor(0);
+						SDL_GetMouseState(&initmousex, &initmousey);
+						SDL_SetRelativeMouseMode(1);
+					}
+					break;
+				case SDL_MOUSEBUTTONUP:
+					if (event.button.button == SDL_BUTTON_LEFT) {
+						flicked = 0;
+						SDL_SetRelativeMouseMode(0);
+						SDL_WarpMouseInWindow(window, initmousex, initmousey);
+						SDL_ShowCursor(1);
+					}
+					break;
+				case SDL_MOUSEWHEEL:
+					scalefactor += (float)event.wheel.y/10;
+					break;
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_SPACE) {
 						if( stop == 0 ) stop = 1;
@@ -173,16 +198,16 @@ int main(int argc, char *argv[])
 						printf("dt = %f\n", dt);
 					}
 					if(event.key.keysym.sym==SDLK_w) {
-						rotatex += 5.0;
+						view_rotx += 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_s) {
-						rotatex -= 5.0;
+						view_rotx -= 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_a) {
-						rotatey += 5.0;
+						view_roty += 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_d) {
-						rotatey -= 5.0;
+						view_roty -= 5.0;
 					}
 					if(event.key.keysym.sym==SDLK_n) {
 						if(nowipe == 1) nowipe = 0;
@@ -207,28 +232,32 @@ int main(int argc, char *argv[])
 			t1 = t2;
 			totaltime += deltatime;
 			frames++;
-			if (totaltime >  2.0f) {
+			if (totaltime >  1.0f) {
 				fps = frames/totaltime;
 				if(novid == 0) {
 					sprintf(osdtext, "FPS = %3.2f", fps);
 				} else {
 					printf("Current FPS = %3.2f\n", fps);
 				}
-				totaltime -= 2.0f;
+				totaltime -= 1.0f;
 				frames = 0;
 			}
+		}
+		if(flicked == 1) {
+			SDL_GetRelativeMouseState(&mousex, &mousey);
+			view_roty += (float)mousex/4;
+			view_rotx += (float)mousey/4;
 		}
 		if(novid == 1) continue;
 		if(nowipe == 0) glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		/*	Rotation control	*/
-		view_rotx = rotatex;
-		view_roty = rotatey;
-		view_rotz = rotatez;
+		glUseProgram(programObj);
 		
-		glUniform4fv(attr_color, 1, colors);
-		
-		adjust_rot();
+		/*	Point/object drawing	*/
+		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
+		for(int i = 1; i < obj + 1; i++) drawobject(object[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		/*	Point/object drawing	*/
 		
 		/*	Link drawing	*/
 		GLfloat link[linkcount][3];
@@ -250,14 +279,15 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		glVertexAttribPointer(attr_pos, 3, GL_FLOAT, GL_FALSE, 0, link);
-		glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
-		glEnableVertexAttribArray(attr_pos);
-		glEnableVertexAttribArray(attr_color);
+		glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, link);
+		glEnableVertexAttribArray(objattr_pos);
 		glDrawArrays(GL_LINES, 0, linkcount+1);
-		glDisableVertexAttribArray(attr_pos);
-		glDisableVertexAttribArray(attr_color);
+		glDisableVertexAttribArray(objattr_pos);
 		/*	Link drawing	*/
+		
+		//glUseProgram(0);
+		
+		glUseProgram(programText);
 		
 		/*	Selected object's red box	*/
 		for(int i = 1; i < obj + 1; i++) {
@@ -275,26 +305,18 @@ int main(int argc, char *argv[])
 		
 		if(chosen != 0) {
 			glBindBuffer(GL_ARRAY_BUFFER, linevbo);
-			glEnableVertexAttribArray(attr_pos);
-			glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(textattr_coord);
+			glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
 			glBufferData(GL_ARRAY_BUFFER, sizeof chosenbox, chosenbox, GL_DYNAMIC_DRAW);
 			glDrawArrays(GL_LINE_LOOP, 0, 4);
-			glDisableVertexAttribArray(attr_pos);
+			glDisableVertexAttribArray(textattr_coord);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 		/*	Selected object's red box	*/
 		
-		/*	Point/object drawing	*/
-		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
-		for(int i = 1; i < obj + 1; i++) drawcircle(object[i].pos[0], object[i].pos[1], object[i].radius);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Point/object drawing	*/
-		
 		/*	Text drawing	*/
-		view_rotx = view_roty = view_rotz = 0;
-		adjust_rot();
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		render_text(osdtext, -1.4, 0, 2.0/width, 2.0/height);
+		render_text(osdtext, -0.95, 0.85, 1.0/width, 1.0/height);
 		for(int i = 1; i < obj + 1; i++) {
 			if(chosen==i) {
 				char osdstr[500];
@@ -302,7 +324,6 @@ int main(int argc, char *argv[])
 				
 				render_text(osdstr, object[i].pos[0] + object[i].radius, \
 				object[i].pos[1] + object[i].radius, 1.0/width, 1.0/height);
-				
 				
 				unsigned int counter = 0;
 				unsigned int links[obj+1];
@@ -328,6 +349,7 @@ int main(int argc, char *argv[])
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
+		//glUseProgram(0);
 		
 		SDL_GL_SwapWindow(window);
 	}

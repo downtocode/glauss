@@ -8,21 +8,27 @@
 #include "physics.h"
 #include "parser.h"
 
+//Object shader global vars
+GLuint programObj;
 GLint u_matrix;
-GLint attr_pos, attr_color, attr_texcoord, attr_tex;
-GLfloat view_rotx, view_roty, view_rotz;
+GLint objattr_pos, objattr_color;
+
+//Text shader global vars
+GLuint programText;
+GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
+
+GLfloat view_rotx, view_roty, view_rotz, scalefactor;
 FT_GlyphSlot g;
 FT_Face face;
 
-static const char *fragShaderText;
-static const char *vertShaderText;
-
-static GLfloat colors[] = {1.0f, 1.0f, 1.0f};
+static GLfloat objectcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
 	float c = cos(angle * acos(-1) / 180.0);
 	float s = sin(angle * acos(-1) / 180.0);
+	m[10] = m[15] = 1;
 	m[0] = c;
 	m[1] = s;
 	m[4] = -s;
@@ -33,6 +39,7 @@ void make_x_rot_matrix(GLfloat angle, GLfloat *m)
 {
 	float c = cos(angle * acos(-1) / 180.0);
 	float s = sin(angle * acos(-1) / 180.0);
+	m[0] = m[15] = 1;
 	m[5] = c;
 	m[6] = s;
 	m[9] = -s;
@@ -43,6 +50,7 @@ void make_y_rot_matrix(GLfloat angle, GLfloat *m)
 {
 	float c = cos(angle * acos(-1) / 180.0);
 	float s = sin(angle * acos(-1) / 180.0);
+	m[5] = m[15] = 1;
 	m[0] = c;
 	m[2] = -s;
 	m[8] = s;
@@ -54,6 +62,7 @@ void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 	m[0] = xs;
 	m[5] = ys;
 	m[10] = zs;
+	m[15] = 1;
 }
 
 
@@ -79,17 +88,12 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 void adjust_rot(void)
 {
 	GLfloat mat[16], rotx[16], roty[16], rotz[16], scale[16];
-	mat[0] = mat[5] = mat[10] = mat[15] = 1;
-	rotx[0] = rotx[5] = rotx[10] = rotx[15] = 1;
-	roty[0] = roty[5] = roty[10] = roty[15] = 1;
-	rotz[0] = rotz[5] = rotz[10] = rotz[15] = 1;
-	scale[0] = scale[5] = scale[10] = scale[15] = 1;
 	
 	/* Set modelview/projection matrix */
 	make_x_rot_matrix(view_rotx, rotx);
 	make_y_rot_matrix(view_roty, roty);
 	make_z_rot_matrix(view_rotz, rotz);
-	make_scale_matrix(0.5, 1, 1, scale);
+	make_scale_matrix(0.5*scalefactor, 1*scalefactor, 1*scalefactor, scale);
 	mul_matrix(mat, roty, rotx);
 	mul_matrix(mat, mat, rotz);
 	mul_matrix(mat, mat, scale);
@@ -101,8 +105,11 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnableVertexAttribArray(attr_pos);
-	glVertexAttribPointer(attr_pos, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glUniform4fv(textattr_color, 1, textcolor);
+	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, textcolor);
+	glEnableVertexAttribArray(textattr_coord);
+	glEnableVertexAttribArray(textattr_color);
+	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	for(p = text; *p; p++) {
 		if(FT_Load_Char(face, *p, FT_LOAD_RENDER)) continue;
 		
@@ -126,78 +133,99 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 		x += (g->advance.x >> 6) * sx;
 		y += (g->advance.y >> 6) * sy;
 	}
-	glDisableVertexAttribArray(attr_pos);
+	glDisableVertexAttribArray(textattr_coord);
+	glDisableVertexAttribArray(textattr_color);
 	glDisable(GL_BLEND);
 }
 
-void drawcircle(float posx, float posy, float radius) {
+void drawobject(data object) {
+	adjust_rot();
 	int circle_precision = 9;
-	GLfloat points[circle_precision][2];
+	GLfloat points[circle_precision][3];
 	
 	for(int j = 0; j < circle_precision + 1; j++) {
 		float radical = ((float)j/circle_precision)*2*acos(-1);
-		points[j][0] = posx + radius*cos(radical);
-		points[j][1] = posy + radius*sin(radical);
+		points[j][0] = object.pos[0] + object.radius*cos(radical);
+		points[j][1] = object.pos[1] + object.radius*sin(radical);
+		points[j][2] = object.pos[2];
 	}
 	
-	glVertexAttribPointer(attr_pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(attr_pos);
-	glVertexAttribPointer(attr_color, 3, GL_FLOAT, GL_FALSE, 0, colors);
-	glEnableVertexAttribArray(attr_color);
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(objattr_pos);
 	glBufferData(GL_ARRAY_BUFFER, sizeof points, points, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, circle_precision);
-	glDisableVertexAttribArray(attr_pos);
-	glDisableVertexAttribArray(attr_color);
+	glDisableVertexAttribArray(objattr_pos);
 }
 
 void create_shaders(void)
 {
-	fragShaderText = readshader("./resources/shaders/object.frag");
-	vertShaderText = readshader("./resources/shaders/object.vert");
+	GLint statObj, statText;
+	const char *srcVertShaderObject = readshader("./resources/shaders/object_vs.glsl");
+	const char *srcFragShaderObject = readshader("./resources/shaders/object_fs.glsl");
+	const char *srcVertShaderText = readshader("./resources/shaders/text_vs.glsl");
+	const char *srcFragShaderText = readshader("./resources/shaders/text_fs.glsl");
 	
-	GLuint fragShader, vertShader, program;
-	GLint stat;
+	GLuint fragShaderObj = glCreateShader(GL_FRAGMENT_SHADER), vertShaderObj = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fragShaderText = glCreateShader(GL_FRAGMENT_SHADER), vertShaderText = glCreateShader(GL_VERTEX_SHADER);
 	
-	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShader, 1, (const char **) &fragShaderText, NULL);
-	glCompileShader(fragShader);
-	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &stat);
-	if(!stat) {
-		printf("Error: fragment shader did not compile!\n");
+	programText = glCreateProgram();
+	programObj = glCreateProgram();
+	
+	glShaderSource(fragShaderObj, 1, (const char **) &srcFragShaderObject, NULL);
+	glShaderSource(fragShaderText, 1, (const char **) &srcFragShaderText, NULL);
+	glCompileShader(fragShaderObj);
+	glCompileShader(fragShaderText);
+	glGetShaderiv(fragShaderObj, GL_COMPILE_STATUS, &statObj);
+	glGetShaderiv(fragShaderText, GL_COMPILE_STATUS, &statText);
+	if(!statObj || !statText) {
+		if(!statObj) printf("Error: object fragment shader did not compile!\n");
+		if(!statText) printf("Error: text fragment shader did not compile!\n");
 		exit(1);
 	}
 	
-	vertShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertShader, 1, (const char **) &vertShaderText, NULL);
-	glCompileShader(vertShader);
-	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &stat);
-	if(!stat) {
-		printf("Error: vertex shader did not compile!\n");
+	glShaderSource(vertShaderObj, 1, (const char **) &srcVertShaderObject, NULL);
+	glShaderSource(vertShaderText, 1, (const char **) &srcVertShaderText, NULL);
+	glCompileShader(vertShaderObj);
+	glCompileShader(vertShaderText);
+	glGetShaderiv(vertShaderObj, GL_COMPILE_STATUS, &statObj);
+	glGetShaderiv(vertShaderText, GL_COMPILE_STATUS, &statText);
+	if(!statObj || !statText) {
+		if(!statObj) printf("Error: object vertex shader did not compile!\n");
+		if(!statText) printf("Error: text vertex shader did not compile!\n");
 		exit(1);
 	}
-
-	program = glCreateProgram();
-	glAttachShader(program, fragShader);
-	glAttachShader(program, vertShader);
-	glLinkProgram(program);
 	
-	glGetProgramiv(program, GL_LINK_STATUS, &stat);
-	if(!stat) {
+	glAttachShader(programText, fragShaderText);
+	glAttachShader(programText, vertShaderText);
+	glAttachShader(programObj, fragShaderObj);
+	glAttachShader(programObj, vertShaderObj);
+	glLinkProgram(programObj);
+	glLinkProgram(programText);
+	
+	glGetProgramiv(programObj, GL_LINK_STATUS, &statObj);
+	glGetProgramiv(programText, GL_LINK_STATUS, &statText);
+	if(!statObj || !statText) {
 		char log[1000];
 		GLsizei len;
-		glGetProgramInfoLog(program, 1000, &len, log);
+		if(!statObj) glGetProgramInfoLog(programObj, 1000, &len, log);
+		else glGetProgramInfoLog(programText, 1000, &len, log);
 		printf("Error: linking:\n%s\n", log);
 		exit(1);
 	}
+	glDeleteShader(fragShaderObj);
+	glDeleteShader(vertShaderObj);
+	glDeleteShader(fragShaderText);
+	glDeleteShader(vertShaderText);
 	
-	glUseProgram(program);
-	
-	
-	glBindAttribLocation(program, attr_pos, "pos");
-	glBindAttribLocation(program, attr_texcoord, "texcoord");
-	glBindAttribLocation(program, attr_color, "colors");
-	glBindAttribLocation(program, attr_tex, "tex");
-	glLinkProgram(program);  /* needed to put attribs into effect */
-
-	u_matrix = glGetUniformLocation(program, "modelviewProjection");
+	glBindAttribLocation(programObj, objattr_pos, "pos");
+	glBindAttribLocation(programObj, objattr_color, "colors");
+	glBindAttribLocation(programText, textattr_coord, "coord");
+	glBindAttribLocation(programText, textattr_texcoord, "texcoord");
+	glBindAttribLocation(programText, textattr_tex, "tex");
+	glBindAttribLocation(programText, textattr_color, "color");
+	glLinkProgram(programText);
+	glLinkProgram(programObj);
+	u_matrix = glGetUniformLocation(programObj, "modelviewProjection");
+	textattr_tex = glGetUniformLocation(programText, "tex");
+	textattr_color = glGetUniformLocation(programText, "color");
 }

@@ -3,6 +3,7 @@
 
 #include <GLES2/gl2.h>
 #include <ft2build.h>
+#include "physics.h"
 #include FT_FREETYPE_H
 
 FT_Library library;
@@ -17,7 +18,7 @@ void make_z_rot_matrix(GLfloat angle, GLfloat *m);
 void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m);
 void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b);
 void adjust_rot(void);
-void drawcircle(float posx, float posy, float radius);
+void drawobject(data object);
 void create_shaders(void);
 
 #endif

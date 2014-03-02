@@ -174,9 +174,10 @@ int parser(data** object, char filename[200])
 		}
 	} else if (random == 1) {
 		for(i = 1; i < obj + 1; i++) {
-			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5, 0};
+			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5,\
+			((float)rand()/(float)RAND_MAX) - 0.5};
 			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
-			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, 0};
+			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
 			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;
 			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
