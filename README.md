@@ -26,7 +26,7 @@ Controls
 --------
 Button | Action
 -------|-------
-**Q and E**  | Rotate camera.
+**LM **      | Drag to rotate camera.
 **[ and ]**  | Increase/decrease time constant.
 **1 and 2**  | Select previous/next object.
 **n**        | Toggle wiping of OpenGL screen.
