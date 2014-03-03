@@ -20,16 +20,17 @@ All are available on any up-to-date Linux distribution's package repositories. O
 
 Running
 -------
-Run the executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below.
+Run the executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS).
 
 Controls
 --------
 Button | Action
 -------|-------
-**LM **      | Drag to rotate camera.
+**LMB**      | Drag to rotate camera.
 **[ and ]**  | Increase/decrease time constant.
 **1 and 2**  | Select previous/next object.
 **n**        | Toggle wiping of OpenGL screen.
+**z**        | Dump all objects to an XYZ file.
 **Spacebar** | Pause.
 
 Command line arguments

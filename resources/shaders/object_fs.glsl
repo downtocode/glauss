@@ -1,9 +1,9 @@
 #version 100
 
-precision highp float;
+precision lowp float;
 
-uniform vec4 colors;
+uniform vec4 objcolor;
 
 void main() {
-	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	gl_FragColor = objcolor;
 }

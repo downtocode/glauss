@@ -6,7 +6,7 @@ OBJS=$(subst .c,.o,$(SOURCES))
 CC=cc
 PROGRAM=physengine
 LDFLAGS=-lm -pthread -lEGL -lGLESv2 -lrt -lX11 `freetype-config --libs` `sdl2-config --libs`
-CFLAGS=-Wall -pedantic -std=c99 `freetype-config --cflags` `sdl2-config --cflags` -O2 -msse -g
+CFLAGS=-Wall -pedantic -std=c99 `freetype-config --cflags` `sdl2-config --cflags` -O2 -msse -msse2 -msse3 -g
 
 
 vpath %.c ./src/
@@ -23,6 +23,7 @@ $(PROGRAM): $(OBJS)
 
 clean:
 	rm -rf $(OBJS) $(PROGRAM)
+	rm *.xyz
 
 .PHONY: all rem
 

@@ -21,7 +21,7 @@ GLfloat view_rotx, view_roty, view_rotz, scalefactor;
 FT_GlyphSlot g;
 FT_Face face;
 
-static GLfloat objectcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 void make_z_rot_matrix(GLfloat angle, GLfloat *m)
@@ -87,7 +87,12 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 
 void adjust_rot(void)
 {
-	GLfloat mat[16], rotx[16], roty[16], rotz[16], scale[16];
+	GLfloat *mat, *rotx, *roty, *rotz, *scale;
+	mat = calloc(16, sizeof(GLfloat));
+	rotx = calloc(16, sizeof(GLfloat));
+	roty = calloc(16, sizeof(GLfloat));
+	rotz = calloc(16, sizeof(GLfloat));
+	scale = calloc(16, sizeof(GLfloat));
 	
 	/* Set modelview/projection matrix */
 	make_x_rot_matrix(view_rotx, rotx);
@@ -98,6 +103,12 @@ void adjust_rot(void)
 	mul_matrix(mat, mat, rotz);
 	mul_matrix(mat, mat, scale);
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
+	
+	free(mat);
+	free(rotx);
+	free(roty);
+	free(rotz);
+	free(scale);
 }
 
 void render_text(const char *text, float x, float y, float sx, float sy) {
@@ -105,11 +116,11 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glUniform4fv(textattr_color, 1, textcolor);
 	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, textcolor);
 	glEnableVertexAttribArray(textattr_coord);
 	glEnableVertexAttribArray(textattr_color);
-	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	for(p = text; *p; p++) {
 		if(FT_Load_Char(face, *p, FT_LOAD_RENDER)) continue;
 		
@@ -151,10 +162,14 @@ void drawobject(data object) {
 	}
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glUniform4fv(objattr_color, 1, objtcolor);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, objtcolor);
 	glEnableVertexAttribArray(objattr_pos);
+	glEnableVertexAttribArray(objattr_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof points, points, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, circle_precision);
 	glDisableVertexAttribArray(objattr_pos);
+	glDisableVertexAttribArray(objattr_color);
 }
 
 void create_shaders(void)
@@ -217,15 +232,21 @@ void create_shaders(void)
 	glDeleteShader(fragShaderText);
 	glDeleteShader(vertShaderText);
 	
+	glUseProgram(programObj);
 	glBindAttribLocation(programObj, objattr_pos, "pos");
-	glBindAttribLocation(programObj, objattr_color, "colors");
+	glBindAttribLocation(programObj, objattr_color, "objcolor");
+	glLinkProgram(programObj);
+	u_matrix = glGetUniformLocation(programObj, "modelviewProjection");
+	objattr_color = glGetUniformLocation(programObj, "objcolor");
+	glUseProgram(0);
+	
+	glUseProgram(programText);
 	glBindAttribLocation(programText, textattr_coord, "coord");
-	glBindAttribLocation(programText, textattr_texcoord, "texcoord");
+	glBindAttribLocation(programText, textattr_texcoord, "textcolor");
 	glBindAttribLocation(programText, textattr_tex, "tex");
 	glBindAttribLocation(programText, textattr_color, "color");
 	glLinkProgram(programText);
-	glLinkProgram(programObj);
-	u_matrix = glGetUniformLocation(programObj, "modelviewProjection");
 	textattr_tex = glGetUniformLocation(programText, "tex");
-	textattr_color = glGetUniformLocation(programText, "color");
+	textattr_color = glGetUniformLocation(programText, "textcolor");
+	glUseProgram(0);
 }

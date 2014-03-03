@@ -10,6 +10,7 @@
 #include "physics.h"
 #include "parser.h"
 #include "glfun.h"
+#include "toxyz.h"
 
 /*	Default settings.	*/
 int obj = 0, width = 1200, height = 600;
@@ -18,19 +19,19 @@ char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0, random = 1, flicked = 0;
+bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0, random = 1, flicked = 0, dumped = 0;
 unsigned int chosen = 0;
 unsigned short int avail_cores = 0;
 
 
 //Object shader global vars
-GLuint programObj = 3;
-GLint u_matrix = -1;
-GLint objattr_pos = 0, objattr_color = 1;
+GLuint programObj;
+GLint u_matrix;
+GLint objattr_pos, objattr_color;
 
 //Text shader global vars
-GLuint programText = 6;
-GLint textattr_coord = 2, textattr_texcoord = 4, textattr_tex = 3, textattr_color = 5;
+GLuint programText;
+GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 1.0;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
@@ -44,7 +45,8 @@ int main(int argc, char *argv[])
 		struct timeval t1, t2;
 		float deltatime, totaltime = 0.0f, fps;
 		unsigned int frames = 0;
-		char osdtext[500] = "FPS = inf";
+		char osdfps[500] = "FPS = n/a";
+		char osdobj[500] = "Objects = n/a";
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -89,7 +91,7 @@ int main(int argc, char *argv[])
 		if(obj == 0) {
 			printf("ERROR! NO OBJECTS!\n");
 			return 1;
-		}
+		} else sprintf(osdobj, "Objects = %i", obj);
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
@@ -99,8 +101,7 @@ int main(int argc, char *argv[])
 		SDL_Window* window = NULL;
 		if(novid == 0) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-			/*	SDL bugs again. Set the line below to anything and you'll render on only half of your screen.	*/
-			/*	For now, sticking to regular, good, awesome OpenGL.	*/
+			/*	Use OpenGL ES instead of regular GL and set ver. to 2.0	*/
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -129,7 +130,6 @@ int main(int argc, char *argv[])
 		if(quiet == 0) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
-		
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
 	/*	Freetype.	*/
@@ -146,10 +146,11 @@ int main(int argc, char *argv[])
 		data* object;
 		if(quiet == 0) {
 			printf("Objects: %i\n", obj);
-			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%f, fontname=%s\n", dt, width, height, boxsize, fontname);
-			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n", elcharge, gconst, epsno);
+			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%f, fontname=%s\n" \
+			, dt, width, height, boxsize, fontname);
+			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
+			, elcharge, gconst, epsno);
 		}
-		
 		/*	Mallocs and wipes	*/
 		initphys(&object);
 		parser(&object, filename);
@@ -213,6 +214,12 @@ int main(int argc, char *argv[])
 						if(nowipe == 1) nowipe = 0;
 						else nowipe = 1;
 					}
+					if(event.key.keysym.sym==SDLK_z) {
+						if(dumped == 0) {
+							toxyz(obj, object);
+							dumped = 1;
+						}
+					}
 					if(event.key.keysym.sym==SDLK_2) {
 						if(chosen < obj) chosen++;
 					}
@@ -235,12 +242,14 @@ int main(int argc, char *argv[])
 			if (totaltime >  1.0f) {
 				fps = frames/totaltime;
 				if(novid == 0) {
-					sprintf(osdtext, "FPS = %3.2f", fps);
+					sprintf(osdfps, "FPS = %3.2f", fps);
 				} else {
 					printf("Current FPS = %3.2f\n", fps);
 				}
 				totaltime -= 1.0f;
 				frames = 0;
+				//To prevent excessive dumps.
+				dumped = 0;
 			}
 		}
 		if(flicked == 1) {
@@ -316,7 +325,8 @@ int main(int argc, char *argv[])
 		
 		/*	Text drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		render_text(osdtext, -0.95, 0.85, 1.0/width, 1.0/height);
+		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height);
+		render_text(osdobj, -0.95, 0.75, 1.0/width, 1.0/height);
 		for(int i = 1; i < obj + 1; i++) {
 			if(chosen==i) {
 				char osdstr[500];
