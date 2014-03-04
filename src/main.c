@@ -19,8 +19,9 @@ char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, nowipe = 0, random = 1, flicked = 0, dumped = 0;
-unsigned int chosen = 0;
+bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0;
+bool nowipe = 0, random = 1, flicked = 0, dumped = 0;
+unsigned int chosen = 0, dumplevel = 0;
 unsigned short int avail_cores = 0;
 
 
@@ -35,7 +36,6 @@ GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 1.0;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
-GLfloat chosenbox[4][2];
 
 
 int main(int argc, char *argv[])
@@ -72,12 +72,16 @@ int main(int argc, char *argv[])
 						enforced = 1;
 					}
 				}
+				if(!strcmp("--dumplevel", argv[i])) {
+					sscanf(argv[i+1], "%u", &dumplevel);
+				}
 				if( !strcmp("--help", argv[i])) {
 					printf("Usage:\n");
 					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
 					printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
 					printf("	--threads (int)		Make the program run with this many threads.\n"); 
+					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
 					printf("	--quiet 		Disable any terminal output except errors.\n"); 
 					printf("	--help  		What you're reading.\n");
 					return 0;
@@ -92,6 +96,8 @@ int main(int argc, char *argv[])
 			printf("ERROR! NO OBJECTS!\n");
 			return 1;
 		} else sprintf(osdobj, "Objects = %i", obj);
+		if(dumplevel == 1 && quiet == 0) printf("Outputting XYZ file every second.\n");
+		if(dumplevel == 2) fprintf(stderr, "Printing XYZ file every frame!\n");
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
@@ -239,6 +245,7 @@ int main(int argc, char *argv[])
 			t1 = t2;
 			totaltime += deltatime;
 			frames++;
+			if(dumplevel == 2) toxyz(obj, object);
 			if (totaltime >  1.0f) {
 				fps = frames/totaltime;
 				if(novid == 0) {
@@ -250,6 +257,7 @@ int main(int argc, char *argv[])
 				frames = 0;
 				//To prevent excessive dumps.
 				dumped = 0;
+				if(dumplevel == 1) toxyz(obj, object);
 			}
 		}
 		if(flicked == 1) {
@@ -299,28 +307,9 @@ int main(int argc, char *argv[])
 		glUseProgram(programText);
 		
 		/*	Selected object's red box	*/
-		for(int i = 1; i < obj + 1; i++) {
-			if(chosen==i) {
-				chosenbox[0][0] = object[i].pos[0] - boxsize;
-				chosenbox[0][1] = object[i].pos[1] - boxsize;
-				chosenbox[1][0] = object[i].pos[0] - boxsize;
-				chosenbox[1][1] = object[i].pos[1] + boxsize;
-				chosenbox[2][0] = object[i].pos[0] + boxsize;
-				chosenbox[2][1] = object[i].pos[1] + boxsize;
-				chosenbox[3][0] = object[i].pos[0] + boxsize;
-				chosenbox[3][1] = object[i].pos[1] - boxsize;
-			}
-		}
-		
-		if(chosen != 0) {
-			glBindBuffer(GL_ARRAY_BUFFER, linevbo);
-			glEnableVertexAttribArray(textattr_coord);
-			glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-			glBufferData(GL_ARRAY_BUFFER, sizeof chosenbox, chosenbox, GL_DYNAMIC_DRAW);
-			glDrawArrays(GL_LINE_LOOP, 0, 4);
-			glDisableVertexAttribArray(textattr_coord);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-		}
+		glBindBuffer(GL_ARRAY_BUFFER, linevbo);
+		if(chosen != 0) selected_box_text(object[chosen]);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Selected object's red box	*/
 		
 		/*	Text drawing	*/

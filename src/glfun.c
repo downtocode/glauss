@@ -21,6 +21,9 @@ GLfloat view_rotx, view_roty, view_rotz, scalefactor;
 FT_GlyphSlot g;
 FT_Face face;
 
+float boxsize;
+
+static GLfloat *mat;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -87,8 +90,7 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 
 void adjust_rot(void)
 {
-	GLfloat *mat, *rotx, *roty, *rotz, *scale;
-	mat = calloc(16, sizeof(GLfloat));
+	GLfloat *rotx, *roty, *rotz, *scale;
 	rotx = calloc(16, sizeof(GLfloat));
 	roty = calloc(16, sizeof(GLfloat));
 	rotz = calloc(16, sizeof(GLfloat));
@@ -104,7 +106,6 @@ void adjust_rot(void)
 	mul_matrix(mat, mat, scale);
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
 	
-	free(mat);
 	free(rotx);
 	free(roty);
 	free(rotz);
@@ -149,7 +150,8 @@ void render_text(const char *text, float x, float y, float sx, float sy) {
 	glDisable(GL_BLEND);
 }
 
-void drawobject(data object) {
+void drawobject(data object) 
+{
 	adjust_rot();
 	int circle_precision = 9;
 	GLfloat points[circle_precision][3];
@@ -172,7 +174,39 @@ void drawobject(data object) {
 	glDisableVertexAttribArray(objattr_color);
 }
 
-void create_shaders(void)
+void selected_box_text(data object) {
+	GLfloat chosenbox[4][2];
+	GLfloat objpoint[4];
+	GLfloat transformed[4];
+	objpoint[0] = object.pos[0];
+	objpoint[1] = object.pos[1];
+	objpoint[2] = object.pos[2];
+	objpoint[1] = 1;
+	
+	mul_matrix(transformed, mat, objpoint);
+	
+	float pointx = transformed[0];
+	float pointy = transformed[1];
+	
+	chosenbox[0][0] = pointx - boxsize;
+	chosenbox[0][1] = pointy - boxsize;
+	chosenbox[1][0] = pointx - boxsize;
+	chosenbox[1][1] = pointy + boxsize;
+	chosenbox[2][0] = pointx + boxsize;
+	chosenbox[2][1] = pointy + boxsize;
+	chosenbox[3][0] = pointx + boxsize;
+	chosenbox[3][1] = pointy - boxsize;
+	
+	
+	
+	glEnableVertexAttribArray(textattr_coord);
+	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof chosenbox, chosenbox, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_LINE_LOOP, 0, 4);
+	glDisableVertexAttribArray(textattr_coord);
+}
+
+int create_shaders(void)
 {
 	GLint statObj, statText;
 	const char *srcVertShaderObject = readshader("./resources/shaders/object_vs.glsl");
@@ -249,4 +283,9 @@ void create_shaders(void)
 	textattr_tex = glGetUniformLocation(programText, "tex");
 	textattr_color = glGetUniformLocation(programText, "textcolor");
 	glUseProgram(0);
+	
+	mat = calloc(16, sizeof(GLfloat));
+	
+	if(!statObj || !statText) return 1;
+	else return 0;
 }

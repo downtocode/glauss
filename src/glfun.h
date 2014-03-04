@@ -23,7 +23,6 @@ struct character_info {
   float tx; // x offset of glyph in texture coordinates
 } c[128];
 
-void render_text(const char *text, float x, float y, float sx, float sy);
 void make_x_rot_matrix(GLfloat angle, GLfloat *m);
 void make_y_rot_matrix(GLfloat angle, GLfloat *m);
 void make_z_rot_matrix(GLfloat angle, GLfloat *m);
@@ -31,6 +30,8 @@ void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m);
 void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b);
 void adjust_rot(void);
 void drawobject(data object);
-void create_shaders(void);
+void render_text(const char *text, float x, float y, float sx, float sy);
+void selected_box_text(data object);
+int create_shaders(void);
 
 #endif

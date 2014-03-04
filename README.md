@@ -20,7 +20,7 @@ All are available on any up-to-date Linux distribution's package repositories. O
 
 Running
 -------
-Run the executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS).
+Run the executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS). You can run `make rem` to remove all XYZ files in the current directory or `make clean` to remove them along with the program and compiled files.
 
 Controls
 --------
@@ -39,6 +39,7 @@ Argument | Action
 ---------|-------
 **-f (filename)** | Specifies a posdata.dat to use. Falls back on simconf.conf's setting.
 **--threads (int)** | Use (int) threads to speed up force calculation. Splits objects between cores.
+**--dumplevel (uint)** | Sets the dumplevel. 1=XYZ file every second. 2=every frame.
 **--novid** | Disables SDL window creation and any OpenGL functions in the main loop.
 **--nosync** | Disables vertical synchronization.
 **--quiet** | Suppresses all informational messages. Errors are still printed to stderr.
