@@ -22,8 +22,9 @@ FT_GlyphSlot g;
 FT_Face face;
 
 float boxsize;
+unsigned int obj;
 
-static GLfloat *mat;
+static GLfloat *mat, *rotx, *roty, *rotz, *scale;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -90,12 +91,6 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 
 void adjust_rot(void)
 {
-	GLfloat *rotx, *roty, *rotz, *scale;
-	rotx = calloc(16, sizeof(GLfloat));
-	roty = calloc(16, sizeof(GLfloat));
-	rotz = calloc(16, sizeof(GLfloat));
-	scale = calloc(16, sizeof(GLfloat));
-	
 	/* Set modelview/projection matrix */
 	make_x_rot_matrix(view_rotx, rotx);
 	make_y_rot_matrix(view_roty, roty);
@@ -105,11 +100,6 @@ void adjust_rot(void)
 	mul_matrix(mat, mat, rotz);
 	mul_matrix(mat, mat, scale);
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
-	
-	free(rotx);
-	free(roty);
-	free(rotz);
-	free(scale);
 }
 
 void render_text(const char *text, float x, float y, float sx, float sy) {
@@ -168,20 +158,43 @@ void drawobject(data object)
 	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, objtcolor);
 	glEnableVertexAttribArray(objattr_pos);
 	glEnableVertexAttribArray(objattr_color);
-	glBufferData(GL_ARRAY_BUFFER, sizeof points, points, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, circle_precision);
 	glDisableVertexAttribArray(objattr_pos);
 	glDisableVertexAttribArray(objattr_color);
 }
 
+void drawlinks(data* object, unsigned int linkcount)
+{
+	GLfloat link[linkcount][3];
+	linkcount = 0;
+	for(int i = 1; i < obj + 1; i++) {
+		for(int j = 1; j < obj + 1; j++) {
+			if( j==i || j > i ) continue;
+			if( object[i].linkwith[j] != 0 ) {
+				link[linkcount][0] = object[i].pos[0];
+				link[linkcount][1] = object[i].pos[1];
+				link[linkcount][2] = object[i].pos[2];
+				linkcount++;
+				link[linkcount][0] = object[j].pos[0];
+				link[linkcount][1] = object[j].pos[1];
+				link[linkcount][2] = object[j].pos[2];
+				linkcount++;
+			}
+		}
+	}
+	
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(objattr_pos);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(link), link, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_LINES, 0, linkcount);
+	glDisableVertexAttribArray(objattr_pos);
+}
+
 void selected_box_text(data object) {
 	GLfloat chosenbox[4][2];
-	GLfloat objpoint[4];
+	GLfloat objpoint[4] = {object.pos[0],object.pos[1],object.pos[2],0};
 	GLfloat transformed[4];
-	objpoint[0] = object.pos[0];
-	objpoint[1] = object.pos[1];
-	objpoint[2] = object.pos[2];
-	objpoint[1] = 1;
 	
 	mul_matrix(transformed, mat, objpoint);
 	
@@ -197,11 +210,9 @@ void selected_box_text(data object) {
 	chosenbox[3][0] = pointx + boxsize;
 	chosenbox[3][1] = pointy - boxsize;
 	
-	
-	
 	glEnableVertexAttribArray(textattr_coord);
 	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glBufferData(GL_ARRAY_BUFFER, sizeof chosenbox, chosenbox, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(chosenbox), chosenbox, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_LINE_LOOP, 0, 4);
 	glDisableVertexAttribArray(textattr_coord);
 }
@@ -285,6 +296,10 @@ int create_shaders(void)
 	glUseProgram(0);
 	
 	mat = calloc(16, sizeof(GLfloat));
+	rotx = calloc(16, sizeof(GLfloat));
+	roty = calloc(16, sizeof(GLfloat));
+	rotz = calloc(16, sizeof(GLfloat));
+	scale = calloc(16, sizeof(GLfloat));
 	
 	if(!statObj || !statText) return 1;
 	else return 0;

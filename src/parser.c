@@ -9,7 +9,7 @@
 
 
 /*	Global variables	*/
-int obj, width, height;
+unsigned obj, width, height;
 float boxsize;
 char fontname[200];
 char filename[200];

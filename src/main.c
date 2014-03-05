@@ -13,7 +13,7 @@
 #include "toxyz.h"
 
 /*	Default settings.	*/
-int obj = 0, width = 1200, height = 600;
+unsigned int obj = 0, width = 1200, height = 600;
 float boxsize = 0.1;
 char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
@@ -41,7 +41,7 @@ GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 int main(int argc, char *argv[])
 {
 	/*	Main function vars	*/
-		int linkcount;
+		unsigned int linkcount;
 		struct timeval t1, t2;
 		float deltatime, totaltime = 0.0f, fps;
 		unsigned int frames = 0;
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint tex, textvbo, linevbo, pointvbo;
+		GLuint tex, textvbo, linevbo, pointvbo, linkvbo;
 		
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
 			glGenBuffers(1, &textvbo);
 			glGenBuffers(1, &linevbo);
 			glGenBuffers(1, &pointvbo);
+			glGenBuffers(1, &linkvbo);
 			glGenTextures(1, &tex);
 			glBindTexture(GL_TEXTURE_2D, tex);
 			glUniform1i(textattr_tex, 0);
@@ -277,32 +278,17 @@ int main(int argc, char *argv[])
 		/*	Point/object drawing	*/
 		
 		/*	Link drawing	*/
-		GLfloat link[linkcount][3];
-		linkcount = 0;
-		
+		glBindBuffer(GL_ARRAY_BUFFER, linkvbo);
 		for(int i = 1; i < obj + 1; i++) {
 			for(int j = 1; j < obj + 1; j++) {
 				if( j==i || j > i ) continue;
-				if( object[i].linkwith[j] != 0 ) {
-					link[linkcount][0] = object[i].pos[0];
-					link[linkcount][1] = object[i].pos[1];
-					link[linkcount][2] = object[i].pos[2];
-					linkcount++;
-					link[linkcount][0] = object[j].pos[0];
-					link[linkcount][1] = object[j].pos[1];
-					link[linkcount][2] = object[j].pos[2];
-					linkcount++;
-				}
+				if( object[i].linkwith[j] != 0 ) linkcount++;
 			}
 		}
-		
-		glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, link);
-		glEnableVertexAttribArray(objattr_pos);
-		glDrawArrays(GL_LINES, 0, linkcount+1);
-		glDisableVertexAttribArray(objattr_pos);
+		drawlinks(object, 2*linkcount);
+		linkcount = 0;
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Link drawing	*/
-		
-		//glUseProgram(0);
 		
 		glUseProgram(programText);
 		
@@ -348,7 +334,6 @@ int main(int argc, char *argv[])
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
-		//glUseProgram(0);
 		
 		SDL_GL_SwapWindow(window);
 	}
