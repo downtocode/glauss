@@ -20,9 +20,9 @@ char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
 long double elcharge = 0, gconst = 0, epsno = 0;
 bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0;
-bool nowipe = 0, random = 1, flicked = 0, dumped = 0;
+bool nowipe = 0, random = 1, flicked = 0, dumped = 0, fullogl = 0;
 unsigned int chosen = 0, dumplevel = 0;
-unsigned short int avail_cores = 0;
+unsigned short int avail_cores = 0, oglmin = 2, oglmax = 0;
 
 
 //Object shader global vars
@@ -64,6 +64,9 @@ int main(int argc, char *argv[])
 				if(!strcmp( "--nosync", argv[i])) {
 					vsync = 0;
 				}
+				if(!strcmp( "--fullogl", argv[i])) {
+					fullogl = 1;
+				}
 				if(!strcmp("--threads", argv[i])) {
 					sscanf(argv[i+1], "%hu", &avail_cores);
 					if(avail_cores == 0) {
@@ -79,6 +82,7 @@ int main(int argc, char *argv[])
 					printf("Usage:\n");
 					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
+					printf("	--fullogl 		Initialize full OpenGL instead of ES.\n");
 					printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
 					printf("	--threads (int)		Make the program run with this many threads.\n"); 
 					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
@@ -108,9 +112,9 @@ int main(int argc, char *argv[])
 		if(novid == 0) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			/*	Use OpenGL ES instead of regular GL and set ver. to 2.0	*/
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+			if(fullogl == 0) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglmin);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglmax);
 			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(vsync);

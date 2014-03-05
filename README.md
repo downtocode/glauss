@@ -41,6 +41,7 @@ Argument | Action
 **--threads (int)** | Use (int) threads to speed up force calculation. Splits objects between cores.
 **--dumplevel (uint)** | Sets the dumplevel. 1=XYZ file every second. 2=every frame.
 **--novid** | Disables SDL window creation and any OpenGL functions in the main loop.
+**--fullogl** | Initialize full OpenGL instead of ES. Look in simconf.conf to change versions.
 **--nosync** | Disables vertical synchronization.
 **--quiet** | Suppresses all informational messages. Errors are still printed to stderr.
 **--help** | Print possible arguments and exit.

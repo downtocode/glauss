@@ -15,9 +15,9 @@ char fontname[200];
 char filename[200];
 float dt, radius;
 long double elcharge, gconst, epsno;
-bool novid, vsync, quiet, stop, enforced, nowipe, random;
+bool novid, vsync, quiet, stop, enforced, nowipe, random, fullogl;
 unsigned int chosen;
-unsigned short int avail_cores;
+unsigned short int avail_cores, oglmin, oglmax;
 
 /*	Static variables	*/
 static char str[200];
@@ -56,10 +56,10 @@ int preparser()
 				epsno = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "width") == 0) {
-				width = (int)value;
+				width = (unsigned int)value;
 			}
 			if(strcmp(word, "height") == 0) {
-				height = (int)value;
+				height = (unsigned int)value;
 			}
 			if(strcmp(word, "boxsize") == 0) {
 				boxsize = value;
@@ -87,6 +87,15 @@ int preparser()
 			}
 			if(strcmp(word, "posdata") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
+			}
+			if(strcmp(word, "fullogl") == 0) {
+				if(!fullogl) fullogl = (bool)value;
+			}
+			if(strcmp(word, "oglmin") == 0) {
+				oglmin = (unsigned int)value;
+			}
+			if(strcmp(word, "oglmax") == 0) {
+				oglmax = (unsigned int)value;
 			}
 		} else {
 			memset(str, 0, sizeof(str));
