@@ -180,6 +180,7 @@ int main(int argc, char *argv[])
 						SDL_ShowCursor(0);
 						SDL_GetMouseState(&initmousex, &initmousey);
 						SDL_SetRelativeMouseMode(1);
+						SDL_GetRelativeMouseState(NULL, NULL);
 					}
 					break;
 				case SDL_MOUSEBUTTONUP:
