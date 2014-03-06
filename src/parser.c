@@ -14,6 +14,7 @@ float boxsize;
 char fontname[200];
 char filename[200];
 float dt, radius;
+long sleepfor;
 long double elcharge, gconst, epsno;
 bool novid, vsync, quiet, stop, enforced, nowipe, random, fullogl;
 unsigned int chosen;
@@ -96,6 +97,9 @@ int preparser()
 			}
 			if(strcmp(word, "oglmax") == 0) {
 				oglmax = (unsigned int)value;
+			}
+			if(strcmp(word, "sleep") == 0) {
+				sleepfor = (long)value;
 			}
 		} else {
 			memset(str, 0, sizeof(str));

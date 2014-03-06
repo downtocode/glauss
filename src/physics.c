@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <tgmath.h>
 #include <unistd.h>
+#include <SDL2/SDL.h>
 #include "physics.h"
 
 /*	Default threads to use when system != linux. Everyone should have 2 physical CPUS now	*/
@@ -11,7 +12,7 @@
 int obj, width, height, objcount;
 float dt;
 long double gconst, epsno, elcharge;
-bool enforced, quiet;
+bool enforced, quiet, stop, quit;
 
 /*	Static vars	*/
 static int i;
@@ -133,40 +134,43 @@ void *resolveforces(void *arg) {
 	return 0;
 }
 
-int integrate(data* object)
+void *integrate(void *arg)
 {
-	for(i = 1; i < obj + 1; i++) {
-		if(object[i].ignore != '0') continue;
-		if(object[i].pos[0] - object[i].radius < -2 || object[i].pos[0] + object[i].radius > 2) {
-			object[i].vel[0] = -object[i].vel[0];
-		}
-		
-		if(object[i].pos[1] - object[i].radius < -2 || object[i].pos[1] + object[i].radius > 2) {
-			object[i].vel[1] = -object[i].vel[1];
-		}
-		
-		if(object[i].pos[2] - object[i].radius < -2 || object[i].pos[2] + object[i].radius > 2) {
-			object[i].vel[2] = -object[i].vel[2];
-		}
-		
-		/*	Move to a new position	*/
-			object[i].pos += (object[i].vel*(v4sf){dt,dt,dt}) + (object[i].acc)*(v4sf){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
-		/*	Move to a new position	*/
-		
-		/*	Calculate forces	*/
-			for(int k = 1; k < avail_cores + 1; k++) {
-				pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
+	while(!quit) {
+		for(i = 1; i < obj + 1; i++) {
+			if(objalt[i].ignore != '0') continue;
+			if(objalt[i].pos[0] - objalt[i].radius < -2 || objalt[i].pos[0] + objalt[i].radius > 2) {
+				objalt[i].vel[0] = -objalt[i].vel[0];
 			}
-			for(int k = 1; k < avail_cores + 1; k++) {
-				pthread_join(threads[k], NULL);
+			
+			if(objalt[i].pos[1] - objalt[i].radius < -2 || objalt[i].pos[1] + objalt[i].radius > 2) {
+				objalt[i].vel[1] = -objalt[i].vel[1];
 			}
-		/*	Calculate forces	*/
-		
-		/*	Calculate new velocity	*/
-			accprev = object[i].acc;
-			object[i].acc = (object[i].Ftot)/(v4sf){object[i].mass,object[i].mass,object[i].mass};
-			object[i].vel += (object[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
-		/*	Calculate new velocity	*/
+			
+			if(objalt[i].pos[2] - objalt[i].radius < -2 || objalt[i].pos[2] + objalt[i].radius > 2) {
+				objalt[i].vel[2] = -objalt[i].vel[2];
+			}
+			
+			/*	Move to a new position	*/
+				objalt[i].pos += (objalt[i].vel*(v4sf){dt,dt,dt}) + (objalt[i].acc)*(v4sf){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
+			/*	Move to a new position	*/
+			
+			/*	Calculate forces	*/
+				for(int k = 1; k < avail_cores + 1; k++) {
+					pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
+				}
+				for(int k = 1; k < avail_cores + 1; k++) {
+					pthread_join(threads[k], NULL);
+				}
+			/*	Calculate forces	*/
+			
+			/*	Calculate new velocity	*/
+				accprev = objalt[i].acc;
+				objalt[i].acc = (objalt[i].Ftot)/(v4sf){objalt[i].mass,objalt[i].mass,objalt[i].mass};
+				objalt[i].vel += (objalt[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
+			/*	Calculate new velocity	*/
+		}
+		SDL_Delay((long)arg);
 	}
 	return 0;
 }

@@ -31,7 +31,7 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b);
 void adjust_rot(void);
 void drawobject(data object);
 void drawlinks(data* object, unsigned int linkcount);
-void render_text(const char *text, float x, float y, float sx, float sy);
+void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
 void selected_box_text(data object);
 int create_shaders(void);
 

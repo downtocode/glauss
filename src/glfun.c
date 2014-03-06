@@ -27,6 +27,7 @@ unsigned int obj;
 static GLfloat *mat, *rotx, *roty, *rotz, *scale;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+static GLfloat textcolor_red[] = {1.0f, 0.0f, 0.0f, 1.0f};
 
 void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
@@ -102,13 +103,14 @@ void adjust_rot(void)
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
 }
 
-void render_text(const char *text, float x, float y, float sx, float sy) {
+void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col) {
 	const char *p;
 	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glUniform4fv(textattr_color, 1, textcolor);
+	if(col == 0) glUniform4fv(textattr_color, 1, textcolor);
+	if(col == 1) glUniform4fv(textattr_color, 1, textcolor_red);
 	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, textcolor);
 	glEnableVertexAttribArray(textattr_coord);
 	glEnableVertexAttribArray(textattr_color);

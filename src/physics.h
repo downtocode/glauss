@@ -21,6 +21,6 @@ float dotprod(v4sf a, v4sf b);
 float lenght(v4sf a);
 int initphys(data** object);
 void *resolveforces(void *arg);
-int integrate(data* object);
+void *integrate(void *arg);
 
 #endif

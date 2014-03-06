@@ -18,9 +18,10 @@ float boxsize = 0.1;
 char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 float dt = 0.008, radius = 12.0;
+long sleepfor = 16;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0;
-bool nowipe = 0, random = 1, flicked = 0, dumped = 0, fullogl = 0;
+bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, quit = 0;
+bool nowipe = 0, random = 1, flicked = 0, dumped = 0, fullogl = 0, restart = 0;
 unsigned int chosen = 0, dumplevel = 0;
 unsigned short int avail_cores = 0, oglmin = 2, oglmax = 0;
 
@@ -83,7 +84,6 @@ int main(int argc, char *argv[])
 					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
 					printf("	--fullogl 		Initialize full OpenGL instead of ES.\n");
-					printf("	--nosync		Disable vsync, render everything as fast as possible.\n"); 
 					printf("	--threads (int)		Make the program run with this many threads.\n"); 
 					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
 					printf("	--quiet 		Disable any terminal output except errors.\n"); 
@@ -171,6 +171,9 @@ int main(int argc, char *argv[])
 	
 	linkcount = obj*2;
 	
+	pthread_t physthread;
+	pthread_create(&physthread, NULL, integrate, (void*)(long)sleepfor);
+	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
 			switch(event.type) {
@@ -197,7 +200,10 @@ int main(int argc, char *argv[])
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_SPACE) {
 						if( stop == 0 ) stop = 1;
-						else if( stop == 1 ) stop = 0;
+						else if( stop == 1 ) {
+							stop = 0;
+							restart = 1;
+						}
 					}
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
@@ -244,8 +250,17 @@ int main(int argc, char *argv[])
 					break;
 			}
 		}
-		if(stop == 0) integrate(object);
-		if(quiet == 0) {
+		if(stop == 1 && restart == 0) {
+			quit = 1;
+			pthread_join(physthread, NULL);
+		}
+		if(restart) {
+			quit = 0;
+			pthread_create(&physthread, NULL, integrate, (void*)(long)sleepfor);
+			stop = 0;
+			restart = 0;
+		}
+		if(!quiet) {
 			gettimeofday(&t2, NULL);
 			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
 			t1 = t2;
@@ -305,15 +320,16 @@ int main(int argc, char *argv[])
 		
 		/*	Text drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height);
-		render_text(osdobj, -0.95, 0.75, 1.0/width, 1.0/height);
+		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height, 0);
+		render_text(osdobj, -0.95, 0.75, 1.0/width, 1.0/height, 0);
+		if(stop == 1) render_text("Simulation stopped", -0.95, -0.95, 1.0/width, 1.0/height, 1);
 		for(int i = 1; i < obj + 1; i++) {
 			if(chosen==i) {
 				char osdstr[500];
 				sprintf(osdstr, "Object %i", i);
 				
 				render_text(osdstr, object[i].pos[0] + object[i].radius, \
-				object[i].pos[1] + object[i].radius, 1.0/width, 1.0/height);
+				object[i].pos[1] + object[i].radius, 1.0/width, 1.0/height, 0);
 				
 				unsigned int counter = 0;
 				unsigned int links[obj+1];
@@ -333,7 +349,7 @@ int main(int argc, char *argv[])
 						strcat(osdstr, linkcount);
 					}
 					render_text(osdstr, object[i].pos[0] + object[i].radius, \
-					object[i].pos[1] + object[i].radius - 0.075, 1.0/width, 1.0/height);
+					object[i].pos[1] + object[i].radius - 0.075, 1.0/width, 1.0/height, 0);
 				}
 			}
 		}
@@ -344,6 +360,8 @@ int main(int argc, char *argv[])
 	}
 	
 	quit:
+		quit = 1;
+		pthread_join(physthread, NULL);
 		FT_Done_Face(face);
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);
