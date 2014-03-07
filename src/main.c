@@ -190,6 +190,7 @@ int main(int argc, char *argv[])
 					break;
 				case SDL_MOUSEWHEEL:
 					scalefactor += (float)event.wheel.y/10;
+					if(scalefactor < 0) scalefactor = 0;
 					break;
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_SPACE) {
