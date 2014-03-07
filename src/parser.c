@@ -39,7 +39,7 @@ int preparser()
 				dt = value;
 			}
 			if(strcmp(word, "threads") == 0) {
-				avail_cores = value;
+				if(!avail_cores) avail_cores = value;
 			}
 			if(strcmp(word, "elcharge") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);

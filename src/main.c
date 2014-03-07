@@ -26,14 +26,11 @@ unsigned int chosen = 0, dumplevel = 0;
 unsigned short int avail_cores = 0, oglmin = 2, oglmax = 0;
 
 
-//Object shader global vars
+//glfun global vars
 GLuint programObj;
-GLint u_matrix;
-GLint objattr_pos, objattr_color;
-
-//Text shader global vars
 GLuint programText;
-GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
+GLint textattr_tex;
+
 
 GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 1.0;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
@@ -100,7 +97,7 @@ int main(int argc, char *argv[])
 			printf("ERROR! NO OBJECTS!\n");
 			return 1;
 		} else sprintf(osdobj, "Objects = %i", obj);
-		if(dumplevel == 1 && quiet == 0) printf("Outputting XYZ file every second.\n");
+		if(dumplevel && !quiet) printf("Outputting XYZ file every second.\n");
 		if(dumplevel == 2) fprintf(stderr, "Printing XYZ file every frame!\n");
 	/*	Error handling.	*/
 	
@@ -111,8 +108,7 @@ int main(int argc, char *argv[])
 		SDL_Window* window = NULL;
 		if(novid == 0) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-			/*	Use OpenGL ES instead of regular GL and set ver. to 2.0	*/
-			if(fullogl == 0) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+			if(!fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglmin);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglmax);
 			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
@@ -168,8 +164,6 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 	
 	gettimeofday (&t1 , NULL);
-	
-	linkcount = obj*2;
 	
 	pthread_t physthread;
 	pthread_create(&physthread, NULL, integrate, (void*)(long)sleepfor);
@@ -250,11 +244,10 @@ int main(int argc, char *argv[])
 					break;
 			}
 		}
-		if(stop == 1 && restart == 0) {
+		if(stop && !restart) {
 			quit = 1;
 			pthread_join(physthread, NULL);
-		}
-		if(restart) {
+		} else if(restart) {
 			quit = 0;
 			pthread_create(&physthread, NULL, integrate, (void*)(long)sleepfor);
 			stop = 0;
@@ -281,13 +274,13 @@ int main(int argc, char *argv[])
 				if(dumplevel == 1) toxyz(obj, object);
 			}
 		}
-		if(flicked == 1) {
+		if(flicked) {
 			SDL_GetRelativeMouseState(&mousex, &mousey);
 			view_roty += (float)mousex/4;
 			view_rotx += (float)mousey/4;
 		}
-		if(novid == 1) continue;
-		if(nowipe == 0) glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		if(novid) continue;
+		if(!nowipe) glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
 		glUseProgram(programObj);
 		

@@ -70,7 +70,6 @@ void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 	m[15] = 1;
 }
 
-
 void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 {
 #define A(row,col)  a[(col<<2)+row]
@@ -130,7 +129,7 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 			{x2,     -y2 - h, 0, 1},
 			{x2 + w, -y2 - h, 1, 1},
 		};
-			
+		
 		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		
@@ -219,7 +218,7 @@ void selected_box_text(data object) {
 	glDisableVertexAttribArray(textattr_coord);
 }
 
-int create_shaders(void)
+void create_shaders(void)
 {
 	GLint statObj, statText;
 	const char *srcVertShaderObject = readshader("./resources/shaders/object_vs.glsl");
@@ -279,15 +278,12 @@ int create_shaders(void)
 	glDeleteShader(fragShaderText);
 	glDeleteShader(vertShaderText);
 	
-	glUseProgram(programObj);
 	glBindAttribLocation(programObj, objattr_pos, "pos");
 	glBindAttribLocation(programObj, objattr_color, "objcolor");
 	glLinkProgram(programObj);
 	u_matrix = glGetUniformLocation(programObj, "modelviewProjection");
 	objattr_color = glGetUniformLocation(programObj, "objcolor");
-	glUseProgram(0);
 	
-	glUseProgram(programText);
 	glBindAttribLocation(programText, textattr_coord, "coord");
 	glBindAttribLocation(programText, textattr_texcoord, "textcolor");
 	glBindAttribLocation(programText, textattr_tex, "tex");
@@ -295,14 +291,10 @@ int create_shaders(void)
 	glLinkProgram(programText);
 	textattr_tex = glGetUniformLocation(programText, "tex");
 	textattr_color = glGetUniformLocation(programText, "textcolor");
-	glUseProgram(0);
 	
 	mat = calloc(16, sizeof(GLfloat));
 	rotx = calloc(16, sizeof(GLfloat));
 	roty = calloc(16, sizeof(GLfloat));
 	rotz = calloc(16, sizeof(GLfloat));
 	scale = calloc(16, sizeof(GLfloat));
-	
-	if(!statObj || !statText) return 1;
-	else return 0;
 }
