@@ -39,12 +39,12 @@ GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 int main(int argc, char *argv[])
 {
 	/*	Main function vars	*/
-		unsigned int linkcount;
+		SDL_Event event;
+		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		float deltatime, totaltime = 0.0f, fps;
-		unsigned int frames = 0;
-		char osdfps[500] = "FPS = n/a";
-		char osdobj[500] = "Objects = n/a";
+		unsigned int linkcount, frames = 0;
+		char osdfps[500] = "FPS = n/a", osdobj[500] = "Objects = n/a";
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 	
 	/*	Error handling.	*/
 		if(obj == 0) {
-			printf("ERROR! NO OBJECTS!\n");
+			fprintf(stderr, "Error: no objects!\n");
 			return 1;
 		} else sprintf(osdobj, "Objects = %i", obj);
 		if(dumplevel && !quiet) printf("Outputting XYZ file every second.\n");
@@ -131,9 +131,6 @@ int main(int argc, char *argv[])
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glClearColor(0.1, 0.1, 0.1, 1);
 		}
-		
-		SDL_Event event;
-		int mousex, mousey, initmousex, initmousey;
 		if(quiet == 0) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
@@ -190,7 +187,7 @@ int main(int argc, char *argv[])
 					break;
 				case SDL_MOUSEWHEEL:
 					scalefactor += (float)event.wheel.y/10;
-					if(scalefactor < 0) scalefactor = 0;
+					if(scalefactor < 0.11) scalefactor = 0.11;
 					break;
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_SPACE) {
@@ -317,36 +314,6 @@ int main(int argc, char *argv[])
 		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height, 0);
 		render_text(osdobj, -0.95, 0.75, 1.0/width, 1.0/height, 0);
 		if(stop == 1) render_text("Simulation stopped", -0.95, -0.95, 1.0/width, 1.0/height, 1);
-		for(int i = 1; i < obj + 1; i++) {
-			if(chosen==i) {
-				char osdstr[500];
-				sprintf(osdstr, "Object %i", i);
-				
-				render_text(osdstr, object[i].pos[0] + object[i].radius, \
-				object[i].pos[1] + object[i].radius, 1.0/width, 1.0/height, 0);
-				
-				unsigned int counter = 0;
-				unsigned int links[obj+1];
-				
-				for(int j = 1; j < obj + 1; j++) {
-					if(object[i].linkwith[j] != 0) {
-						counter++;
-						links[counter] = j;
-					}
-				}
-				if(counter != 0) {
-					memset(osdstr, 0, sizeof(osdstr));
-					char linkcount[obj+1];
-					sprintf(osdstr, "Links: ");
-					for(int j = 1; j < counter + 1; j++) {
-						sprintf(linkcount, "%u, ", links[j]);
-						strcat(osdstr, linkcount);
-					}
-					render_text(osdstr, object[i].pos[0] + object[i].radius, \
-					object[i].pos[1] + object[i].radius - 0.075, 1.0/width, 1.0/height, 0);
-				}
-			}
-		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
 		

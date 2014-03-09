@@ -22,7 +22,7 @@ FT_GlyphSlot g;
 FT_Face face;
 
 float boxsize;
-unsigned int obj;
+unsigned int obj, width, height;
 
 static GLfloat *mat, *rotx, *roty, *rotz, *scale;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -199,17 +199,41 @@ void selected_box_text(data object) {
 	
 	mul_matrix(transformed, mat, objpoint);
 	
-	float pointx = transformed[0];
-	float pointy = transformed[1];
+	chosenbox[0][0] = transformed[0] - boxsize;
+	chosenbox[0][1] = transformed[1] - boxsize;
+	chosenbox[1][0] = transformed[0] - boxsize;
+	chosenbox[1][1] = transformed[1] + boxsize;
+	chosenbox[2][0] = transformed[0] + boxsize;
+	chosenbox[2][1] = transformed[1] + boxsize;
+	chosenbox[3][0] = transformed[0] + boxsize;
+	chosenbox[3][1] = transformed[1] - boxsize;
+
+	char osdstr[500];
+	sprintf(osdstr, "Object %i", object.index);
 	
-	chosenbox[0][0] = pointx - boxsize;
-	chosenbox[0][1] = pointy - boxsize;
-	chosenbox[1][0] = pointx - boxsize;
-	chosenbox[1][1] = pointy + boxsize;
-	chosenbox[2][0] = pointx + boxsize;
-	chosenbox[2][1] = pointy + boxsize;
-	chosenbox[3][0] = pointx + boxsize;
-	chosenbox[3][1] = pointy - boxsize;
+	render_text(osdstr, transformed[0] + object.radius, \
+	transformed[1] + object.radius, 1.0/width, 1.0/height, 0);
+	
+	unsigned int counter = 0;
+	unsigned int links[obj+1];
+	
+	for(int j = 1; j < obj + 1; j++) {
+		if(object.linkwith[j] != 0) {
+			counter++;
+			links[counter] = j;
+		}
+	}
+	if(counter != 0) {
+		memset(osdstr, 0, sizeof(osdstr));
+		char linkcount[obj+1];
+		sprintf(osdstr, "Links: ");
+		for(int j = 1; j < counter + 1; j++) {
+			sprintf(linkcount, "%u, ", links[j]);
+			strcat(osdstr, linkcount);
+		}
+		render_text(osdstr, transformed[0] + object.radius, \
+		transformed[1] + object.radius - 0.075, 1.0/width, 1.0/height, 0);
+	}
 	
 	glEnableVertexAttribArray(textattr_coord);
 	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);

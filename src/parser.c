@@ -159,6 +159,7 @@ int parser(data** object, char filename[200])
 				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
 				(*object)[i].center = 0;
+				(*object)[i].index = i;
 				(*object)[i].radius = radius;
 				
 				if( quiet == 0 ) {
@@ -187,6 +188,7 @@ int parser(data** object, char filename[200])
 		}
 	} else if (random == 1) {
 		for(i = 1; i < obj + 1; i++) {
+			(*object)[i].index = i;
 			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5,\
 			((float)rand()/(float)RAND_MAX) - 0.5};
 			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \

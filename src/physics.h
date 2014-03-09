@@ -8,11 +8,10 @@
 typedef float v4sf __attribute__ ((vector_size (16)));
 
 typedef struct {
+	unsigned int index;
 	v4sf pos, vel, acc, Ftot;
 	long double mass, charge;
-	float radius;
-	float *linkwith;
-	/*	Set this to 0. No, not like that. Like '0' or (char)0.	*/
+	float radius, *linkwith;
 	char ignore;
 	bool center;
 } data;
