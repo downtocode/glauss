@@ -10,19 +10,6 @@ FT_Library library;
 FT_Face face;
 FT_GlyphSlot g;
 
-struct character_info {
-  float ax; // advance.x
-  float ay; // advance.y
- 
-  float bw; // bitmap.width;
-  float bh; // bitmap.rows;
- 
-  float bl; // bitmap_left;
-  float bt; // bitmap_top;
- 
-  float tx; // x offset of glyph in texture coordinates
-} c[128];
-
 void make_x_rot_matrix(GLfloat angle, GLfloat *m);
 void make_y_rot_matrix(GLfloat angle, GLfloat *m);
 void make_z_rot_matrix(GLfloat angle, GLfloat *m);
@@ -33,6 +20,7 @@ void drawobject(data object);
 void drawlinks(data* object, unsigned int linkcount);
 void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
 void selected_box_text(data object);
+int resize_wind();
 void create_shaders(void);
 
 #endif

@@ -18,12 +18,11 @@ GLuint programText;
 GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 GLfloat view_rotx, view_roty, view_rotz, scalefactor;
-FT_GlyphSlot g;
-FT_Face face;
 
 float boxsize;
 unsigned int obj, width, height;
 
+static float aspect_ratio;
 static GLfloat *mat, *rotx, *roty, *rotz, *scale;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -95,7 +94,7 @@ void adjust_rot(void)
 	make_x_rot_matrix(view_rotx, rotx);
 	make_y_rot_matrix(view_roty, roty);
 	make_z_rot_matrix(view_rotz, rotz);
-	make_scale_matrix(0.5*scalefactor, 1*scalefactor, 1*scalefactor, scale);
+	make_scale_matrix(aspect_ratio*scalefactor, scalefactor, scalefactor, scale);
 	mul_matrix(mat, roty, rotx);
 	mul_matrix(mat, mat, rotz);
 	mul_matrix(mat, mat, scale);
@@ -242,6 +241,17 @@ void selected_box_text(data object) {
 	glDisableVertexAttribArray(textattr_coord);
 }
 
+int resize_wind() {
+	aspect_ratio = (float)height/width;
+	glViewport(0, 0, width, height);
+	mat = calloc(16, sizeof(GLfloat));
+	rotx = calloc(16, sizeof(GLfloat));
+	roty = calloc(16, sizeof(GLfloat));
+	rotz = calloc(16, sizeof(GLfloat));
+	scale = calloc(16, sizeof(GLfloat));
+	return 0;
+}
+
 void create_shaders(void)
 {
 	GLint statObj, statText;
@@ -315,10 +325,4 @@ void create_shaders(void)
 	glLinkProgram(programText);
 	textattr_tex = glGetUniformLocation(programText, "tex");
 	textattr_color = glGetUniformLocation(programText, "textcolor");
-	
-	mat = calloc(16, sizeof(GLfloat));
-	rotx = calloc(16, sizeof(GLfloat));
-	roty = calloc(16, sizeof(GLfloat));
-	rotz = calloc(16, sizeof(GLfloat));
-	scale = calloc(16, sizeof(GLfloat));
 }

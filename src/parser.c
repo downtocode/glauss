@@ -9,16 +9,16 @@
 
 
 /*	Global variables	*/
-unsigned obj, width, height;
-float boxsize;
+int width, height;
+unsigned int obj, chosen, dumplevel;
+unsigned short int avail_cores, oglmin, oglmax;
+float boxsize, dt, radius;
 char fontname[200];
 char filename[200];
-float dt, radius;
 long sleepfor;
 long double elcharge, gconst, epsno;
-bool novid, vsync, quiet, stop, enforced, nowipe, random, fullogl;
-unsigned int chosen;
-unsigned short int avail_cores, oglmin, oglmax;
+bool novid, vsync, quiet, stop, enforced, quit;
+bool nowipe, random, flicked, dumped, fullogl, restart;
 
 /*	Static variables	*/
 static char str[200];

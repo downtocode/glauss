@@ -13,17 +13,16 @@
 #include "toxyz.h"
 
 /*	Default settings.	*/
-unsigned int obj = 0, width = 1200, height = 600;
-float boxsize = 0.1;
+int width = 1200, height = 600;
+unsigned int obj = 0, chosen = 0, dumplevel = 0;
+unsigned short int avail_cores = 0, oglmin = 2, oglmax = 0;
+float boxsize = 0.1, dt = 0.008, radius = 12.0;
 char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
-float dt = 0.008, radius = 12.0;
 long sleepfor = 16;
 long double elcharge = 0, gconst = 0, epsno = 0;
 bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, quit = 0;
 bool nowipe = 0, random = 1, flicked = 0, dumped = 0, fullogl = 0, restart = 0;
-unsigned int chosen = 0, dumplevel = 0;
-unsigned short int avail_cores = 0, oglmin = 2, oglmax = 0;
 
 
 //glfun global vars
@@ -111,7 +110,10 @@ int main(int argc, char *argv[])
 			if(!fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglmin);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglmax);
-			window = SDL_CreateWindow("Physengine", 0, 0, width, height, SDL_WINDOW_OPENGL);
+			window = SDL_CreateWindow("Physengine", \
+				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, \
+				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
+			resize_wind();
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(vsync);
 			glViewport(0, 0, width, height);
@@ -168,6 +170,12 @@ int main(int argc, char *argv[])
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
 			switch(event.type) {
+				case SDL_WINDOWEVENT:
+					if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
+						SDL_GetWindowSize(window, &width, &height);
+						resize_wind();
+					}
+					break;
 				case SDL_MOUSEBUTTONDOWN:
 					if (event.button.button == SDL_BUTTON_LEFT) {
 						flicked = 1;
