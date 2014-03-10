@@ -11,6 +11,7 @@
 #include "parser.h"
 #include "glfun.h"
 #include "toxyz.h"
+#include "options.h"
 
 /*	Default settings.	*/
 int width = 1200, height = 600;
@@ -21,8 +22,8 @@ char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 long sleepfor = 16;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool novid = 0, vsync = 1, quiet = 0, stop = 0, enforced = 0, quit = 0;
-bool nowipe = 0, random = 1, flicked = 0, dumped = 0, fullogl = 0, restart = 0;
+bool quiet = 0, stop = 0, enforced = 0, quit = 0;
+bool nowipe = 0, random = 1, flicked = 0, dumped = 0, restart = 0;
 
 
 //glfun global vars
@@ -34,9 +35,23 @@ GLint textattr_tex;
 GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 1.0;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 
+struct option_struct* option;
 
 int main(int argc, char *argv[])
 {
+	/*	Default settings.	*/
+		option = calloc(1, sizeof(*option));
+	
+		option->width = 1200; option->height = 600;
+		option->obj = 0; option->chosen = 0; option->dumplevel = 0;
+		option->avail_cores = 0; option->oglmin = 2; option->oglmax = 0;
+		option->boxsize = 0.1; option->dt = 0.008; option->radius = 12.0;
+		strcpy(option->fontname, "./resources/fonts/DejaVuSansMono.ttf");
+		strcpy(option->filename, "posdata.dat");
+		option->vsync = 1, option->random = 1;
+		
+	/*	Default settings.	*/
+	
 	/*	Main function vars	*/
 		SDL_Event event;
 		int mousex, mousey, initmousex, initmousey;
@@ -50,7 +65,7 @@ int main(int argc, char *argv[])
 		if(argc > 1) {
 			for(int i=1; i < argc; i++) {
 				if(!strcmp( "--novid", argv[i])) {
-					novid = 1;
+					option->novid = 1;
 				}
 				if(!strcmp( "--quiet", argv[i])) {
 					quiet = 1;
@@ -59,10 +74,10 @@ int main(int argc, char *argv[])
 					strcpy( filename, argv[i+1]);
 				}
 				if(!strcmp( "--nosync", argv[i])) {
-					vsync = 0;
+					option->vsync = 0;
 				}
 				if(!strcmp( "--fullogl", argv[i])) {
-					fullogl = 1;
+					option->fullogl = 1;
 				}
 				if(!strcmp("--threads", argv[i])) {
 					sscanf(argv[i+1], "%hu", &avail_cores);
@@ -101,13 +116,13 @@ int main(int argc, char *argv[])
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint tex, textvbo, linevbo, pointvbo, linkvbo;
+		GLuint tex, textvbo, linevbo, axisvbo, pointvbo, linkvbo;
 		
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
-		if(novid == 0) {
+		if(option->novid == 0) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-			if(!fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+			if(!option->fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglmin);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglmax);
 			window = SDL_CreateWindow("Physengine", \
@@ -115,12 +130,13 @@ int main(int argc, char *argv[])
 				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
 			resize_wind();
 			SDL_GL_CreateContext(window);
-			SDL_GL_SetSwapInterval(vsync);
+			SDL_GL_SetSwapInterval(option->vsync);
 			glViewport(0, 0, width, height);
 			create_shaders();
 			glActiveTexture(GL_TEXTURE0);
 			glGenBuffers(1, &textvbo);
 			glGenBuffers(1, &linevbo);
+			glGenBuffers(1, &axisvbo);
 			glGenBuffers(1, &pointvbo);
 			glGenBuffers(1, &linkvbo);
 			glGenTextures(1, &tex);
@@ -268,7 +284,7 @@ int main(int argc, char *argv[])
 			if(dumplevel == 2) toxyz(obj, object);
 			if (totaltime >  1.0f) {
 				fps = frames/totaltime;
-				if(novid == 0) {
+				if(option->novid == 0) {
 					sprintf(osdfps, "FPS = %3.2f", fps);
 				} else {
 					printf("Current FPS = %3.2f\n", fps);
@@ -285,7 +301,7 @@ int main(int argc, char *argv[])
 			view_roty += (float)mousex/4;
 			view_rotx += (float)mousey/4;
 		}
-		if(novid) continue;
+		if(option->novid) continue;
 		if(!nowipe) glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
 		glUseProgram(programObj);
@@ -309,6 +325,12 @@ int main(int argc, char *argv[])
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Link drawing	*/
 		
+		/*	Axis drawing	*/
+		glBindBuffer(GL_ARRAY_BUFFER, axisvbo);
+		drawaxis();
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		/*	Axis drawing	*/
+		
 		glUseProgram(programText);
 		
 		/*	Selected object's red box	*/
@@ -319,7 +341,11 @@ int main(int argc, char *argv[])
 		
 		/*	Text drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height, 0);
+		unsigned int fpscolor;
+		if(fps < 25) fpscolor = 1;
+		if(fps >= 25 && fps < 48) fpscolor = 3;
+		if(fps >= 48) fpscolor = 2;
+		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height, fpscolor);
 		render_text(osdobj, -0.95, 0.75, 1.0/width, 1.0/height, 0);
 		if(stop == 1) render_text("Simulation stopped", -0.95, -0.95, 1.0/width, 1.0/height, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);

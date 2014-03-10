@@ -13,13 +13,16 @@ FT_GlyphSlot g;
 void make_x_rot_matrix(GLfloat angle, GLfloat *m);
 void make_y_rot_matrix(GLfloat angle, GLfloat *m);
 void make_z_rot_matrix(GLfloat angle, GLfloat *m);
-void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m);
 void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b);
+void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m);
 void adjust_rot(void);
+
+void drawaxis();
 void drawobject(data object);
 void drawlinks(data* object, unsigned int linkcount);
 void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
 void selected_box_text(data object);
+
 int resize_wind();
 void create_shaders(void);
 

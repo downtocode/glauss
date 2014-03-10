@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tgmath.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include "glfun.h"
 #include "physics.h"
 #include "parser.h"
@@ -26,7 +24,9 @@ static float aspect_ratio;
 static GLfloat *mat, *rotx, *roty, *rotz, *scale;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-static GLfloat textcolor_red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+static GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+static GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
+static GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
 
 void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
@@ -101,18 +101,38 @@ void adjust_rot(void)
 	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
 }
 
+void drawaxis() {
+	GLfloat axis[6][3] = {
+			{0,0,0},
+			{0.17*(1/scalefactor),0,0},
+			{0,0,0},
+			{0,0.17*(1/scalefactor),0},
+			{0,0,0},
+			{0,0,0.17*(1/scalefactor)},
+	};
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glUniform4fv(objattr_color, 1, green);
+	glVertexAttribPointer(objattr_color, 3, GL_FLOAT, GL_FALSE, 0, objtcolor);
+	glEnableVertexAttribArray(objattr_pos);
+	glEnableVertexAttribArray(objattr_color);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_LINES, 0, 6);
+	glDisableVertexAttribArray(objattr_pos);
+	glDisableVertexAttribArray(objattr_color);
+}
+
 void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col) {
-	const char *p;
-	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	if(col == 0) glUniform4fv(textattr_color, 1, textcolor);
-	if(col == 1) glUniform4fv(textattr_color, 1, textcolor_red);
+	if(col == 1) glUniform4fv(textattr_color, 1, red);
+	if(col == 2) glUniform4fv(textattr_color, 1, green);
+	if(col == 3) glUniform4fv(textattr_color, 1, blue);
 	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, textcolor);
 	glEnableVertexAttribArray(textattr_coord);
 	glEnableVertexAttribArray(textattr_color);
-	for(p = text; *p; p++) {
+	for(const char *p = text; *p; p++) {
 		if(FT_Load_Char(face, *p, FT_LOAD_RENDER)) continue;
 		
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, g->bitmap.width, g->bitmap.rows, 0, GL_ALPHA,GL_UNSIGNED_BYTE, g->bitmap.buffer);
@@ -198,13 +218,13 @@ void selected_box_text(data object) {
 	
 	mul_matrix(transformed, mat, objpoint);
 	
-	chosenbox[0][0] = transformed[0] - boxsize;
+	chosenbox[0][0] = transformed[0] - aspect_ratio*boxsize;
 	chosenbox[0][1] = transformed[1] - boxsize;
-	chosenbox[1][0] = transformed[0] - boxsize;
+	chosenbox[1][0] = transformed[0] - aspect_ratio*boxsize;
 	chosenbox[1][1] = transformed[1] + boxsize;
-	chosenbox[2][0] = transformed[0] + boxsize;
+	chosenbox[2][0] = transformed[0] + aspect_ratio*boxsize;
 	chosenbox[2][1] = transformed[1] + boxsize;
-	chosenbox[3][0] = transformed[0] + boxsize;
+	chosenbox[3][0] = transformed[0] + aspect_ratio*boxsize;
 	chosenbox[3][1] = transformed[1] - boxsize;
 
 	char osdstr[500];
@@ -227,7 +247,7 @@ void selected_box_text(data object) {
 		char linkcount[obj+1];
 		sprintf(osdstr, "Links: ");
 		for(int j = 1; j < counter + 1; j++) {
-			sprintf(linkcount, "%u, ", links[j]);
+			sprintf(linkcount, "%u ", links[j]);
 			strcat(osdstr, linkcount);
 		}
 		render_text(osdstr, transformed[0] + object.radius, \
