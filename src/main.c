@@ -248,6 +248,9 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_d) {
 						view_roty -= 5.0;
 					}
+					if(event.key.keysym.sym==SDLK_r) {
+						view_roty = view_rotx = view_rotz = 0.0;
+					}
 					if(event.key.keysym.sym==SDLK_n) {
 						if(nowipe == 1) nowipe = 0;
 						else nowipe = 1;
@@ -309,6 +312,7 @@ int main(int argc, char *argv[])
 		if(!nowipe) glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
 		glUseProgram(programObj);
+		adjust_rot();
 		
 		/*	Point/object drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
@@ -329,13 +333,13 @@ int main(int argc, char *argv[])
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Link drawing	*/
 		
+		glUseProgram(programText);
+		
 		/*	Axis drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, axisvbo);
 		drawaxis();
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Axis drawing	*/
-		
-		glUseProgram(programText);
 		
 		/*	Selected object's red box	*/
 		glBindBuffer(GL_ARRAY_BUFFER, linevbo);

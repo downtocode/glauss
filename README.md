@@ -30,6 +30,7 @@ Button | Action
 **[ and ]**  | Increase/decrease time constant.
 **1 and 2**  | Select previous/next object.
 **n**        | Toggle wiping of OpenGL screen.
+**r**        | Reset view.
 **z**        | Dump all objects to an XYZ file.
 **Spacebar** | Pause.
 

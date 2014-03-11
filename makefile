@@ -2,7 +2,7 @@ SRCDIR=src
 SOURCES=$(shell find $(SRCDIR) -type f -iname '*.c' | sed 's/^\.\.\/src\///')
 OPTIONS=$(shell find $(SRCDIR) -type f -iname 'options.h' | sed 's/^\.\.\/src\///')
 VERSION=$(shell git rev-parse HEAD | cut -c 1-10)
-TITLEGIT = $(PROGRAM) git-$(VERSION)
+TITLEGIT = $(PROGRAM)	git-$(VERSION)
 OBJS=$(subst .c,.o,$(SOURCES))
 
 CC=cc
@@ -16,8 +16,9 @@ $(PROGRAM): $(OBJS)
 	@${LINK_STATUS}
 	@$(CC) $^ -o $@ $(LDFLAGS)
 	@${LINK_OK}
+	@sed -i '1c\const char revision[] = "$(PROGRAM)";' $(OPTIONS)
 
-%.o: %.c setgitver
+%.o: %.c
 	@${COMPILE_STATUS}
 	@$(CC) $< -c -o $@ $(CFLAGS)
 	@${COMPILE_OK}

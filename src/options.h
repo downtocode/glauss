@@ -1,4 +1,4 @@
-const char revision[] = "physengine git-58f541fb64";
+const char revision[] = "physengine";
 
 struct option_struct {
 	int width, height;
