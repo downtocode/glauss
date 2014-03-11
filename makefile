@@ -1,15 +1,14 @@
-
 SRCDIR=src
 SOURCES=$(shell find $(SRCDIR) -type f -iname '*.c' | sed 's/^\.\.\/src\///')
+OPTIONS=$(shell find $(SRCDIR) -type f -iname 'options.h' | sed 's/^\.\.\/src\///')
+VERSION=$(shell git rev-parse HEAD | cut -c 1-10)
+TITLEGIT = $(PROGRAM) git-$(VERSION)
 OBJS=$(subst .c,.o,$(SOURCES))
 
 CC=cc
 PROGRAM=physengine
 LDFLAGS=-lm -pthread -lEGL -lGLESv2 -lrt -lX11 `freetype-config --libs` `sdl2-config --libs`
 CFLAGS=-Wall -pedantic -std=c99 `freetype-config --cflags` `sdl2-config --cflags` -O2 -msse -msse2 -msse3 -g
-
-
-vpath %.c ./src/
 
 all: $(PROGRAM)
 
@@ -18,10 +17,13 @@ $(PROGRAM): $(OBJS)
 	@$(CC) $^ -o $@ $(LDFLAGS)
 	@${LINK_OK}
 
-%.o: %.c
+%.o: %.c setgitver
 	@${COMPILE_STATUS}
 	@$(CC) $< -c -o $@ $(CFLAGS)
 	@${COMPILE_OK}
+	
+setgitver: $(OPTIONS)
+	@sed -i '1c\const char revision[] = "$(TITLEGIT)";' $(OPTIONS)
 
 .PHONY: all clean
 

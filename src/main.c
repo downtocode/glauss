@@ -1,7 +1,9 @@
 /*	Standard header files	*/
 #include <stdio.h>
+#include <string.h>
 #include <tgmath.h>
 #include <sys/time.h>
+
 
 /*	Dependencies	*/
 #include <SDL2/SDL.h>
@@ -41,15 +43,16 @@ int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
-	
-		option->width = 1200; option->height = 600;
-		option->obj = 0; option->chosen = 0; option->dumplevel = 0;
-		option->avail_cores = 0; option->oglmin = 2; option->oglmax = 0;
-		option->boxsize = 0.1; option->dt = 0.008; option->radius = 12.0;
-		strcpy(option->fontname, "./resources/fonts/DejaVuSansMono.ttf");
-		strcpy(option->filename, "posdata.dat");
-		option->vsync = 1, option->random = 1;
 		
+		 *option = (struct option_struct){
+			.width = 1200, .height = 600,
+			.obj = 0, .chosen = 0, .dumplevel = 0,
+			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
+			.boxsize = 0.1, .dt = 0.008, .radius = 12.0,
+			.vsync = 1, .random = 1,
+		};
+		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
+		strcpy(option->filename,"posdata.dat");
 	/*	Default settings.	*/
 	
 	/*	Main function vars	*/
@@ -91,6 +94,7 @@ int main(int argc, char *argv[])
 					sscanf(argv[i+1], "%u", &dumplevel);
 				}
 				if( !strcmp("--help", argv[i])) {
+					printf("%s\n", revision);
 					printf("Usage:\n");
 					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
@@ -125,7 +129,7 @@ int main(int argc, char *argv[])
 			if(!option->fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglmin);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglmax);
-			window = SDL_CreateWindow("Physengine", \
+			window = SDL_CreateWindow(revision, \
 				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, \
 				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
 			resize_wind();
@@ -361,8 +365,9 @@ int main(int argc, char *argv[])
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
-		if(quiet == 0) printf("Quitting!\n");
+		if(!option->quiet) printf("Quitting!\n");
 		pthread_exit(NULL);
+		free(option);
 		free(object);
 		return 0;
 }

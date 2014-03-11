@@ -1,5 +1,7 @@
+const char revision[] = "physengine git-58f541fb64";
+
 struct option_struct {
-    int width, height;
+	int width, height;
 	unsigned int obj, chosen, dumplevel;
 	unsigned short int avail_cores, oglmin, oglmax;
 	float boxsize, dt, radius;
