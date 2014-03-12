@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
 			SDL_GL_SetSwapInterval(option->vsync);
 			glViewport(0, 0, width, height);
 			create_shaders();
+			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LEQUAL);
 			glActiveTexture(GL_TEXTURE0);
 			glGenBuffers(1, &textvbo);
 			glGenBuffers(1, &linevbo);
@@ -250,6 +252,7 @@ int main(int argc, char *argv[])
 					}
 					if(event.key.keysym.sym==SDLK_r) {
 						view_roty = view_rotx = view_rotz = 0.0;
+						scalefactor = 1.0;
 					}
 					if(event.key.keysym.sym==SDLK_n) {
 						if(nowipe == 1) nowipe = 0;

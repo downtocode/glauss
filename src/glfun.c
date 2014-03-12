@@ -296,12 +296,6 @@ void selected_box_text(data object) {
 int resize_wind() {
 	aspect_ratio = (float)height/width;
 	glViewport(0, 0, width, height);
-	mat = calloc(16, sizeof(GLfloat));
-	rotx = calloc(16, sizeof(GLfloat));
-	roty = calloc(16, sizeof(GLfloat));
-	rotz = calloc(16, sizeof(GLfloat));
-	rotation = calloc(16, sizeof(GLfloat));
-	scale = calloc(16, sizeof(GLfloat));
 	return 0;
 }
 
@@ -378,4 +372,11 @@ void create_shaders(void)
 	glLinkProgram(programText);
 	textattr_tex = glGetUniformLocation(programText, "tex");
 	textattr_color = glGetUniformLocation(programText, "textcolor");
+	
+	mat = calloc(16, sizeof(GLfloat));
+	rotx = calloc(16, sizeof(GLfloat));
+	roty = calloc(16, sizeof(GLfloat));
+	rotz = calloc(16, sizeof(GLfloat));
+	rotation = calloc(16, sizeof(GLfloat));
+	scale = calloc(16, sizeof(GLfloat));
 }
