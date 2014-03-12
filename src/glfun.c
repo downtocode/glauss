@@ -28,7 +28,7 @@ static GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
 static GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
 static GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
 
-void make_z_rot_matrix(GLfloat angle, GLfloat *m)
+static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
 	float c = cos(angle * acos(-1) / 180.0);
 	float s = sin(angle * acos(-1) / 180.0);
@@ -39,7 +39,7 @@ void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 	m[5] = c;
 }
 
-void make_x_rot_matrix(GLfloat angle, GLfloat *m)
+static void make_x_rot_matrix(GLfloat angle, GLfloat *m)
 {
 	float c = cos(angle * acos(-1) / 180.0);
 	float s = sin(angle * acos(-1) / 180.0);
@@ -50,7 +50,7 @@ void make_x_rot_matrix(GLfloat angle, GLfloat *m)
 	m[10] = c;
 }
 
-void make_y_rot_matrix(GLfloat angle, GLfloat *m)
+static void make_y_rot_matrix(GLfloat angle, GLfloat *m)
 {
 	float c = cos(angle * acos(-1) / 180.0);
 	float s = sin(angle * acos(-1) / 180.0);
@@ -61,7 +61,7 @@ void make_y_rot_matrix(GLfloat angle, GLfloat *m)
 	m[10] = c;
 }
 
-void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
+static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 {
 	m[0] = xs;
 	m[5] = ys;
@@ -213,10 +213,10 @@ void drawobject(data object)
 	if(object.charge != 0) glUniform4fv(objattr_color, 1, objtcolor);
 }
 
-void drawlinks(data* object, unsigned int linkcount)
+void drawlinks(data* object)
 {
-	GLfloat link[linkcount][3];
-	linkcount = 0;
+	GLfloat link[2*obj][3];
+	unsigned int linkcount = 0;
 	for(int i = 1; i < obj + 1; i++) {
 		for(int j = 1; j < obj + 1; j++) {
 			if( j==i || j > i ) continue;
@@ -241,23 +241,19 @@ void drawlinks(data* object, unsigned int linkcount)
 }
 
 void selected_box_text(data object) {
-	GLfloat chosenbox[4][3];
+	GLfloat chosenbox[4][2];
 	GLfloat objpoint[3] = {object.pos[0],object.pos[1],object.pos[2]};
 	
 	transformpoint(objpoint, mat);
 	
 	chosenbox[0][0] = objpoint[0] - aspect_ratio*boxsize;
 	chosenbox[0][1] = objpoint[1] - boxsize;
-	chosenbox[0][2] = objpoint[2];
 	chosenbox[1][0] = objpoint[0] - aspect_ratio*boxsize;
 	chosenbox[1][1] = objpoint[1] + boxsize;
-	chosenbox[3][2] = objpoint[2];
 	chosenbox[2][0] = objpoint[0] + aspect_ratio*boxsize;
 	chosenbox[2][1] = objpoint[1] + boxsize;
-	chosenbox[3][2] = objpoint[2];
 	chosenbox[3][0] = objpoint[0] + aspect_ratio*boxsize;
 	chosenbox[3][1] = objpoint[1] - boxsize;
-	chosenbox[3][2] = objpoint[2];
 
 	char osdstr[500];
 	sprintf(osdstr, "Object %i", object.index);
@@ -287,7 +283,7 @@ void selected_box_text(data object) {
 	}
 	
 	glEnableVertexAttribArray(textattr_coord);
-	glVertexAttribPointer(textattr_coord, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(chosenbox), chosenbox, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_LINE_LOOP, 0, 4);
 	glDisableVertexAttribArray(textattr_coord);

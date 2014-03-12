@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		float deltatime, totaltime = 0.0f, fps;
-		unsigned int linkcount, frames = 0;
+		unsigned int frames = 0;
 		char osdfps[500] = "FPS = n/a", osdobj[500] = "Objects = n/a";
 	/*	Main function vars	*/
 	
@@ -325,14 +325,7 @@ int main(int argc, char *argv[])
 		
 		/*	Link drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, linkvbo);
-		for(int i = 1; i < obj + 1; i++) {
-			for(int j = 1; j < obj + 1; j++) {
-				if( j==i || j > i ) continue;
-				if( object[i].linkwith[j] != 0 ) linkcount++;
-			}
-		}
-		drawlinks(object, 2*linkcount);
-		linkcount = 0;
+		drawlinks(object);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Link drawing	*/
 		
