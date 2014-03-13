@@ -58,6 +58,7 @@ int initphys(data** object)
 	
 	#ifdef __linux__
 		online_cores = sysconf(_SC_NPROCESSORS_ONLN);
+		if(online_cores > 4) online_cores = 4;
 	#endif
 	
 	if(avail_cores == 0 && online_cores != 0 && enforced == 0) {
