@@ -132,6 +132,7 @@ void *resolveforces(void *arg) {
 		}
 	}
 	objalt[i].Ftot = forceconst + grv + ele + link;
+	pthread_exit(NULL);
 	return 0;
 }
 
@@ -173,5 +174,6 @@ void *integrate(void *arg)
 		}
 		SDL_Delay((long)arg);
 	}
+	pthread_exit(NULL);
 	return 0;
 }
