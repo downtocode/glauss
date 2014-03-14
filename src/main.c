@@ -4,7 +4,6 @@
 #include <tgmath.h>
 #include <sys/time.h>
 
-
 /*	Dependencies	*/
 #include <SDL2/SDL.h>
 
@@ -24,8 +23,8 @@ char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
 char filename[200] = "posdata.dat";
 long sleepfor = 16;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool quiet = 0, stop = 0, enforced = 0, quit = 0;
-bool nowipe = 0, random = 1, flicked = 0, dumped = 0, restart = 0;
+bool quiet = 0, enforced = 0;
+bool nowipe = 0, random = 1, flicked = 0, dumped = 0;
 
 
 //glfun global vars
@@ -153,7 +152,7 @@ int main(int argc, char *argv[])
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glClearColor(0.1, 0.1, 0.1, 1);
+			glClearColor(0.2, 0.2, 0.2, 1);
 		}
 		if(quiet == 0) {
 			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
@@ -186,8 +185,7 @@ int main(int argc, char *argv[])
 	
 	gettimeofday (&t1 , NULL);
 	
-	pthread_t physthread;
-	pthread_create(&physthread, NULL, integrate, (void*)(long)sleepfor);
+	threadcontrol(1);
 	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
@@ -220,13 +218,6 @@ int main(int argc, char *argv[])
 					if(scalefactor < 0.11) scalefactor = 0.11;
 					break;
 				case SDL_KEYDOWN:
-					if(event.key.keysym.sym==SDLK_SPACE) {
-						if( stop == 0 ) stop = 1;
-						else if( stop == 1 ) {
-							stop = 0;
-							restart = 1;
-						}
-					}
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
 					}
@@ -237,6 +228,10 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_LEFTBRACKET) {
 						dt /= 2;
 						printf("dt = %f\n", dt);
+					}
+					if(event.key.keysym.sym==SDLK_SPACE) {
+						if(threadcontrol(2)) threadcontrol(0);
+						else threadcontrol(1);
 					}
 					if(event.key.keysym.sym==SDLK_w) {
 						view_rotx += 5.0;
@@ -275,15 +270,6 @@ int main(int argc, char *argv[])
 					goto quit;
 					break;
 			}
-		}
-		if(stop && !restart) {
-			quit = 1;
-			pthread_join(physthread, NULL);
-		} else if(restart) {
-			quit = 0;
-			pthread_create(&physthread, NULL, integrate, (void*)(long)sleepfor);
-			stop = 0;
-			restart = 0;
 		}
 		if(!quiet) {
 			gettimeofday(&t2, NULL);
@@ -351,7 +337,7 @@ int main(int argc, char *argv[])
 		if(fps >= 48) fpscolor = 2;
 		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height, fpscolor);
 		render_text(osdobj, -0.95, 0.75, 1.0/width, 1.0/height, 0);
-		if(stop == 1) render_text("Simulation stopped", -0.95, -0.95, 1.0/width, 1.0/height, 1);
+		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/width, 1.0/height, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
 		
@@ -359,8 +345,6 @@ int main(int argc, char *argv[])
 	}
 	
 	quit:
-		quit = 1;
-		pthread_join(physthread, NULL);
 		FT_Done_Face(face);
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);

@@ -16,9 +16,15 @@ typedef struct {
 	bool center;
 } data;
 
+struct thread_settings {
+	unsigned int looplimit1, looplimit2, objid, threadid;
+	data object;
+};
+
 float dotprod(v4sf a, v4sf b);
 float lenght(v4sf a);
 int initphys(data** object);
+int threadcontrol(int status);
 void *resolveforces(void *arg);
 void *integrate(void *arg);
 
