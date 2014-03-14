@@ -5,6 +5,7 @@
 #include "glfun.h"
 #include "physics.h"
 #include "parser.h"
+#include "options.h"
 
 //Object shader global vars
 GLuint programObj;
@@ -350,6 +351,7 @@ void create_shaders(void)
 		printf("Error: linking:\n%s\n", log);
 		exit(1);
 	}
+	
 	glDeleteShader(fragShaderObj);
 	glDeleteShader(vertShaderObj);
 	glDeleteShader(fragShaderText);
