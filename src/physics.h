@@ -2,7 +2,6 @@
 #define FUNCTIONS_H_INCLUDED
 
 #include <stdbool.h>
-#include <pthread.h>
 
 /*	Vector size must be a power of 2 and big enough to contain the dimensions	*/
 typedef float v4sf __attribute__ ((vector_size (16)));
@@ -17,8 +16,7 @@ typedef struct {
 } data;
 
 struct thread_settings {
-	unsigned int looplimit1, looplimit2, objid, threadid;
-	data object;
+	unsigned int looplimit1, looplimit2, threadid;
 };
 
 float dotprod(v4sf a, v4sf b);

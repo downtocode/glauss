@@ -18,8 +18,7 @@ GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 GLfloat view_rotx, view_roty, view_rotz, scalefactor;
 
-float boxsize;
-unsigned int obj, width, height;
+unsigned int obj;
 
 static float aspect_ratio;
 static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale;
@@ -242,25 +241,23 @@ void drawlinks(data* object)
 }
 
 void selected_box_text(data object) {
-	GLfloat chosenbox[4][2];
+	float boxsize = 0.13*scalefactor;
 	GLfloat objpoint[3] = {object.pos[0],object.pos[1],object.pos[2]};
 	
 	transformpoint(objpoint, mat);
 	
-	chosenbox[0][0] = objpoint[0] - aspect_ratio*boxsize;
-	chosenbox[0][1] = objpoint[1] - boxsize;
-	chosenbox[1][0] = objpoint[0] - aspect_ratio*boxsize;
-	chosenbox[1][1] = objpoint[1] + boxsize;
-	chosenbox[2][0] = objpoint[0] + aspect_ratio*boxsize;
-	chosenbox[2][1] = objpoint[1] + boxsize;
-	chosenbox[3][0] = objpoint[0] + aspect_ratio*boxsize;
-	chosenbox[3][1] = objpoint[1] - boxsize;
+	GLfloat chosenbox[4][2] = {
+		{objpoint[0] - aspect_ratio*boxsize, objpoint[1] - boxsize},
+		{objpoint[0] - aspect_ratio*boxsize, chosenbox[1][1] = objpoint[1] + boxsize},
+		{objpoint[0] + aspect_ratio*boxsize, objpoint[1] + boxsize},
+		{objpoint[0] + aspect_ratio*boxsize, chosenbox[3][1] = objpoint[1] - boxsize},
+	};
 
 	char osdstr[500];
 	sprintf(osdstr, "Object %i", object.index);
 	
-	render_text(osdstr, objpoint[0] + object.radius, \
-	objpoint[1] + object.radius, 1.0/width, 1.0/height, 0);
+	render_text(osdstr, objpoint[0] + object.radius*scalefactor, \
+	objpoint[1] + object.radius*scalefactor, 1.0/option->width, 1.0/option->height, 0);
 	
 	unsigned int counter = 0;
 	unsigned int links[obj+1];
@@ -280,7 +277,7 @@ void selected_box_text(data object) {
 			strcat(osdstr, linkcount);
 		}
 		render_text(osdstr, objpoint[0] + object.radius, \
-		objpoint[1] + object.radius - 0.075, 1.0/width, 1.0/height, 0);
+		objpoint[1] + object.radius - 0.075, 1.0/option->width, 1.0/option->height, 0);
 	}
 	
 	glEnableVertexAttribArray(textattr_coord);
@@ -291,8 +288,8 @@ void selected_box_text(data object) {
 }
 
 int resize_wind() {
-	aspect_ratio = (float)height/width;
-	glViewport(0, 0, width, height);
+	aspect_ratio = (float)option->height/option->width;
+	glViewport(0, 0, option->width, option->height);
 	return 0;
 }
 

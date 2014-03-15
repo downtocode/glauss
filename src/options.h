@@ -1,12 +1,12 @@
 #define revision "physengine"
 
+struct option_struct* option;
+
 struct option_struct {
-	int width, height;
-	unsigned int obj, chosen, dumplevel;
+	float dt;
+	long sleepfor;
 	unsigned short int avail_cores, oglmin, oglmax;
-	float boxsize, dt, radius;
+	int width, height;
+	bool vsync, novid, fullogl;
 	char fontname[200], filename[200];
-	long double elcharge, gconst, epsno;
-	bool novid, vsync, quiet, stop, enforced, quit;
-	bool nowipe, random, flicked, dumped, fullogl, restart;
 };

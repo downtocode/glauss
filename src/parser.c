@@ -6,22 +6,16 @@
 #include <stdlib.h>
 #include "physics.h"
 #include "parser.h"
-
+#include "options.h"
 
 /*	Global variables	*/
-int width, height;
 unsigned int obj, chosen, dumplevel;
-unsigned short int avail_cores, oglmin, oglmax;
-float boxsize, dt, radius;
-char fontname[200];
-char filename[200];
-long sleepfor;
 long double elcharge, gconst, epsno;
-bool novid, vsync, quiet, stop, enforced, quit;
-bool nowipe, random, flicked, dumped, fullogl, restart;
+bool quiet;
 
 /*	Static variables	*/
 static char str[200];
+static bool random;
 static float velmax, massrand, chargerand, sizerand;
 
 
@@ -36,10 +30,10 @@ int preparser()
 		if (strstr(str, "#") == NULL) {
 			sscanf(str, "%s = \"%f\"", word, &value);
 			if(strcmp(word, "dt") == 0) {
-				dt = value;
+				option->dt = value;
 			}
 			if(strcmp(word, "threads") == 0) {
-				if(!avail_cores) avail_cores = value;
+				if(!option->avail_cores) option->avail_cores = value;
 			}
 			if(strcmp(word, "elcharge") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
@@ -57,16 +51,13 @@ int preparser()
 				epsno = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "width") == 0) {
-				width = (unsigned int)value;
+				option->width = (unsigned int)value;
 			}
 			if(strcmp(word, "height") == 0) {
-				height = (unsigned int)value;
-			}
-			if(strcmp(word, "boxsize") == 0) {
-				boxsize = value;
+				option->height = (unsigned int)value;
 			}
 			if(strcmp(word, "fontname") == 0) {
-				sscanf(str, "%s = \"%100[^\"]\"", word, fontname);
+				sscanf(str, "%s = \"%100[^\"]\"", word, option->fontname);
 			}
 			if(strcmp(word, "random") == 0) {
 				random = (bool)value;
@@ -90,16 +81,16 @@ int preparser()
 				sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
 			}
 			if(strcmp(word, "fullogl") == 0) {
-				if(!fullogl) fullogl = (bool)value;
+				if(!option->fullogl) option->fullogl = (bool)value;
 			}
 			if(strcmp(word, "oglmin") == 0) {
-				oglmin = (unsigned int)value;
+				option->oglmin = (unsigned int)value;
 			}
 			if(strcmp(word, "oglmax") == 0) {
-				oglmax = (unsigned int)value;
+				option->oglmax = (unsigned int)value;
 			}
 			if(strcmp(word, "sleep") == 0) {
-				sleepfor = (long)value;
+				option->sleepfor = (long)value;
 			}
 		} else {
 			memset(str, 0, sizeof(str));
@@ -113,17 +104,17 @@ int preparser()
 		srand(time(NULL));
 	} else { 
 		count = 0;
-		if(access(filename, F_OK) == -1 ) {
-			fprintf(stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", filename, namebuff);
+		if(access(option->filename, F_OK) == -1 ) {
+			fprintf(stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", option->filename, namebuff);
 			if(access(namebuff, F_OK) == 0) {
-				strcpy(filename, namebuff);
+				strcpy(option->filename, namebuff);
 				fprintf(stderr, " Success!\n");
 			} else {
 				fprintf(stderr, " Fail!\n");
 				return 0;
 			}
 		}
-		FILE *inprep = fopen(filename, "r");
+		FILE *inprep = fopen(option->filename, "r");
 		while(fgets(str, sizeof(str), inprep)!=NULL) {
 			if (strstr(str, "#") == NULL) {
 				count += 1;
@@ -142,7 +133,7 @@ int parser(data** object, char filename[200])
 	float posx, posy, posz, velx, vely, velz, bond, radius;
 	long double mass, chargetemp;
 	
-	FILE *in = fopen ( filename, "r" );
+	FILE *in = fopen ( option->filename, "r" );
 	
 	if(random == 0) {
 		if(quiet == 0) {

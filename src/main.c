@@ -15,16 +15,9 @@
 #include "options.h"
 
 /*	Default settings.	*/
-int width = 1200, height = 600;
-unsigned int obj = 0, chosen = 0, dumplevel = 0;
-unsigned short int avail_cores = 0, oglmin = 2, oglmax = 0;
-float boxsize = 0.1, dt = 0.008, radius = 12.0;
-char fontname[200] = "./resources/fonts/DejaVuSansMono.ttf";
-char filename[200] = "posdata.dat";
-long sleepfor = 16;
+unsigned int obj = 0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool quiet = 0, enforced = 0;
-bool nowipe = 0, random = 1, flicked = 0, dumped = 0;
+bool quiet = 0;
 
 
 //glfun global vars
@@ -36,8 +29,6 @@ GLint textattr_tex;
 GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 1.0;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 
-struct option_struct* option;
-
 int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
@@ -45,10 +36,8 @@ int main(int argc, char *argv[])
 		
 		 *option = (struct option_struct){
 			.width = 1200, .height = 600,
-			.obj = 0, .chosen = 0, .dumplevel = 0,
 			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
-			.boxsize = 0.1, .dt = 0.008, .radius = 12.0,
-			.vsync = 1, .random = 1,
+			.dt = 0.008, .vsync = 1,
 		};
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 		strcpy(option->filename,"posdata.dat");
@@ -59,8 +48,9 @@ int main(int argc, char *argv[])
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		float deltatime, totaltime = 0.0f, fps;
-		unsigned int frames = 0;
+		unsigned int frames = 0, chosen = 0, dumplevel = 0;
 		char osdfps[500] = "FPS = n/a", osdobj[500] = "Objects = n/a";
+		bool flicked = 0, dumped = 0;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -73,7 +63,7 @@ int main(int argc, char *argv[])
 					quiet = 1;
 				}
 				if(!strcmp( "-f", argv[i] ) ) {
-					strcpy( filename, argv[i+1]);
+					strcpy( option->filename, argv[i+1]);
 				}
 				if(!strcmp( "--nosync", argv[i])) {
 					option->vsync = 0;
@@ -82,11 +72,10 @@ int main(int argc, char *argv[])
 					option->fullogl = 1;
 				}
 				if(!strcmp("--threads", argv[i])) {
-					sscanf(argv[i+1], "%hu", &avail_cores);
-					if(avail_cores == 0) {
-						fprintf(stderr, "WARNING! Running with 0 cores disables all force calculations. Press Enter to continue.");
-						while(getchar() != '\n');
-						enforced = 1;
+					sscanf(argv[i+1], "%hu", &option->avail_cores);
+					if(option->avail_cores == 0) {
+						fprintf(stderr, "ERROR! Requires at least 1 thread.\n");
+						return 1;
 					}
 				}
 				if(!strcmp("--dumplevel", argv[i])) {
@@ -97,6 +86,7 @@ int main(int argc, char *argv[])
 					printf("Usage:\n");
 					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
+					printf("	--nosync 		Disables vsync.\n");
 					printf("	--fullogl 		Initialize full OpenGL instead of ES.\n");
 					printf("	--threads (int)		Make the program run with this many threads.\n"); 
 					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
@@ -126,15 +116,15 @@ int main(int argc, char *argv[])
 		if(option->novid == 0) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			if(!option->fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglmin);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglmax);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, option->oglmin);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, option->oglmax);
 			window = SDL_CreateWindow(revision, \
-				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, \
+				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width, option->height, \
 				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
 			resize_wind();
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(option->vsync);
-			glViewport(0, 0, width, height);
+			glViewport(0, 0, option->width, option->height);
 			create_shaders();
 			glEnable(GL_DEPTH_TEST);
 			glDepthFunc(GL_LEQUAL);
@@ -164,7 +154,10 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Could not init freetype library\n");
 			return 1;
 		}
-		if(FT_New_Face(library, fontname, 0, &face)) fprintf(stderr, "Could not open font\n");
+		if(FT_New_Face(library, option->fontname, 0, &face)) {
+			fprintf(stderr, "Could not open font\n");
+			return 1;
+		}
 		FT_Set_Pixel_Sizes(face, 0, 40);
 		g = face->glyph;
 	/*	Freetype.	*/
@@ -173,14 +166,13 @@ int main(int argc, char *argv[])
 		data* object;
 		if(quiet == 0) {
 			printf("Objects: %i\n", obj);
-			printf("Settings: dt=%f, widith=%i, height=%i, boxsize=%f, fontname=%s\n" \
-			, dt, width, height, boxsize, fontname);
+			printf("Settings: dt=%f\n", option->dt);
 			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
 			, elcharge, gconst, epsno);
 		}
 		/*	Mallocs and wipes	*/
 		initphys(&object);
-		parser(&object, filename);
+		parser(&object, option->filename);
 	/*	Physics.	*/
 	
 	gettimeofday (&t1 , NULL);
@@ -192,7 +184,7 @@ int main(int argc, char *argv[])
 			switch(event.type) {
 				case SDL_WINDOWEVENT:
 					if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
-						SDL_GetWindowSize(window, &width, &height);
+						SDL_GetWindowSize(window, &option->width, &option->height);
 						resize_wind();
 					}
 					break;
@@ -222,12 +214,12 @@ int main(int argc, char *argv[])
 						goto quit;
 					}
 					if(event.key.keysym.sym==SDLK_RIGHTBRACKET) {
-						dt *= 2;
-						printf("dt = %f\n", dt);
+						option->dt *= 2;
+						printf("dt = %f\n", option->dt);
 					}
 					if(event.key.keysym.sym==SDLK_LEFTBRACKET) {
-						dt /= 2;
-						printf("dt = %f\n", dt);
+						option->dt /= 2;
+						printf("dt = %f\n", option->dt);
 					}
 					if(event.key.keysym.sym==SDLK_SPACE) {
 						if(threadcontrol(2)) threadcontrol(0);
@@ -248,10 +240,6 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_r) {
 						view_roty = view_rotx = view_rotz = 0.0;
 						scalefactor = 1.0;
-					}
-					if(event.key.keysym.sym==SDLK_n) {
-						if(nowipe == 1) nowipe = 0;
-						else nowipe = 1;
 					}
 					if(event.key.keysym.sym==SDLK_z) {
 						if(dumped == 0) {
@@ -298,7 +286,8 @@ int main(int argc, char *argv[])
 			view_rotx += (float)mousey/4;
 		}
 		if(option->novid) continue;
-		if(!nowipe) glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+		
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
 		glUseProgram(programObj);
 		adjust_rot();
@@ -335,9 +324,9 @@ int main(int argc, char *argv[])
 		if(fps < 25) fpscolor = 1;
 		if(fps >= 25 && fps < 48) fpscolor = 3;
 		if(fps >= 48) fpscolor = 2;
-		render_text(osdfps, -0.95, 0.85, 1.0/width, 1.0/height, fpscolor);
-		render_text(osdobj, -0.95, 0.75, 1.0/width, 1.0/height, 0);
-		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/width, 1.0/height, 1);
+		render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
+		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, 0);
+		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
 		
@@ -351,6 +340,6 @@ int main(int argc, char *argv[])
 		SDL_Quit();
 		free(option);
 		free(object);
-		if(!option->quiet) printf("Quitting!\n");
+		if(!quiet) printf("Quitting!\n");
 		return 0;
 }
