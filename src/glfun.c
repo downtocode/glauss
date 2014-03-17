@@ -24,9 +24,9 @@ static float aspect_ratio;
 static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-static GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+static GLfloat red[] = {1.0f, 0.0f, 0.0f, 0.2f};
 static GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
-static GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
+static GLfloat blue[] = {0.0f, 0.0f, 1.0f, 0.2f};
 
 static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {

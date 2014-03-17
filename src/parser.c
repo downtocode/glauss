@@ -15,7 +15,7 @@ bool quiet;
 
 /*	Static variables	*/
 static char str[200];
-static bool random;
+static bool moderandom;
 static float velmax, massrand, chargerand, sizerand;
 
 
@@ -60,7 +60,7 @@ int preparser()
 				sscanf(str, "%s = \"%100[^\"]\"", word, option->fontname);
 			}
 			if(strcmp(word, "random") == 0) {
-				random = (bool)value;
+				moderandom = (bool)value;
 			}
 			if(strcmp(word, "randobjs") == 0) {
 				count = (int)value;
@@ -100,7 +100,7 @@ int preparser()
 	
 	memset(str, 0, sizeof(str));
 	
-	if( random == 1 ) {
+	if( moderandom == 1 ) {
 		srand(time(NULL));
 	} else { 
 		count = 0;
@@ -135,7 +135,7 @@ int parser(data** object, char filename[200])
 	
 	FILE *in = fopen ( option->filename, "r" );
 	
-	if(random == 0) {
+	if(moderandom == 0) {
 		if(quiet == 0) {
 			printf("	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
 		}
@@ -177,7 +177,7 @@ int parser(data** object, char filename[200])
 				memset(str, 0, sizeof(str));
 			}
 		}
-	} else if (random == 1) {
+	} else if (moderandom == 1) {
 		for(i = 1; i < obj + 1; i++) {
 			(*object)[i].index = i;
 			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5,\
