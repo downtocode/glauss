@@ -4,8 +4,8 @@ OBJS=$(subst .c,.o,$(SOURCES))
 
 CC=cc
 PROGRAM=physengine
-LDFLAGS=-lm -pthread -lEGL -lGLESv2 -lrt -lX11 `freetype-config --libs` `sdl2-config --libs`
-CFLAGS=-Wall -pedantic -std=c99 `freetype-config --cflags` `sdl2-config --cflags` -O2 -msse -msse2 -msse3 -g
+LDFLAGS=-lm -lrt -pthread -lEGL -lGLESv2 -lrt -lX11 `freetype-config --libs` `sdl2-config --libs`
+CFLAGS=-Wall -pthread -pedantic -std=gnu99 `freetype-config --cflags` `sdl2-config --cflags` -O2 -msse -msse2 -msse3 -g
 
 all: $(PROGRAM)
 

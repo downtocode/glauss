@@ -26,7 +26,7 @@ GLuint programText;
 GLint textattr_tex;
 
 
-GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 1.0;
+GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.80;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 
 int main(int argc, char *argv[])
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		SDL_Event event;
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
-		float deltatime, totaltime = 0.0f, fps;
+		float deltatime, totaltime = 0.0f, fps = 0;
 		unsigned int frames = 0, chosen = 0, dumplevel = 0;
 		char osdfps[500] = "FPS = n/a", osdobj[500] = "Objects = n/a";
 		bool flicked = 0, dumped = 0;
@@ -110,7 +110,6 @@ int main(int argc, char *argv[])
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
 		GLuint tex, textvbo, linevbo, axisvbo, pointvbo, linkvbo;
-		
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(option->novid == 0) {
@@ -120,7 +119,7 @@ int main(int argc, char *argv[])
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, option->oglmax);
 			window = SDL_CreateWindow(revision, \
 				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width, option->height, \
-				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
+				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|SDL_WINDOW_ALLOW_HIGHDPI);
 			resize_wind();
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(option->vsync);
@@ -142,24 +141,26 @@ int main(int argc, char *argv[])
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glClearColor(0.2, 0.2, 0.2, 1);
-		}
-		if(quiet == 0) {
-			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+			glClearColor(0.16, 0.16, 0.16, 1);
+			if(quiet == 0) {
+				printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+			}
 		}
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
 	/*	Freetype.	*/
-		if(FT_Init_FreeType(&library)) {
-			fprintf(stderr, "Could not init freetype library\n");
-			return 1;
+		if(option->novid == 0) {
+			if(FT_Init_FreeType(&library)) {
+				fprintf(stderr, "Could not init freetype library\n");
+				return 1;
+			}
+			if(FT_New_Face(library, option->fontname, 0, &face)) {
+				fprintf(stderr, "Could not open font\n");
+				return 1;
+			}
+			FT_Set_Pixel_Sizes(face, 0, 34);
+			g = face->glyph;
 		}
-		if(FT_New_Face(library, option->fontname, 0, &face)) {
-			fprintf(stderr, "Could not open font\n");
-			return 1;
-		}
-		FT_Set_Pixel_Sizes(face, 0, 40);
-		g = face->glyph;
 	/*	Freetype.	*/
 	
 	/*	Physics.	*/
@@ -177,7 +178,7 @@ int main(int argc, char *argv[])
 	
 	gettimeofday (&t1 , NULL);
 	
-	threadcontrol(1);
+	threadcontrol(8);
 	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
@@ -259,33 +260,49 @@ int main(int argc, char *argv[])
 					break;
 			}
 		}
-		if(!quiet) {
-			gettimeofday(&t2, NULL);
-			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
-			t1 = t2;
-			totaltime += deltatime;
-			frames++;
-			if(dumplevel == 2) toxyz(obj, object);
-			if (totaltime >  1.0f) {
-				fps = frames/totaltime;
-				if(option->novid == 0) {
-					sprintf(osdfps, "FPS = %3.2f", fps);
-				} else {
-					printf("Current FPS = %3.2f\n", fps);
+		
+		gettimeofday(&t2, NULL);
+		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
+		t1 = t2;
+		totaltime += deltatime;
+		frames++;
+		if(dumplevel == 2) toxyz(obj, object);
+		if (totaltime >  1.0f) {
+			fps = frames/totaltime;
+			if(option->novid == 0) sprintf(osdfps, "FPS = %3.2f", fps);
+			totaltime -= 1.0f;
+			frames = 0;
+			//To prevent excessive dumps.
+			dumped = 0;
+			if(dumplevel == 1) toxyz(obj, object);
+			
+			long totaltime = 0, threadtime[option->avail_cores];
+			
+			if(threadcontrol(2)) {
+				for(int i = 1; i < option->avail_cores + 1; i++) {
+					threadtime[i] = thread_opts[i].time.tv_nsec;
+					totaltime += threadtime[i];
 				}
-				totaltime -= 1.0f;
-				frames = 0;
-				//To prevent excessive dumps.
-				dumped = 0;
-				if(dumplevel == 1) toxyz(obj, object);
+			}
+			for(int i = 1; i < option->avail_cores + 1; i++) {
+				if(!threadcontrol(2)) {
+					sprintf(thread_opts[i].timepercent, "Thread %i: 0.00%%", i);
+					continue;
+				}
+				sprintf(thread_opts[i].timepercent, "Thread %i: %.02f%%", \
+				i, (float)((long double)threadtime[i]/(long double)totaltime)*100);
 			}
 		}
+		if(option->novid) {
+			SDL_Delay(100);
+			continue;
+		}
+		
 		if(flicked) {
 			SDL_GetRelativeMouseState(&mousex, &mousey);
 			view_roty += (float)mousex/4;
 			view_rotx += (float)mousey/4;
 		}
-		if(option->novid) continue;
 		
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
@@ -320,12 +337,15 @@ int main(int argc, char *argv[])
 		
 		/*	Text drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		unsigned int fpscolor;
+		unsigned int fpscolor = 0;
 		if(fps < 25) fpscolor = 1;
 		if(fps >= 25 && fps < 48) fpscolor = 3;
 		if(fps >= 48) fpscolor = 2;
 		render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
 		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, 0);
+		for(int i = 1; i < option->avail_cores + 1; i++) {
+			render_text(thread_opts[i].timepercent, 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, 0);
+		}
 		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
@@ -334,6 +354,7 @@ int main(int argc, char *argv[])
 	}
 	
 	quit:
+		threadcontrol(9);
 		FT_Done_Face(face);
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);
