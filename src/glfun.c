@@ -276,8 +276,8 @@ void selected_box_text(data object) {
 			sprintf(linkcount, "%u ", links[j]);
 			strcat(osdstr, linkcount);
 		}
-		render_text(osdstr, objpoint[0] + object.radius, \
-		objpoint[1] + object.radius - 0.075, 1.0/option->width, 1.0/option->height, 0);
+		render_text(osdstr, objpoint[0] + object.radius*scalefactor, \
+	objpoint[1] + object.radius*scalefactor - 0.055, 1.0/option->width, 1.0/option->height, 0);
 	}
 	
 	glEnableVertexAttribArray(textattr_coord);

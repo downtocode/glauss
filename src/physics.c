@@ -6,13 +6,14 @@
 #include "physics.h"
 #include "options.h"
 
+#include <SDL2/SDL.h>
+
 /*	Default threads to use when system != linux.	*/
 #define failsafe_cores 2
 #define spring 500
 
 /*	Global vars	*/
 int obj, objcount;
-bool quiet;
 
 /*	Static vars	*/
 static long double pi;
@@ -48,9 +49,8 @@ int initphys(data** object)
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
 	
-	if(quiet == 0)
-		printf("Allocated %lu bytes to object array.\n", \
-		((obj+1)*sizeof(**object)+(obj+1)*sizeof(float)));
+	printf("Allocated %lu bytes to object array.\n", \
+	((obj+1)*sizeof(**object)+(obj+1)*sizeof(float)));
 	
 	pi = acos(-1);
 	
@@ -66,14 +66,12 @@ int initphys(data** object)
 	
 	if(avail_cores == 0 && online_cores != 0 ) {
 		avail_cores = online_cores;
-		if(quiet == 0)
 		printf("Detected %i threads, will use all.\n", online_cores);
 	} else if( avail_cores != 0 && online_cores != 0 && online_cores > avail_cores ) {
-		if(quiet == 0)
-			printf("Using %i out of %i threads.\n", avail_cores, online_cores);
-	} else if(avail_cores == 1 && quiet == 0) {
+		printf("Using %i out of %i threads.\n", avail_cores, online_cores);
+	} else if(avail_cores == 1) {
 		printf("Running program in a single thread.\n");
-	} else if(avail_cores > 1 && quiet == 0) {
+	} else if(avail_cores > 1) {
 		printf("Running program with %i threads.\n", avail_cores);
 	} else if(avail_cores == 0 ) {
 		/*	Poor Mac OS...	*/
@@ -103,7 +101,7 @@ int initphys(data** object)
 			/*	Takes care of rounding problems with odd numbers.	*/
 			thread_opts[k].looplimit2 += obj - thread_opts[k].looplimit2;
 		}
-		if(thread_opts[k].looplimit2 != 0 && quiet == 0)
+		if(thread_opts[k].looplimit2 != 0)
 			printf("Thread %i's objects = [%u,%u]\n", \
 			k, thread_opts[k].looplimit1, thread_opts[k].looplimit2);
 	}
@@ -116,9 +114,11 @@ int threadcontrol(int status)
 {
 	/*	Codes: 0 - unpause, 1-pause, 2-return status, 8 -start 9 - destroy	*/
 	if(status == 1 && running == 0) {
+		dt = option->dt;
 		running = 1;
 		pthread_mutex_unlock(&movestop);
 	} else if(status == 0 && running == 1) {
+		dt = option->dt;
 		running = 0;
 	} else if(status == 2) {
 		return running;
@@ -143,22 +143,22 @@ int threadcontrol(int status)
 
 void *resolveforces(void *arg) {
 	struct thread_settings *thread = &thread_opts[(long)arg];
-	v4sf vecnorm, accprev, grv = {0,0,0}, ele = {0,0,0}, flj = {0,0,0}, link = {0,0,0};
-	long double mag, grvmag, elemag, fljmag, springmag;
+	v4sf vecnorm, accprev, Ftot = {0,0,0}, grv = {0,0,0}, ele = {0,0,0}, flj = {0,0,0}, link = {0,0,0};
+	long double mag, grvmag, elemag = 0.0, fljmag, springmag;
 	
 	/*	TODO - LJ potential, collisions.	*/
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
 			if(objalt[i].ignore != '0') continue;
-				if(objalt[i].pos[0] - objalt[i].radius < -2 || objalt[i].pos[0] + objalt[i].radius > 2) {
+				if(objalt[i].pos[0] - objalt[i].radius < -50 || objalt[i].pos[0] + objalt[i].radius > 50) {
 					objalt[i].vel[0] = -objalt[i].vel[0];
 				}
 				
-				if(objalt[i].pos[1] - objalt[i].radius < -2 || objalt[i].pos[1] + objalt[i].radius > 2) {
+				if(objalt[i].pos[1] - objalt[i].radius < -50 || objalt[i].pos[1] + objalt[i].radius > 50) {
 					objalt[i].vel[1] = -objalt[i].vel[1];
 				}
 				
-				if(objalt[i].pos[2] - objalt[i].radius < -2 || objalt[i].pos[2] + objalt[i].radius > 2) {
+				if(objalt[i].pos[2] - objalt[i].radius < -50 || objalt[i].pos[2] + objalt[i].radius > 50) {
 					objalt[i].vel[2] = -objalt[i].vel[2];
 				}
 			objalt[i].pos += (objalt[i].vel*(v4sf){dt,dt,dt}) + (objalt[i].acc)*(v4sf){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
@@ -168,36 +168,34 @@ void *resolveforces(void *arg) {
 		if(running) pthread_mutex_unlock(&movestop);
 		
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
+			if(objalt[i].ignore != '0') continue;
 			for(int j = 1; j < obj + 1; j++) {
-				if(i != j) {
-					vecnorm = objalt[j].pos - objalt[i].pos;
-					mag = lenght(vecnorm);
-					vecnorm /= (v4sf){mag, mag, mag};
-					
-					grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
-					elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
-					//fljmag = (0.00000000001/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
-					
-					grv += vecnorm*(v4sf){grvmag,grvmag,grvmag};
-					ele += -vecnorm*(v4sf){elemag,elemag,elemag};
-					//flj += vecnorm*(v4sf){fljmag,fljmag,fljmag};
-					
-					if( objalt[i].linkwith[j] != 0 ) {
-						springmag = (spring)*(mag - objalt[i].linkwith[j])*0.1;
-						link += vecnorm*(v4sf){springmag, springmag, springmag};
-					}
-					if( mag < objalt[i].radius + objalt[j].radius ) {
-						/*	Hijacking link force until real elastic 3D collisions	*/
-						link = -vecnorm*(v4sf){spring*3, spring*3, spring*3};
-					}
+				if(i==j) continue;
+				vecnorm = objalt[j].pos - objalt[i].pos;
+				mag = lenght(vecnorm);
+				vecnorm /= (v4sf){mag, mag, mag};
+				
+				grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
+				//elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
+				//fljmag = (24/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
+				
+				//grv += vecnorm*(v4sf){grvmag,grvmag,grvmag};
+				ele += -vecnorm*(v4sf){elemag,elemag,elemag};
+				//flj += vecnorm*(v4sf){fljmag,fljmag,fljmag};
+				
+				if( objalt[i].linkwith[j] != 0 ) {
+					springmag = (spring)*(mag - objalt[i].linkwith[j])*0.1;
+					link += vecnorm*(v4sf){springmag, springmag, springmag};
 				}
 			}
-			objalt[i].Ftot = objalt[i].Ftot + grv + ele + flj + link;
+			Ftot += ele + link;
 			accprev = objalt[i].acc;
-			objalt[i].acc = (objalt[i].Ftot)/(v4sf){objalt[i].mass,objalt[i].mass,objalt[i].mass};
+			objalt[i].acc = (Ftot)/(v4sf){objalt[i].mass,objalt[i].mass,objalt[i].mass};
 			objalt[i].vel += (objalt[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
+			Ftot = ele = grv = flj = link = (v4sf){0,0,0,0};
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread->time);
+		SDL_Delay(1);
 	}
 	return 0;
 }

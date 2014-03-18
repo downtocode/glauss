@@ -17,7 +17,6 @@
 /*	Default settings.	*/
 unsigned int obj = 0;
 long double elcharge = 0, gconst = 0, epsno = 0;
-bool quiet = 0;
 
 
 //glfun global vars
@@ -26,7 +25,7 @@ GLuint programText;
 GLint textattr_tex;
 
 
-GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.80;
+GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.35;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 
 int main(int argc, char *argv[])
@@ -59,9 +58,6 @@ int main(int argc, char *argv[])
 				if(!strcmp( "--novid", argv[i])) {
 					option->novid = 1;
 				}
-				if(!strcmp( "--quiet", argv[i])) {
-					quiet = 1;
-				}
 				if(!strcmp( "-f", argv[i] ) ) {
 					strcpy( option->filename, argv[i+1]);
 				}
@@ -90,7 +86,6 @@ int main(int argc, char *argv[])
 					printf("	--fullogl 		Initialize full OpenGL instead of ES.\n");
 					printf("	--threads (int)		Make the program run with this many threads.\n"); 
 					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
-					printf("	--quiet 		Disable any terminal output except errors.\n"); 
 					printf("	--help  		What you're reading.\n");
 					return 0;
 				}
@@ -104,7 +99,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Error: no objects!\n");
 			return 1;
 		} else sprintf(osdobj, "Objects = %i", obj);
-		if(dumplevel && !quiet) printf("Outputting XYZ file every second.\n");
+		if(dumplevel) printf("Outputting XYZ file every second.\n");
 		if(dumplevel == 2) fprintf(stderr, "Printing XYZ file every frame!\n");
 	/*	Error handling.	*/
 	
@@ -142,9 +137,7 @@ int main(int argc, char *argv[])
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glClearColor(0.16, 0.16, 0.16, 1);
-			if(quiet == 0) {
-				printf("OpenGL Version %s\n", glGetString(GL_VERSION));
-			}
+			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
@@ -165,12 +158,10 @@ int main(int argc, char *argv[])
 	
 	/*	Physics.	*/
 		data* object;
-		if(quiet == 0) {
-			printf("Objects: %i\n", obj);
-			printf("Settings: dt=%f\n", option->dt);
-			printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
-			, elcharge, gconst, epsno);
-		}
+		printf("Objects: %i\n", obj);
+		printf("Settings: dt=%f\n", option->dt);
+		printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
+				, elcharge, gconst, epsno);
 		/*	Mallocs and wipes	*/
 		initphys(&object);
 		parser(&object, option->filename);
@@ -241,6 +232,8 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_r) {
 						view_roty = view_rotx = view_rotz = 0.0;
 						scalefactor = 1.0;
+						//threadcontrol(9);
+						//threadcontrol(8);
 					}
 					if(event.key.keysym.sym==SDLK_z) {
 						if(dumped == 0) {
@@ -361,6 +354,6 @@ int main(int argc, char *argv[])
 		SDL_Quit();
 		free(option);
 		free(object);
-		if(!quiet) printf("Quitting!\n");
+		printf("Quitting!\n");
 		return 0;
 }

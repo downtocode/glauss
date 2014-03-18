@@ -9,10 +9,10 @@ typedef float v4sf __attribute__ ((vector_size (16)));
 
 typedef struct {
 	unsigned int index;
-	v4sf pos, vel, acc, Ftot;
+	v4sf pos, vel, acc;
 	long double mass, charge;
 	float radius, *linkwith;
-	char ignore;
+	char ignore, atom;
 	bool center;
 } data;
 
