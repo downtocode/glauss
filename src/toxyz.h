@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_R_INCLUDED
-#define FUNCTIONS_R_INCLUDED
+#ifndef PHYSENGINE_OUTPUT
+#define PHYSENGINE_OUTPUT
 
 int toxyz(int populated, data *object);
 

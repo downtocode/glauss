@@ -1,4 +1,21 @@
-#col1 - id, col2,3,4 - pos, col5,6,7 - vel, col8 - mass, col9 - charge, col10 - radius, col11 - ignore, col12(links) - "id-lenght,id-lenght,..."
-#Format: %i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"
-1 1 0 0 0 0 0 1.4 400 0.1 0 "0"
-#!xyz benzene
+#Physengine v0.1 input simulation data. Modify to change system. Format to follow is below.
+#Pos[3], Vel[3], Mass, Charge, Radius, Ign., Links - "id-lenght,id-lenght,..."
+#Format: %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"
+#Use "#""!"(data format) (molecule name inside the resource folder) to insert molecules.
+#Molecules must be inserted after the very last object.
+#0.01 0.01 0 0 0 0 1.4 100 0.05 0 "0"
+#0.01 -0.01 0 0 0 0 1.4 100 0.05 0 "0"
+#-0.01 -0.01 0 0 0 0 1.4 100 0.05 0 "0"
+#-0.01 0.01 0 0 0 0 1.4 100 0.05 0 "0"
+#0.02 0.02 0 0 0 0 1.4 100 0.05 0 "0"
+#0.02 -0.02 0 0 0 0 1.4 100 0.05 0 "0"
+#-0.02 -0.02 0 0 0 0 1.4 100 0.05 0 "0"
+#-0.02 0.02 0 0 0 0 1.4 100 0.05 0 "0"
+#!xyz benzene -10 0 0 0.1 0 0
+#!xyz benzene 10 0 0 -0.1 0 0
+#!xyz benzene 0 10 0 0 -0.1 0
+#!xyz benzene 0 -10 0 0 0.1 0
+#!xyz benzene -19 -10 0 0.1 0.1 0
+#!xyz benzene 19 -10 0 -0.1 0.1 0
+#!xyz benzene 19 10 0 -0.1 -0.1 0
+#!xyz benzene -19 10 0 0.1 -0.1 0

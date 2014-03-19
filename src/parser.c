@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "options.h"
 #include "molreader.h"
+#include "msg_phys.h"
 
 /*	Global variables	*/
 unsigned int obj, chosen, dumplevel;
@@ -78,6 +79,10 @@ int preparser()
 			if(strcmp(word, "sizerand") == 0) {
 				sizerand = value;
 			}
+			if(strcmp(word, "verbosity") == 0) {
+				/*	6-Default value	*/
+				if(option->verbosity == 6) option->verbosity = (unsigned int)value;
+			}
 			if(strcmp(word, "posdata") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
 			}
@@ -120,7 +125,7 @@ int preparser()
 			if(strstr(str, "#") == NULL) {
 				count += 1;
 				if(endfile) {
-					printf("ERROR in posdata file! Molecules must be listed last!\n");
+					fprintf(stderr, "ERROR in posdata file! Molecules must be listed last!\n");
 					exit(1);
 				}
 			}
@@ -131,10 +136,10 @@ int preparser()
 				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
 				if(access(molfile, F_OK) == 0) {
 					int atoms = probefile(molfile);
-					printf("File \"%s\" has %i atoms\n", molfile, atoms);
+					pprint(9, "File \"%s\" has %i atoms\n", molfile, atoms);
 					count += atoms;
 				} else {
-					printf("File \"%s\" not found!\n", molfile);
+					fprintf(stderr, "File \"%s\" not found!\n", molfile);
 					exit(1);
 				}
 				/*	Because of the way the parser below works molfiles NEED to be last in posdata.	*/
@@ -149,7 +154,7 @@ int preparser()
 
 int parser(data** object, char filename[200])
 {
-	int i = 0, link, atoms;
+	int i = 0, link;
 	char links[200], *linkstr, ignflag;
 	char molfile[200], molname[180], moltype[20];
 	float posx, posy, posz, velx, vely, velz, bond, radius;
@@ -158,23 +163,23 @@ int parser(data** object, char filename[200])
 	FILE *in = fopen ( option->filename, "r" );
 	
 	if(moderandom == 0) {
-		printf("	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
-		while(fgets (str, sizeof(str), in)!= NULL) {
+		pprint(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
+		while(fgets(str, sizeof(str), in)!= NULL) {
 			if(strstr(str, "#") == NULL) {
-				sscanf(str, "%i %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"", &i, &posx, &posy, &posz, &velx, \
+				i++;
+				sscanf(str, "%f %f %f %f %f %f %Lf %Lf %f %c \"%s\"", &posx, &posy, &posz, &velx, \
 				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
 				
+				(*object)[i].index = i;
 				(*object)[i].pos = (v4sf){ posx, posy, posz };
 				(*object)[i].vel = (v4sf){ velx, vely, velz };
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
 				(*object)[i].atom = '0';
-				(*object)[i].center = 0;
-				(*object)[i].index = i;
 				(*object)[i].radius = radius;
 				
-				printf("(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
+				pprint(9, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
 				(*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
 				(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
 				
@@ -182,26 +187,19 @@ int parser(data** object, char filename[200])
 					linkstr = strtok(links,",");
 					while(linkstr != NULL) {
 						sscanf(linkstr, "%i-%f", &link, &bond);
-						printf("%i - %f ", link, bond);
+						pprint(9, "%i - %f ", link, bond);
 						(*object)[i].linkwith[link] = bond;
 						linkstr = strtok(NULL,",");
 					}
 					bond = link = 0;
 					memset(links, 0, sizeof(links));
 				}
-				
-				printf(" \n");
-			} if(strstr(str, "#!") != NULL) {
-				sscanf(str, "#!%s %s", moltype, molname);
+				pprint(9, " \n");
+			}
+			if(strstr(str, "#!") != NULL) {
+				sscanf(str, "#!%s %s %f %f %f %f %f %f", moltype, molname, &posx, &posy, &posz, &velx, &vely, &velz);
 				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
-				/*	If we got this far we can trust such a file really exists	*/
-				atoms = probefile(molfile);
-				/*	Better to explicitly say where to write in the array.	*/
-				readmolecule(molfile, *object, i, i+atoms);
-				
-			} else {
-				/*	Wipe string in case last line didn't have a newline char.	*/
-				memset(str, 0, sizeof(str));
+				readmolecule(molfile, *object, (v4sf){ posx, posy, posz }, (v4sf){ velx, vely, velz }, &i);
 			}
 		}
 	} else if (moderandom == 1) {
@@ -214,7 +212,6 @@ int parser(data** object, char filename[200])
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
 			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;
 			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
-			(*object)[i].center = 0;
 			(*object)[i].ignore = '0';
 		}
 	}

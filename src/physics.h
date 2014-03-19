@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef PHYSENGINE_PHYS
+#define PHYSENGINE_PHYS
 
 #include <stdbool.h>
 #include <time.h>
@@ -13,7 +13,6 @@ typedef struct {
 	long double mass, charge;
 	float radius, *linkwith;
 	char ignore, atom;
-	bool center;
 } data;
 
 struct thread_settings {

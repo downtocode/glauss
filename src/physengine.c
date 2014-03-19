@@ -1,5 +1,6 @@
 /*	Standard header files	*/
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <tgmath.h>
 #include <sys/time.h>
@@ -13,6 +14,7 @@
 #include "glfun.h"
 #include "toxyz.h"
 #include "options.h"
+#include "msg_phys.h"
 
 /*	Default settings.	*/
 unsigned int obj = 0;
@@ -25,7 +27,7 @@ GLuint programText;
 GLint textattr_tex;
 
 
-GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.35;
+GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.09;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 
 int main(int argc, char *argv[])
@@ -36,7 +38,7 @@ int main(int argc, char *argv[])
 		 *option = (struct option_struct){
 			.width = 1200, .height = 600,
 			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
-			.dt = 0.008, .vsync = 1,
+			.dt = 0.008, .vsync = 1, .verbosity = 5,
 		};
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 		strcpy(option->filename,"posdata.dat");
@@ -77,6 +79,9 @@ int main(int argc, char *argv[])
 				if(!strcmp("--dumplevel", argv[i])) {
 					sscanf(argv[i+1], "%u", &dumplevel);
 				}
+				if(!strcmp("--verb", argv[i])) {
+					sscanf(argv[i+1], "%hu", &option->verbosity);
+				}
 				if( !strcmp("--help", argv[i])) {
 					printf("%s\n", revision);
 					printf("Usage:\n");
@@ -84,7 +89,8 @@ int main(int argc, char *argv[])
 					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
 					printf("	--nosync 		Disables vsync.\n");
 					printf("	--fullogl 		Initialize full OpenGL instead of ES.\n");
-					printf("	--threads (int)		Make the program run with this many threads.\n"); 
+					printf("	--threads (int)		Make the program run with this many threads.\n");
+					printf("	--verb (uint)		Set how much to output to stdout. Def. 5\n"); 
 					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
 					printf("	--help  		What you're reading.\n");
 					return 0;
@@ -136,8 +142,8 @@ int main(int argc, char *argv[])
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glClearColor(0.16, 0.16, 0.16, 1);
-			printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+			glClearColor(0.12, 0.12, 0.12, 1);
+			pprint(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
@@ -159,8 +165,8 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 		data* object;
 		printf("Objects: %i\n", obj);
-		printf("Settings: dt=%f\n", option->dt);
-		printf("Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
+		pprint(5, "Settings: dt=%f\n", option->dt);
+		pprint(5, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
 				, elcharge, gconst, epsno);
 		/*	Mallocs and wipes	*/
 		initphys(&object);
@@ -198,8 +204,9 @@ int main(int argc, char *argv[])
 					}
 					break;
 				case SDL_MOUSEWHEEL:
-					scalefactor += (float)event.wheel.y/10;
-					if(scalefactor < 0.11) scalefactor = 0.11;
+					if(event.wheel.y == 1) scalefactor *= 1.11;
+					if(event.wheel.y == -1) scalefactor /= 1.11;
+					if(scalefactor < 0.005) scalefactor = 0.005;
 					break;
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
@@ -270,6 +277,10 @@ int main(int argc, char *argv[])
 			if(dumplevel == 1) toxyz(obj, object);
 			
 			long totaltime = 0, threadtime[option->avail_cores];
+			
+			struct timespec maintime;
+			clock_gettime(CLOCK_THREAD_CPUTIME_ID, &maintime);
+			totaltime = maintime.tv_nsec;
 			
 			if(threadcontrol(2)) {
 				for(int i = 1; i < option->avail_cores + 1; i++) {

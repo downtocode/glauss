@@ -2,7 +2,10 @@
 #include <string.h>
 #include <tgmath.h>
 #include "molreader.h"
+#include "options.h"
+#include "msg_phys.h"
 
+long double elcharge, gconst, epsno;
 
 /* 
  * Universal function to read the amount of objects/atoms in a molecule
@@ -25,11 +28,11 @@ int probefile(char filename[200]) {
 	return 0;
 }
 
-int readmolecule(char filename[200], data *object, int start, int end) {
+int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity, int *i) {
 	char str[500], atom;
 	v4sf dist;
+	int start = *i + 1;
 	float xpos, ypos, zpos, mag;
-	int i = start + 1;
 	FILE *inpars = fopen(filename, "r");
 	
 	fgets(str, sizeof(str), inpars);
@@ -37,45 +40,44 @@ int readmolecule(char filename[200], data *object, int start, int end) {
 	
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
 		if(strstr(str, "#") == NULL) {
+			*i = *i + 1;
 			sscanf(str, "  %c        %f        %f        %f", &atom, &xpos, &ypos, &zpos);
-			
-			object[i].pos = (v4sf){ xpos, ypos, zpos };
-			object[i].vel = (v4sf){ 0, 0, 0 };
-			object[i].mass = 1.0;
-			object[i].charge = 0;
-			object[i].ignore = '0';
-			if(atom == 'H') object[i].charge = 400;
+			object[*i].index = *i;
+			object[*i].pos = (v4sf){ xpos + position[0], ypos + position[1], zpos + position[2] };
+			object[*i].vel = (v4sf){ velocity[0], velocity[1], velocity[2] };
+			object[*i].charge = 0;
+			if(atom == 'H') {
+				object[*i].charge = 2200*elcharge;
+				object[*i].ignore = '0';
+				object[*i].mass = 1.0;
+				object[*i].radius = 0.1;
+			}
 			if(atom == 'C') {
-				object[i].charge = -400;
-				object[i].ignore = '1';
+				object[*i].charge = -200*elcharge;
+				object[*i].ignore = '0';
+				object[*i].mass = 12.0;
+				object[*i].radius = 0.3;
 			}
-			object[i].atom = atom;
-			object[i].center = 0;
-			object[i].index = i;
-			object[i].radius = 0.1;
-			for(int y = start + 1; y < end + 1; y++) {
-				object[i].linkwith[y] = 0;
-			}
-			i++;
+			object[*i].atom = atom;
 		}
 	}
-	for(int i = start +1; i < end+1; i++) {
-		printf("(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
-		object[i].pos[0], object[i].pos[1], object[i].pos[2], object[i].vel[0], object[i].vel[1], \
-		object[i].vel[2], object[i].mass, object[i].charge, object[i].radius, object[i].ignore);
-		for(int y = start +1; y < end+1; y++) {
+	for(int z = start; z < *i + 1; z++) {
+		pprint(9, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
+		object[z].pos[0], object[z].pos[1], object[z].pos[2], object[z].vel[0], object[z].vel[1], \
+		object[z].vel[2], object[z].mass, object[z].charge, object[z].radius, object[z].ignore);
+		for(int y = start; y < *i + 1; y++) {
 			
 			if(atom != '0') {
-				dist = object[y].pos - object[i].pos;
+				dist = object[y].pos - object[z].pos;
 				mag = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2]);
-				if(object[y].atom == 'C' && mag < 1.5) object[i].linkwith[y] = mag-0.03;
+				if(object[y].atom == 'C' && mag < 1.5) object[z].linkwith[y] = mag;
 			}
 			
-			if(object[i].linkwith[y] != 0) {
-				printf("%i - %f, ", i, object[i].linkwith[y]);
+			if(object[z].linkwith[y] != 0) {
+				pprint(9, "%i - %f, ", z, object[z].linkwith[y]);
 			}
 		}
-		printf("\n");
+		pprint(9, "\n");
 	}
 	
 	fclose(inpars);

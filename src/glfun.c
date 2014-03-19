@@ -24,9 +24,9 @@ static float aspect_ratio;
 static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-static GLfloat red[] = {1.0f, 0.0f, 0.0f, 0.2f};
+static GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
 static GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
-static GLfloat blue[] = {0.0f, 0.0f, 1.0f, 0.2f};
+static GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
 
 static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
@@ -174,7 +174,7 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 			{x2 + w, -y2 - h, 1, 1},
 		};
 		
-		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		
 		x += (g->advance.x >> 6) * sx;
@@ -192,7 +192,7 @@ void drawobject(data object)
 	if(object.charge > 0) glUniform4fv(objattr_color, 1, red);
 	if(object.charge < 0) glUniform4fv(objattr_color, 1, blue);
 	
-	int circle_precision = 9;
+	int circle_precision = 12;
 	GLfloat points[circle_precision][3];
 	
 	for(int j = 0; j < circle_precision + 1; j++) {
@@ -241,7 +241,7 @@ void drawlinks(data* object)
 }
 
 void selected_box_text(data object) {
-	float boxsize = 0.13*scalefactor;
+	float boxsize = 0.13*scalefactor*(object.radius*15);
 	GLfloat objpoint[3] = {object.pos[0],object.pos[1],object.pos[2]};
 	
 	transformpoint(objpoint, mat);

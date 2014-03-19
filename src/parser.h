@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_J_INCLUDED
-#define FUNCTIONS_J_INCLUDED
+#ifndef PHYSENGINE_PARS
+#define PHYSENGINE_PARS
 
 int preparser();
 int parser(data** object, char filename[200]);

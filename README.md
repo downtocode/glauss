@@ -43,6 +43,7 @@ Argument | Action
 **--novid** | Disables SDL window creation and any OpenGL functions in the main loop.
 **--fullogl** | Initialize full OpenGL instead of ES. Look in simconf.conf to change versions.
 **--nosync** | Disables vertical synchronization.
+**--verb (uint)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
 **--quiet** | Suppresses all informational messages. Errors are still printed to stderr.
 **--help** | Print possible arguments and exit.
 

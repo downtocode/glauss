@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_P_INCLUDED
-#define FUNCTIONS_P_INCLUDED
+#ifndef PHYSENGINE_GRAPH
+#define PHYSENGINE_GRAPH
 
 #include <GLES2/gl2.h>
 #include <ft2build.h>

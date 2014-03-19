@@ -1,9 +1,9 @@
-#ifndef FUNCTIONS_Q_INCLUDED
-#define FUNCTIONS_Q_INCLUDED
+#ifndef PHYSENGINE_INPUT
+#define PHYSENGINE_INPUT
 
 #include "physics.h"
 
 int probefile(char filename[200]);
-int readmolecule(char filename[200], data *object, int start, int end);
+int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity, int *i);
 
 #endif

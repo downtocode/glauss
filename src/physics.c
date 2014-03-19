@@ -3,10 +3,10 @@
 #include <tgmath.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <SDL2/SDL.h>
 #include "physics.h"
 #include "options.h"
-
-#include <SDL2/SDL.h>
+#include "msg_phys.h"
 
 /*	Default threads to use when system != linux.	*/
 #define failsafe_cores 2
@@ -49,7 +49,7 @@ int initphys(data** object)
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
 	
-	printf("Allocated %lu bytes to object array.\n", \
+	pprint(8, "Allocated %lu bytes to object array.\n", \
 	((obj+1)*sizeof(**object)+(obj+1)*sizeof(float)));
 	
 	pi = acos(-1);
@@ -87,11 +87,14 @@ int initphys(data** object)
 	pthread_attr_init(&thread_attribs);
 	pthread_attr_setinheritsched(&thread_attribs, PTHREAD_INHERIT_SCHED);
 	/*	SCHED_RR - Round Robin, SCHED_FIFO - FIFO	*/
-	pthread_attr_setschedpolicy(&thread_attribs, SCHED_FIFO);
+	pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
 	pthread_attr_setschedparam(&thread_attribs, &parameters);
 	
 	
-	/*	Split objects equally between cores	*/
+	/*
+	 * Split objects equally between cores
+	 * You can deliberatly load one core more by deducting a few objects in totcore.
+	 */
 	int totcore = (int)((float)obj/avail_cores);
 	for(int k = 1; k < avail_cores + 1; k++) {
 		thread_opts[k].threadid = k;
@@ -102,7 +105,7 @@ int initphys(data** object)
 			thread_opts[k].looplimit2 += obj - thread_opts[k].looplimit2;
 		}
 		if(thread_opts[k].looplimit2 != 0)
-			printf("Thread %i's objects = [%u,%u]\n", \
+			pprint(5, "Thread %i's objects = [%u,%u]\n", \
 			k, thread_opts[k].looplimit1, thread_opts[k].looplimit2);
 	}
 	option->avail_cores = avail_cores;
@@ -150,15 +153,15 @@ void *resolveforces(void *arg) {
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
 			if(objalt[i].ignore != '0') continue;
-				if(objalt[i].pos[0] - objalt[i].radius < -50 || objalt[i].pos[0] + objalt[i].radius > 50) {
+				if(objalt[i].pos[0] - objalt[i].radius < -20 || objalt[i].pos[0] + objalt[i].radius > 20) {
 					objalt[i].vel[0] = -objalt[i].vel[0];
 				}
 				
-				if(objalt[i].pos[1] - objalt[i].radius < -50 || objalt[i].pos[1] + objalt[i].radius > 50) {
+				if(objalt[i].pos[1] - objalt[i].radius < -20 || objalt[i].pos[1] + objalt[i].radius > 20) {
 					objalt[i].vel[1] = -objalt[i].vel[1];
 				}
 				
-				if(objalt[i].pos[2] - objalt[i].radius < -50 || objalt[i].pos[2] + objalt[i].radius > 50) {
+				if(objalt[i].pos[2] - objalt[i].radius < -20 || objalt[i].pos[2] + objalt[i].radius > 20) {
 					objalt[i].vel[2] = -objalt[i].vel[2];
 				}
 			objalt[i].pos += (objalt[i].vel*(v4sf){dt,dt,dt}) + (objalt[i].acc)*(v4sf){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
@@ -175,8 +178,8 @@ void *resolveforces(void *arg) {
 				mag = lenght(vecnorm);
 				vecnorm /= (v4sf){mag, mag, mag};
 				
-				grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
-				//elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
+				//grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
+				elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
 				//fljmag = (24/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
 				
 				//grv += vecnorm*(v4sf){grvmag,grvmag,grvmag};
@@ -184,18 +187,19 @@ void *resolveforces(void *arg) {
 				//flj += vecnorm*(v4sf){fljmag,fljmag,fljmag};
 				
 				if( objalt[i].linkwith[j] != 0 ) {
-					springmag = (spring)*(mag - objalt[i].linkwith[j])*0.1;
+					if(mag > 3*objalt[i].linkwith[j]) objalt[i].linkwith[j] = 0;
+					springmag = (spring)*(mag - objalt[i].linkwith[j]);
 					link += vecnorm*(v4sf){springmag, springmag, springmag};
 				}
 			}
-			Ftot += ele + link;
+			Ftot += ele + link + flj;
 			accprev = objalt[i].acc;
 			objalt[i].acc = (Ftot)/(v4sf){objalt[i].mass,objalt[i].mass,objalt[i].mass};
 			objalt[i].vel += (objalt[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
 			Ftot = ele = grv = flj = link = (v4sf){0,0,0,0};
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread->time);
-		SDL_Delay(1);
+		//SDL_Delay(option->sleepfor);
 	}
 	return 0;
 }
