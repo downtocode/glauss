@@ -25,6 +25,7 @@ long double gconst, epsno, elcharge;
 pthread_t *threads;
 pthread_attr_t thread_attribs;
 pthread_mutex_t movestop;
+pthread_barrier_t barrier;
 struct sched_param parameters;
 static bool running, quit;
 
@@ -123,23 +124,26 @@ int threadcontrol(int status)
 	} else if(status == 0 && running == 1) {
 		dt = option->dt;
 		running = 0;
+		pthread_mutex_lock(&movestop);
 	} else if(status == 2) {
 		return running;
 	} else if(status == 8) {
 		pthread_mutex_init(&movestop, NULL);
+		pthread_barrier_init(&barrier, NULL, avail_cores);
+		running = 1;
 		for(int k = 1; k < avail_cores + 1; k++) {
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
 		}
-		running = 1;
 	} else if(status == 9) {
-		running = 1;
-		pthread_mutex_unlock(&movestop);
 		quit = 1;
-		pthread_mutex_unlock(&movestop);
-		for(int k = 1; k < avail_cores + 1; k++) {
-			pthread_join(threads[k], NULL);
-		}
+		//threadcontrol(1);
+		//SDL_Delay(100);
+		//pthread_mutex_unlock(&movestop);
+		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);
+		for(int k = 1; k < avail_cores + 1; k++) {
+			//pthread_join(threads[k], NULL);
+		}
 	}
 	return 0;
 }
@@ -153,15 +157,15 @@ void *resolveforces(void *arg) {
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
 			if(objalt[i].ignore != '0') continue;
-				if(objalt[i].pos[0] - objalt[i].radius < -20 || objalt[i].pos[0] + objalt[i].radius > 20) {
+				if(objalt[i].pos[0] - objalt[i].radius < -50 || objalt[i].pos[0] + objalt[i].radius > 50) {
 					objalt[i].vel[0] = -objalt[i].vel[0];
 				}
 				
-				if(objalt[i].pos[1] - objalt[i].radius < -20 || objalt[i].pos[1] + objalt[i].radius > 20) {
+				if(objalt[i].pos[1] - objalt[i].radius < -50 || objalt[i].pos[1] + objalt[i].radius > 50) {
 					objalt[i].vel[1] = -objalt[i].vel[1];
 				}
 				
-				if(objalt[i].pos[2] - objalt[i].radius < -20 || objalt[i].pos[2] + objalt[i].radius > 20) {
+				if(objalt[i].pos[2] - objalt[i].radius < -50 || objalt[i].pos[2] + objalt[i].radius > 50) {
 					objalt[i].vel[2] = -objalt[i].vel[2];
 				}
 			objalt[i].pos += (objalt[i].vel*(v4sf){dt,dt,dt}) + (objalt[i].acc)*(v4sf){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
@@ -170,8 +174,11 @@ void *resolveforces(void *arg) {
 		pthread_mutex_lock(&movestop);
 		if(running) pthread_mutex_unlock(&movestop);
 		
+		pthread_barrier_wait(&barrier);
+		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread->time);
+		SDL_Delay(option->sleepfor);
+		
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
-			if(objalt[i].ignore != '0') continue;
 			for(int j = 1; j < obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = objalt[j].pos - objalt[i].pos;
@@ -196,10 +203,8 @@ void *resolveforces(void *arg) {
 			accprev = objalt[i].acc;
 			objalt[i].acc = (Ftot)/(v4sf){objalt[i].mass,objalt[i].mass,objalt[i].mass};
 			objalt[i].vel += (objalt[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
-			Ftot = ele = grv = flj = link = (v4sf){0,0,0,0};
+			Ftot = ele = grv = flj = link = (v4sf){0,0,0};
 		}
-		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread->time);
-		//SDL_Delay(option->sleepfor);
 	}
 	return 0;
 }

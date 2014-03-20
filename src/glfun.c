@@ -217,7 +217,32 @@ void drawlinks(data* object)
 {
 	GLfloat link[2*obj][3];
 	unsigned int linkcount = 0;
-	for(int i = 1; i < obj + 1; i++) {
+	int i;
+	for(i = 1; i < obj - 500; i++) {
+		for(int j = 1; j < obj + 1; j++) {
+			if( j==i || j > i ) continue;
+			if( object[i].linkwith[j] != 0 ) {
+				link[linkcount][0] = object[i].pos[0];
+				link[linkcount][1] = object[i].pos[1];
+				link[linkcount][2] = object[i].pos[2];
+				linkcount++;
+				link[linkcount][0] = object[j].pos[0];
+				link[linkcount][1] = object[j].pos[1];
+				link[linkcount][2] = object[j].pos[2];
+				linkcount++;
+			}
+		}
+	}
+	
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(objattr_pos);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(link), link, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_LINES, 0, linkcount);
+	glDisableVertexAttribArray(objattr_pos);
+	
+	
+	linkcount = 0;
+	for(i = i; i < obj + 1; i++) {
 		for(int j = 1; j < obj + 1; j++) {
 			if( j==i || j > i ) continue;
 			if( object[i].linkwith[j] != 0 ) {

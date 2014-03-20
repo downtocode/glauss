@@ -1,4 +1,4 @@
 src/*.o
 physengine
-*.xyz
-*.log
+./*.xyz
+./*.log

@@ -41,7 +41,7 @@ int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity,
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
 		if(strstr(str, "#") == NULL) {
 			*i = *i + 1;
-			sscanf(str, "  %c        %f        %f        %f", &atom, &xpos, &ypos, &zpos);
+			sscanf(str, " %c  %f         %f         %f", &atom, &xpos, &ypos, &zpos);
 			object[*i].index = *i;
 			object[*i].pos = (v4sf){ xpos + position[0], ypos + position[1], zpos + position[2] };
 			object[*i].vel = (v4sf){ velocity[0], velocity[1], velocity[2] };
@@ -66,11 +66,10 @@ int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity,
 		object[z].pos[0], object[z].pos[1], object[z].pos[2], object[z].vel[0], object[z].vel[1], \
 		object[z].vel[2], object[z].mass, object[z].charge, object[z].radius, object[z].ignore);
 		for(int y = start; y < *i + 1; y++) {
-			
 			if(atom != '0') {
 				dist = object[y].pos - object[z].pos;
 				mag = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2]);
-				if(object[y].atom == 'C' && mag < 1.5) object[z].linkwith[y] = mag;
+				if(object[y].atom == 'C' && mag < 1.45) object[z].linkwith[y] = mag;
 			}
 			
 			if(object[z].linkwith[y] != 0) {
