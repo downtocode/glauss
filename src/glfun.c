@@ -9,7 +9,7 @@
 
 //Object shader global vars
 GLuint programObj;
-GLint u_matrix;
+static GLint trn_matrix, rot_matrix, scl_matrix;
 GLint objattr_pos, objattr_color;
 
 //Text shader global vars
@@ -17,11 +17,12 @@ GLuint programText;
 GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 GLfloat view_rotx, view_roty, view_rotz, scalefactor;
+GLfloat tr_x, tr_y, tr_z;
 
 unsigned int obj;
 
 static float aspect_ratio;
-static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale;
+static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale, *transl;
 static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -59,6 +60,17 @@ static void make_y_rot_matrix(GLfloat angle, GLfloat *m)
 	m[2] = -s;
 	m[8] = s;
 	m[10] = c;
+}
+
+static void make_translation_matrix(GLfloat xpos, GLfloat ypos, GLfloat zpos, GLfloat *m)
+{
+	m[0] = 1;
+	m[3] = xpos;
+	m[5] = 1;
+	m[7] = ypos;
+	m[10] = 1;
+	m[11] = zpos;
+	m[15] = 1;
 }
 
 static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
@@ -108,14 +120,19 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 void adjust_rot(void)
 {
 	/* Set modelview/projection matrix */
+	make_translation_matrix(tr_x, tr_y, tr_z, transl);
+	glUniformMatrix4fv(trn_matrix, 1, GL_FALSE, transl);
+	
+	make_scale_matrix(aspect_ratio*scalefactor, scalefactor, scalefactor, scale);
+	glUniformMatrix4fv(scl_matrix, 1, GL_FALSE, scale);
+	
 	make_x_rot_matrix(view_rotx, rotx);
 	make_y_rot_matrix(view_roty, roty);
 	make_z_rot_matrix(view_rotz, rotz);
-	make_scale_matrix(aspect_ratio*scalefactor, scalefactor, scalefactor, scale);
 	mul_matrix(mat, roty, rotx);
 	mul_matrix(rotation, mat, rotz);
 	mul_matrix(mat, rotation, scale);
-	glUniformMatrix4fv(u_matrix, 1, GL_FALSE, mat);
+	glUniformMatrix4fv(rot_matrix, 1, GL_FALSE, rotation);
 }
 
 void drawaxis() {
@@ -218,7 +235,7 @@ void drawlinks(data* object)
 	GLfloat link[2*obj][3];
 	unsigned int linkcount = 0;
 	int i;
-	for(i = 1; i < obj - 500; i++) {
+	for(i = 1; i < obj/2; i++) {
 		for(int j = 1; j < obj + 1; j++) {
 			if( j==i || j > i ) continue;
 			if( object[i].linkwith[j] != 0 ) {
@@ -238,11 +255,10 @@ void drawlinks(data* object)
 	glEnableVertexAttribArray(objattr_pos);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(link), link, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_LINES, 0, linkcount);
-	glDisableVertexAttribArray(objattr_pos);
 	
 	
 	linkcount = 0;
-	for(i = i; i < obj + 1; i++) {
+	for(i = obj/2; i < obj + 1; i++) {
 		for(int j = 1; j < obj + 1; j++) {
 			if( j==i || j > i ) continue;
 			if( object[i].linkwith[j] != 0 ) {
@@ -382,7 +398,9 @@ void create_shaders(void)
 	glBindAttribLocation(programObj, objattr_pos, "pos");
 	glBindAttribLocation(programObj, objattr_color, "objcolor");
 	glLinkProgram(programObj);
-	u_matrix = glGetUniformLocation(programObj, "modelviewProjection");
+	trn_matrix = glGetUniformLocation(programObj, "translMat");
+	rot_matrix = glGetUniformLocation(programObj, "rotationMat");
+	scl_matrix = glGetUniformLocation(programObj, "scalingMat");
 	objattr_color = glGetUniformLocation(programObj, "objcolor");
 	
 	glBindAttribLocation(programText, textattr_coord, "coord");
@@ -399,4 +417,5 @@ void create_shaders(void)
 	rotz = calloc(16, sizeof(GLfloat));
 	rotation = calloc(16, sizeof(GLfloat));
 	scale = calloc(16, sizeof(GLfloat));
+	transl = calloc(16, sizeof(GLfloat));
 }

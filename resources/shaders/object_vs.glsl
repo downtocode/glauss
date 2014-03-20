@@ -2,9 +2,11 @@
 
 precision highp float;
 
-uniform mat4 modelviewProjection;
+uniform mat4 translMat;
+uniform mat4 rotationMat;
+uniform mat4 scalingMat;
 attribute vec4 pos;
 
 void main() {
-	gl_Position = pos*modelviewProjection;
+	gl_Position = pos*translMat*rotationMat*scalingMat;
 }

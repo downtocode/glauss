@@ -28,6 +28,7 @@ GLint textattr_tex;
 
 
 GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.09;
+GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
 
 int main(int argc, char *argv[])
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
 		float deltatime, totaltime = 0.0f, fps = 0;
 		unsigned int frames = 0, chosen = 0, dumplevel = 0;
 		char osdfps[500] = "FPS = n/a", osdobj[500] = "Objects = n/a";
-		bool flicked = 0, dumped = 0;
+		bool flicked = 0, translate = 0, dumped = 0;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -187,17 +188,17 @@ int main(int argc, char *argv[])
 					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						flicked = 1;
-						SDL_ShowCursor(0);
-						SDL_GetMouseState(&initmousex, &initmousey);
-						SDL_SetRelativeMouseMode(1);
-						SDL_GetRelativeMouseState(NULL, NULL);
-					}
+					if(event.button.button == SDL_BUTTON_LEFT) flicked = 1;
+					if(event.button.button == SDL_BUTTON_MIDDLE) translate = 1;
+					SDL_ShowCursor(0);
+					SDL_GetMouseState(&initmousex, &initmousey);
+					SDL_SetRelativeMouseMode(1);
+					SDL_GetRelativeMouseState(NULL, NULL);
 					break;
 				case SDL_MOUSEBUTTONUP:
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						flicked = 0;
+					if(event.button.button == SDL_BUTTON_LEFT) flicked = 0;
+					if(event.button.button == SDL_BUTTON_MIDDLE) translate = 0;
+					if(!translate && !flicked) {
 						SDL_SetRelativeMouseMode(0);
 						SDL_WarpMouseInWindow(window, initmousex, initmousey);
 						SDL_ShowCursor(1);
@@ -224,23 +225,10 @@ int main(int argc, char *argv[])
 						if(threadcontrol(2)) threadcontrol(0);
 						else threadcontrol(1);
 					}
-					if(event.key.keysym.sym==SDLK_w) {
-						view_rotx += 5.0;
-					}
-					if(event.key.keysym.sym==SDLK_s) {
-						view_rotx -= 5.0;
-					}
-					if(event.key.keysym.sym==SDLK_a) {
-						view_roty += 5.0;
-					}
-					if(event.key.keysym.sym==SDLK_d) {
-						view_roty -= 5.0;
-					}
 					if(event.key.keysym.sym==SDLK_r) {
 						view_roty = view_rotx = view_rotz = 0.0;
-						scalefactor = 1.0;
-						//threadcontrol(9);
-						//threadcontrol(8);
+						tr_x = tr_y = tr_z = 0.0;
+						scalefactor = 0.1;
 					}
 					if(event.key.keysym.sym==SDLK_z) {
 						if(dumped == 0) {
@@ -302,10 +290,22 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		
-		if(flicked) {
+		if(!translate) {
+			tr_x = -object[1].pos[0];
+			tr_y = object[1].pos[1];
+			tr_z = -object[1].pos[2];
+		}
+		
+		if(flicked || translate) {
 			SDL_GetRelativeMouseState(&mousex, &mousey);
-			view_roty += (float)mousex/4;
-			view_rotx += (float)mousey/4;
+			if(flicked) {
+				view_roty += (float)mousex/4;
+				view_rotx += (float)mousey/4;
+			}
+			if(translate) {
+				tr_x += -(float)mousex/100;
+				tr_y += (float)mousey/100;
+			}
 		}
 		
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);

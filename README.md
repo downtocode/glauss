@@ -27,6 +27,7 @@ Controls
 Button | Action
 -------|-------
 **LMB**      | Drag to rotate camera.
+**MMB**      | Drag to translate camera.
 **[ and ]**  | Increase/decrease time constant.
 **1 and 2**  | Select previous/next object.
 **r**        | Reset view.
