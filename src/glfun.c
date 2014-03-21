@@ -121,28 +121,27 @@ void adjust_rot(void)
 {
 	/* Set modelview/projection matrix */
 	make_translation_matrix(tr_x, tr_y, tr_z, transl);
-	glUniformMatrix4fv(trn_matrix, 1, GL_FALSE, transl);
 	
 	make_scale_matrix(aspect_ratio*scalefactor, scalefactor, scalefactor, scale);
-	glUniformMatrix4fv(scl_matrix, 1, GL_FALSE, scale);
 	
 	make_x_rot_matrix(view_rotx, rotx);
 	make_y_rot_matrix(view_roty, roty);
 	make_z_rot_matrix(view_rotz, rotz);
 	mul_matrix(mat, roty, rotx);
 	mul_matrix(rotation, mat, rotz);
-	mul_matrix(mat, rotation, scale);
+	glUniformMatrix4fv(trn_matrix, 1, GL_FALSE, transl);
+	glUniformMatrix4fv(scl_matrix, 1, GL_FALSE, scale);
 	glUniformMatrix4fv(rot_matrix, 1, GL_FALSE, rotation);
 }
 
 void drawaxis() {
 	GLfloat axis[6][3] = {
 			{0,0,0},
-			{0.17*(1/scalefactor),0,0},
+			{0.1,0,0},
 			{0,0,0},
-			{0,0.17*(1/scalefactor),0},
+			{0,0.1,0},
 			{0,0,0},
-			{0,0,0.17*(1/scalefactor)},
+			{0,0,0.1},
 	};
 	
 	transformpoint(axis[1],rotation);
@@ -283,7 +282,7 @@ void drawlinks(data* object)
 
 void selected_box_text(data object) {
 	float boxsize = 0.13*scalefactor*(object.radius*15);
-	GLfloat objpoint[3] = {object.pos[0],object.pos[1],object.pos[2]};
+	GLfloat objpoint[3] = {0,0,0};
 	
 	transformpoint(objpoint, mat);
 	

@@ -189,7 +189,10 @@ int main(int argc, char *argv[])
 					break;
 				case SDL_MOUSEBUTTONDOWN:
 					if(event.button.button == SDL_BUTTON_LEFT) flicked = 1;
-					if(event.button.button == SDL_BUTTON_MIDDLE) translate = 1;
+					if(event.button.button == SDL_BUTTON_MIDDLE) {
+						chosen = 0;
+						translate = 1;
+					}
 					SDL_ShowCursor(0);
 					SDL_GetMouseState(&initmousex, &initmousey);
 					SDL_SetRelativeMouseMode(1);
@@ -288,14 +291,7 @@ int main(int argc, char *argv[])
 		if(option->novid) {
 			SDL_Delay(100);
 			continue;
-		}
-		
-		if(!translate) {
-			tr_x = -object[1].pos[0];
-			tr_y = object[1].pos[1];
-			tr_z = -object[1].pos[2];
-		}
-		
+		}		
 		if(flicked || translate) {
 			SDL_GetRelativeMouseState(&mousex, &mousey);
 			if(flicked) {
@@ -335,7 +331,12 @@ int main(int argc, char *argv[])
 		
 		/*	Selected object's red box	*/
 		glBindBuffer(GL_ARRAY_BUFFER, linevbo);
-		if(chosen != 0) selected_box_text(object[chosen]);
+		if(chosen != 0) {
+			selected_box_text(object[chosen]);
+			tr_x = -object[chosen].pos[0];
+			tr_y = -object[chosen].pos[1];
+			tr_z = -object[chosen].pos[2];
+		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Selected object's red box	*/
 		
