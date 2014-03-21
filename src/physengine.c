@@ -309,17 +309,17 @@ int main(int argc, char *argv[])
 		glUseProgram(programObj);
 		adjust_rot();
 		
-		/*	Point/object drawing	*/
-		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
-		for(int i = 1; i < obj + 1; i++) drawobject(object[i]);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Point/object drawing	*/
-		
 		/*	Link drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, linkvbo);
 		drawlinks(object);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Link drawing	*/
+		
+		/*	Point/object drawing	*/
+		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
+		for(int i = 1; i < obj + 1; i++) drawobject(object[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		/*	Point/object drawing	*/
 		
 		glUseProgram(programText);
 		
