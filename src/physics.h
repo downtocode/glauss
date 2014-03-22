@@ -17,8 +17,7 @@ typedef struct {
 struct thread_settings {
 	unsigned int looplimit1, looplimit2, threadid;
 	unsigned long long processed;
-	struct timespec time;
-	char timepercent[50];
+	clockid_t clockid;
 };
 
 struct thread_settings *thread_opts;

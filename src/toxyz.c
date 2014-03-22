@@ -4,17 +4,14 @@
 #include "physics.h"
 #include "toxyz.h"
 
-char extension[20] = "xyz", file[80] = "config", filetodump[120];
-static int dumpcount = 0;
+char extension[] = "xyz", file[] = "config", filetodump[120];
 
-
-int toxyz(int obj, data *object) {
-	dumpcount++;
-	sprintf(filetodump, "%s_%05i.%s", file, dumpcount, extension);
+int toxyz(int obj, data *object, float timestep) {
+	sprintf(filetodump, "%s_%0.2f.%s", file, timestep, extension);
 	FILE *out = fopen ( filetodump, "w" );
 	fprintf(stderr, "Created %s\n", filetodump);
 	fprintf(out, "%i\n", obj);
-	fprintf(out, "#Current dump = %i\n", dumpcount);
+	fprintf(out, "#Current dump = %0.2f\n", timestep);
 	for(int i = 1; i < obj + 1; i++) {
 		fprintf(out, "%c %f %f %f\n", object[i].atom, object[i].pos[0], object[i].pos[1], object[i].pos[2]);
 	}

@@ -49,10 +49,12 @@ int main(int argc, char *argv[])
 		SDL_Event event;
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
-		float deltatime, totaltime = 0.0f, fps = 0;
+		struct timespec ts;
+		float deltatime, totaltime = 0.0f, fps = 0, timestep;
 		unsigned int frames = 0, chosen = 0, dumplevel = 0;
-		char osdfps[500] = "FPS = n/a", osdobj[500] = "Objects = n/a";
-		bool flicked = 0, translate = 0, dumped = 0;
+		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
+		char osdtime[100] = "Timestep = 0.0";
+		bool flicked = 0, translate = 0;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -171,6 +173,7 @@ int main(int argc, char *argv[])
 				, elcharge, gconst, epsno);
 		/*	Mallocs and wipes	*/
 		initphys(&object);
+		char threadtime[option->avail_cores][100];
 		parser(&object, option->filename);
 	/*	Physics.	*/
 	
@@ -234,10 +237,7 @@ int main(int argc, char *argv[])
 						scalefactor = 0.1;
 					}
 					if(event.key.keysym.sym==SDLK_z) {
-						if(dumped == 0) {
-							toxyz(obj, object);
-							dumped = 1;
-						}
+						toxyz(obj, object, timestep);
 					}
 					if(event.key.keysym.sym==SDLK_2) {
 						if(chosen < obj) chosen++;
@@ -251,49 +251,31 @@ int main(int argc, char *argv[])
 					break;
 			}
 		}
+		timestep = thread_opts[1].processed*option->dt;
+		sprintf(osdtime, "Timestep = %0.2f", timestep);
 		
 		gettimeofday(&t2, NULL);
 		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
 		t1 = t2;
 		totaltime += deltatime;
 		frames++;
-		if(dumplevel == 2) toxyz(obj, object);
 		if (totaltime >  1.0f) {
+			if(dumplevel == 1) toxyz(obj, object, timestep);
 			fps = frames/totaltime;
-			if(option->novid == 0) sprintf(osdfps, "FPS = %3.2f", fps);
-			totaltime -= 1.0f;
-			frames = 0;
-			//To prevent excessive dumps.
-			dumped = 0;
-			if(dumplevel == 1) toxyz(obj, object);
+			sprintf(osdfps, "FPS = %3.2f", fps);
+			totaltime = frames = 0;
 			
-			long totaltime = 0, threadtime[option->avail_cores];
+			pprintf(PRI_VERYLOW, "Progressed %0.2f timeunits.\n", timestep);
 			
-			pprintf(8, "Progressed %0.2f timeunits.\n", thread_opts[1].processed*option->dt);
-			
-			struct timespec maintime;
-			clock_gettime(CLOCK_THREAD_CPUTIME_ID, &maintime);
-			totaltime = maintime.tv_nsec;
-			
-			if(threadcontrol(2)) {
-				for(int i = 1; i < option->avail_cores + 1; i++) {
-					threadtime[i] = thread_opts[i].time.tv_nsec;
-					totaltime += threadtime[i];
-				}
-			}
 			for(int i = 1; i < option->avail_cores + 1; i++) {
-				if(!threadcontrol(2)) {
-					sprintf(thread_opts[i].timepercent, "Thread %i: 0.00%%", i);
-					continue;
-				}
-				sprintf(thread_opts[i].timepercent, "Thread %i: %.02f%%", \
-				i, (float)((long double)threadtime[i]/(long double)totaltime)*100);
+				clock_gettime(thread_opts[i].clockid, &ts);
+				sprintf(threadtime[i], "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 			}
 		}
 		if(option->novid) {
 			SDL_Delay(100);
 			continue;
-		}		
+		}
 		if(flicked || translate) {
 			SDL_GetRelativeMouseState(&mousex, &mousey);
 			if(flicked) {
@@ -350,8 +332,9 @@ int main(int argc, char *argv[])
 		if(fps >= 48) fpscolor = 2;
 		render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
 		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, 0);
+		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, 0);
 		for(int i = 1; i < option->avail_cores + 1; i++) {
-			render_text(thread_opts[i].timepercent, 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, 0);
+			render_text(threadtime[i], 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, 0);
 		}
 		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -361,6 +344,7 @@ int main(int argc, char *argv[])
 	}
 	
 	quit:
+		printf("Quitting... ");
 		threadcontrol(9);
 		FT_Done_Face(face);
 		FT_Done_FreeType(library);
@@ -368,6 +352,6 @@ int main(int argc, char *argv[])
 		SDL_Quit();
 		free(option);
 		free(object);
-		printf("Quitting!\n");
+		printf("success!\n");
 		return 0;
 }

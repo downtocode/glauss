@@ -83,8 +83,7 @@ int initphys(data** object)
 	threads = calloc(avail_cores+1, sizeof(pthread_t));
 	thread_opts = calloc(avail_cores+1, sizeof(struct thread_settings));
 	
-	/*	Poorly documented.  IBM's documents use 3, so I figure it's fine.	*/
-	parameters.sched_priority = 3;
+	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
 	pthread_attr_setinheritsched(&thread_attribs, PTHREAD_INHERIT_SCHED);
 	/*	SCHED_RR - Round Robin, SCHED_FIFO - FIFO	*/
@@ -106,7 +105,7 @@ int initphys(data** object)
 			thread_opts[k].looplimit2 += obj - thread_opts[k].looplimit2;
 		}
 		if(thread_opts[k].looplimit2 != 0)
-			pprintf(5, "Thread %i's objects = [%u,%u]\n", \
+			pprintf(PRI_MEDIUM, "Thread %i's objects = [%u,%u]\n", \
 			k, thread_opts[k].looplimit1, thread_opts[k].looplimit2);
 	}
 	option->avail_cores = avail_cores;
@@ -135,22 +134,25 @@ int threadcontrol(int status)
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
 		}
 	} else if(status == 9) {
+		running = 1;
+		pthread_mutex_unlock(&movestop);
 		quit = 1;
-		//pthread_mutex_unlock(&movestop);
+		for(int k = 1; k < avail_cores + 1; k++) {
+			pthread_join(threads[k], NULL);
+		}
 		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);
-		for(int k = 1; k < avail_cores + 1; k++) {
-			//pthread_join(threads[k], NULL);
-		}
+		running = 0;
+		quit = 0;
 	}
 	return 0;
 }
 
 void *resolveforces(void *arg) {
 	struct thread_settings *thread = &thread_opts[(long)arg];
-	thread->processed = 0;
-	v4sd vecnorm, accprev, Ftot = {0,0,0}, grv = {0,0,0}, ele = {0,0,0}, flj = {0,0,0}, link = {0,0,0};
-	long double mag, grvmag, elemag = 0.0, fljmag, springmag;
+	pthread_getcpuclockid(pthread_self(), &thread->clockid);
+	v4sd vecnorm, accprev, Ftot, grv, ele, flj, link;
+	long double mag, grvmag, elemag, fljmag, springmag;
 	
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
@@ -171,11 +173,6 @@ void *resolveforces(void *arg) {
 		
 		pthread_mutex_lock(&movestop);
 		if(running) pthread_mutex_unlock(&movestop);
-		
-		/*	calling gettime everytime is wasting CPU cycles, will transfer to main	*/
-		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread->time);
-		SDL_Delay(option->sleepfor);
-		
 		pthread_barrier_wait(&barrier);
 		
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
@@ -205,7 +202,8 @@ void *resolveforces(void *arg) {
 			objalt[i].vel += (objalt[i].acc + accprev)*(v4sd){((dt)/2),((dt)/2),((dt)/2)};
 			Ftot = ele = grv = flj = link = (v4sd){0,0,0};
 		}
-		thread->processed++;
+		if((long)arg == 1) thread->processed++;
+		SDL_Delay(option->sleepfor);
 		pthread_barrier_wait(&barrier);
 	}
 	return 0;
