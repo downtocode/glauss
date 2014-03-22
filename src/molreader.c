@@ -28,9 +28,9 @@ int probefile(char filename[200]) {
 	return 0;
 }
 
-int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity, int *i) {
+int readmolecule(char filename[200], data *object, v4sd position, v4sd velocity, int *i) {
 	char str[500], atom;
-	v4sf dist;
+	v4sd dist;
 	int start = *i + 1;
 	float xpos, ypos, zpos, mag;
 	FILE *inpars = fopen(filename, "r");
@@ -43,8 +43,8 @@ int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity,
 			*i = *i + 1;
 			sscanf(str, " %c  %f         %f         %f", &atom, &xpos, &ypos, &zpos);
 			object[*i].index = *i;
-			object[*i].pos = (v4sf){ xpos + position[0], ypos + position[1], zpos + position[2] };
-			object[*i].vel = (v4sf){ velocity[0], velocity[1], velocity[2] };
+			object[*i].pos = (v4sd){ xpos + position[0], ypos + position[1], zpos + position[2] };
+			object[*i].vel = (v4sd){ velocity[0], velocity[1], velocity[2] };
 			object[*i].charge = 0;
 			if(atom == 'H') {
 				object[*i].charge = 2200*elcharge;
@@ -62,7 +62,7 @@ int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity,
 		}
 	}
 	for(int z = start; z < *i + 1; z++) {
-		pprint(9, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
+		pprintf(9, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
 		object[z].pos[0], object[z].pos[1], object[z].pos[2], object[z].vel[0], object[z].vel[1], \
 		object[z].vel[2], object[z].mass, object[z].charge, object[z].radius, object[z].ignore);
 		for(int y = start; y < *i + 1; y++) {
@@ -73,10 +73,10 @@ int readmolecule(char filename[200], data *object, v4sf position, v4sf velocity,
 			}
 			
 			if(object[z].linkwith[y] != 0) {
-				pprint(9, "%i - %f, ", z, object[z].linkwith[y]);
+				pprintf(PRI_SPAM, "%i - %f, ", z, object[z].linkwith[y]);
 			}
 		}
-		pprint(9, "\n");
+		pprintf(9, "\n");
 	}
 	
 	fclose(inpars);

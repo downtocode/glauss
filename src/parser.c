@@ -136,7 +136,7 @@ int preparser()
 				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
 				if(access(molfile, F_OK) == 0) {
 					int atoms = probefile(molfile);
-					pprint(9, "File \"%s\" has %i atoms\n", molfile, atoms);
+					pprintf(9, "File \"%s\" has %i atoms\n", molfile, atoms);
 					count += atoms;
 				} else {
 					fprintf(stderr, "File \"%s\" not found!\n", molfile);
@@ -163,7 +163,7 @@ int parser(data** object, char filename[200])
 	FILE *in = fopen ( option->filename, "r" );
 	
 	if(moderandom == 0) {
-		pprint(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
+		pprintf(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
 		while(fgets(str, sizeof(str), in)!= NULL) {
 			if(strstr(str, "#") == NULL) {
 				i++;
@@ -171,15 +171,15 @@ int parser(data** object, char filename[200])
 				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
 				
 				(*object)[i].index = i;
-				(*object)[i].pos = (v4sf){ posx, posy, posz };
-				(*object)[i].vel = (v4sf){ velx, vely, velz };
+				(*object)[i].pos = (v4sd){ posx, posy, posz };
+				(*object)[i].vel = (v4sd){ velx, vely, velz };
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*elcharge;
 				(*object)[i].ignore = ignflag;
 				(*object)[i].atom = '0';
 				(*object)[i].radius = radius;
 				
-				pprint(9, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
+				pprintf(PRI_SPAM, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
 				(*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
 				(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
 				
@@ -187,27 +187,27 @@ int parser(data** object, char filename[200])
 					linkstr = strtok(links,",");
 					while(linkstr != NULL) {
 						sscanf(linkstr, "%i-%f", &link, &bond);
-						pprint(9, "%i - %f ", link, bond);
+						pprintf(PRI_SPAM, "%i - %f ", link, bond);
 						(*object)[i].linkwith[link] = bond;
 						linkstr = strtok(NULL,",");
 					}
 					bond = link = 0;
 					memset(links, 0, sizeof(links));
 				}
-				pprint(9, " \n");
+				pprintf(PRI_SPAM, " \n");
 			}
 			if(strstr(str, "#!") != NULL) {
 				sscanf(str, "#!%s %s %f %f %f %f %f %f", moltype, molname, &posx, &posy, &posz, &velx, &vely, &velz);
 				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
-				readmolecule(molfile, *object, (v4sf){ posx, posy, posz }, (v4sf){ velx, vely, velz }, &i);
+				readmolecule(molfile, *object, (v4sd){ posx, posy, posz }, (v4sd){ velx, vely, velz }, &i);
 			}
 		}
 	} else if (moderandom == 1) {
 		for(i = 1; i < obj + 1; i++) {
 			(*object)[i].index = i;
-			(*object)[i].pos = (v4sf){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5,\
+			(*object)[i].pos = (v4sd){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5,\
 			((float)rand()/(float)RAND_MAX) - 0.5};
-			(*object)[i].vel = (v4sf){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
+			(*object)[i].vel = (v4sd){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
 			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
 			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;

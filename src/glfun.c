@@ -394,6 +394,12 @@ void create_shaders(void)
 	glDeleteShader(fragShaderText);
 	glDeleteShader(vertShaderText);
 	
+	/*	Cast to void * to strip qualifiers	*/
+	free((void *)srcVertShaderObject);
+	free((void *)srcFragShaderObject);
+	free((void *)srcVertShaderText);
+	free((void *)srcFragShaderText);
+	
 	glBindAttribLocation(programObj, objattr_pos, "pos");
 	glBindAttribLocation(programObj, objattr_color, "objcolor");
 	glLinkProgram(programObj);

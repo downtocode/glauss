@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glClearColor(0.12, 0.12, 0.12, 1);
-			pprint(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
+			pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
@@ -166,8 +166,8 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 		data* object;
 		printf("Objects: %i\n", obj);
-		pprint(5, "Settings: dt=%f\n", option->dt);
-		pprint(5, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
+		pprintf(5, "Settings: dt=%f\n", option->dt);
+		pprintf(5, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
 				, elcharge, gconst, epsno);
 		/*	Mallocs and wipes	*/
 		initphys(&object);
@@ -268,6 +268,8 @@ int main(int argc, char *argv[])
 			if(dumplevel == 1) toxyz(obj, object);
 			
 			long totaltime = 0, threadtime[option->avail_cores];
+			
+			pprintf(8, "Progressed %0.2f timeunits.\n", thread_opts[1].processed*option->dt);
 			
 			struct timespec maintime;
 			clock_gettime(CLOCK_THREAD_CPUTIME_ID, &maintime);

@@ -3,7 +3,9 @@
 #include "msg_phys.h"
 #include "options.h"
 
-void pprint(unsigned int priority, const char *format, ...)
+/* pprintf - a priority printing function. */
+
+void pprintf(unsigned int priority, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);

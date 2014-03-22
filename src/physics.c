@@ -32,12 +32,12 @@ static bool running, quit;
 data *objalt;
 
 
-float dotprod(v4sf a, v4sf b)
+float dotprod(v4sd a, v4sd b)
 {
 	float result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; 
 	return result;
 }
-float lenght(v4sf a)
+float lenght(v4sd a)
 {
 	float result = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
 	return sqrt(result);
@@ -50,7 +50,7 @@ int initphys(data** object)
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
 	
-	pprint(8, "Allocated %lu bytes to object array.\n", \
+	pprintf(8, "Allocated %lu bytes to object array.\n", \
 	((obj+1)*sizeof(**object)+(obj+1)*sizeof(float)));
 	
 	pi = acos(-1);
@@ -106,7 +106,7 @@ int initphys(data** object)
 			thread_opts[k].looplimit2 += obj - thread_opts[k].looplimit2;
 		}
 		if(thread_opts[k].looplimit2 != 0)
-			pprint(5, "Thread %i's objects = [%u,%u]\n", \
+			pprintf(5, "Thread %i's objects = [%u,%u]\n", \
 			k, thread_opts[k].looplimit1, thread_opts[k].looplimit2);
 	}
 	option->avail_cores = avail_cores;
@@ -116,7 +116,7 @@ int initphys(data** object)
 
 int threadcontrol(int status)
 {
-	/*	Codes: 0 - unpause, 1-pause, 2-return status, 8 -start 9 - destroy	*/
+	/*	Codes: 0 - unpause, 1-pause, 2-return status, 8 -start, 9 - destroy	*/
 	if(status == 1 && running == 0) {
 		dt = option->dt;
 		running = 1;
@@ -136,8 +136,6 @@ int threadcontrol(int status)
 		}
 	} else if(status == 9) {
 		quit = 1;
-		//threadcontrol(1);
-		//SDL_Delay(100);
 		//pthread_mutex_unlock(&movestop);
 		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);
@@ -150,10 +148,10 @@ int threadcontrol(int status)
 
 void *resolveforces(void *arg) {
 	struct thread_settings *thread = &thread_opts[(long)arg];
-	v4sf vecnorm, accprev, Ftot = {0,0,0}, grv = {0,0,0}, ele = {0,0,0}, flj = {0,0,0}, link = {0,0,0};
+	thread->processed = 0;
+	v4sd vecnorm, accprev, Ftot = {0,0,0}, grv = {0,0,0}, ele = {0,0,0}, flj = {0,0,0}, link = {0,0,0};
 	long double mag, grvmag, elemag = 0.0, fljmag, springmag;
 	
-	/*	TODO - LJ potential, collisions.	*/
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
 			if(objalt[i].ignore != '0') continue;
@@ -168,43 +166,47 @@ void *resolveforces(void *arg) {
 				if(objalt[i].pos[2] - objalt[i].radius < -50 || objalt[i].pos[2] + objalt[i].radius > 50) {
 					objalt[i].vel[2] = -objalt[i].vel[2];
 				}
-			objalt[i].pos += (objalt[i].vel*(v4sf){dt,dt,dt}) + (objalt[i].acc)*(v4sf){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
+			objalt[i].pos += (objalt[i].vel*(v4sd){dt,dt,dt}) + (objalt[i].acc)*(v4sd){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
 		}
 		
 		pthread_mutex_lock(&movestop);
 		if(running) pthread_mutex_unlock(&movestop);
 		
-		pthread_barrier_wait(&barrier);
+		/*	calling gettime everytime is wasting CPU cycles, will transfer to main	*/
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread->time);
 		SDL_Delay(option->sleepfor);
+		
+		pthread_barrier_wait(&barrier);
 		
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
 			for(int j = 1; j < obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = objalt[j].pos - objalt[i].pos;
 				mag = lenght(vecnorm);
-				vecnorm /= (v4sf){mag, mag, mag};
+				vecnorm /= (v4sd){mag, mag, mag};
 				
 				//grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
 				elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
 				//fljmag = (24/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
 				
-				//grv += vecnorm*(v4sf){grvmag,grvmag,grvmag};
-				ele += -vecnorm*(v4sf){elemag,elemag,elemag};
-				//flj += vecnorm*(v4sf){fljmag,fljmag,fljmag};
+				//grv += vecnorm*(v4sd){grvmag,grvmag,grvmag};
+				ele += -vecnorm*(v4sd){elemag,elemag,elemag};
+				//flj += vecnorm*(v4sd){fljmag,fljmag,fljmag};
 				
 				if( objalt[i].linkwith[j] != 0 ) {
 					if(mag > 3*objalt[i].linkwith[j]) objalt[i].linkwith[j] = 0;
-					springmag = (spring)*(mag - objalt[i].linkwith[j]);
-					link += vecnorm*(v4sf){springmag, springmag, springmag};
+					springmag = (spring)*(pow((mag - objalt[i].linkwith[j]),2));
+					link += vecnorm*(v4sd){springmag, springmag, springmag};
 				}
 			}
 			Ftot += ele + link + flj;
 			accprev = objalt[i].acc;
-			objalt[i].acc = (Ftot)/(v4sf){objalt[i].mass,objalt[i].mass,objalt[i].mass};
-			objalt[i].vel += (objalt[i].acc + accprev)*(v4sf){((dt)/2),((dt)/2),((dt)/2)};
-			Ftot = ele = grv = flj = link = (v4sf){0,0,0};
+			objalt[i].acc = (Ftot)/(v4sd){objalt[i].mass,objalt[i].mass,objalt[i].mass};
+			objalt[i].vel += (objalt[i].acc + accprev)*(v4sd){((dt)/2),((dt)/2),((dt)/2)};
+			Ftot = ele = grv = flj = link = (v4sd){0,0,0};
 		}
+		thread->processed++;
+		pthread_barrier_wait(&barrier);
 	}
 	return 0;
 }
