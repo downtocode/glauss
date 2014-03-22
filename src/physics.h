@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <time.h>
 
-typedef double v4sd __attribute__ ((vector_size (24)));
+typedef float v4sd __attribute__ ((vector_size (16)));
 
 typedef struct {
 	v4sd pos, vel, acc;

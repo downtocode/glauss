@@ -42,7 +42,6 @@ int main(int argc, char *argv[])
 			.dt = 0.008, .vsync = 1, .verbosity = 5,
 		};
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
-		strcpy(option->filename,"posdata.dat");
 	/*	Default settings.	*/
 	
 	/*	Main function vars	*/
@@ -50,7 +49,7 @@ int main(int argc, char *argv[])
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		struct timespec ts;
-		float deltatime, totaltime = 0.0f, fps = 0, timestep;
+		float deltatime = 0.0, totaltime = 0.0f, fps = 0.0, timestep = 0.0;
 		unsigned int frames = 0, chosen = 0, dumplevel = 0;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0";
@@ -252,8 +251,6 @@ int main(int argc, char *argv[])
 			}
 		}
 		timestep = thread_opts[1].processed*option->dt;
-		sprintf(osdtime, "Timestep = %0.2f", timestep);
-		
 		gettimeofday(&t2, NULL);
 		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
 		t1 = t2;
@@ -270,12 +267,15 @@ int main(int argc, char *argv[])
 			for(int i = 1; i < option->avail_cores + 1; i++) {
 				clock_gettime(thread_opts[i].clockid, &ts);
 				sprintf(threadtime[i], "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
+				pprintf(PRI_SPAM, "%s\n", threadtime[i]);
 			}
 		}
+		
 		if(option->novid) {
 			SDL_Delay(100);
 			continue;
 		}
+		
 		if(flicked || translate) {
 			SDL_GetRelativeMouseState(&mousex, &mousey);
 			if(flicked) {
@@ -331,12 +331,17 @@ int main(int argc, char *argv[])
 		if(fps >= 25 && fps < 48) fpscolor = 3;
 		if(fps >= 48) fpscolor = 2;
 		render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
+		
 		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, 0);
+		
+		sprintf(osdtime, "Timestep = %0.2f", timestep);
 		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, 0);
+		
+		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
+		
 		for(int i = 1; i < option->avail_cores + 1; i++) {
 			render_text(threadtime[i], 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, 0);
 		}
-		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
 		

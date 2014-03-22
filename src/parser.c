@@ -110,7 +110,7 @@ int preparser()
 		srand(time(NULL));
 	} else { 
 		count = 0;
-		if(access(option->filename, F_OK) == -1 ) {
+		if(access(option->filename, F_OK) == -1) {
 			fprintf(stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", option->filename, namebuff);
 			if(access(namebuff, F_OK) == 0) {
 				strcpy(option->filename, namebuff);

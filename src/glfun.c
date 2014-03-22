@@ -208,7 +208,7 @@ void drawobject(data object)
 	if(object.charge > 0) glUniform4fv(objattr_color, 1, red);
 	if(object.charge < 0) glUniform4fv(objattr_color, 1, blue);
 	
-	int circle_precision = 12;
+	int circle_precision = 6;
 	GLfloat points[circle_precision][3];
 	
 	for(int j = 0; j < circle_precision + 1; j++) {
