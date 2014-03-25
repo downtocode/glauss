@@ -67,17 +67,17 @@ int initphys(data** object)
 	
 	if(avail_cores == 0 && online_cores != 0 ) {
 		avail_cores = online_cores;
-		printf("Detected %i threads, will use all.\n", online_cores);
+		pprintf(PRI_VERYHIGH, "Detected %i threads, will use all.\n", online_cores);
 	} else if( avail_cores != 0 && online_cores != 0 && online_cores > avail_cores ) {
-		printf("Using %i out of %i threads.\n", avail_cores, online_cores);
+		pprintf(PRI_VERYHIGH, "Using %i out of %i threads.\n", avail_cores, online_cores);
 	} else if(avail_cores == 1) {
-		printf("Running program in a single thread.\n");
+		pprintf(PRI_VERYHIGH, "Running program in a single thread.\n");
 	} else if(avail_cores > 1) {
-		printf("Running program with %i threads.\n", avail_cores);
+		pprintf(PRI_VERYHIGH, "Running program with %i threads.\n", avail_cores);
 	} else if(avail_cores == 0 ) {
 		/*	Poor Mac OS...	*/
 		avail_cores = failsafe_cores;
-		printf("Thread detection unavailable, running with %i.\n", avail_cores);
+		pprintf(PRI_VERYHIGH, "Thread detection unavailable, running with %i.\n", avail_cores);
 	}
 	
 	threads = calloc(avail_cores+1, sizeof(pthread_t));
@@ -109,7 +109,6 @@ int initphys(data** object)
 			k, thread_opts[k].looplimit1, thread_opts[k].looplimit2);
 	}
 	option->avail_cores = avail_cores;
-	
 	return 0;
 }
 
@@ -182,11 +181,11 @@ void *resolveforces(void *arg) {
 				mag = lenght(vecnorm);
 				vecnorm /= (v4sd){mag, mag, mag};
 				
-				//grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
+				grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
 				elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
 				//fljmag = (24/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
 				
-				//grv += vecnorm*(v4sd){grvmag,grvmag,grvmag};
+				grv += vecnorm*(v4sd){grvmag,grvmag,grvmag};
 				ele += -vecnorm*(v4sd){elemag,elemag,elemag};
 				//flj += vecnorm*(v4sd){fljmag,fljmag,fljmag};
 				
@@ -196,7 +195,7 @@ void *resolveforces(void *arg) {
 					link += vecnorm*(v4sd){springmag, springmag, springmag};
 				}
 			}
-			Ftot += ele + link + flj;
+			Ftot += ele + grv + link + flj;
 			accprev = objalt[i].acc;
 			objalt[i].acc = (Ftot)/(v4sd){objalt[i].mass,objalt[i].mass,objalt[i].mass};
 			objalt[i].vel += (objalt[i].acc + accprev)*(v4sd){((dt)/2),((dt)/2),((dt)/2)};

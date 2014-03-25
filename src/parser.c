@@ -108,7 +108,7 @@ int preparser()
 	
 	if( moderandom == 1 ) {
 		srand(time(NULL));
-	} else { 
+	} else {
 		count = 0;
 		if(access(option->filename, F_OK) == -1) {
 			fprintf(stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", option->filename, namebuff);

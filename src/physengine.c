@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
 			.dt = 0.008, .vsync = 1, .verbosity = 5,
 		};
+		strcpy(option->filename,"nanotubes.dat");
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
 	
@@ -166,9 +167,9 @@ int main(int argc, char *argv[])
 	
 	/*	Physics.	*/
 		data* object;
-		printf("Objects: %i\n", obj);
-		pprintf(5, "Settings: dt=%f\n", option->dt);
-		pprintf(5, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
+		pprintf(PRI_ESSENTIAL, "Objects: %i\n", obj);
+		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
+		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
 				, elcharge, gconst, epsno);
 		/*	Mallocs and wipes	*/
 		initphys(&object);
