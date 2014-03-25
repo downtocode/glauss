@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		obj = preparser();
+		option->elcharge = elcharge;
 	/*	Arguments	*/
 	
 	/*	Error handling.	*/

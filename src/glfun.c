@@ -7,6 +7,8 @@
 #include "parser.h"
 #include "options.h"
 
+#define maxcharge 2200
+
 //Object shader global vars
 GLuint programObj;
 static GLint trn_matrix, rot_matrix, scl_matrix;
@@ -204,9 +206,12 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 
 void drawobject(data object) 
 {
-	if(!object.charge) glUniform4fv(objattr_color, 1, objtcolor);
-	if(object.charge > 0) glUniform4fv(objattr_color, 1, red);
-	if(object.charge < 0) glUniform4fv(objattr_color, 1, blue);
+	GLfloat gencolor[4] = {0.0f,0.0f,0.0f,1.0f};
+	if(object.charge > 0) gencolor[0] = (object.charge/option->elcharge)/maxcharge;
+	if(object.charge < 0) gencolor[2] = (object.charge/option->elcharge)/maxcharge + 0.7;
+	if(object.charge == 0) memset(gencolor, 1.0f, sizeof(gencolor));
+	
+	glUniform4fv(objattr_color, 1, gencolor);
 	
 	int circle_precision = 6;
 	GLfloat points[circle_precision][3];
@@ -219,14 +224,14 @@ void drawobject(data object)
 	}
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, objtcolor);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, gencolor);
 	glEnableVertexAttribArray(objattr_pos);
 	glEnableVertexAttribArray(objattr_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, circle_precision);
 	glDisableVertexAttribArray(objattr_pos);
 	glDisableVertexAttribArray(objattr_color);
-	if(object.charge != 0) glUniform4fv(objattr_color, 1, objtcolor);
+	if(object.charge != 0) glUniform4fv(objattr_color, 1, gencolor);
 }
 
 void drawlinks(data* object)
