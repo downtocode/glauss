@@ -29,8 +29,6 @@ pthread_barrier_t barrier;
 struct sched_param parameters;
 static bool running, quit;
 
-data *objalt;
-
 
 float dotprod(v4sd a, v4sd b)
 {
@@ -55,7 +53,6 @@ int initphys(data** object)
 	
 	pi = acos(-1);
 	
-	objalt = *object;
 	dt = option->dt;
 	avail_cores = option->avail_cores;
 	
@@ -77,7 +74,7 @@ int initphys(data** object)
 	} else if(avail_cores == 0 ) {
 		/*	Poor Mac OS...	*/
 		avail_cores = failsafe_cores;
-		pprintf(PRI_VERYHIGH, "Thread detection unavailable, running with %i.\n", avail_cores);
+		pprintf(PRI_VERYHIGH, "Thread detection unavailable, running with %i thread(s).\n", avail_cores);
 	}
 	
 	threads = calloc(avail_cores+1, sizeof(pthread_t));
@@ -93,7 +90,7 @@ int initphys(data** object)
 	
 	/*
 	 * Split objects equally between cores
-	 * You can deliberatly load one core more by deducting a few objects in totcore.
+	 * You can deliberatly load the last thread more by deducting a few objects in totcore.
 	 */
 	int totcore = (int)((float)obj/avail_cores);
 	for(int k = 1; k < avail_cores + 1; k++) {
@@ -112,7 +109,7 @@ int initphys(data** object)
 	return 0;
 }
 
-int threadcontrol(int status)
+int threadcontrol(int status, data** object)
 {
 	/*	Codes: 0 - unpause, 1-pause, 2-return status, 8 -start, 9 - destroy	*/
 	if(status == 1 && running == 0) {
@@ -130,6 +127,7 @@ int threadcontrol(int status)
 		pthread_barrier_init(&barrier, NULL, avail_cores);
 		running = 1;
 		for(int k = 1; k < avail_cores + 1; k++) {
+			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
 		}
 	} else if(status == 9) {
@@ -138,6 +136,7 @@ int threadcontrol(int status)
 		quit = 1;
 		for(int k = 1; k < avail_cores + 1; k++) {
 			pthread_join(threads[k], NULL);
+			thread_opts[k].obj = NULL;
 		}
 		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);
@@ -155,19 +154,19 @@ void *resolveforces(void *arg) {
 	
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
-			if(objalt[i].ignore != '0') continue;
-				if(objalt[i].pos[0] - objalt[i].radius < -50 || objalt[i].pos[0] + objalt[i].radius > 50) {
-					objalt[i].vel[0] = -objalt[i].vel[0];
+			if(thread->obj[i].ignore != '0') continue;
+				if(thread->obj[i].pos[0] - thread->obj[i].radius < -50 || thread->obj[i].pos[0] + thread->obj[i].radius > 50) {
+					thread->obj[i].vel[0] = -thread->obj[i].vel[0];
 				}
 				
-				if(objalt[i].pos[1] - objalt[i].radius < -50 || objalt[i].pos[1] + objalt[i].radius > 50) {
-					objalt[i].vel[1] = -objalt[i].vel[1];
+				if(thread->obj[i].pos[1] - thread->obj[i].radius < -50 || thread->obj[i].pos[1] + thread->obj[i].radius > 50) {
+					thread->obj[i].vel[1] = -thread->obj[i].vel[1];
 				}
 				
-				if(objalt[i].pos[2] - objalt[i].radius < -50 || objalt[i].pos[2] + objalt[i].radius > 50) {
-					objalt[i].vel[2] = -objalt[i].vel[2];
+				if(thread->obj[i].pos[2] - thread->obj[i].radius < -50 || thread->obj[i].pos[2] + thread->obj[i].radius > 50) {
+					thread->obj[i].vel[2] = -thread->obj[i].vel[2];
 				}
-			objalt[i].pos += (objalt[i].vel*(v4sd){dt,dt,dt}) + (objalt[i].acc)*(v4sd){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
+			thread->obj[i].pos += (thread->obj[i].vel*(v4sd){dt,dt,dt}) + (thread->obj[i].acc)*(v4sd){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
 		}
 		
 		pthread_mutex_lock(&movestop);
@@ -177,28 +176,28 @@ void *resolveforces(void *arg) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
 			for(int j = 1; j < obj + 1; j++) {
 				if(i==j) continue;
-				vecnorm = objalt[j].pos - objalt[i].pos;
+				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
 				mag = lenght(vecnorm);
 				vecnorm /= (v4sd){mag, mag, mag};
 				
-				grvmag = ((gconst*objalt[i].mass*objalt[j].mass)/(mag*mag));
-				elemag = ((objalt[i].charge*objalt[j].charge)/(4*pi*epsno*mag*mag));
+				grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(mag*mag));
+				elemag = ((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*mag*mag));
 				//fljmag = (24/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
 				
 				grv += vecnorm*(v4sd){grvmag,grvmag,grvmag};
 				ele += -vecnorm*(v4sd){elemag,elemag,elemag};
 				//flj += vecnorm*(v4sd){fljmag,fljmag,fljmag};
 				
-				if( objalt[i].linkwith[j] != 0 ) {
-					if(mag > 3*objalt[i].linkwith[j]) objalt[i].linkwith[j] = 0;
-					springmag = (spring)*(pow((mag - objalt[i].linkwith[j]),2));
+				if( thread->obj[i].linkwith[j] != 0 ) {
+					if(mag > 3*thread->obj[i].linkwith[j]) thread->obj[i].linkwith[j] = 0;
+					springmag = (spring)*(pow((mag - thread->obj[i].linkwith[j]),2));
 					link += vecnorm*(v4sd){springmag, springmag, springmag};
 				}
 			}
 			Ftot += ele + grv + link + flj;
-			accprev = objalt[i].acc;
-			objalt[i].acc = (Ftot)/(v4sd){objalt[i].mass,objalt[i].mass,objalt[i].mass};
-			objalt[i].vel += (objalt[i].acc + accprev)*(v4sd){((dt)/2),((dt)/2),((dt)/2)};
+			accprev = thread->obj[i].acc;
+			thread->obj[i].acc = (Ftot)/(v4sd){thread->obj[i].mass,thread->obj[i].mass,thread->obj[i].mass};
+			thread->obj[i].vel += (thread->obj[i].acc + accprev)*(v4sd){((dt)/2),((dt)/2),((dt)/2)};
 			Ftot = ele = grv = flj = link = (v4sd){0,0,0};
 		}
 		if((long)arg == 1) thread->processed++;

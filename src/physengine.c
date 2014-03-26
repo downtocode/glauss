@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 	
 	gettimeofday (&t1 , NULL);
 	
-	threadcontrol(8);
+	threadcontrol(8, &object);
 	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
@@ -229,8 +229,8 @@ int main(int argc, char *argv[])
 						printf("dt = %f\n", option->dt);
 					}
 					if(event.key.keysym.sym==SDLK_SPACE) {
-						if(threadcontrol(2)) threadcontrol(0);
-						else threadcontrol(1);
+						if(threadcontrol(2, &object)) threadcontrol(0, &object);
+						else threadcontrol(1, &object);
 					}
 					if(event.key.keysym.sym==SDLK_r) {
 						view_roty = view_rotx = view_rotz = 0.0;
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 		sprintf(osdtime, "Timestep = %0.2f", timestep);
 		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, 0);
 		
-		if(!threadcontrol(2)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
+		if(!threadcontrol(2, &object)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
 		
 		for(int i = 1; i < option->avail_cores + 1; i++) {
 			render_text(threadtime[i], 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, 0);
@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
 	
 	quit:
 		printf("Quitting... ");
-		threadcontrol(9);
+		threadcontrol(9, &object);
 		FT_Done_Face(face);
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);

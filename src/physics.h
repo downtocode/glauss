@@ -33,6 +33,7 @@ typedef struct {
 } data;
 
 struct thread_settings {
+	data* obj;
 	unsigned int looplimit1, looplimit2, threadid;
 	unsigned long long processed;
 	clockid_t clockid;
@@ -43,7 +44,7 @@ struct thread_settings *thread_opts;
 float dotprod(v4sd a, v4sd b);
 float lenght(v4sd a);
 int initphys(data** object);
-int threadcontrol(int status);
+int threadcontrol(int status, data** object);
 void *resolveforces(void *arg);
 
 #endif
