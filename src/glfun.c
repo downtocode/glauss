@@ -139,29 +139,27 @@ void adjust_rot(void)
 void drawaxis() {
 	GLfloat axis[6][3] = {
 			{0,0,0},
-			{0.1,0,0},
+			{1,0,0},
 			{0,0,0},
-			{0,0.1,0},
+			{0,1,0},
 			{0,0,0},
-			{0,0,0.1},
+			{0,0,1},
 	};
 	
-	transformpoint(axis[1],rotation);
-	transformpoint(axis[3],rotation);
-	transformpoint(axis[5],rotation);
+	//transformpoint(axis[1],rotation);
+	//transformpoint(axis[3],rotation);
+	//transformpoint(axis[5],rotation);
 	
-	for(int i = 0; i < 6; i++) movept2d(axis[i], -0.90, -0.80);
+	/*for(int i = 0; i < 6; i++) {
+		transformpoint(axis[1], scale);
+		movept2d(axis[i], -3.90, -3.80);
+	}*/
 	
-	glVertexAttribPointer(textattr_coord, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, textcolor);
-	glEnableVertexAttribArray(textattr_coord);
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(objattr_pos);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_DYNAMIC_DRAW);
-	glUniform4fv(textattr_color, 1, red);
-	glDrawArrays(GL_LINE_LOOP, 0, 2);
-	glUniform4fv(textattr_color, 1, green);
-	glDrawArrays(GL_LINE_LOOP, 2, 4);
-	glDisableVertexAttribArray(textattr_coord);
-	glDisableVertexAttribArray(textattr_color);
+	glDrawArrays(GL_LINE_LOOP, 0, 6);
+	glDisableVertexAttribArray(objattr_pos);
 }
 
 void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col) {

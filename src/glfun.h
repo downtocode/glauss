@@ -6,6 +6,11 @@
 #include "physics.h"
 #include FT_FREETYPE_H
 
+#define GL_WHITE 0
+#define GL_RED 1
+#define GL_GREEN 2
+#define GL_BLUE 3
+
 FT_Library library;
 FT_Face face;
 FT_GlyphSlot g;

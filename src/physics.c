@@ -127,6 +127,7 @@ int threadcontrol(int status, data** object)
 		pthread_barrier_init(&barrier, NULL, avail_cores);
 		running = 1;
 		for(int k = 1; k < avail_cores + 1; k++) {
+			if(thread_opts[k].obj != NULL) continue;
 			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
 		}

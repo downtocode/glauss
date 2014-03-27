@@ -50,7 +50,8 @@ int main(int argc, char *argv[])
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		struct timespec ts;
-		float deltatime = 0.0, totaltime = 0.0f, fps = 0.0, timestep = 0.0;
+		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0;
+		static volatile float fps = 0.0;
 		unsigned int frames = 0, chosen = 0, dumplevel = 0;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0";
@@ -307,13 +308,13 @@ int main(int argc, char *argv[])
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Point/object drawing	*/
 		
-		glUseProgram(programText);
-		
 		/*	Axis drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, axisvbo);
 		drawaxis();
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Axis drawing	*/
+		
+		glUseProgram(programText);
 		
 		/*	Selected object's red box	*/
 		glBindBuffer(GL_ARRAY_BUFFER, linevbo);
@@ -328,21 +329,21 @@ int main(int argc, char *argv[])
 		
 		/*	Text drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		unsigned int fpscolor = 0;
-		if(fps < 25) fpscolor = 1;
-		if(fps >= 25 && fps < 48) fpscolor = 3;
-		if(fps >= 48) fpscolor = 2;
+		unsigned int fpscolor = GL_WHITE;
+		if(fps < 25) fpscolor = GL_RED;
+		if(fps >= 25 && fps < 48) fpscolor = GL_BLUE;
+		if(fps >= 48) fpscolor = GL_GREEN;
 		render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
 		
-		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, 0);
+		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
 		sprintf(osdtime, "Timestep = %0.2f", timestep);
-		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, 0);
+		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
-		if(!threadcontrol(2, &object)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, 1);
+		if(!threadcontrol(2, &object)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);
 		
 		for(int i = 1; i < option->avail_cores + 1; i++) {
-			render_text(threadtime[i], 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, 0);
+			render_text(threadtime[i], 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, GL_WHITE);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Text drawing	*/
