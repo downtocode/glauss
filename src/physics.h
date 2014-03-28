@@ -44,6 +44,7 @@ struct thread_settings *thread_opts;
 float dotprod(v4sd a, v4sd b);
 float lenght(v4sd a);
 int initphys(data** object);
+int threadseperate();
 int threadcontrol(int status, data** object);
 void *resolveforces(void *arg);
 

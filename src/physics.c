@@ -18,7 +18,6 @@ int obj, objcount;
 /*	Static vars	*/
 static long double pi;
 static float dt;
-static unsigned int avail_cores;
 long double gconst, epsno, elcharge;
 
 /*	Indexing of cores = 1, 2, 3...	*/
@@ -43,6 +42,7 @@ float lenght(v4sd a)
 
 int initphys(data** object)
 {
+	unsigned int avail_cores;
 	*object = calloc(obj+1,sizeof(data));
 	for(int i = 0; i < obj + 1; i++ ) {
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
@@ -76,6 +76,7 @@ int initphys(data** object)
 		avail_cores = failsafe_cores;
 		pprintf(PRI_VERYHIGH, "Thread detection unavailable, running with %i thread(s).\n", avail_cores);
 	}
+	option->avail_cores = avail_cores;
 	
 	threads = calloc(avail_cores+1, sizeof(pthread_t));
 	thread_opts = calloc(avail_cores+1, sizeof(struct thread_settings));
@@ -86,18 +87,21 @@ int initphys(data** object)
 	/*	SCHED_RR - Round Robin, SCHED_FIFO - FIFO	*/
 	pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
 	pthread_attr_setschedparam(&thread_attribs, &parameters);
-	
-	
+	threadseperate();
+	return 0;
+}
+
+int threadseperate() {
 	/*
 	 * Split objects equally between cores
 	 * You can deliberatly load the last thread more by deducting a few objects in totcore.
 	 */
-	int totcore = (int)((float)obj/avail_cores);
-	for(int k = 1; k < avail_cores + 1; k++) {
+	int totcore = (int)((float)obj/option->avail_cores);
+	for(int k = 1; k < option->avail_cores + 1; k++) {
 		thread_opts[k].threadid = k;
 		thread_opts[k].looplimit1 = thread_opts[k-1].looplimit2 + 1;
 		thread_opts[k].looplimit2 = thread_opts[k].looplimit1 + totcore - 1;
-		if(k == avail_cores) {
+		if(k == option->avail_cores) {
 			/*	Takes care of rounding problems with odd numbers.	*/
 			thread_opts[k].looplimit2 += obj - thread_opts[k].looplimit2;
 		}
@@ -105,7 +109,6 @@ int initphys(data** object)
 			pprintf(PRI_MEDIUM, "Thread %i's objects = [%u,%u]\n", \
 			k, thread_opts[k].looplimit1, thread_opts[k].looplimit2);
 	}
-	option->avail_cores = avail_cores;
 	return 0;
 }
 
@@ -124,9 +127,9 @@ int threadcontrol(int status, data** object)
 		return running;
 	} else if(status == 8) {
 		pthread_mutex_init(&movestop, NULL);
-		pthread_barrier_init(&barrier, NULL, avail_cores);
+		pthread_barrier_init(&barrier, NULL, option->avail_cores);
 		running = 1;
-		for(int k = 1; k < avail_cores + 1; k++) {
+		for(int k = 1; k < option->avail_cores + 1; k++) {
 			if(thread_opts[k].obj != NULL) continue;
 			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
@@ -135,7 +138,7 @@ int threadcontrol(int status, data** object)
 		running = 1;
 		pthread_mutex_unlock(&movestop);
 		quit = 1;
-		for(int k = 1; k < avail_cores + 1; k++) {
+		for(int k = 1; k < option->avail_cores + 1; k++) {
 			pthread_join(threads[k], NULL);
 			thread_opts[k].obj = NULL;
 		}
