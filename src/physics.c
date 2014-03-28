@@ -28,33 +28,17 @@ pthread_barrier_t barrier;
 struct sched_param parameters;
 static bool running, quit;
 
-
-float dotprod(v4sd a, v4sd b)
-{
-	float result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; 
-	return result;
-}
-float lenght(v4sd a)
-{
-	float result = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
-	return sqrt(result);
-}
-
 int initphys(data** object)
 {
-	unsigned int avail_cores;
 	*object = calloc(obj+1,sizeof(data));
 	for(int i = 0; i < obj + 1; i++ ) {
 		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
 	}
 	
 	pprintf(8, "Allocated %lu bytes to object array.\n", \
-	((obj+1)*sizeof(**object)+(obj+1)*sizeof(float)));
+	((obj+1)*sizeof(data)+(obj+1)*sizeof(float)));
 	
 	pi = acos(-1);
-	
-	dt = option->dt;
-	avail_cores = option->avail_cores;
 	
 	int online_cores = 0;
 	
@@ -62,24 +46,23 @@ int initphys(data** object)
 		online_cores = sysconf(_SC_NPROCESSORS_ONLN);
 	#endif
 	
-	if(avail_cores == 0 && online_cores != 0 ) {
-		avail_cores = online_cores;
+	if(option->avail_cores == 0 && online_cores != 0 ) {
+		option->avail_cores = online_cores;
 		pprintf(PRI_VERYHIGH, "Detected %i threads, will use all.\n", online_cores);
-	} else if( avail_cores != 0 && online_cores != 0 && online_cores > avail_cores ) {
-		pprintf(PRI_VERYHIGH, "Using %i out of %i threads.\n", avail_cores, online_cores);
-	} else if(avail_cores == 1) {
+	} else if( option->avail_cores != 0 && online_cores != 0 && online_cores > option->avail_cores ) {
+		pprintf(PRI_VERYHIGH, "Using %i out of %i threads.\n", option->avail_cores, online_cores);
+	} else if(option->avail_cores == 1) {
 		pprintf(PRI_VERYHIGH, "Running program in a single thread.\n");
-	} else if(avail_cores > 1) {
-		pprintf(PRI_VERYHIGH, "Running program with %i threads.\n", avail_cores);
-	} else if(avail_cores == 0 ) {
+	} else if(option->avail_cores > 1) {
+		pprintf(PRI_VERYHIGH, "Running program with %i threads.\n", option->avail_cores);
+	} else if(option->avail_cores == 0 ) {
 		/*	Poor Mac OS...	*/
-		avail_cores = failsafe_cores;
-		pprintf(PRI_VERYHIGH, "Thread detection unavailable, running with %i thread(s).\n", avail_cores);
+		option->avail_cores = failsafe_cores;
+		pprintf(PRI_VERYHIGH, "Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
 	}
-	option->avail_cores = avail_cores;
 	
-	threads = calloc(avail_cores+1, sizeof(pthread_t));
-	thread_opts = calloc(avail_cores+1, sizeof(struct thread_settings));
+	threads = calloc(option->avail_cores+1, sizeof(pthread_t));
+	thread_opts = calloc(option->avail_cores+1, sizeof(struct thread_settings));
 	
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
@@ -87,7 +70,6 @@ int initphys(data** object)
 	/*	SCHED_RR - Round Robin, SCHED_FIFO - FIFO	*/
 	pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
 	pthread_attr_setschedparam(&thread_attribs, &parameters);
-	threadseperate();
 	return 0;
 }
 
@@ -126,6 +108,8 @@ int threadcontrol(int status, data** object)
 	} else if(status == 2) {
 		return running;
 	} else if(status == 8) {
+		dt = option->dt;
+		threadseperate();
 		pthread_mutex_init(&movestop, NULL);
 		pthread_barrier_init(&barrier, NULL, option->avail_cores);
 		running = 1;
@@ -152,9 +136,10 @@ int threadcontrol(int status, data** object)
 
 void *resolveforces(void *arg) {
 	struct thread_settings *thread = &thread_opts[(long)arg];
-	pthread_getcpuclockid(pthread_self(), &thread->clockid);
 	v4sd vecnorm, accprev, Ftot, grv, ele, flj, link;
-	long double mag, grvmag, elemag, fljmag, springmag;
+	double mag, grvmag, elemag, fljmag, springmag;
+	
+	pthread_getcpuclockid(pthread_self(), &thread->clockid);
 	
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
@@ -181,7 +166,7 @@ void *resolveforces(void *arg) {
 			for(int j = 1; j < obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
-				mag = lenght(vecnorm);
+				mag = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 				vecnorm /= (v4sd){mag, mag, mag};
 				
 				grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(mag*mag));
