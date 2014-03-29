@@ -18,8 +18,6 @@ GLint objattr_pos, objattr_color;
 GLuint programText;
 GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
-GLfloat view_rotx, view_roty, view_rotz, scalefactor;
-GLfloat tr_x, tr_y, tr_z;
 
 unsigned int obj;
 
@@ -119,7 +117,8 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 #undef PROD
 }
 
-void adjust_rot(void)
+void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
+				GLfloat scalefactor, GLfloat tr_x, GLfloat tr_y, GLfloat tr_z)
 {
 	/* Set modelview/projection matrix */
 	make_translation_matrix(tr_x, tr_y, tr_z, transl);
@@ -204,21 +203,24 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 
 void drawobject(data object) 
 {
+	float dj = 0.5, pi=acos(-1);
+	int pointcount = 0;
+	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
+	
 	GLfloat gencolor[4] = {0.0f,0.0f,0.0f,1.0f};
 	if(object.charge > 0) gencolor[0] = (object.charge/option->elcharge)/maxcharge;
 	if(object.charge < 0) gencolor[2] = (object.charge/option->elcharge)/maxcharge + 0.7;
 	if(object.charge == 0) memset(gencolor, 1.0f, sizeof(gencolor));
-	
 	glUniform4fv(objattr_color, 1, gencolor);
 	
-	int circle_precision = 6;
-	GLfloat points[circle_precision][3];
 	
-	for(int j = 0; j < circle_precision + 1; j++) {
-		float radical = ((float)j/circle_precision)*2*acos(-1);
-		points[j][0] = object.pos[0] + object.radius*cos(radical);
-		points[j][1] = object.pos[1] + object.radius*sin(radical);
-		points[j][2] = object.pos[2];
+	for(float i = 0; i < pi; i+=dj) {
+		for(float j = 0; j < 2*pi; j+=dj) {
+			points[pointcount][0] = object.pos[0] + object.radius*sin(i)*cos(j);
+			points[pointcount][1] = object.pos[1] + object.radius*sin(i)*sin(j);
+			points[pointcount][2] = object.pos[2] + object.radius*cos(i);
+			pointcount++;
+		}
 	}
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -226,7 +228,9 @@ void drawobject(data object)
 	glEnableVertexAttribArray(objattr_pos);
 	glEnableVertexAttribArray(objattr_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, circle_precision);
+	
+	glDrawArrays(GL_TRIANGLE_FAN, 0, pointcount);
+	
 	glDisableVertexAttribArray(objattr_pos);
 	glDisableVertexAttribArray(objattr_color);
 	if(object.charge != 0) glUniform4fv(objattr_color, 1, gencolor);
@@ -284,7 +288,7 @@ void drawlinks(data* object)
 }
 
 void selected_box_text(data object) {
-	float boxsize = 0.13*scalefactor*(object.radius*15);
+	float boxsize = 0.13*scale[5]*(object.radius*15);
 	GLfloat objpoint[3] = {0,0,0};
 	
 	transformpoint(objpoint, mat);
@@ -299,8 +303,8 @@ void selected_box_text(data object) {
 	char osdstr[500];
 	sprintf(osdstr, "Object %i", object.index);
 	
-	render_text(osdstr, objpoint[0] + object.radius*scalefactor, \
-	objpoint[1] + object.radius*scalefactor, 1.0/option->width, 1.0/option->height, 0);
+	render_text(osdstr, objpoint[0] + object.radius*scale[5], \
+	objpoint[1] + object.radius*scale[5], 1.0/option->width, 1.0/option->height, 0);
 	
 	unsigned int counter = 0;
 	unsigned int links[obj+1];
@@ -319,8 +323,8 @@ void selected_box_text(data object) {
 			sprintf(linkcount, "%u ", links[j]);
 			strcat(osdstr, linkcount);
 		}
-		render_text(osdstr, objpoint[0] + object.radius*scalefactor, \
-	objpoint[1] + object.radius*scalefactor - 0.055, 1.0/option->width, 1.0/option->height, 0);
+		render_text(osdstr, objpoint[0] + object.radius*scale[5], \
+		objpoint[1] + object.radius*scale[5] - 0.055, 1.0/option->width, 1.0/option->height, 0);
 	}
 	
 	glEnableVertexAttribArray(textattr_coord);
