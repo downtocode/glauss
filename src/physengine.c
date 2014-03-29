@@ -237,6 +237,7 @@ int main(int argc, char *argv[])
 						view_roty = view_rotx = view_rotz = 0.0;
 						tr_x = tr_y = tr_z = 0.0;
 						scalefactor = 0.1;
+						chosen = 0;
 					}
 					if(event.key.keysym.sym==SDLK_z) {
 						toxyz(obj, object, timestep);
@@ -294,7 +295,7 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
 		glUseProgram(programObj);
-		adjust_rot();
+		adjust_rot(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
 		
 		/*	Link drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, linkvbo);
@@ -304,7 +305,7 @@ int main(int argc, char *argv[])
 		
 		/*	Point/object drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
-		for(int i = 1; i < obj + 1; i++) drawobject(object[i]);
+		for(int i = 1; i < obj+1; i++) drawobject(object[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Point/object drawing	*/
 		

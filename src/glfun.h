@@ -16,7 +16,8 @@ FT_Face face;
 FT_GlyphSlot g;
 
 void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b);
-void adjust_rot(void);
+void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
+				GLfloat scalefactor, GLfloat tr_x, GLfloat tr_y, GLfloat tr_z);
 
 void drawaxis();
 void drawobject(data object);
