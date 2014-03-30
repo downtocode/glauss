@@ -26,6 +26,6 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 void selected_box_text(data object);
 
 int resize_wind();
-void create_shaders(void);
+void create_shaders(GLuint** shaderprogs);
 
 #endif

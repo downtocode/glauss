@@ -10,20 +10,13 @@
 #include "molreader.h"
 #include "msg_phys.h"
 
-/*	Global variables	*/
-unsigned int obj, chosen, dumplevel;
-long double elcharge, gconst, epsno;
-
 /*	Static variables	*/
-static char str[200];
-static bool moderandom;
 static float velmax, massrand, chargerand, sizerand;
-
 
 int preparser()
 {
 	int count = 0;
-	char word[200], variable[200], namebuff[200];
+	char word[200], variable[200], namebuff[200], str[200];
 	long double anothervar;
 	float value, base, power;
 	bool endfile = 0;
@@ -40,17 +33,17 @@ int preparser()
 			if(strcmp(word, "elcharge") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				elcharge = anothervar*pow(base, power);
+				option->elcharge = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "gconst") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				gconst = anothervar*pow(base, power);
+				option->gconst = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "epsno") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				epsno = anothervar*pow(base, power);
+				option->epsno = anothervar*pow(base, power);
 			}
 			if(strcmp(word, "width") == 0) {
 				option->width = (unsigned int)value;
@@ -62,7 +55,7 @@ int preparser()
 				sscanf(str, "%s = \"%100[^\"]\"", word, option->fontname);
 			}
 			if(strcmp(word, "random") == 0) {
-				moderandom = (bool)value;
+				option->moderandom = (bool)value;
 			}
 			if(strcmp(word, "randobjs") == 0) {
 				count = (int)value;
@@ -106,7 +99,7 @@ int preparser()
 	
 	memset(str, 0, sizeof(str));
 	
-	if( moderandom == 1 ) {
+	if(option->moderandom == 1) {
 		srand(time(NULL));
 	} else {
 		count = 0;
@@ -156,13 +149,13 @@ int parser(data** object, char filename[200])
 {
 	int i = 0, link;
 	char links[200], *linkstr, ignflag;
-	char molfile[200], molname[180], moltype[20];
+	char molfile[200], molname[180], moltype[20], str[200];
 	float posx, posy, posz, velx, vely, velz, bond, radius;
 	long double mass, chargetemp;
 	
 	FILE *in = fopen ( option->filename, "r" );
 	
-	if(moderandom == 0) {
+	if(option->moderandom == 0) {
 		pprintf(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
 		while(fgets(str, sizeof(str), in)!= NULL) {
 			if(strstr(str, "#") == NULL) {
@@ -174,7 +167,7 @@ int parser(data** object, char filename[200])
 				(*object)[i].pos = (v4sd){ posx, posy, posz };
 				(*object)[i].vel = (v4sd){ velx, vely, velz };
 				(*object)[i].mass = mass;
-				(*object)[i].charge = chargetemp*elcharge;
+				(*object)[i].charge = chargetemp*option->elcharge;
 				(*object)[i].ignore = ignflag;
 				(*object)[i].atom = '0';
 				(*object)[i].radius = radius;
@@ -202,15 +195,15 @@ int parser(data** object, char filename[200])
 				readmolecule(molfile, *object, (v4sd){ posx, posy, posz }, (v4sd){ velx, vely, velz }, &i);
 			}
 		}
-	} else if (moderandom == 1) {
-		for(i = 1; i < obj + 1; i++) {
+	} else {
+		for(i = 1; i < option->obj + 1; i++) {
 			(*object)[i].index = i;
 			(*object)[i].pos = (v4sd){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5,\
 			((float)rand()/(float)RAND_MAX) - 0.5};
 			(*object)[i].vel = (v4sd){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
 			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
-			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*elcharge*2;
+			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*option->elcharge*2;
 			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
 			(*object)[i].ignore = '0';
 		}

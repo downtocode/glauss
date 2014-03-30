@@ -33,6 +33,7 @@ typedef struct {
 } data;
 
 struct thread_settings {
+	float dt;
 	data* obj;
 	unsigned int looplimit1, looplimit2, threadid;
 	unsigned long long processed;

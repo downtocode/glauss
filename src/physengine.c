@@ -16,21 +16,6 @@
 #include "options.h"
 #include "msg_phys.h"
 
-/*	Default settings.	*/
-unsigned int obj = 0;
-long double elcharge = 0, gconst = 0, epsno = 0;
-
-
-//glfun global vars
-GLuint programObj;
-GLuint programText;
-GLint textattr_tex;
-
-
-GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.09;
-GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
-GLfloat rotatex = 0.0, rotatey = 0.0, rotatez = 0.0;
-
 int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
@@ -56,6 +41,9 @@ int main(int argc, char *argv[])
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0";
 		bool flicked = 0, translate = 0;
+		GLfloat view_rotx, view_roty, view_rotz, scalefactor = 0.09;
+		GLfloat tr_x, tr_y, tr_z;
+		GLuint* shaderprogs;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -101,21 +89,20 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-		obj = preparser();
-		option->elcharge = elcharge;
+		option->obj = preparser();
 	/*	Arguments	*/
 	
 	/*	Error handling.	*/
-		if(obj == 0) {
+		if(option->obj == 0) {
 			fprintf(stderr, "Error: no objects!\n");
 			return 1;
-		} else sprintf(osdobj, "Objects = %i", obj);
+		} else sprintf(osdobj, "Objects = %i", option->obj);
 		if(dumplevel) printf("Outputting XYZ file every second.\n");
 		if(dumplevel == 2) fprintf(stderr, "Printing XYZ file every frame!\n");
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint tex, textvbo, linevbo, axisvbo, pointvbo, linkvbo;
+		GLuint textvbo, linevbo, axisvbo, pointvbo, linkvbo;
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(option->novid == 0) {
@@ -130,7 +117,7 @@ int main(int argc, char *argv[])
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(option->vsync);
 			glViewport(0, 0, option->width, option->height);
-			create_shaders();
+			create_shaders(&shaderprogs);
 			glEnable(GL_DEPTH_TEST);
 			glDepthFunc(GL_LEQUAL);
 			glActiveTexture(GL_TEXTURE0);
@@ -139,14 +126,6 @@ int main(int argc, char *argv[])
 			glGenBuffers(1, &axisvbo);
 			glGenBuffers(1, &pointvbo);
 			glGenBuffers(1, &linkvbo);
-			glGenTextures(1, &tex);
-			glBindTexture(GL_TEXTURE_2D, tex);
-			glUniform1i(textattr_tex, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glClearColor(0.12, 0.12, 0.12, 1);
 			pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
@@ -169,10 +148,10 @@ int main(int argc, char *argv[])
 	
 	/*	Physics.	*/
 		data* object;
-		pprintf(PRI_ESSENTIAL, "Objects: %i\n", obj);
+		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
 		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
-				, elcharge, gconst, epsno);
+		, option->elcharge, option->gconst, option->epsno);
 		/*	Mallocs and wipes	*/
 		initphys(&object);
 		char threadtime[option->avail_cores][100];
@@ -240,10 +219,10 @@ int main(int argc, char *argv[])
 						chosen = 0;
 					}
 					if(event.key.keysym.sym==SDLK_z) {
-						toxyz(obj, object, timestep);
+						toxyz(option->obj, object, timestep);
 					}
 					if(event.key.keysym.sym==SDLK_2) {
-						if(chosen < obj) chosen++;
+						if(chosen < option->obj) chosen++;
 					}
 					if(event.key.keysym.sym==SDLK_1) {
 						if(chosen > 0) chosen--;
@@ -261,7 +240,7 @@ int main(int argc, char *argv[])
 		totaltime += deltatime;
 		frames++;
 		if (totaltime >  1.0f) {
-			if(dumplevel == 1) toxyz(obj, object, timestep);
+			if(dumplevel == 1) toxyz(option->obj, object, timestep);
 			fps = frames/totaltime;
 			sprintf(osdfps, "FPS = %3.2f", fps);
 			totaltime = frames = 0;
@@ -294,7 +273,7 @@ int main(int argc, char *argv[])
 		
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
-		glUseProgram(programObj);
+		glUseProgram(shaderprogs[0]);
 		adjust_rot(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
 		
 		/*	Link drawing	*/
@@ -305,7 +284,7 @@ int main(int argc, char *argv[])
 		
 		/*	Point/object drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
-		for(int i = 1; i < obj+1; i++) drawobject(object[i]);
+		for(int i = 1; i < option->obj+1; i++) drawobject(object[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Point/object drawing	*/
 		
@@ -315,7 +294,7 @@ int main(int argc, char *argv[])
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Axis drawing	*/
 		
-		glUseProgram(programText);
+		glUseProgram(shaderprogs[1]);
 		
 		/*	Selected object's red box	*/
 		glBindBuffer(GL_ARRAY_BUFFER, linevbo);
@@ -359,6 +338,7 @@ int main(int argc, char *argv[])
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
+		free(shaderprogs);
 		free(option);
 		free(object);
 		printf("success!\n");

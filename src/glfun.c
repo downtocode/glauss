@@ -8,26 +8,18 @@
 #include "options.h"
 
 #define maxcharge 2200
+#define numshaders 2
 
-//Object shader global vars
-GLuint programObj;
 static GLint trn_matrix, rot_matrix, scl_matrix;
-GLint objattr_pos, objattr_color;
-
-//Text shader global vars
-GLuint programText;
-GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
-
-
-unsigned int obj;
+static GLint objattr_pos, objattr_color;
+static GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 static float aspect_ratio;
 static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale, *transl;
-static GLfloat objtcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-static GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-static GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
-static GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
-static GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
+static const GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+static const GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+static const GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
+static const GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
 
 static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
@@ -238,11 +230,11 @@ void drawobject(data object)
 
 void drawlinks(data* object)
 {
-	GLfloat link[2*obj][3];
+	GLfloat link[2*option->obj][3];
 	unsigned int linkcount = 0;
 	int i;
-	for(i = 1; i < obj/2; i++) {
-		for(int j = 1; j < obj + 1; j++) {
+	for(i = 1; i < option->obj/2; i++) {
+		for(int j = 1; j < option->obj + 1; j++) {
 			if( j==i || j > i ) continue;
 			if( object[i].linkwith[j] != 0 ) {
 				link[linkcount][0] = object[i].pos[0];
@@ -264,8 +256,8 @@ void drawlinks(data* object)
 	
 	
 	linkcount = 0;
-	for(i = obj/2; i < obj + 1; i++) {
-		for(int j = 1; j < obj + 1; j++) {
+	for(i = option->obj/2; i < option->obj + 1; i++) {
+		for(int j = 1; j < option->obj + 1; j++) {
 			if( j==i || j > i ) continue;
 			if( object[i].linkwith[j] != 0 ) {
 				link[linkcount][0] = object[i].pos[0];
@@ -307,9 +299,9 @@ void selected_box_text(data object) {
 	objpoint[1] + object.radius*scale[5], 1.0/option->width, 1.0/option->height, 0);
 	
 	unsigned int counter = 0;
-	unsigned int links[obj+1];
+	unsigned int links[option->obj+1];
 	
-	for(int j = 1; j < obj + 1; j++) {
+	for(int j = 1; j < option->obj + 1; j++) {
 		if(object.linkwith[j] != 0) {
 			counter++;
 			links[counter] = j;
@@ -317,7 +309,7 @@ void selected_box_text(data object) {
 	}
 	if(counter != 0) {
 		memset(osdstr, 0, sizeof(osdstr));
-		char linkcount[obj+1];
+		char linkcount[option->obj+1];
 		sprintf(osdstr, "Links: ");
 		for(int j = 1; j < counter + 1; j++) {
 			sprintf(linkcount, "%u ", links[j]);
@@ -340,7 +332,7 @@ int resize_wind() {
 	return 0;
 }
 
-void create_shaders(void)
+void create_shaders(GLuint** shaderprogs)
 {
 	GLint statObj, statText;
 	const char *srcVertShaderObject = readshader("./resources/shaders/object_vs.glsl");
@@ -351,8 +343,10 @@ void create_shaders(void)
 	GLuint fragShaderObj = glCreateShader(GL_FRAGMENT_SHADER), vertShaderObj = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragShaderText = glCreateShader(GL_FRAGMENT_SHADER), vertShaderText = glCreateShader(GL_VERTEX_SHADER);
 	
-	programText = glCreateProgram();
-	programObj = glCreateProgram();
+	*shaderprogs = calloc(numshaders, sizeof(GLuint));
+	
+	(*shaderprogs)[0] = glCreateProgram();
+	(*shaderprogs)[1] = glCreateProgram();
 	
 	glShaderSource(fragShaderObj, 1, (const char **) &srcFragShaderObject, NULL);
 	glShaderSource(fragShaderText, 1, (const char **) &srcFragShaderText, NULL);
@@ -378,20 +372,20 @@ void create_shaders(void)
 		exit(1);
 	}
 	
-	glAttachShader(programText, fragShaderText);
-	glAttachShader(programText, vertShaderText);
-	glAttachShader(programObj, fragShaderObj);
-	glAttachShader(programObj, vertShaderObj);
-	glLinkProgram(programObj);
-	glLinkProgram(programText);
+	glAttachShader((*shaderprogs)[1], fragShaderText);
+	glAttachShader((*shaderprogs)[1], vertShaderText);
+	glAttachShader((*shaderprogs)[0], fragShaderObj);
+	glAttachShader((*shaderprogs)[0], vertShaderObj);
+	glLinkProgram((*shaderprogs)[0]);
+	glLinkProgram((*shaderprogs)[1]);
 	
-	glGetProgramiv(programObj, GL_LINK_STATUS, &statObj);
-	glGetProgramiv(programText, GL_LINK_STATUS, &statText);
+	glGetProgramiv((*shaderprogs)[0], GL_LINK_STATUS, &statObj);
+	glGetProgramiv((*shaderprogs)[1], GL_LINK_STATUS, &statText);
 	if(!statObj || !statText) {
 		char log[1000];
 		GLsizei len;
-		if(!statObj) glGetProgramInfoLog(programObj, 1000, &len, log);
-		else glGetProgramInfoLog(programText, 1000, &len, log);
+		if(!statObj) glGetProgramInfoLog((*shaderprogs)[0], 1000, &len, log);
+		else glGetProgramInfoLog((*shaderprogs)[1], 1000, &len, log);
 		printf("Error: linking:\n%s\n", log);
 		exit(1);
 	}
@@ -407,21 +401,21 @@ void create_shaders(void)
 	free((void *)srcVertShaderText);
 	free((void *)srcFragShaderText);
 	
-	glBindAttribLocation(programObj, objattr_pos, "pos");
-	glBindAttribLocation(programObj, objattr_color, "objcolor");
-	glLinkProgram(programObj);
-	trn_matrix = glGetUniformLocation(programObj, "translMat");
-	rot_matrix = glGetUniformLocation(programObj, "rotationMat");
-	scl_matrix = glGetUniformLocation(programObj, "scalingMat");
-	objattr_color = glGetUniformLocation(programObj, "objcolor");
+	glBindAttribLocation((*shaderprogs)[0], objattr_pos, "pos");
+	glBindAttribLocation((*shaderprogs)[0], objattr_color, "objcolor");
+	glLinkProgram((*shaderprogs)[0]);
+	trn_matrix = glGetUniformLocation((*shaderprogs)[0], "translMat");
+	rot_matrix = glGetUniformLocation((*shaderprogs)[0], "rotationMat");
+	scl_matrix = glGetUniformLocation((*shaderprogs)[0], "scalingMat");
+	objattr_color = glGetUniformLocation((*shaderprogs)[0], "objcolor");
 	
-	glBindAttribLocation(programText, textattr_coord, "coord");
-	glBindAttribLocation(programText, textattr_texcoord, "textcolor");
-	glBindAttribLocation(programText, textattr_tex, "tex");
-	glBindAttribLocation(programText, textattr_color, "color");
-	glLinkProgram(programText);
-	textattr_tex = glGetUniformLocation(programText, "tex");
-	textattr_color = glGetUniformLocation(programText, "textcolor");
+	glBindAttribLocation((*shaderprogs)[1], textattr_coord, "coord");
+	glBindAttribLocation((*shaderprogs)[1], textattr_texcoord, "textcolor");
+	glBindAttribLocation((*shaderprogs)[1], textattr_tex, "tex");
+	glBindAttribLocation((*shaderprogs)[1], textattr_color, "color");
+	glLinkProgram((*shaderprogs)[1]);
+	textattr_tex = glGetUniformLocation((*shaderprogs)[1], "tex");
+	textattr_color = glGetUniformLocation((*shaderprogs)[1], "textcolor");
 	
 	mat = calloc(16, sizeof(GLfloat));
 	rotx = calloc(16, sizeof(GLfloat));
@@ -430,4 +424,11 @@ void create_shaders(void)
 	rotation = calloc(16, sizeof(GLfloat));
 	scale = calloc(16, sizeof(GLfloat));
 	transl = calloc(16, sizeof(GLfloat));
+	
+	glUniform1i(textattr_tex, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }

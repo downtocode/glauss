@@ -5,8 +5,6 @@
 #include "options.h"
 #include "msg_phys.h"
 
-long double elcharge, gconst, epsno;
-
 /* 
  * Universal function to read the amount of objects/atoms in a molecule
  * Thankfully every standard I've seen uses an atom-per-line structure,
@@ -47,13 +45,13 @@ int readmolecule(char filename[200], data *object, v4sd position, v4sd velocity,
 			object[*i].vel = (v4sd){ velocity[0], velocity[1], velocity[2] };
 			object[*i].charge = 0;
 			if(atom == 'H') {
-				object[*i].charge = 2200*elcharge;
+				object[*i].charge = 2200*option->elcharge;
 				object[*i].ignore = '0';
 				object[*i].mass = 1.0;
 				object[*i].radius = 0.1;
 			}
 			if(atom == 'C') {
-				object[*i].charge = -200*elcharge;
+				object[*i].charge = -200*option->elcharge;
 				object[*i].ignore = '0';
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.3;

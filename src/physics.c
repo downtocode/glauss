@@ -12,14 +12,6 @@
 #define failsafe_cores 2
 #define spring 500
 
-/*	Global vars	*/
-int obj, objcount;
-
-/*	Static vars	*/
-static long double pi;
-static float dt;
-long double gconst, epsno, elcharge;
-
 /*	Indexing of cores = 1, 2, 3...	*/
 pthread_t *threads;
 pthread_attr_t thread_attribs;
@@ -30,15 +22,13 @@ static bool running, quit;
 
 int initphys(data** object)
 {
-	*object = calloc(obj+1,sizeof(data));
-	for(int i = 0; i < obj + 1; i++ ) {
-		(*object)[i].linkwith = calloc(obj+1,sizeof(float));
+	*object = calloc(option->obj+1,sizeof(data));
+	for(int i = 0; i < option->obj + 1; i++ ) {
+		(*object)[i].linkwith = calloc(option->obj+1,sizeof(float));
 	}
 	
 	pprintf(8, "Allocated %lu bytes to object array.\n", \
-	((obj+1)*sizeof(data)+(obj+1)*sizeof(float)));
-	
-	pi = acos(-1);
+	((option->obj+1)*sizeof(data)+(option->obj+1)*sizeof(float)));
 	
 	int online_cores = 0;
 	
@@ -78,14 +68,14 @@ int threadseperate() {
 	 * Split objects equally between cores
 	 * You can deliberatly load the last thread more by deducting a few objects in totcore.
 	 */
-	int totcore = (int)((float)obj/option->avail_cores);
+	int totcore = (int)((float)option->obj/option->avail_cores);
 	for(int k = 1; k < option->avail_cores + 1; k++) {
 		thread_opts[k].threadid = k;
 		thread_opts[k].looplimit1 = thread_opts[k-1].looplimit2 + 1;
 		thread_opts[k].looplimit2 = thread_opts[k].looplimit1 + totcore - 1;
 		if(k == option->avail_cores) {
 			/*	Takes care of rounding problems with odd numbers.	*/
-			thread_opts[k].looplimit2 += obj - thread_opts[k].looplimit2;
+			thread_opts[k].looplimit2 += option->obj - thread_opts[k].looplimit2;
 		}
 		if(thread_opts[k].looplimit2 != 0)
 			pprintf(PRI_MEDIUM, "Thread %i's objects = [%u,%u]\n", \
@@ -98,23 +88,22 @@ int threadcontrol(int status, data** object)
 {
 	/*	Codes: 0 - unpause, 1-pause, 2-return status, 8 -start, 9 - destroy	*/
 	if(status == 1 && running == 0) {
-		dt = option->dt;
+		for(int k = 1; k < option->avail_cores + 1; k++) thread_opts[k].dt = option->dt;
 		running = 1;
 		pthread_mutex_unlock(&movestop);
 	} else if(status == 0 && running == 1) {
-		dt = option->dt;
 		running = 0;
 		pthread_mutex_lock(&movestop);
 	} else if(status == 2) {
 		return running;
 	} else if(status == 8) {
-		dt = option->dt;
 		threadseperate();
 		pthread_mutex_init(&movestop, NULL);
 		pthread_barrier_init(&barrier, NULL, option->avail_cores);
 		running = 1;
 		for(int k = 1; k < option->avail_cores + 1; k++) {
 			if(thread_opts[k].obj != NULL) continue;
+			thread_opts[k].dt = option->dt;
 			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
 		}
@@ -139,6 +128,9 @@ void *resolveforces(void *arg) {
 	v4sd vecnorm, accprev, Ftot, grv, ele, flj, link;
 	double mag, grvmag, elemag, fljmag, springmag;
 	
+	long double pi = acos(-1);
+	long double gconst = option->gconst, epsno = option->epsno;
+	
 	pthread_getcpuclockid(pthread_self(), &thread->clockid);
 	
 	while(!quit) {
@@ -155,7 +147,7 @@ void *resolveforces(void *arg) {
 				if(thread->obj[i].pos[2] - thread->obj[i].radius < -50 || thread->obj[i].pos[2] + thread->obj[i].radius > 50) {
 					thread->obj[i].vel[2] = -thread->obj[i].vel[2];
 				}
-			thread->obj[i].pos += (thread->obj[i].vel*(v4sd){dt,dt,dt}) + (thread->obj[i].acc)*(v4sd){((dt*dt)/2),((dt*dt)/2),((dt*dt)/2)};
+			thread->obj[i].pos += (thread->obj[i].vel*(v4sd){thread->dt,thread->dt,thread->dt}) + (thread->obj[i].acc)*(v4sd){((thread->dt*thread->dt)/2),((thread->dt*thread->dt)/2),((thread->dt*thread->dt)/2)};
 		}
 		
 		pthread_mutex_lock(&movestop);
@@ -163,7 +155,7 @@ void *resolveforces(void *arg) {
 		pthread_barrier_wait(&barrier);
 		
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
-			for(int j = 1; j < obj + 1; j++) {
+			for(int j = 1; j < option->obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
 				mag = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
@@ -186,7 +178,7 @@ void *resolveforces(void *arg) {
 			Ftot += ele + grv + link + flj;
 			accprev = thread->obj[i].acc;
 			thread->obj[i].acc = (Ftot)/(v4sd){thread->obj[i].mass,thread->obj[i].mass,thread->obj[i].mass};
-			thread->obj[i].vel += (thread->obj[i].acc + accprev)*(v4sd){((dt)/2),((dt)/2),((dt)/2)};
+			thread->obj[i].vel += (thread->obj[i].acc + accprev)*(v4sd){((thread->dt)/2),((thread->dt)/2),((thread->dt)/2)};
 			Ftot = ele = grv = flj = link = (v4sd){0,0,0};
 		}
 		if((long)arg == 1) thread->processed++;

@@ -7,8 +7,9 @@ struct option_struct {
 	float dt;
 	long sleepfor;
 	long double elcharge, gconst, epsno;
+	unsigned int obj;
 	unsigned short int avail_cores, oglmin, oglmax, verbosity;
 	int width, height;
-	bool vsync, novid, fullogl;
+	bool vsync, novid, fullogl, moderandom;
 	char fontname[200], filename[200];
 };
