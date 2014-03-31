@@ -128,8 +128,8 @@ int preparser()
 				sscanf(str, "#!%s %s", moltype, molname);
 				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
 				if(access(molfile, F_OK) == 0) {
-					int atoms = probefile(molfile);
-					pprintf(9, "File \"%s\" has %i atoms\n", molfile, atoms);
+					int atoms = probefile(molfile, moltype);
+					pprintf(5, "File \"%s\" has %i atoms\n", molfile, atoms);
 					count += atoms;
 				} else {
 					fprintf(stderr, "File \"%s\" not found!\n", molfile);
@@ -192,7 +192,7 @@ int parser(data** object, char filename[200])
 			if(strstr(str, "#!") != NULL) {
 				sscanf(str, "#!%s %s %f %f %f %f %f %f", moltype, molname, &posx, &posy, &posz, &velx, &vely, &velz);
 				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
-				readmolecule(molfile, *object, (v4sd){ posx, posy, posz }, (v4sd){ velx, vely, velz }, &i);
+				readmolecule(molfile, moltype, *object, (v4sd){ posx, posy, posz }, (v4sd){ velx, vely, velz }, &i);
 			}
 		}
 	} else {
