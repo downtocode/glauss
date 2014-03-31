@@ -21,18 +21,21 @@ All are available on any up-to-date Linux distribution's package repositories. O
 Running
 -------
 Run the executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS). You can run `make rem` to remove all XYZ files in the current directory or `make clean` to remove them along with the program and compiled files.
+Support for gcc versions older than 4.8 and clang versions older than 3.3 will be removed once version 0.1 is released. Tons of simplifications will be made once that happens. The current recommended compiler is **Clang 3.3** due to the fact it supports double precision vectors and will use them. GCC also supports such, however due to poor performance they are disabled. See the comments in ./src/physics.h for the details.
 
 Controls
 --------
 Button | Action
 -------|-------
 **LMB**      | Drag to rotate camera.
-**MMB**      | Drag to translate camera.
-**[ and ]**  | Increase/decrease time constant.
+**MSCROLL**  | Control zoom.
+**MMB**      | Drag to translate camera, deselects object.
+**[ and ]**  | Increase/decrease time constant. Pause/unpause to put into effect.
 **1 and 2**  | Select previous/next object.
-**r**        | Reset view.
+**r**        | Reset view and deseclect object.
 **z**        | Dump entire system to an XYZ file.
-**Spacebar** | Pause.
+**Spacebar** | Pause/unpause.
+**Esc**      | Quit the program. If running inside terminal with --novid, use Ctrl+C.
 
 Command line arguments
 ----------------------
@@ -45,7 +48,6 @@ Argument | Action
 **--fullogl** | Initialize full OpenGL instead of ES. Look in simconf.conf to change versions.
 **--nosync** | Disables vertical synchronization.
 **--verb (uint)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
-**--quiet** | Suppresses all informational messages. Errors are still printed to stderr.
 **--help** | Print possible arguments and exit.
 
 simconf.conf
@@ -54,7 +56,7 @@ This file contains the program configuration. Most of the settings have self-exp
 
 posdata.dat
 -----------
-This file determines the properties of all the objects to be simulated. The comment at the top describes the correct order and structure. Object numbers **must** be sequential, starting from 1. The argument `-f (filename)` overrides the filename in simconf.conf, however, the program will fall back on the configuration file should no such filename exists. If both filenames do not exist, the program will exit with a return value of 1. Currently, no error checking is present for this file, therefore should the physics engine misbehave, inspect both the objects table printed on the terminal and your posdata file. In case nothing appears to be wrong, file an [issue][issue-tracker].
+This file determines the properties of all the objects to be simulated. The comment at the top describes the correct order and structure. Object numbers **must** be sequential, starting from 1. The argument `-f (filename)` overrides the filename in simconf.conf, however, the program will fall back on the configuration file should no such filename exists. If both filenames do not exist, the program will exit with a return value of 1. Currently, no error checking is present for this file, therefore should the physics engine misbehave, inspect both the objects table printed on the terminal and your posdata file. In case nothing appears to be wrong, file a bug report with the file.
 
 Contacts
 -------
