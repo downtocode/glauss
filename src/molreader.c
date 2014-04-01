@@ -7,8 +7,8 @@
 #include "msg_phys.h"
 
 int probefile(char filename[200], char moltype[20]) {
-	int counter = 0;
 	char str[500];
+	int counter = 0;
 	FILE *inprep = fopen(filename, "r");
 	
 	/* 
@@ -21,7 +21,11 @@ int probefile(char filename[200], char moltype[20]) {
 		sscanf(str, "%i", &counter);
 		return counter;
 	} else if(strstr(moltype, "pdb")!=NULL) {
-		while(fgets (str, sizeof(str), inprep)!= NULL) counter++;
+		while(fgets (str, sizeof(str), inprep)!= NULL) {
+			if(strstr(str, "ATOM")!=NULL) {
+				counter++;
+			}
+		}
 		return counter;
 	}
 	return 0;
@@ -30,29 +34,30 @@ int probefile(char filename[200], char moltype[20]) {
 int readmolecule(char filename[200], char moltype[20], data *object, v4sd position, v4sd velocity, int *i) {
 	char str[500], atom, pdbtype[10], pdbatomname[10], pdbresidue[10], pdbreschain;
 	v4sd dist;
-	int start = *i + 1, pdbatomindex, pdbresidueseq;
-	float xpos, ypos, zpos, mag, pdboccupy, pdbtemp;
+	int filetype, start = *i + 1, pdbatomindex, pdbresidueseq;
+	float xpos, ypos, zpos, mag, pdboccupy, pdbtemp, pdboffset;
 	FILE *inpars = fopen(filename, "r");
 	
 	/* Put format specific quirks here. */
 	if(strstr(moltype, "xyz")!=NULL) {
+		filetype = MOL_XYZ;
 		/* Skip first two lines of XYZ files. */
 		fgets(str, sizeof(str), inpars);
 		fgets(str, sizeof(str), inpars);
+	} else if(strstr(moltype, "pdb")!=NULL) {
+		filetype = MOL_PDB;
 	}
 	
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
 		if(strstr(str, "#") == NULL) {
 			*i = *i + 1;
-			if(strstr(moltype, "xyz")!=NULL) {
+			if(filetype == MOL_XYZ) {
 				sscanf(str, " %c  %f         %f         %f", &atom, &xpos, &ypos, &zpos);
-			} else if(strstr(moltype, "pdb")!=NULL) {
-				sscanf(str, "%s      %i  %s   %s %c   %i      %f  %f  %f  %f  %f           %c  ",\
-						pdbtype, &pdbatomindex, pdbatomname, pdbresidue, &pdbreschain, &pdbresidueseq,\
-						&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp, &atom);
-				if(strstr(pdbtype, "ATOM")==NULL) {
-					fprintf(stderr, "Sorry, PDB files containing only ATOM types are supported right now.\n");
-					exit(1);
+			} else if(filetype == MOL_PDB) {
+				if(strstr(str, "ATOM")!=NULL) {
+					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %c %f",\
+							pdbtype, &pdbatomindex, pdbatomname, pdbresidue, &pdbreschain, &pdbresidueseq,\
+							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp, &atom, &pdboffset);
 				}
 			}
 			object[*i].index = *i;
@@ -90,7 +95,6 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 				mag = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2]);
 				if(object[y].atom == 'C' && mag < 1.45) object[z].linkwith[y] = mag;
 			}
-			
 			if(object[z].linkwith[y] != 0) {
 				pprintf(PRI_SPAM, "%i - %f, ", z, object[z].linkwith[y]);
 			}
