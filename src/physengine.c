@@ -61,6 +61,10 @@ int main(int argc, char *argv[])
 				if(!strcmp( "--fullogl", argv[i])) {
 					option->fullogl = 1;
 				}
+				if(!strcmp( "--log", argv[i])) {
+					option->logenable = 1;
+					option->logfile = fopen("physengine.log", "w");
+				}
 				if(!strcmp("--threads", argv[i])) {
 					sscanf(argv[i+1], "%hu", &option->avail_cores);
 					if(option->avail_cores == 0) {
@@ -83,6 +87,7 @@ int main(int argc, char *argv[])
 					printf("	--fullogl 		Initialize full OpenGL instead of ES.\n");
 					printf("	--threads (int)		Make the program run with this many threads.\n");
 					printf("	--verb (uint)		Set how much to output to stdout. Def. 5\n"); 
+					printf("	--log 		Log all output at current verbose level to physengine.log.\n");
 					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
 					printf("	--help  		What you're reading.\n");
 					return 0;
@@ -341,6 +346,7 @@ int main(int argc, char *argv[])
 		free(shaderprogs);
 		free(option);
 		free(object);
+		if(option->logenable) fclose(option->logfile);
 		printf("success!\n");
 		return 0;
 }

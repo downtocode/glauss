@@ -10,6 +10,7 @@ struct option_struct {
 	unsigned int obj;
 	unsigned short int avail_cores, oglmin, oglmax, verbosity;
 	int width, height;
-	bool vsync, novid, fullogl, moderandom;
+	bool vsync, novid, fullogl, moderandom, logenable;
 	char fontname[200], filename[200];
+	FILE *logfile;
 };

@@ -8,9 +8,14 @@
 void pprintf(unsigned int priority, const char *format, ...)
 {
 	va_list args;
-	va_start(args, format);
 	if(priority <= option->verbosity) {
-		vprintf (format, args);
+		va_start(args, format);
+		vprintf(format, args);
+		va_end(args);
+		if(option->logenable) {
+			va_start(args, format);
+			vfprintf(option->logfile, format, args);
+			va_end(args);
+		}
 	}
-	va_end(args);
 }

@@ -23,6 +23,7 @@ $(PROGRAM): $(OBJS)
 
 clean:
 	@${DELETE_PROG}
+	rm *.log
 	rm -rf $(OBJS) $(PROGRAM)
 ifneq (,$(wildcard *.xyz))
 	rm *.xyz
@@ -36,6 +37,7 @@ endif
 rem:
 ifneq (,$(wildcard *.xyz))
 	rm *.xyz
+	rm *.log
 	@${DELETE_XYZ}
 else 
 	@${DELETE_NO}
