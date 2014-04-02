@@ -5,6 +5,7 @@
 #include "molreader.h"
 #include "options.h"
 #include "msg_phys.h"
+#include "elements.h"
 
 int probefile(char filename[200], char moltype[20]) {
 	char str[500];
@@ -32,7 +33,7 @@ int probefile(char filename[200], char moltype[20]) {
 }
 
 int readmolecule(char filename[200], char moltype[20], data *object, v4sd position, v4sd velocity, int *i) {
-	char str[500], atom, pdbtype[10], pdbatomname[10], pdbresidue[10], pdbreschain;
+	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10], pdbreschain;
 	v4sd dist;
 	int filetype, start = *i + 1, pdbatomindex, pdbresidueseq;
 	float xpos, ypos, zpos, mag, pdboccupy, pdbtemp, pdboffset;
@@ -52,23 +53,24 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 		if(strstr(str, "#") == NULL) {
 			*i = *i + 1;
 			if(filetype == MOL_XYZ) {
-				sscanf(str, " %c  %f         %f         %f", &atom, &xpos, &ypos, &zpos);
+				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos, &zpos);
 			} else if(filetype == MOL_PDB) {
 				if(strstr(str, "ATOM")!=NULL) {
-					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %c %f",\
+					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",\
 							pdbtype, &pdbatomindex, pdbatomname, pdbresidue, &pdbreschain, &pdbresidueseq,\
-							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp, &atom, &pdboffset);
+							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp, atom, &pdboffset);
 				}
 			}
+			object[*i].atomnumber = return_atom_num(atom);
 			object[*i].index = *i;
 			object[*i].pos = (v4sd){ xpos + position[0], ypos + position[1], zpos + position[2] };
 			object[*i].vel = (v4sd){ velocity[0], velocity[1], velocity[2] };
-			if(atom == 'H') {
+			if(object[*i].atomnumber == 1) {
 				object[*i].charge = 2200*option->elcharge;
 				object[*i].ignore = '0';
 				object[*i].mass = 1.0;
 				object[*i].radius = 0.1;
-			} else if(atom == 'C') {
+			} else if(object[*i].atomnumber == 6) {
 				object[*i].charge = -200*option->elcharge;
 				object[*i].ignore = '0';
 				object[*i].mass = 12.0;
@@ -78,8 +80,8 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 				object[*i].ignore = '0';
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.3;
+				object[*i].atomnumber = 0;
 			}
-			object[*i].atom = atom;
 		}
 	}
 	/*
@@ -90,10 +92,19 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 		object[z].pos[0], object[z].pos[1], object[z].pos[2], object[z].vel[0], object[z].vel[1], \
 		object[z].vel[2], object[z].mass, object[z].charge, object[z].radius, object[z].ignore);
 		for(int y = start; y < *i + 1; y++) {
-			if(atom != '0') {
-				dist = object[y].pos - object[z].pos;
-				mag = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2]);
-				if(object[y].atom == 'C' && mag < 1.45) object[z].linkwith[y] = mag;
+			dist = object[y].pos - object[z].pos;
+			mag = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2]);
+			if(object[z].atomnumber == 6) {
+				if(object[y].atomnumber == 6 && mag < 1.45) {
+					object[z].linkwith[y] = mag;
+					//object[y].linkwith[z] = mag;
+				}
+			}
+			if(object[z].atomnumber == 1) {
+				if(object[y].atomnumber == 6 && mag < 1.45) {
+					object[z].linkwith[y] = mag;
+					//object[y].linkwith[z] = mag;
+				}
 			}
 			if(object[z].linkwith[y] != 0) {
 				pprintf(PRI_SPAM, "%i - %f, ", z, object[z].linkwith[y]);

@@ -9,6 +9,7 @@
 #include "options.h"
 #include "molreader.h"
 #include "msg_phys.h"
+#include "elements.h"
 
 /*	Static variables	*/
 static float velmax, massrand, chargerand, sizerand;
@@ -169,7 +170,7 @@ int parser(data** object, char filename[200])
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*option->elcharge;
 				(*object)[i].ignore = ignflag;
-				(*object)[i].atom = '0';
+				(*object)[i].atomnumber = 0;
 				(*object)[i].radius = radius;
 				
 				pprintf(PRI_SPAM, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c | ", \
@@ -206,6 +207,7 @@ int parser(data** object, char filename[200])
 			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*option->elcharge*2;
 			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
 			(*object)[i].ignore = '0';
+			(*object)[i].atomnumber = 0;
 		}
 	}
 	fclose(in);

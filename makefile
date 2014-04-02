@@ -22,14 +22,17 @@ $(PROGRAM): $(OBJS)
 .PHONY: all clean
 
 clean:
-	@${DELETE_PROG}
-	rm *.log
+ifneq (,$(wildcard physengine))
 	rm -rf $(OBJS) $(PROGRAM)
+	@${DELETE_PROG}
+endif
 ifneq (,$(wildcard *.xyz))
 	rm *.xyz
 	@${DELETE_XYZ}
-else 
-	@${DELETE_NO}
+endif
+ifneq (,$(wildcard *.log))
+	rm *.log
+	@${DELETE_LOG}
 endif
 
 .PHONY: all rem
@@ -37,10 +40,11 @@ endif
 rem:
 ifneq (,$(wildcard *.xyz))
 	rm *.xyz
-	rm *.log
 	@${DELETE_XYZ}
-else 
-	@${DELETE_NO}
+endif
+ifneq (,$(wildcard *.log))
+	rm *.log
+	@${DELETE_LOG}
 endif
 
 COMPILE_STATUS = printf "[K[33mCompiling [1m$<(B[m[33m...(B[m\r"
@@ -48,5 +52,5 @@ COMPILE_OK = printf "[K[32mSuccessfully compiled [1m$<(B[m[32m.(B[m\n"
 LINK_STATUS = printf "[K[33mLinking [1m$@(B[m[33m...(B[m\r"
 LINK_OK = printf "[K[32mSuccessfully linked [1m$@(B[m[32m.(B[m\n"
 DELETE_XYZ = printf "[K[31mDeleted *.xyz files.(B[m\n"
+DELETE_LOG = printf "[K[31mDeleted *.log files.(B[m\n"
 DELETE_PROG = printf "[K[33mCleaning up...(B[m\n"
-DELETE_NO = printf "[K[33mNo .xyz files to delete.(B[m\n"

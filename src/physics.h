@@ -28,8 +28,9 @@ typedef struct {
 	v4sd pos, vel, acc;
 	long double mass, charge;
 	float radius, *linkwith;
-	char ignore, atom;
+	char ignore;
 	unsigned int index;
+	unsigned short int atomnumber;
 } data;
 
 struct thread_settings {
