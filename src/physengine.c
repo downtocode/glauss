@@ -15,6 +15,7 @@
 #include "toxyz.h"
 #include "options.h"
 #include "msg_phys.h"
+#include "elements.h"
 
 int main(int argc, char *argv[])
 {
@@ -160,6 +161,7 @@ int main(int argc, char *argv[])
 		/*	Mallocs and wipes	*/
 		initphys(&object);
 		char threadtime[option->avail_cores][100];
+		init_elements();
 		parser(&object, option->filename);
 	/*	Physics.	*/
 	

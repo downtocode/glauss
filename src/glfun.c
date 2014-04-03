@@ -6,6 +6,7 @@
 #include "physics.h"
 #include "parser.h"
 #include "options.h"
+#include "elements.h"
 
 #define maxcharge 2200
 #define numshaders 2
@@ -199,12 +200,7 @@ void drawobject(data object)
 	int pointcount = 0;
 	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
 	
-	GLfloat gencolor[4] = {0.0f,0.0f,0.0f,1.0f};
-	if(object.charge > 0) gencolor[0] = (object.charge/option->elcharge)/maxcharge;
-	if(object.charge < 0) gencolor[2] = (object.charge/option->elcharge)/maxcharge + 0.7;
-	if(object.charge == 0) memset(gencolor, 1.0f, sizeof(gencolor));
-	glUniform4fv(objattr_color, 1, gencolor);
-	
+	glUniform4fv(objattr_color, 1, atom_prop[object.atomnumber].color);
 	
 	for(float i = 0; i < pi; i+=dj) {
 		for(float j = 0; j < 2*pi; j+=dj) {
@@ -216,7 +212,7 @@ void drawobject(data object)
 	}
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, gencolor);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, atom_prop[object.atomnumber].color);
 	glEnableVertexAttribArray(objattr_pos);
 	glEnableVertexAttribArray(objattr_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
@@ -225,7 +221,7 @@ void drawobject(data object)
 	
 	glDisableVertexAttribArray(objattr_pos);
 	glDisableVertexAttribArray(objattr_color);
-	if(object.charge != 0) glUniform4fv(objattr_color, 1, gencolor);
+	glUniform4fv(objattr_color, 1, textcolor);
 }
 
 void drawlinks(data* object)
