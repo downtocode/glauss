@@ -6,44 +6,35 @@ int init_elements() {
 	atom_prop = calloc(120, sizeof(struct atomic_cont));
 	short unsigned int index;
 	long double mass;
-	char str[500];
-	float colR, colG, colB, colA;
+	char str[500], name[2];
+	int colR, colG, colB, colA;
 	FILE *inelements = fopen("./resources/elements.conf", "r");
 	while(fgets (str, sizeof(str), inelements)!=NULL) {
 		if (strstr(str, "#") == NULL) {
-			sscanf(str, "index=%hi; mass=%Lf; color={%f, %f, %f, %f};", &index, &mass, &colR, &colG, &colB, &colA);
+			sscanf(str, "index=%hi; mass=%Lf; color={%i, %i, %i, %i}; name=%s", \
+						&index, &mass, &colR, &colG, &colB, &colA, name);
 			atom_prop[index].mass = mass;
-			atom_prop[index].color[0] = colR;
-			atom_prop[index].color[1] = colG;
-			atom_prop[index].color[2] = colB;
-			atom_prop[index].color[3] = colA;
-			printf("Color %i = %f, %f, %f, %f\n", index, colR, colG, colB, colA);
+			strcpy(atom_prop[index].name, name);
+			atom_prop[index].color[0] = (float)colR/255;
+			atom_prop[index].color[1] = (float)colG/255;
+			atom_prop[index].color[2] = (float)colB/255;
+			atom_prop[index].color[3] = (float)colA/255;
+			printf("Color %i, Name %s, Mass %Lf = %i, %i, %i, %i\n", index, name, mass, colR, colG, colB, colA);
 		}
 	}
 	fclose(inelements);
 	return 0;
 }
 
+/*
+ * Used only in molreader.c and parser.c, before the physics have even initialized.
+ * We can afford to waste time looping through all.
+ */
 unsigned short int return_atom_num(char element[2]) {
-	if(strcmp(element, "H")==0) return 1;
-	if(strcmp(element, "HE")==0) return 2;
-	if(strcmp(element, "LI")==0) return 3;
-	if(strcmp(element, "BE")==0) return 4;
-	if(strcmp(element, "B")==0) return 5;
-	if(strcmp(element, "C")==0) return 6;
-	if(strcmp(element, "N")==0) return 7;
-	if(strcmp(element, "O")==0) return 8;
-	if(strcmp(element, "F")==0) return 9;
-	if(strcmp(element, "NE")==0) return 10;
-	if(strcmp(element, "NA")==0) return 11;
-	if(strcmp(element, "MG")==0) return 12;
-	if(strcmp(element, "AL")==0) return 13;
-	return 0;
-}
-
-int return_atom_char(char *element, unsigned short int index) {
-	if(index == 0) sprintf(element, "0");
-	if(index == 1) sprintf(element, "H");
-	if(index == 6) sprintf(element, "C");
+	for(int i=1; i<121; i++) {
+		if(strcmp(element, atom_prop[i].name) == 0) {
+			return i;
+		}
+	}
 	return 0;
 }

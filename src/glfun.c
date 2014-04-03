@@ -289,7 +289,7 @@ void selected_box_text(data object) {
 	};
 
 	char osdstr[500];
-	sprintf(osdstr, "Object %i", object.index);
+	sprintf(osdstr, "ID=%i Atom=%s", object.index, atom_prop[object.atomnumber].name);
 	
 	render_text(osdstr, objpoint[0] + object.radius*scale[5], \
 	objpoint[1] + object.radius*scale[5], 1.0/option->width, 1.0/option->height, 0);
