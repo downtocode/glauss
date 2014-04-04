@@ -20,5 +20,7 @@ physengine
 # Junk files
 ./*.xyz
 ./*.log
+.deps
+.deps/*
 .directory
 core.*
