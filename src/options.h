@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov
+ * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <stdbool.h>
-#define revision "physengine"
 
 struct option_struct* option;
 

@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov
+ * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 /*	Standard header files	*/
 #include <stdio.h>
 #include <stdarg.h>
@@ -26,6 +27,7 @@
 #include <SDL2/SDL.h>
 
 /*	Functions	*/
+#include "../config.h"
 #include "physics.h"
 #include "parser.h"
 #include "glfun.h"
@@ -97,7 +99,7 @@ int main(int argc, char *argv[])
 					sscanf(argv[i+1], "%hu", &option->verbosity);
 				}
 				if( !strcmp("--help", argv[i])) {
-					printf("%s\n", revision);
+					printf("%s\n", PACKAGE_STRING);
 					printf("Usage:\n");
 					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
 					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
@@ -132,7 +134,7 @@ int main(int argc, char *argv[])
 			if(!option->fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, option->oglmin);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, option->oglmax);
-			window = SDL_CreateWindow(revision, \
+			window = SDL_CreateWindow(PACKAGE, \
 				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width, option->height, \
 				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|SDL_WINDOW_ALLOW_HIGHDPI);
 			resize_wind();
