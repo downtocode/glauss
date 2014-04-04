@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
 			.dt = 0.008, .vsync = 1, .verbosity = 5,
 		};
-		strcpy(option->filename,"nanotubes.dat");
+		strcpy(option->filename,"posdata.dat");
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
 	
