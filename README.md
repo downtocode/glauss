@@ -14,7 +14,13 @@ Dependencies:
  * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2) 
  * SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)
 
-All are available on any up-to-date Linux distribution's package repositories. Once all the dependencies are satisfied, run make in this directory to compile. An executable named physengine will be created.
+All are available on any up-to-date Linux distribution's package repositories. To compile, do the standard:
+
+`./autogen.sh`
+
+`./configure`
+
+`make`
 
 Running
 -------
