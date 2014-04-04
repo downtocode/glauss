@@ -3,7 +3,7 @@
 #Format: %f %f %f %f %f %f %Lf %Lf %f %c \"%s\"
 #Use "#""!"(data format) (molecule name inside the resource folder) to insert molecules.
 #Molecules must be inserted after the very last object.
-0.1 0.1 0 0 0 0 10.4 300 0.4 0 "0"
+#0.1 0.1 0 0 0 0 10.4 300 0.4 0 "0"
 2 2 2 0 0 0 1.4 4600 0.4 0 "0"
 #-0.01 -0.01 0 0 0 0 1.4 100 0.05 0 "0"
 #-0.01 0.01 0 0 0 0 1.4 100 0.05 0 "0"
@@ -11,6 +11,7 @@
 #0.02 -0.02 0 0 0 0 1.4 100 0.05 0 "0"
 #-0.02 -0.02 0 0 0 0 1.4 100 0.05 0 "0"
 #-0.02 0.02 0 0 0 0 1.4 100 0.05 0 "0"
-#!pdb ala_ala
-#!xyz nanotube 0 0 0 0 0 0
-#!xyz benzene 0 0 0 0 0 0
+#pdb 1HBG 0 0 0 0 0 0
+#!pdb 1SOP 0 0 0 0 0 0
+#xyz nanotube 0 0 0 0 0 0
+#xyz benzene 0 0 0 0 0 0

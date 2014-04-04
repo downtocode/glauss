@@ -1,3 +1,20 @@
+/*
+ * This file is part of physengine.
+ * Copyright (c) 2012 Rostislav Pehlivanov
+ * 
+ * physengine is free software: you can redistribute it and/or modify *
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * physengine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /*	Standard header files	*/
 #include <stdio.h>
 #include <stdarg.h>
@@ -38,12 +55,12 @@ int main(int argc, char *argv[])
 		struct timespec ts;
 		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0;
 		static volatile float fps = 0.0;
-		unsigned int frames = 0, chosen = 0, dumplevel = 0;
+		unsigned int frames = 0, chosen = 0, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0";
-		bool flicked = 0, translate = 0;
-		GLfloat view_rotx, view_roty, view_rotz, scalefactor = 0.09;
-		GLfloat tr_x, tr_y, tr_z;
+		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 1, dumplevel = 0;
+		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.04;
+		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 		GLuint* shaderprogs;
 	/*	Main function vars	*/
 	
@@ -73,8 +90,8 @@ int main(int argc, char *argv[])
 						return 1;
 					}
 				}
-				if(!strcmp("--dumplevel", argv[i])) {
-					sscanf(argv[i+1], "%u", &dumplevel);
+				if(!strcmp("--dump", argv[i])) {
+					dumplevel = 1;
 				}
 				if(!strcmp("--verb", argv[i])) {
 					sscanf(argv[i+1], "%hu", &option->verbosity);
@@ -89,7 +106,7 @@ int main(int argc, char *argv[])
 					printf("	--threads (int)		Make the program run with this many threads.\n");
 					printf("	--verb (uint)		Set how much to output to stdout. Def. 5\n"); 
 					printf("	--log 		Log all output at current verbose level to physengine.log.\n");
-					printf("	--dumplevel (uint)		Set the dumplevel. 1=XYZ file every second. 2=every frame.\n"); 
+					printf("	--dump		Dump entire system to an XYZ file every second.\n"); 
 					printf("	--help  		What you're reading.\n");
 					return 0;
 				}
@@ -104,11 +121,10 @@ int main(int argc, char *argv[])
 			return 1;
 		} else sprintf(osdobj, "Objects = %i", option->obj);
 		if(dumplevel) printf("Outputting XYZ file every second.\n");
-		if(dumplevel == 2) fprintf(stderr, "Printing XYZ file every frame!\n");
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint textvbo, linevbo, axisvbo, pointvbo, linkvbo;
+		GLuint textvbo, pointvbo;
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(option->novid == 0) {
@@ -128,10 +144,7 @@ int main(int argc, char *argv[])
 			glDepthFunc(GL_LEQUAL);
 			glActiveTexture(GL_TEXTURE0);
 			glGenBuffers(1, &textvbo);
-			glGenBuffers(1, &linevbo);
-			glGenBuffers(1, &axisvbo);
 			glGenBuffers(1, &pointvbo);
-			glGenBuffers(1, &linkvbo);
 			glClearColor(0.12, 0.12, 0.12, 1);
 			pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
@@ -161,13 +174,13 @@ int main(int argc, char *argv[])
 		/*	Mallocs and wipes	*/
 		initphys(&object);
 		char threadtime[option->avail_cores][100];
-		init_elements();
+		if(!init_elements()) pprintf(7, "Successfully read ./resources/elements.conf!\n");
 		parser(&object, option->filename);
 	/*	Physics.	*/
 	
 	gettimeofday (&t1 , NULL);
 	
-	threadcontrol(8, &object);
+	threadcontrol(PHYS_START, &object);
 	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
@@ -216,8 +229,8 @@ int main(int argc, char *argv[])
 						printf("dt = %f\n", option->dt);
 					}
 					if(event.key.keysym.sym==SDLK_SPACE) {
-						if(threadcontrol(2, &object)) threadcontrol(0, &object);
-						else threadcontrol(1, &object);
+						if(threadcontrol(PHYS_STATUS, &object)) threadcontrol(PHYS_PAUSE, &object);
+						else threadcontrol(PHYS_UNPAUSE, &object);
 					}
 					if(event.key.keysym.sym==SDLK_r) {
 						view_roty = view_rotx = view_rotz = 0.0;
@@ -234,24 +247,34 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_1) {
 						if(chosen > 0) chosen--;
 					}
+					if(event.key.keysym.sym==SDLK_TAB) {
+						if(drawlinks && drawobj) drawobj = 0;
+						else if(drawlinks) {
+							drawlinks = 0;
+							drawobj = 1;
+						} else if(drawobj)
+							drawlinks = 1;
+					}
 					break;
 				case SDL_QUIT:
 					goto quit;
 					break;
 			}
 		}
-		timestep = thread_opts[1].processed*option->dt;
-		gettimeofday(&t2, NULL);
-		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
-		t1 = t2;
-		totaltime += deltatime;
-		frames++;
+		
+		{
+			timestep = thread_opts[1].processed*option->dt;
+			gettimeofday(&t2, NULL);
+			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
+			t1 = t2;
+			totaltime += deltatime;
+			frames++;
+		}
 		if (totaltime >  1.0f) {
-			if(dumplevel == 1) toxyz(option->obj, object, timestep);
 			fps = frames/totaltime;
-			sprintf(osdfps, "FPS = %3.2f", fps);
 			totaltime = frames = 0;
 			
+			if(dumplevel) toxyz(option->obj, object, timestep);
 			pprintf(PRI_VERYLOW, "Progressed %0.2f timeunits.\n", timestep);
 			
 			for(int i = 1; i < option->avail_cores + 1; i++) {
@@ -278,69 +301,60 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-		
 		glUseProgram(shaderprogs[0]);
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		adjust_rot(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
 		
-		/*	Link drawing	*/
-		glBindBuffer(GL_ARRAY_BUFFER, linkvbo);
-		drawlinks(object);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Link drawing	*/
-		
-		/*	Point/object drawing	*/
+		/*	Dynamic drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
-		for(int i = 1; i < option->obj+1; i++) drawobject(object[i]);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Point/object drawing	*/
-		
-		/*	Axis drawing	*/
-		glBindBuffer(GL_ARRAY_BUFFER, axisvbo);
+		for(int i = 1; i < option->obj+1; i++) {
+			if(drawlinks)  draw_obj_links(object, i);
+			if(drawobj) drawobject(object[i]);
+		}
 		drawaxis();
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Axis drawing	*/
+		/*	Dynamic drawing	*/
+		
 		
 		glUseProgram(shaderprogs[1]);
 		
-		/*	Selected object's red box	*/
-		glBindBuffer(GL_ARRAY_BUFFER, linevbo);
+		/*	Static drawing	*/
+		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
 		if(chosen != 0) {
 			selected_box_text(object[chosen]);
 			tr_x = -object[chosen].pos[0];
 			tr_y = -object[chosen].pos[1];
 			tr_z = -object[chosen].pos[2];
 		}
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Selected object's red box	*/
 		
-		/*	Text drawing	*/
-		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		unsigned int fpscolor = GL_WHITE;
-		if(fps < 25) fpscolor = GL_RED;
-		if(fps >= 25 && fps < 48) fpscolor = GL_BLUE;
-		if(fps >= 48) fpscolor = GL_GREEN;
-		render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
+		{
+			if(fps < 25) fpscolor = GL_RED;
+			else if(fps < 48) fpscolor = GL_BLUE;
+			else fpscolor = GL_GREEN;
+			sprintf(osdfps, "FPS = %3.2f", fps);
+			render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
+		}
 		
 		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
 		sprintf(osdtime, "Timestep = %0.2f", timestep);
 		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
-		if(!threadcontrol(2, &object)) render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);
+		if(!threadcontrol(PHYS_STATUS, &object))
+			render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);
 		
-		for(int i = 1; i < option->avail_cores + 1; i++) {
-			render_text(threadtime[i], 0.76, 0.95-((float)i/13), 0.75/option->width, 0.75/option->height, GL_WHITE);
-		}
+		for(int i = 1; i < option->avail_cores + 1; i++) 
+			render_text(threadtime[i], 0.76, 0.95-((float)i/14), 0.75/option->width, 0.75/option->height, GL_WHITE);
+		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Text drawing	*/
+		/*	Static drawing	*/
 		
 		SDL_GL_SwapWindow(window);
 	}
 	
 	quit:
 		printf("Quitting... ");
-		threadcontrol(9, &object);
+		threadcontrol(PHYS_SHUTDOWN, &object);
 		FT_Done_Face(face);
 		FT_Done_FreeType(library);
 		SDL_DestroyWindow(window);

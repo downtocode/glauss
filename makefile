@@ -5,7 +5,7 @@ OBJS=$(subst .c,.o,$(SOURCES))
 CC=cc
 PROGRAM=physengine
 LDFLAGS=-lm -pthread -lGLESv2 `freetype-config --libs` `sdl2-config --libs`
-CFLAGS=-Wall -pthread -pedantic -std=gnu99 -march=native `freetype-config --cflags` `sdl2-config --cflags` -O3 -g
+CFLAGS=-Wall -pthread -pedantic -std=gnu99 -march=native `freetype-config --cflags` `sdl2-config --cflags` -O2 -g
 
 all: $(PROGRAM)
 
@@ -22,9 +22,12 @@ $(PROGRAM): $(OBJS)
 .PHONY: all clean
 
 clean:
-ifneq (,$(wildcard physengine))
-	rm -rf $(OBJS) $(PROGRAM)
+ifneq (,$(wildcard $(PROGRAM)))
+	rm $(PROGRAM)
 	@${DELETE_PROG}
+endif
+ifneq (,$(wildcard $(OBJS)))
+	rm -rf $(OBJS)
 endif
 ifneq (,$(wildcard *.xyz))
 	rm *.xyz

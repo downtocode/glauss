@@ -21,7 +21,8 @@ All are available on any up-to-date Linux distribution's package repositories. O
 Running
 -------
 Run the executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS). You can run `make rem` to remove all XYZ files in the current directory or `make clean` to remove them along with the program and compiled files.
-Support for gcc versions older than 4.8 and clang versions older than 3.3 will be removed once version 0.1 is released. Tons of simplifications will be made once that happens. The current recommended compiler is **Clang 3.3** due to the fact it supports double precision vectors and will use them. GCC also supports such, however due to poor performance they are disabled. See the comments in ./src/physics.h for the details.
+
+Support for gcc versions older than 4.8 and clang versions older than 3.3 will be removed once version 0.1 is released. Tons of simplifications will be made once that happens. Currently I recommend using either GCC 4.8(or newer) or Clang 3.3(or newer). When using GCC, check that your processors has the AVX extensions enabled or performance will probably be deteriorated.
 
 Controls
 --------
@@ -34,6 +35,7 @@ Button | Action
 **1 and 2**  | Select previous/next object.
 **r**        | Reset view and deseclect object.
 **z**        | Dump entire system to an XYZ file.
+**TAB**      | Cycle - draw links/objects/both.
 **Spacebar** | Pause/unpause.
 **Esc**      | Quit the program. If running inside terminal with --novid, use Ctrl+C.
 
@@ -43,7 +45,7 @@ Argument | Action
 ---------|-------
 **-f (filename)** | Specifies a posdata.dat to use. Falls back on simconf.conf's setting.
 **--threads (int)** | Use (int) threads to speed up force calculation. Splits objects between cores.
-**--dumplevel (uint)** | Sets the dumplevel. 1=XYZ file every second. 2=every frame.
+**--dump** | Dump entire system to an XYZ file every second.
 **--novid** | Disables SDL window creation and any OpenGL functions in the main loop.
 **--fullogl** | Initialize full OpenGL instead of ES. Look in simconf.conf to change versions.
 **--nosync** | Disables vertical synchronization.

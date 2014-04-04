@@ -1,3 +1,20 @@
+/*
+ * This file is part of physengine.
+ * Copyright (c) 2012 Rostislav Pehlivanov
+ * 
+ * physengine is free software: you can redistribute it and/or modify *
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * physengine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <tgmath.h>
@@ -22,9 +39,9 @@ static bool running, quit;
 
 int initphys(data** object)
 {
-	*object = calloc(option->obj+1,sizeof(data));
+	*object = calloc(option->obj+100,sizeof(data));
 	for(int i = 0; i < option->obj + 1; i++ ) {
-		(*object)[i].linkwith = calloc(option->obj+1,sizeof(float));
+		(*object)[i].links = calloc(100,sizeof(unsigned int));
 	}
 	
 	pprintf(8, "Allocated %lu bytes to object array.\n", \
@@ -63,7 +80,8 @@ int initphys(data** object)
 	return 0;
 }
 
-int threadseperate() {
+int threadseperate()
+{
 	/*
 	 * Split objects equally between cores
 	 * You can deliberatly load the last thread more by deducting a few objects in totcore.
@@ -123,10 +141,14 @@ int threadcontrol(int status, data** object)
 	return 0;
 }
 
-void *resolveforces(void *arg) {
+void *resolveforces(void *arg)
+{
 	struct thread_settings *thread = &thread_opts[(long)arg];
-	v4sd vecnorm, accprev, Ftot, grv, ele, flj, link;
-	double mag, grvmag, elemag, fljmag, springmag;
+	v4sd vecnorm, accprev, Ftot, grv, ele, flj;
+	double mag, grvmag, elemag, fljmag;
+	
+	Ftot = ele = grv = flj = (v4sd){0,0,0};
+	mag = grvmag = elemag = fljmag = 0.0;
 	
 	long double pi = acos(-1);
 	long double gconst = option->gconst, epsno = option->epsno;
@@ -136,18 +158,18 @@ void *resolveforces(void *arg) {
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
 			if(thread->obj[i].ignore != '0') continue;
-				if(thread->obj[i].pos[0] - thread->obj[i].radius < -50 || thread->obj[i].pos[0] + thread->obj[i].radius > 50) {
+				if(thread->obj[i].pos[0] - thread->obj[i].radius < -100 || thread->obj[i].pos[0] + thread->obj[i].radius > 100) {
 					thread->obj[i].vel[0] = -thread->obj[i].vel[0];
 				}
 				
-				if(thread->obj[i].pos[1] - thread->obj[i].radius < -50 || thread->obj[i].pos[1] + thread->obj[i].radius > 50) {
+				if(thread->obj[i].pos[1] - thread->obj[i].radius < -100 || thread->obj[i].pos[1] + thread->obj[i].radius > 100) {
 					thread->obj[i].vel[1] = -thread->obj[i].vel[1];
 				}
 				
-				if(thread->obj[i].pos[2] - thread->obj[i].radius < -50 || thread->obj[i].pos[2] + thread->obj[i].radius > 50) {
+				if(thread->obj[i].pos[2] - thread->obj[i].radius < -100 || thread->obj[i].pos[2] + thread->obj[i].radius > 100) {
 					thread->obj[i].vel[2] = -thread->obj[i].vel[2];
 				}
-			thread->obj[i].pos += (thread->obj[i].vel*(v4sd){thread->dt,thread->dt,thread->dt}) + (thread->obj[i].acc)*(v4sd){((thread->dt*thread->dt)/2),((thread->dt*thread->dt)/2),((thread->dt*thread->dt)/2)};
+			thread->obj[i].pos += (thread->obj[i].vel*thread->dt) + (thread->obj[i].acc)*((thread->dt*thread->dt)/2);
 		}
 		
 		pthread_mutex_lock(&movestop);
@@ -159,27 +181,22 @@ void *resolveforces(void *arg) {
 				if(i==j) continue;
 				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
 				mag = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
-				vecnorm /= (v4sd){mag, mag, mag};
+				vecnorm /= mag;
 				
-				grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(mag*mag));
+				//grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(mag*mag));
 				elemag = ((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*mag*mag));
 				//fljmag = (24/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
 				
-				grv += vecnorm*(v4sd){grvmag,grvmag,grvmag};
-				ele += -vecnorm*(v4sd){elemag,elemag,elemag};
-				//flj += vecnorm*(v4sd){fljmag,fljmag,fljmag};
+				//grv += grvmag*vecnorm;
+				ele += -elemag*vecnorm;
+				//flj += fljmag*vecnorm;
 				
-				if( thread->obj[i].linkwith[j] != 0 ) {
-					if(mag > 3*thread->obj[i].linkwith[j]) thread->obj[i].linkwith[j] = 0;
-					springmag = (spring)*(pow((mag - thread->obj[i].linkwith[j]),2));
-					link += vecnorm*(v4sd){springmag, springmag, springmag};
-				}
 			}
-			Ftot += ele + grv + link + flj;
+			Ftot += ele;
 			accprev = thread->obj[i].acc;
-			thread->obj[i].acc = (Ftot)/(v4sd){thread->obj[i].mass,thread->obj[i].mass,thread->obj[i].mass};
-			thread->obj[i].vel += (thread->obj[i].acc + accprev)*(v4sd){((thread->dt)/2),((thread->dt)/2),((thread->dt)/2)};
-			Ftot = ele = grv = flj = link = (v4sd){0,0,0};
+			thread->obj[i].acc = Ftot/thread->obj[i].mass;
+			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((thread->dt)/2);
+			Ftot = ele = grv = flj = (v4sd){0,0,0};
 		}
 		if((long)arg == 1) thread->processed++;
 		SDL_Delay(option->sleepfor);

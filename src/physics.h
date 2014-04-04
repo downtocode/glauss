@@ -1,41 +1,59 @@
+/*
+ * This file is part of physengine.
+ * Copyright (c) 2012 Rostislav Pehlivanov
+ * 
+ * physengine is free software: you can redistribute it and/or modify *
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * physengine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef PHYSENGINE_PHYS
 #define PHYSENGINE_PHYS
+
+#define PHYS_PAUSE 0
+#define PHYS_UNPAUSE 1
+#define PHYS_STATUS 2
+#define PHYS_START 8
+#define PHYS_SHUTDOWN 9
 
 #include <stdbool.h>
 #include <time.h>
 
 #ifdef __clang__
-/*
- * Clang supports both OpenCL and GCC vectors.
- * The former have feature parity with GCC's GCC vectors. Only on newer Clang
- * versions however. We could siplify the equations quite a bit if we dropped support for Clang below 3.3
- * GCC's vectors on the other hand, do not support scalar operations on vectors. However, they are still
- * better than GCC's own GCC vector support because we're not limited to just power of two vector size.
- * Better to choose the lesser of two evils and have double support for Clang by using OpenCL's vectors.
- * Segmentation is always a bad choice but I don't see any other way.
+/* 
+ * Use OpenCL's vectors when compiling with Clang since it doesn't support scalar operations on vectors.
  */
 typedef double v4sd __attribute__((ext_vector_type(3)));
 #else
 /*
- * I'm starting to get tired of GCC's antics. No non-power-of-two vectors, INCREDIBLY bad performance
- * with double precision when using 32 byte vectors, I just don't get it. It can optimize basic programs
- * but man does it fail here. Leaving it float for now just to get somewhat nice performance out of GCC.
+ * It appears I might have been wrong about GCC. It tries its damn hardest to optimize
+ * the hell out of anything, but without AVX it can't do much.
+ * My Celeron B820 doesn't support AVX, so I'll have to check out whether it does well
+ * with 32 bit vectors on a high end machine(read: not junk).
  */
-typedef float v4sd __attribute__ ((vector_size (16)));
+typedef double v4sd __attribute__ ((vector_size (32)));
 #endif
 
 typedef struct {
 	v4sd pos, vel, acc;
-	long double mass, charge;
-	float radius, *linkwith;
-	char ignore;
-	unsigned int index;
+	double mass, charge;
+	float radius;
+	unsigned int index, totlinks, *links;
 	unsigned short int atomnumber;
+	char ignore;
 } data;
 
 struct thread_settings {
-	float dt;
 	data* obj;
+	float dt;
 	unsigned int looplimit1, looplimit2, threadid;
 	unsigned long long processed;
 	clockid_t clockid;

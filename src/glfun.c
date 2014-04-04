@@ -1,3 +1,20 @@
+/*
+ * This file is part of physengine.
+ * Copyright (c) 2012 Rostislav Pehlivanov
+ * 
+ * physengine is free software: you can redistribute it and/or modify *
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * physengine is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,12 +25,12 @@
 #include "options.h"
 #include "elements.h"
 
-#define maxcharge 2200
 #define numshaders 2
 
 static GLint trn_matrix, rot_matrix, scl_matrix;
 static GLint objattr_pos, objattr_color;
 static GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
+
 
 static float aspect_ratio;
 static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale, *transl;
@@ -74,7 +91,8 @@ static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 	m[15] = 1;
 }
 
-void transformpoint(GLfloat *p, GLfloat *m) {
+void transformpoint(GLfloat *p, GLfloat *m)
+{
 	GLfloat tempmat[16] = {0};
 	tempmat[0] = p[0];
 	tempmat[5] = p[1];
@@ -86,7 +104,8 @@ void transformpoint(GLfloat *p, GLfloat *m) {
 	p[2] = tempmat[10];
 }
 
-void movept2d(GLfloat *p, float x, float y) {
+void movept2d(GLfloat *p, float x, float y)
+{
 	p[0] += x;
 	p[1] += y;
 }
@@ -113,7 +132,6 @@ void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
 				GLfloat scalefactor, GLfloat tr_x, GLfloat tr_y, GLfloat tr_z)
 {
-	/* Set modelview/projection matrix */
 	make_translation_matrix(tr_x, tr_y, tr_z, transl);
 	
 	make_scale_matrix(aspect_ratio*scalefactor, scalefactor, scalefactor, scale);
@@ -128,7 +146,8 @@ void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
 	glUniformMatrix4fv(rot_matrix, 1, GL_FALSE, rotation);
 }
 
-void drawaxis() {
+void drawaxis()
+{
 	GLfloat axis[6][3] = {
 			{0,0,0},
 			{1,0,0},
@@ -138,15 +157,6 @@ void drawaxis() {
 			{0,0,1},
 	};
 	
-	//transformpoint(axis[1],rotation);
-	//transformpoint(axis[3],rotation);
-	//transformpoint(axis[5],rotation);
-	
-	/*for(int i = 0; i < 6; i++) {
-		transformpoint(axis[1], scale);
-		movept2d(axis[i], -3.90, -3.80);
-	}*/
-	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(objattr_pos);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_DYNAMIC_DRAW);
@@ -154,7 +164,8 @@ void drawaxis() {
 	glDisableVertexAttribArray(objattr_pos);
 }
 
-void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col) {
+void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col)
+{
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
@@ -224,58 +235,34 @@ void drawobject(data object)
 	glUniform4fv(objattr_color, 1, textcolor);
 }
 
-void drawlinks(data* object)
+void draw_obj_links(data* object, unsigned int index)
 {
-	GLfloat link[2*option->obj][3];
+	if(object[index].totlinks == 0) return;
+	
+	GLfloat links[100][3];
 	unsigned int linkcount = 0;
-	int i;
-	for(i = 1; i < option->obj/2; i++) {
-		for(int j = 1; j < option->obj + 1; j++) {
-			if( j==i || j > i ) continue;
-			if( object[i].linkwith[j] != 0 ) {
-				link[linkcount][0] = object[i].pos[0];
-				link[linkcount][1] = object[i].pos[1];
-				link[linkcount][2] = object[i].pos[2];
-				linkcount++;
-				link[linkcount][0] = object[j].pos[0];
-				link[linkcount][1] = object[j].pos[1];
-				link[linkcount][2] = object[j].pos[2];
-				linkcount++;
-			}
-		}
+	
+	for(int i = 0; i < object[index].totlinks+1; i++)
+	{
+		links[linkcount][0] = object[index].pos[0];
+		links[linkcount][1] = object[index].pos[1];
+		links[linkcount][2] = object[index].pos[2];
+		linkcount++;
+		links[linkcount][0] = object[object[index].links[i]].pos[0];
+		links[linkcount][1] = object[object[index].links[i]].pos[1];
+		links[linkcount][2] = object[object[index].links[i]].pos[2];
+		linkcount++;
 	}
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(objattr_pos);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(link), link, GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_LINES, 0, linkcount);
-	
-	
-	linkcount = 0;
-	for(i = option->obj/2; i < option->obj + 1; i++) {
-		for(int j = 1; j < option->obj + 1; j++) {
-			if( j==i || j > i ) continue;
-			if( object[i].linkwith[j] != 0 ) {
-				link[linkcount][0] = object[i].pos[0];
-				link[linkcount][1] = object[i].pos[1];
-				link[linkcount][2] = object[i].pos[2];
-				linkcount++;
-				link[linkcount][0] = object[j].pos[0];
-				link[linkcount][1] = object[j].pos[1];
-				link[linkcount][2] = object[j].pos[2];
-				linkcount++;
-			}
-		}
-	}
-	
-	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(objattr_pos);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(link), link, GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_LINES, 0, linkcount);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(links), links, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_LINES, 0, linkcount-1);
 	glDisableVertexAttribArray(objattr_pos);
 }
 
-void selected_box_text(data object) {
+void selected_box_text(data object)
+{
 	float boxsize = 0.13*scale[5]*(object.radius*15);
 	GLfloat objpoint[3] = {0,0,0};
 	
@@ -294,23 +281,8 @@ void selected_box_text(data object) {
 	render_text(osdstr, objpoint[0] + object.radius*scale[5], \
 	objpoint[1] + object.radius*scale[5], 1.0/option->width, 1.0/option->height, 0);
 	
-	unsigned int counter = 0;
-	unsigned int links[option->obj+1];
-	
-	for(int j = 1; j < option->obj + 1; j++) {
-		if(object.linkwith[j] != 0) {
-			counter++;
-			links[counter] = j;
-		}
-	}
-	if(counter != 0) {
-		memset(osdstr, 0, sizeof(osdstr));
-		char linkcount[option->obj+1];
-		sprintf(osdstr, "Links: ");
-		for(int j = 1; j < counter + 1; j++) {
-			sprintf(linkcount, "%u ", links[j]);
-			strcat(osdstr, linkcount);
-		}
+	if(object.totlinks != 0) {
+		sprintf(osdstr, "Links: %u", object.totlinks);
 		render_text(osdstr, objpoint[0] + object.radius*scale[5], \
 		objpoint[1] + object.radius*scale[5] - 0.055, 1.0/option->width, 1.0/option->height, 0);
 	}
@@ -322,7 +294,8 @@ void selected_box_text(data object) {
 	glDisableVertexAttribArray(textattr_coord);
 }
 
-int resize_wind() {
+int resize_wind()
+{
 	aspect_ratio = (float)option->height/option->width;
 	glViewport(0, 0, option->width, option->height);
 	return 0;
