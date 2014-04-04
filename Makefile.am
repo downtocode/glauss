@@ -1,5 +1,3 @@
 AUTOMAKE_OPTIONS = foreign
-
+EXTRA_DIST = autogen.sh
 SUBDIRS = src
-
-$(shell mv ./src/physengine ./)
