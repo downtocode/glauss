@@ -1,17 +1,15 @@
 physengine
 ==========
 
-[![Build Status](https://travis-ci.org/atomnuker/physengine.png?branch=master)](https://travis-ci.org/atomnuker/physengine)
-
 Overview
 --------
-This program aims to implement a physics simulation engine capable of doing simulations on various scales, from molecular dynamics to planetary motion, all whilst maintaining maximum performance. Implemented using the SDL2, Freetype 2, and the OpenGL ES 2.0 libraries. Uses POSIX threads to implement multi-threading. Written in standard C and released under the MIT License.
+This program aims to implement a physics simulation engine capable of doing simulations on various scales, from molecular dynamics to planetary motion, all whilst maintaining maximum performance. Implemented using the SDL2, Freetype 2, and the OpenGL ES 2.0 libraries. Uses POSIX threads to implement multi-threading. Written in standard C and released under the GPLv3 License.
 
 Compiling
 ---------
 Dependencies:
 
- * gcc (4.6 or newer)  or clang (3.3 or newer)
+ * gcc (4.8 or newer)  or clang (3.3 or newer)
  * OpenGL ES 2.0 development libraries (Debian: libgles2-mesa-dev; Fedora: mesa-libGLES)
  * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2) 
  * SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)
@@ -22,7 +20,7 @@ Running
 -------
 Run the executable. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS). You can run `make rem` to remove all XYZ files in the current directory or `make clean` to remove them along with the program and compiled files.
 
-Support for gcc versions older than 4.8 and clang versions older than 3.3 will be removed once version 0.1 is released. Tons of simplifications will be made once that happens. Currently I recommend using either GCC 4.8(or newer) or Clang 3.3(or newer). When using GCC, check that your processors has the AVX extensions enabled or performance will probably be deteriorated.
+This program **requires** the newest stable GCC or Clang releases. Vector extensions have always been a tricky things in C, but in the last few years the major compilers have roughly agreed on a standard. Currently the requirements are either GCC 4.8(or newer) or Clang 3.3(or newer). When using GCC, check that your processors has AVX extensions or performance will probably be affected.
 
 Controls
 --------
@@ -69,4 +67,4 @@ Contacts
 
 Contributing
 ------------
-Got a bug fix? New feature? Sent a pull request here on Github. Just please use the project's coding style (which is the same as the Linux kernel's coding style except without the 80 characters per line limit).
+Got a bug fix? New feature? Sent a pull request here on Github. Just please use the project's coding style (which is almost the same as the Linux kernel's coding style except without the 80 characters per line limit).
