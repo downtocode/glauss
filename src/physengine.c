@@ -27,7 +27,7 @@
 #include <SDL2/SDL.h>
 
 /*	Functions	*/
-#include "../config.h"
+#include "config.h"
 #include "physics.h"
 #include "parser.h"
 #include "glfun.h"

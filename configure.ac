@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([physengine], [0.1pre], [atomnuker@gmail.com])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_SRCDIR([src/msg_phys.h])
 AM_INIT_AUTOMAKE
 # Checks for programs.
