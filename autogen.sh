@@ -1,4 +1,3 @@
 #!/bin/sh
-aclocal \
-&& automake --add-missing \
-&& autoconf
+echo Running autoreconf...
+autoreconf -ivf
