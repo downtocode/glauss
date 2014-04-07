@@ -36,6 +36,23 @@
 #include "msg_phys.h"
 #include "elements.h"
 
+int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status) {
+	if(status == NUM_ANOTHER) {
+		numbers->digits[numbers->final_digit] = currentdigit;
+		numbers->final_digit+=1;
+		return 0;
+	} else if(status == NUM_GIVEME) {
+		unsigned int result = 0;
+		for(int i=0; i < numbers->final_digit; i++) {
+			result*=10;
+			result+=numbers->digits[i];
+		}
+		numbers->final_digit = 0;
+		return result;
+	}
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
@@ -55,12 +72,15 @@ int main(int argc, char *argv[])
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		struct timespec ts;
+		struct numbers_selection numbers;
+		numbers.final_digit = 0;
 		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0;
 		static volatile float fps = 0.0;
-		unsigned int frames = 0, chosen = 0, fpscolor = GL_WHITE;
+		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
-		char osdtime[100] = "Timestep = 0.0";
+		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 1, dumplevel = 0;
+		bool start_selection = 0;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.04;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 		GLuint* shaderprogs;
@@ -222,6 +242,28 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
 						goto quit;
 					}
+					if(start_selection) {
+						if(event.key.keysym.sym!=SDLK_RETURN && numbers.final_digit < 19) {
+							/*	sscanf will return 0 if nothing was done	*/
+							if(!sscanf(SDL_GetKeyName(event.key.keysym.sym), "%u", &currentnum)) {
+								break;
+							} else {
+								strcat(currentsel, SDL_GetKeyName(event.key.keysym.sym));
+								getnumber(&numbers, currentnum, NUM_ANOTHER);
+							}
+							break;
+						} else {
+							strcpy(currentsel, "Select object:");
+							start_selection = 0;
+							chosen = getnumber(&numbers, 0, NUM_GIVEME);
+							if(chosen > option->obj) chosen = 0;
+							break;
+						}
+					}
+					if(event.key.keysym.sym==SDLK_RETURN) {
+						start_selection = 1;
+						break;
+					}
 					if(event.key.keysym.sym==SDLK_RIGHTBRACKET) {
 						option->dt *= 2;
 						printf("dt = %f\n", option->dt);
@@ -243,10 +285,10 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_z) {
 						toxyz(option->obj, object, timestep);
 					}
-					if(event.key.keysym.sym==SDLK_2) {
+					if(event.key.keysym.sym==SDLK_PERIOD) {
 						if(chosen < option->obj) chosen++;
 					}
-					if(event.key.keysym.sym==SDLK_1) {
+					if(event.key.keysym.sym==SDLK_COMMA) {
 						if(chosen > 0) chosen--;
 					}
 					if(event.key.keysym.sym==SDLK_TAB) {
@@ -341,6 +383,9 @@ int main(int argc, char *argv[])
 		
 		sprintf(osdtime, "Timestep = %0.2f", timestep);
 		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, GL_WHITE);
+		
+		if(start_selection)
+			render_text(currentsel, 0.67, -0.95, 1.0/option->width, 1.0/option->height, GL_BLUE);
 		
 		if(!threadcontrol(PHYS_STATUS, &object))
 			render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);

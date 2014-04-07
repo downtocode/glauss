@@ -36,7 +36,8 @@ Button | Action
 **MSCROLL**  | Control zoom.
 **MMB**      | Drag to translate camera, deselects object.
 **[ and ]**  | Increase/decrease time constant. Pause/unpause to put into effect.
-**1 and 2**  | Select previous/next object.
+**,(<) and .(>)**  | Select previous/next object.
+**Enter**    | Press once to init object selection, input number and press again to select.
 **r**        | Reset view and deseclect object.
 **z**        | Dump entire system to an XYZ file.
 **TAB**      | Cycle - draw links/objects/both.

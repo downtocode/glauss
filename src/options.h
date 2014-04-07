@@ -30,3 +30,11 @@ struct option_struct {
 	char fontname[200], filename[200];
 	FILE *logfile;
 };
+
+#define NUM_ANOTHER 1
+#define NUM_GIVEME 2
+
+struct numbers_selection {
+	int digits[20];
+	unsigned short int final_digit;
+};
