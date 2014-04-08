@@ -49,6 +49,9 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int 
 		}
 		numbers->final_digit = 0;
 		return result;
+	} else if(status == NUM_REMOVE) {
+		numbers->final_digit-=1;
+		return 0;
 	}
 	return 0;
 }
@@ -244,6 +247,11 @@ int main(int argc, char *argv[])
 					}
 					if(start_selection) {
 						if(event.key.keysym.sym!=SDLK_RETURN && numbers.final_digit < 19) {
+							if(event.key.keysym.sym==SDLK_BACKSPACE && numbers.final_digit > 0) {
+								getnumber(&numbers, 0, NUM_REMOVE);
+								currentsel[strlen(currentsel)-1] = '\0';
+								break;
+							}
 							/*	sscanf will return 0 if nothing was done	*/
 							if(!sscanf(SDL_GetKeyName(event.key.keysym.sym), "%u", &currentnum)) {
 								break;

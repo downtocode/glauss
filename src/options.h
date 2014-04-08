@@ -33,6 +33,7 @@ struct option_struct {
 
 #define NUM_ANOTHER 1
 #define NUM_GIVEME 2
+#define NUM_REMOVE 3
 
 struct numbers_selection {
 	int digits[20];
