@@ -44,8 +44,8 @@ int initphys(data** object)
 		(*object)[i].links = calloc(100,sizeof(unsigned int));
 	}
 	
-	pprintf(8, "Allocated %lu bytes to object array.\n", \
-	((option->obj+1)*sizeof(data)+(option->obj+1)*sizeof(float)));
+	pprintf(5, "Allocated %lu bytes to object array at %p.\n", \
+	((option->obj+1)*sizeof(data)+(option->obj+1)*sizeof(float)), *object);
 	
 	int online_cores = 0;
 	
@@ -105,16 +105,16 @@ int threadseperate()
 int threadcontrol(int status, data** object)
 {
 	/*	Codes: 0 - unpause, 1-pause, 2-return status, 8 -start, 9 - destroy	*/
-	if(status == 1 && running == 0) {
+	if(status == PHYS_UNPAUSE && running == 0) {
 		for(int k = 1; k < option->avail_cores + 1; k++) thread_opts[k].dt = option->dt;
 		running = 1;
 		pthread_mutex_unlock(&movestop);
-	} else if(status == 0 && running == 1) {
+	} else if(status == PHYS_PAUSE && running == 1) {
 		running = 0;
 		pthread_mutex_lock(&movestop);
-	} else if(status == 2) {
+	} else if(status == PHYS_STATUS) {
 		return running;
-	} else if(status == 8) {
+	} else if(status == PHYS_START) {
 		threadseperate();
 		pthread_mutex_init(&movestop, NULL);
 		pthread_barrier_init(&barrier, NULL, option->avail_cores);
@@ -124,12 +124,15 @@ int threadcontrol(int status, data** object)
 			thread_opts[k].dt = option->dt;
 			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
+			pprintf(5, "Thread %i - %p started using object array at %p.\n", \
+			k, &threads[k], *object);
 		}
-	} else if(status == 9) {
+	} else if(status == PHYS_SHUTDOWN) {
 		running = 1;
 		pthread_mutex_unlock(&movestop);
 		quit = 1;
 		for(int k = 1; k < option->avail_cores + 1; k++) {
+			pprintf(5, "Thread %i - %p shutting down.\n", k, &threads[k]);
 			pthread_join(threads[k], NULL);
 			thread_opts[k].obj = NULL;
 		}
