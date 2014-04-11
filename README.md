@@ -9,7 +9,7 @@ Compiling
 ---------
 Dependencies:
 
- * gcc (4.8 or newer)  or clang (3.3 or newer)
+ * gcc (4.8.2 or newer)  or clang (3.5 or newer)
  * OpenGL ES 2.0 development libraries (Debian: libgles2-mesa-dev; Fedora: mesa-libGLES)
  * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2) 
  * SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)
@@ -26,7 +26,7 @@ Running
 -------
 Run the shell script. The executable needs to be ran into the root directory of the build. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS). You can run `make rem` to remove all XYZ files in the current directory or `make clean` to remove them along with the program and compiled files.
 
-This program **requires** the newest stable GCC or Clang releases. Vector extensions have always been a tricky things in C, but in the last few years the major compilers have roughly agreed on a standard. Currently the requirements are either GCC 4.8(or newer) or Clang 3.3(or newer). When using GCC, check that your processors has AVX extensions or performance will probably be affected.
+This program **absolutely requires** the newest stable GCC or Clang releases to build. Vector extensions have always been a tricky things in C, but in the last few years the major compilers have roughly agreed on a standard. When using GCC, check that your processors has AVX extensions or performance will probably be affected.
 
 Controls
 --------
