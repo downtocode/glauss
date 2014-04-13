@@ -7,26 +7,27 @@ AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_SRCDIR([src/msg_phys.h])
 AM_INIT_AUTOMAKE
 # Checks for programs.
-AC_PROG_CC([cc gcc clang])
+AC_PROG_CC([cc])
+
+CFLAGS=" -Wall -pedantic"
+CFLAGS+=" -std=gnu99 -march=native -O3 -g"
+LDFLAGS=""
 
 # Checks for libraries.
-AC_CHECK_LIB([m], [main], [],[
+AC_CHECK_LIB([m], [main], [LDFLAGS+=" -lm"],[
          echo "The standard C math libary is required to run this program. You have one, right?"
          exit -1])
-AC_CHECK_LIB([SDL2], [main], [],[
+AC_CHECK_LIB([pthread], [main], [LDFLAGS+=" -pthread" CFLAGS+=" -pthread"],[
+         echo "The standard C math libary is required to run this program. You have one, right?"
+         exit -1])
+AC_CHECK_LIB([SDL2], [main], [LDFLAGS+=" `sdl2-config --libs`" CFLAGS+=" `sdl2-config --cflags`"],[
          echo "SDL2 library is required to build this program."
          exit -1])
-AC_CHECK_LIB([GLESv2], [main], [],[
+AC_CHECK_LIB([GLESv2], [main], [LDFLAGS+=" -lGLESv2"],[
          echo "OpenGL ES 2.0 library is required to build this program."
          exit -1])
-AC_CHECK_LIB([freetype], [main], [],[
+AC_CHECK_LIB([freetype], [main], [LDFLAGS+=" `freetype-config --libs`" CFLAGS+=" `freetype-config --cflags`"],[
          echo "Freetype 2 libary is required to build this program."
-         exit -1])
-AC_CHECK_LIB([png12], [main], [],[
-         echo "The PNG 1.2 library is required(by Freetype) to build this program."
-         exit -1])
-AC_CHECK_LIB([z], [main], [],[
-         echo "The standard ZIP libary is required(by Freetype) to build this program."
          exit -1])
 
 # Checks for header files.
@@ -48,3 +49,12 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 
 AC_OUTPUT
+
+echo "
+ $PACKAGE_NAME $VERSION
+
+    prefix:		${prefix}
+    compiler:		${CC}
+    cflags:		${CFLAGS}
+    ldflags:		${LDFLAGS}
+"
