@@ -8,9 +8,10 @@ AC_CONFIG_SRCDIR([src/msg_phys.h])
 AM_INIT_AUTOMAKE
 # Checks for programs.
 AC_PROG_CC([cc])
+AM_SILENT_RULES([yes])
 
 CFLAGS=" -Wall -pedantic"
-CFLAGS+=" -std=gnu99 -march=native -O3 -g"
+CFLAGS+=" -std=gnu99 -march=native -g -O3"
 LDFLAGS=""
 
 # Checks for libraries.
@@ -29,6 +30,9 @@ AC_CHECK_LIB([GLESv2], [main], [LDFLAGS+=" -lGLESv2"],[
 AC_CHECK_LIB([freetype], [main], [LDFLAGS+=" `freetype-config --libs`" CFLAGS+=" `freetype-config --cflags`"],[
          echo "Freetype 2 libary is required to build this program."
          exit -1])
+
+AC_ARG_ENABLE([lto], AS_HELP_STRING([--enable-lto],
+		[enable link time optimizations @<:@default=no@:>@]), [LDFLAGS+=" -flto" CFLAGS+=" -flto"], [])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h string.h sys/time.h unistd.h])

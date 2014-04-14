@@ -32,7 +32,8 @@
  * Use OpenCL's vectors when compiling with Clang since it doesn't support scalar operations on vectors.
  */
 typedef double v4sd __attribute__((ext_vector_type(3)));
-#elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 8) && (__GNUC_PATCHLEVEL__ >= 2)
+/*	Clang also defines __GNUC__ however it doesn't matter since the first condition has already been met in that case.	*/
+#elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 8)
 /*
  * It appears I might have been wrong about GCC. It tries its damn hardest to optimize
  * the hell out of anything, but without AVX it can't do much.

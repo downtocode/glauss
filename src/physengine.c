@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
-		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 1, dumplevel = 0;
+		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0, dumplevel = 0;
 		bool start_selection = 0;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.04;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;

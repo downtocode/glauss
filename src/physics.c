@@ -37,6 +37,9 @@ pthread_barrier_t barrier;
 struct sched_param parameters;
 static bool running, quit;
 
+#define sigma 1
+#define epsilon 0.02
+
 int initphys(data** object)
 {
 	*object = calloc(option->obj+100,sizeof(data));
@@ -188,18 +191,18 @@ void *resolveforces(void *arg)
 				
 				//grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(mag*mag));
 				elemag = ((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*mag*mag));
-				//fljmag = (24/mag*mag)*(2*pow((1/mag),12.0) - pow((1/mag),6.0));
+				fljmag = 4*epsilon*(12*(pow(sigma, 12)/pow(mag, 13)) - 6*(pow(sigma, 6)/pow(mag, 7)));
 				
 				//grv += grvmag*vecnorm;
 				ele += -elemag*vecnorm;
-				//flj += fljmag*vecnorm;
+				flj += fljmag*vecnorm;
 				
 			}
-			Ftot += ele;
+			Ftot += flj;
 			accprev = thread->obj[i].acc;
 			thread->obj[i].acc = Ftot/thread->obj[i].mass;
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((thread->dt)/2);
-			Ftot = ele = grv = flj = (v4sd){0,0,0};
+			Ftot = ele = flj = (v4sd){0,0,0};
 		}
 		if((long)arg == 1) thread->processed++;
 		SDL_Delay(option->sleepfor);
