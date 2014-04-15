@@ -221,10 +221,10 @@ int parser(data** object, char filename[200])
 			(*object)[i].vel = (v4sd){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
 			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
 			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
-			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*chargerand*option->elcharge*2;
+			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*2;
 			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
 			(*object)[i].ignore = '0';
-			(*object)[i].atomnumber = 0;
+			(*object)[i].atomnumber = (int)((((float)rand()/(float)RAND_MAX))*10);
 		}
 	}
 	fclose(in);

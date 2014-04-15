@@ -207,7 +207,7 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 
 void drawobject(data object) 
 {
-	float dj = 0.5, pi=acos(-1);
+	float dj = 0.2, pi=acos(-1);
 	int pointcount = 0;
 	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
 	

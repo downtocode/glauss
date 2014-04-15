@@ -37,8 +37,8 @@ pthread_barrier_t barrier;
 struct sched_param parameters;
 static bool running, quit;
 
-#define sigma 1
-#define epsilon 0.02
+#define sigma 0.5
+#define epsilon 0.0001
 
 int initphys(data** object)
 {
@@ -195,10 +195,9 @@ void *resolveforces(void *arg)
 				
 				//grv += grvmag*vecnorm;
 				ele += -elemag*vecnorm;
-				flj += fljmag*vecnorm;
-				
+				if(mag<2.5) flj += fljmag*vecnorm;
 			}
-			Ftot += flj;
+			Ftot += ele - flj;
 			accprev = thread->obj[i].acc;
 			thread->obj[i].acc = Ftot/thread->obj[i].mass;
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((thread->dt)/2);

@@ -327,7 +327,7 @@ int main(int argc, char *argv[])
 			totaltime = frames = 0;
 			
 			if(dumplevel) toxyz(option->obj, object, timestep);
-			pprintf(PRI_VERYLOW, "Progressed %0.2f timeunits.\n", timestep);
+			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", timestep);
 			
 			for(int i = 1; i < option->avail_cores + 1; i++) {
 				clock_gettime(thread_opts[i].clockid, &ts);
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
 		
 		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
-		sprintf(osdtime, "Timestep = %0.2f", timestep);
+		sprintf(osdtime, "Timestep = %f", timestep);
 		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
 		if(start_selection)
