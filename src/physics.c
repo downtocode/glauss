@@ -47,7 +47,7 @@ int initphys(data** object)
 		(*object)[i].links = calloc(100,sizeof(unsigned int));
 	}
 	
-	pprintf(5, "Allocated %lu bytes to object array at %p.\n", \
+	pprintf(5, "[\033[032m OK! \033[0m] Allocated %lu bytes to object array at %p.\n", \
 	((option->obj+1)*sizeof(data)+(option->obj+1)*sizeof(float)), *object);
 	
 	int online_cores = 0;
@@ -68,7 +68,7 @@ int initphys(data** object)
 	} else if(option->avail_cores == 0 ) {
 		/*	Poor Mac OS...	*/
 		option->avail_cores = failsafe_cores;
-		pprintf(PRI_VERYHIGH, "Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
+		pprintf(PRI_VERYHIGH, "[\033[033m Warning! \033[0m] Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
 	}
 	
 	threads = calloc(option->avail_cores+1, sizeof(pthread_t));
@@ -127,7 +127,7 @@ int threadcontrol(int status, data** object)
 			thread_opts[k].dt = option->dt;
 			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
-			pprintf(5, "Thread %i - %p started using object array at %p.\n", \
+			pprintf(5, "[\033[032m OK! \033[0m] Thread %i - %p started using object array at %p.\n", \
 			k, &threads[k], *object);
 		}
 	} else if(status == PHYS_SHUTDOWN) {
@@ -135,9 +135,10 @@ int threadcontrol(int status, data** object)
 		pthread_mutex_unlock(&movestop);
 		quit = 1;
 		for(int k = 1; k < option->avail_cores + 1; k++) {
-			pprintf(5, "Thread %i - %p shutting down.\n", k, &threads[k]);
+			pprintf(5, "Thread %i - %p shutting down...", k, &threads[k]);
 			pthread_join(threads[k], NULL);
 			thread_opts[k].obj = NULL;
+			pprintf(5, "\r[\033[032m OK! \033[0m] Thread %i - %p shut down.\n", k, &threads[k]);
 		}
 		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);

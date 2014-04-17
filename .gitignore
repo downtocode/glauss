@@ -20,10 +20,10 @@ physengine
 # Junk files
 ./*.xyz
 ./*.log
-Makefile
-Makefile.in
-./Makefile
-./Makefile.in
+configure
+autom4te.cache
+*Makefile
+*Makefile.in
 missing
 compile
 config.status
@@ -31,10 +31,9 @@ config.log
 aclocal.m4
 depcomp
 install-sh
-./src/stamp-h1
-./src/config.h
-./src/config.h.in~
+*stamp-h1
+*config.h
+*config.h.in~
 .deps
-.deps/*
 .directory
 core.*

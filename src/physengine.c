@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
 			.dt = 0.008, .vsync = 1, .verbosity = 5,
 		};
-		strcpy(option->filename,"posdata.dat");
+		strcpy(option->filename,"posdata.in");
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
 	
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 			if(!option->fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, option->oglmin);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, option->oglmax);
-			window = SDL_CreateWindow(PACKAGE, \
+			window = SDL_CreateWindow(PACKAGE_STRING, \
 				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width, option->height, \
 				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|SDL_WINDOW_ALLOW_HIGHDPI);
 			resize_wind();
@@ -178,11 +178,11 @@ int main(int argc, char *argv[])
 	/*	Freetype.	*/
 		if(option->novid == 0) {
 			if(FT_Init_FreeType(&library)) {
-				fprintf(stderr, "Could not init freetype library\n");
+				fprintf(stderr, "\033[031m Error! \033[0m] Could not init freetype library\n");
 				return 1;
 			}
 			if(FT_New_Face(library, option->fontname, 0, &face)) {
-				fprintf(stderr, "Could not open font\n");
+				fprintf(stderr, "\033[031m Error! \033[0m] Could not open font\n");
 				return 1;
 			}
 			FT_Set_Pixel_Sizes(face, 0, 34);
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 		/*	Mallocs and wipes	*/
 		initphys(&object);
 		char threadtime[option->avail_cores][100];
-		if(!init_elements()) pprintf(7, "Successfully read ./resources/elements.conf!\n");
+		if(!init_elements()) pprintf(7, "[\033[032m OK! \033[0m] Successfully read ./resources/elements.conf!\n");
 		parser(&object, option->filename);
 	/*	Physics.	*/
 	
@@ -408,7 +408,7 @@ int main(int argc, char *argv[])
 	}
 	
 	quit:
-		printf("Quitting... ");
+		printf("Quitting...\n");
 		threadcontrol(PHYS_SHUTDOWN, &object);
 		FT_Done_Face(face);
 		FT_Done_FreeType(library);
@@ -418,6 +418,6 @@ int main(int argc, char *argv[])
 		free(option);
 		free(object);
 		if(option->logenable) fclose(option->logfile);
-		printf("success!\n");
+		printf("Success!\n");
 		return 0;
 }

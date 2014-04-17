@@ -84,8 +84,13 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 			}
 			object[*i].atomnumber = return_atom_num(atom);
 			object[*i].index = *i;
-			object[*i].pos = (v4sd){ xpos + position[0], ypos + position[1], zpos + position[2] };
-			object[*i].vel = (v4sd){ velocity[0], velocity[1], velocity[2] };
+			/* Look in parser.c for info on why do this. */
+			object[*i].pos[0] = (double)xpos + position[0];
+			object[*i].pos[1] = (double)ypos + position[1];
+			object[*i].pos[2] = (double)zpos + position[2];
+			object[*i].vel[0] = velocity[0];
+			object[*i].vel[1] = velocity[1];
+			object[*i].vel[2] = velocity[2];
 			if(object[*i].atomnumber == 1) {
 				object[*i].charge = 2200*option->elcharge;
 				object[*i].ignore = '0';
@@ -105,9 +110,7 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 			*i = *i + 1;
 		}
 	}
-	/*
-	 * Build initial links here.
-	 */
+	/* Build initial links here. */
 	for(int z = start-1; z < *i + 1; z++) {
 		pprintf(9, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c\n", \
 		object[z].pos[0], object[z].pos[1], object[z].pos[2], object[z].vel[0], object[z].vel[1], \

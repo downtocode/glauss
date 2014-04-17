@@ -122,7 +122,7 @@ int preparser()
 	} else {
 		count = 0;
 		if(access(option->filename, F_OK) == -1) {
-			fprintf(stderr, "Argument/default set filename %s not found! Trying %s from configuration file...", option->filename, namebuff);
+			pprintf(PRI_VERYHIGH, "[\033[033m Warning! \033[0m] Argument/default set filename %s not found! Trying %s from configuration file...", option->filename, namebuff);
 			if(access(namebuff, F_OK) == 0) {
 				strcpy(option->filename, namebuff);
 				fprintf(stderr, " Success!\n");
@@ -182,8 +182,17 @@ int parser(data** object, char filename[200])
 				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
 				
 				(*object)[i].index = i;
-				(*object)[i].pos = (v4sd){ posx, posy, posz };
-				(*object)[i].vel = (v4sd){ velx, vely, velz };
+				(*object)[i].pos[0] = posx;
+				(*object)[i].pos[1] = posy;
+				(*object)[i].pos[2] = posz;
+				(*object)[i].vel[0] = velx;
+				(*object)[i].vel[1] = vely;
+				(*object)[i].vel[2] = velz;
+				/*
+				 * Clang is strongly opposed to this assignment.
+				 * (*object)[i].pos = (v4sd){ posx, posy, posz };
+				 * (*object)[i].vel = (v4sd){ velx, vely, velz };
+				 */
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*option->elcharge;
 				(*object)[i].ignore = ignflag;

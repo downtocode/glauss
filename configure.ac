@@ -11,7 +11,7 @@ AC_PROG_CC([cc])
 AM_SILENT_RULES([yes])
 
 CFLAGS=" -Wall -pedantic"
-CFLAGS+=" -std=gnu99 -march=native -g -O3"
+CFLAGS+=" -std=gnu11 -march=native -g -O3"
 LDFLAGS=""
 
 # Checks for libraries.
