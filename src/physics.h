@@ -49,16 +49,16 @@ typedef struct {
 	v4sd pos, vel, acc;
 	double mass, charge;
 	float radius;
-	unsigned int index, totlinks, *links;
 	unsigned short int atomnumber;
-	char ignore;
+	bool ignore;
+	unsigned int totlinks;
+	bool *links;
 } data;
 
 struct thread_settings {
 	data* obj;
 	float dt;
 	unsigned int looplimit1, looplimit2, threadid;
-	unsigned long long processed;
 	clockid_t clockid;
 };
 

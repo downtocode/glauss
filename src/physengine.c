@@ -36,6 +36,9 @@
 #include "msg_phys.h"
 #include "elements.h"
 
+
+/* Function to input numbers in an array and later extract a single number out.
+ * Used in selecting objects.*/
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status) {
 	if(status == NUM_ANOTHER) {
 		numbers->digits[numbers->final_digit] = currentdigit;
@@ -61,7 +64,7 @@ int main(int argc, char *argv[])
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
 		
-		 *option = (struct option_struct){
+		*option = (struct option_struct){
 			.width = 1200, .height = 600,
 			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
 			.dt = 0.008, .vsync = 1, .verbosity = 5,
@@ -78,13 +81,13 @@ int main(int argc, char *argv[])
 		struct numbers_selection numbers;
 		numbers.final_digit = 0;
 		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0;
-		static volatile float fps = 0.0;
+		static volatile float fps = 0.0; /* Volatile because GCC tends to improperly optimize it. */
 		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0, dumplevel = 0;
 		bool start_selection = 0;
-		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.04;
+		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 		GLuint* shaderprogs;
 	/*	Main function vars	*/
@@ -315,7 +318,7 @@ int main(int argc, char *argv[])
 		}
 		
 		{
-			timestep = thread_opts[1].processed*option->dt;
+			timestep = option->processed*option->dt;
 			gettimeofday(&t2, NULL);
 			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
 			t1 = t2;
@@ -337,6 +340,8 @@ int main(int argc, char *argv[])
 		}
 		
 		if(option->novid) {
+			/* Prevents wasting CPU time by waking up once every 100 msec.
+			 * Using SDL_Delay because usleep is depricated and nanosleep is overkill. */
 			SDL_Delay(100);
 			continue;
 		}
@@ -393,7 +398,7 @@ int main(int argc, char *argv[])
 		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
 		if(start_selection)
-			render_text(currentsel, 0.67, -0.95, 1.0/option->width, 1.0/option->height, GL_BLUE);
+			render_text(currentsel, 0.67, -0.95, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
 		if(!threadcontrol(PHYS_STATUS, &object))
 			render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);

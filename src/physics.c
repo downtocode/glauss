@@ -27,7 +27,6 @@
 
 /*	Default threads to use when system != linux.	*/
 #define failsafe_cores 2
-#define spring 500
 
 /*	Indexing of cores = 1, 2, 3...	*/
 pthread_t *threads;
@@ -44,7 +43,7 @@ int initphys(data** object)
 {
 	*object = calloc(option->obj+100,sizeof(data));
 	for(int i = 0; i < option->obj + 1; i++ ) {
-		(*object)[i].links = calloc(100,sizeof(unsigned int));
+		(*object)[i].links = calloc(option->obj+1,sizeof(bool));
 	}
 	
 	pprintf(5, "[\033[032m OK! \033[0m] Allocated %lu bytes to object array at %p.\n", \
@@ -107,7 +106,6 @@ int threadseperate()
 
 int threadcontrol(int status, data** object)
 {
-	/*	Codes: 0 - unpause, 1-pause, 2-return status, 8 -start, 9 - destroy	*/
 	if(status == PHYS_UNPAUSE && running == 0) {
 		for(int k = 1; k < option->avail_cores + 1; k++) thread_opts[k].dt = option->dt;
 		running = 1;
@@ -131,6 +129,7 @@ int threadcontrol(int status, data** object)
 			k, &threads[k], *object);
 		}
 	} else if(status == PHYS_SHUTDOWN) {
+		/* Shutting down's always been unstable as we use a mutex for pausing. */
 		running = 1;
 		pthread_mutex_unlock(&movestop);
 		quit = 1;
@@ -150,11 +149,18 @@ int threadcontrol(int status, data** object)
 
 void *resolveforces(void *arg)
 {
+	/*
+	 * There shouldn't be any need to use a mutex for synchronizing access to the object array.
+	 * Each thread reads every object(including other threads' objects) however it only writes
+	 * to its own set of objects. Therefore synchronizing common objects reads, which is the
+	 * only time threads overlap, is not required.
+	 */
+	
 	struct thread_settings *thread = &thread_opts[(long)arg];
-	v4sd vecnorm, accprev, Ftot, grv, ele, flj;
+	v4sd vecnorm, accprev, grv, ele, flj;
 	double mag, grvmag, elemag, fljmag;
 	
-	Ftot = ele = grv = flj = (v4sd){0,0,0};
+	ele = grv = flj = (v4sd){0,0,0};
 	mag = grvmag = elemag = fljmag = 0.0;
 	
 	long double pi = acos(-1);
@@ -164,22 +170,12 @@ void *resolveforces(void *arg)
 	
 	while(!quit) {
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
-			if(thread->obj[i].ignore != '0') continue;
-				if(thread->obj[i].pos[0] - thread->obj[i].radius < -100 || thread->obj[i].pos[0] + thread->obj[i].radius > 100) {
-					thread->obj[i].vel[0] = -thread->obj[i].vel[0];
-				}
-				
-				if(thread->obj[i].pos[1] - thread->obj[i].radius < -100 || thread->obj[i].pos[1] + thread->obj[i].radius > 100) {
-					thread->obj[i].vel[1] = -thread->obj[i].vel[1];
-				}
-				
-				if(thread->obj[i].pos[2] - thread->obj[i].radius < -100 || thread->obj[i].pos[2] + thread->obj[i].radius > 100) {
-					thread->obj[i].vel[2] = -thread->obj[i].vel[2];
-				}
+			if(thread->obj[i].ignore) continue;
 			thread->obj[i].pos += (thread->obj[i].vel*thread->dt) + (thread->obj[i].acc)*((thread->dt*thread->dt)/2);
 		}
 		
 		pthread_mutex_lock(&movestop);
+		/* Mutex here is only used for pausing the execution. Using it as a barrier not possible.(?) */
 		if(running) pthread_mutex_unlock(&movestop);
 		pthread_barrier_wait(&barrier);
 		
@@ -195,16 +191,16 @@ void *resolveforces(void *arg)
 				fljmag = 4*epsilon*(12*(pow(sigma, 12)/pow(mag, 13)) - 6*(pow(sigma, 6)/pow(mag, 7)));
 				
 				//grv += grvmag*vecnorm;
-				ele += -elemag*vecnorm;
-				if(mag<2.5) flj += fljmag*vecnorm;
+				//ele += -elemag*vecnorm;
+				//flj += fljmag*vecnorm;
 			}
-			Ftot += ele - flj;
 			accprev = thread->obj[i].acc;
-			thread->obj[i].acc = Ftot/thread->obj[i].mass;
+			thread->obj[i].acc = (ele+flj)/thread->obj[i].mass;
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((thread->dt)/2);
-			Ftot = ele = flj = (v4sd){0,0,0};
+			ele = flj = (v4sd){0,0,0};
 		}
-		if((long)arg == 1) thread->processed++;
+		if((long)arg == 1) option->processed++;
+		/* Using SDL_Delay because it's thread-safe. */
 		SDL_Delay(option->sleepfor);
 		pthread_barrier_wait(&barrier);
 	}

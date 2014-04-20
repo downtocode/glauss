@@ -53,9 +53,8 @@ int probefile(char filename[200], char moltype[20])
 int readmolecule(char filename[200], char moltype[20], data *object, v4sd position, v4sd velocity, int *i)
 {
 	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10], pdbreschain;
-	v4sd dist;
-	int filetype, start = *i+1, pdbatomindex, pdbresidueseq;
-	float xpos, ypos, zpos, mag, pdboccupy, pdbtemp, pdboffset;
+	int filetype, pdbatomindex, pdbresidueseq;
+	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
 	FILE *inpars = fopen(filename, "r");
 	
 	/* Put format specific quirks here. */
@@ -83,7 +82,6 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 				} else continue;
 			}
 			object[*i].atomnumber = return_atom_num(atom);
-			object[*i].index = *i;
 			/* Look in parser.c for info on why do this. */
 			object[*i].pos[0] = (double)xpos + position[0];
 			object[*i].pos[1] = (double)ypos + position[1];
@@ -93,44 +91,21 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 			object[*i].vel[2] = velocity[2];
 			if(object[*i].atomnumber == 1) {
 				object[*i].charge = 2200*option->elcharge;
-				object[*i].ignore = '0';
+				object[*i].ignore = 0;
 				object[*i].mass = 1.0;
 				object[*i].radius = 0.05;
 			} else if(object[*i].atomnumber == 6) {
 				object[*i].charge = -200*option->elcharge;
-				object[*i].ignore = '0';
+				object[*i].ignore = 0;
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			} else {
 				object[*i].charge = 0;
-				object[*i].ignore = '0';
+				object[*i].ignore = 0;
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			}
 			*i = *i + 1;
-		}
-	}
-	/* Build initial links here. */
-	for(int z = start-1; z < *i + 1; z++) {
-		pprintf(9, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2LE | %0.2LE | %f | %c\n", \
-		object[z].pos[0], object[z].pos[1], object[z].pos[2], object[z].vel[0], object[z].vel[1], \
-		object[z].vel[2], object[z].mass, object[z].charge, object[z].radius, object[z].ignore);
-		for(int y = start-1; y < *i + 1; y++) {
-			if(z==y) continue;
-			dist = object[y].pos - object[z].pos;
-			mag = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2]);
-			if(object[z].atomnumber == 6) {
-				if(object[y].atomnumber == 7 && mag < 2.4) {
-					object[z].links[object[z].totlinks] = y;
-					object[z].totlinks += 1;
-				}
-			}
-			if(object[z].atomnumber == 1) {
-				if(object[y].atomnumber == 7 && mag < 2.4) {
-					object[z].links[object[z].totlinks] = y;
-					object[z].totlinks += 1;
-				}
-			}
 		}
 	}
 	

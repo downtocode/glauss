@@ -207,7 +207,7 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 
 void drawobject(data object) 
 {
-	float dj = 0.2, pi=acos(-1);
+	float dj = 1.2, pi=acos(-1);
 	int pointcount = 0;
 	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
 	
@@ -235,6 +235,12 @@ void drawobject(data object)
 	glUniform4fv(objattr_color, 1, textcolor);
 }
 
+void createlinks(data* object) {
+	
+	
+	
+}
+
 void draw_obj_links(data* object, unsigned int index)
 {
 	if(object[index].totlinks == 0) return;
@@ -242,15 +248,15 @@ void draw_obj_links(data* object, unsigned int index)
 	GLfloat links[100][3];
 	unsigned int linkcount = 0;
 	
-	for(int i = 0; i < object[index].totlinks+1; i++)
+	for(int i = 1; i < option->obj+1; i++)
 	{
 		links[linkcount][0] = object[index].pos[0];
 		links[linkcount][1] = object[index].pos[1];
 		links[linkcount][2] = object[index].pos[2];
 		linkcount++;
-		links[linkcount][0] = object[object[index].links[i]].pos[0];
-		links[linkcount][1] = object[object[index].links[i]].pos[1];
-		links[linkcount][2] = object[object[index].links[i]].pos[2];
+		links[linkcount][0] = object[i].pos[0];
+		links[linkcount][1] = object[i].pos[1];
+		links[linkcount][2] = object[i].pos[2];
 		linkcount++;
 	}
 	
@@ -276,7 +282,7 @@ void selected_box_text(data object)
 	};
 
 	char osdstr[500];
-	sprintf(osdstr, "ID=%i Atom=%s", object.index, atom_prop[object.atomnumber].name);
+	sprintf(osdstr, "Atom=%s", atom_prop[object.atomnumber].name);
 	
 	render_text(osdstr, objpoint[0] + object.radius*scale[5], \
 	objpoint[1] + object.radius*scale[5], 1.0/option->width, 1.0/option->height, GL_RED);

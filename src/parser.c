@@ -181,7 +181,6 @@ int parser(data** object, char filename[200])
 				sscanf(str, "%f %f %f %f %f %f %lf %lf %f %c \"%s\"", &posx, &posy, &posz, &velx, \
 				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
 				
-				(*object)[i].index = i;
 				(*object)[i].pos[0] = posx;
 				(*object)[i].pos[1] = posy;
 				(*object)[i].pos[2] = posz;
@@ -195,7 +194,7 @@ int parser(data** object, char filename[200])
 				 */
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*option->elcharge;
-				(*object)[i].ignore = ignflag;
+				(*object)[i].ignore = (bool)ignflag;
 				(*object)[i].atomnumber = 0;
 				(*object)[i].radius = radius;
 				
@@ -208,7 +207,7 @@ int parser(data** object, char filename[200])
 					while(linkstr != NULL) {
 						sscanf(linkstr, "%i-%f", &link, &bond);
 						pprintf(PRI_SPAM, "%i - %f ", link, bond);
-						//(*object)[i].linkwith[link] = bond;
+						//(*object)[i].links[link] = bond;
 						linkstr = strtok(NULL,",");
 					}
 					bond = link = 0;
@@ -224,15 +223,16 @@ int parser(data** object, char filename[200])
 		}
 	} else {
 		for(i = 1; i < option->obj + 1; i++) {
-			(*object)[i].index = i;
-			(*object)[i].pos = (v4sd){((float)rand()/(float)RAND_MAX) - 0.5, ((float)rand()/(float)RAND_MAX) - 0.5,\
-			((float)rand()/(float)RAND_MAX) - 0.5};
-			(*object)[i].vel = (v4sd){(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, \
-			(((float)rand()/(float)RAND_MAX) - 0.5)*velmax, (((float)rand()/(float)RAND_MAX) - 0.5)*velmax};
-			(*object)[i].mass = (((float)rand()/(float)RAND_MAX))*massrand;
-			(*object)[i].charge = (((float)rand()/(float)RAND_MAX) - 0.5)*2;
+			(*object)[i].pos[0] = (((double)rand()/(double)RAND_MAX) - 0.5)*50;
+			(*object)[i].pos[1] = (((double)rand()/(double)RAND_MAX) - 0.5)*50;
+			(*object)[i].pos[2] = (((double)rand()/(double)RAND_MAX) - 0.5)*50;
+			(*object)[i].vel[0] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
+			(*object)[i].vel[1] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
+			(*object)[i].vel[2] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
+			(*object)[i].mass = (((double)rand()/(double)RAND_MAX))*massrand;
+			(*object)[i].charge = (((double)rand()/(double)RAND_MAX) - 0.5)*2;
 			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
-			(*object)[i].ignore = '0';
+			(*object)[i].ignore = 0;
 			(*object)[i].atomnumber = (int)((((float)rand()/(float)RAND_MAX))*10);
 		}
 	}

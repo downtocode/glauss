@@ -24,6 +24,7 @@ struct option_struct {
 	long sleepfor;
 	long double elcharge, gconst, epsno;
 	unsigned int obj;
+	unsigned long long processed;
 	unsigned short int avail_cores, oglmin, oglmax, verbosity;
 	int width, height;
 	bool vsync, novid, fullogl, moderandom, logenable;
