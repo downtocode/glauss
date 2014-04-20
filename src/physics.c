@@ -158,10 +158,9 @@ void *resolveforces(void *arg)
 	
 	struct thread_settings *thread = &thread_opts[(long)arg];
 	v4sd vecnorm, accprev, grv, ele, flj;
-	double mag, grvmag, elemag, fljmag;
+	double dist;
 	
 	ele = grv = flj = (v4sd){0,0,0};
-	mag = grvmag = elemag = fljmag = 0.0;
 	
 	long double pi = acos(-1);
 	long double gconst = option->gconst, epsno = option->epsno;
@@ -183,16 +182,13 @@ void *resolveforces(void *arg)
 			for(int j = 1; j < option->obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
-				mag = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
-				vecnorm /= mag;
+				dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
+				vecnorm /= dist;
 				
-				//grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(mag*mag));
-				elemag = ((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*mag*mag));
-				fljmag = 4*epsilon*(12*(pow(sigma, 12)/pow(mag, 13)) - 6*(pow(sigma, 6)/pow(mag, 7)));
+				//grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(dist*dist));
+				ele += -vecnorm*(double)((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*dist*dist));
+				flj += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) - 6*(pow(sigma, 6)/pow(dist, 7))));
 				
-				//grv += grvmag*vecnorm;
-				//ele += -elemag*vecnorm;
-				//flj += fljmag*vecnorm;
 			}
 			accprev = thread->obj[i].acc;
 			thread->obj[i].acc = (ele+flj)/thread->obj[i].mass;
