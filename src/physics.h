@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
+ * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -51,8 +51,7 @@ typedef struct {
 	float radius;
 	unsigned short int atomnumber;
 	bool ignore;
-	unsigned int totlinks;
-	bool *links;
+	double *links;
 } data;
 
 struct thread_settings {

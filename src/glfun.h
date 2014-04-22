@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
+ * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,8 @@ void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
 
 void drawaxis();
 void drawobject(data object);
-void draw_obj_links(data* object, unsigned int index);
+unsigned int createlinks(data* object, GLfloat (**links)[3]);
+void draw_obj_links(GLfloat (**links)[3], unsigned int linkcount);
 void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
 void selected_box_text(data object);
 

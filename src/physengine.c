@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
+ * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
-		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0, dumplevel = 0;
+		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 1, dumplevel = 0;
 		bool start_selection = 0;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
@@ -205,6 +205,11 @@ int main(int argc, char *argv[])
 		if(!init_elements()) pprintf(7, "[\033[032m OK! \033[0m] Successfully read ./resources/elements.conf!\n");
 		parser(&object, option->filename);
 	/*	Physics.	*/
+	
+	/*	Links.	*/
+		GLfloat (*links)[3] = calloc(10000, sizeof(*links));
+		unsigned int linkcounter = createlinks(object, &links);
+	/*	Links.	*/
 	
 	gettimeofday (&t1 , NULL);
 	
@@ -329,6 +334,8 @@ int main(int argc, char *argv[])
 			fps = frames/totaltime;
 			totaltime = frames = 0;
 			
+			if(option->novid == 0) linkcounter = createlinks(object, &links);
+			
 			if(dumplevel) toxyz(option->obj, object, timestep);
 			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", timestep);
 			
@@ -362,13 +369,15 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		adjust_rot(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
 		
+		
+		
 		/*	Dynamic drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
+		//drawaxis();
 		for(int i = 1; i < option->obj+1; i++) {
-			if(drawlinks)  draw_obj_links(object, i);
 			if(drawobj) drawobject(object[i]);
 		}
-		drawaxis();
+		if(drawlinks) draw_obj_links(&links, linkcounter);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Dynamic drawing	*/
 		
@@ -414,15 +423,18 @@ int main(int argc, char *argv[])
 	
 	quit:
 		printf("Quitting...\n");
+		if(option->novid == 0) {
+			FT_Done_Face(face);
+			//FT_Done_FreeType(library);
+			SDL_DestroyWindow(window);
+			free(links);
+			free(shaderprogs);
+		}
 		threadcontrol(PHYS_SHUTDOWN, &object);
-		FT_Done_Face(face);
-		FT_Done_FreeType(library);
-		SDL_DestroyWindow(window);
-		SDL_Quit();
-		free(shaderprogs);
 		free(option);
-		free(object);
+		//free(object);
 		if(option->logenable) fclose(option->logfile);
 		printf("Success!\n");
+		SDL_Quit();
 		return 0;
 }

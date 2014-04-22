@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
+ * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -108,7 +108,6 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 			*i = *i + 1;
 		}
 	}
-	
 	fclose(inpars);
 	return 0;
 }

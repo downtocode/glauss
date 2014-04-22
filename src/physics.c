@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
+ * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ int initphys(data** object)
 {
 	*object = calloc(option->obj+100,sizeof(data));
 	for(int i = 0; i < option->obj + 1; i++ ) {
-		(*object)[i].links = calloc(option->obj+1,sizeof(bool));
+		(*object)[i].links = calloc(option->obj+1,sizeof(double));
 	}
 	
 	pprintf(5, "[\033[032m OK! \033[0m] Allocated %lu bytes to object array at %p.\n", \
@@ -129,7 +129,7 @@ int threadcontrol(int status, data** object)
 			k, &threads[k], *object);
 		}
 	} else if(status == PHYS_SHUTDOWN) {
-		/* Shutting down's always been unstable as we use a mutex for pausing. */
+		/* Shutting down's always been unstable as we use a mutex for pausing. Current code works fine. */
 		running = 1;
 		pthread_mutex_unlock(&movestop);
 		quit = 1;
@@ -155,14 +155,9 @@ void *resolveforces(void *arg)
 	 * to its own set of objects. Therefore synchronizing common objects reads, which is the
 	 * only time threads overlap, is not required.
 	 */
-	
 	struct thread_settings *thread = &thread_opts[(long)arg];
-	v4sd vecnorm, accprev, grv, ele, flj;
-	double dist;
-	
-	ele = grv = flj = (v4sd){0,0,0};
-	
-	long double pi = acos(-1);
+	v4sd vecnorm, accprev;
+	double dist, pi = acos(-1);;
 	long double gconst = option->gconst, epsno = option->epsno;
 	
 	pthread_getcpuclockid(pthread_self(), &thread->clockid);
@@ -179,21 +174,22 @@ void *resolveforces(void *arg)
 		pthread_barrier_wait(&barrier);
 		
 		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
+			accprev = thread->obj[i].acc;
 			for(int j = 1; j < option->obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
 				dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
 				
-				//grvmag = ((gconst*thread->obj[i].mass*thread->obj[j].mass)/(dist*dist));
-				ele += -vecnorm*(double)((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*dist*dist));
-				flj += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) - 6*(pow(sigma, 6)/pow(dist, 7))));
+				//thread->obj[i].acc += vecnorm*(double)(gconst*thread->obj[j].mass)/(dist*dist);
+				thread->obj[i].acc += -vecnorm*(double)((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*dist*dist*thread->obj[i].mass));
+				thread->obj[i].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) - 6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[i].mass);
 				
+				if(thread->obj[i].links[j] != 0) {
+					thread->obj[i].acc += vecnorm*(dist - thread->obj[i].links[j])*5000/thread->obj[i].mass;
+				}
 			}
-			accprev = thread->obj[i].acc;
-			thread->obj[i].acc = (ele+flj)/thread->obj[i].mass;
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((thread->dt)/2);
-			ele = flj = (v4sd){0,0,0};
 		}
 		if((long)arg == 1) option->processed++;
 		/* Using SDL_Delay because it's thread-safe. */

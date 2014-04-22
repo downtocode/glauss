@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([physengine], [0.1pre], [atomnuker@gmail.com])
+AC_INIT([physengine], [0.1], [atomnuker@gmail.com])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_SRCDIR([src/msg_phys.h])
 AM_INIT_AUTOMAKE

@@ -64,7 +64,7 @@ This file contains the program configuration. Most of the settings have self-exp
 
 posdata.in
 -----------
-This file determines the properties of all the objects to be simulated. The comment at the top describes the correct order and structure. Object numbers **must** be sequential, starting from 1. The argument `-f (filename)` overrides the filename in simconf.conf, however, the program will fall back on the configuration file should no such filename exists. If both filenames do not exist, the program will exit with a return value of 1. Currently, no error checking is present for this file, therefore should the physics engine misbehave, inspect both the objects table printed on the terminal and your posdata file. In case nothing appears to be wrong, file a bug report with the file.
+This file determines the properties of all the objects to be simulated. The comment at the top describes the correct order and structure. Object numbers **must** be sequential, starting from 1. The argument `-f (filename)` overrides the filename in simconf.conf, however, the program will fall back on the configuration file should no such filename exists. If both filenames do not exist, the program will exit with a return 1. Currently, no error checking is present for this file, therefore should the physics engine misbehave, inspect both the objects table printed on the terminal and your posdata file. It's likely 2 objects share the same coordinates. In case nothing appears to be wrong, file a bug report with the file.
 
 Contacts
 -------

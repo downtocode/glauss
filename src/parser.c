@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
+ * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ int preparser()
 	char word[200], variable[200], namebuff[200], str[200];
 	long double anothervar;
 	float value, base, power;
-	bool endfile = 0;
 	FILE *inconf = fopen ("simconf.ini", "r");
 	while(fgets (str, sizeof(str), inconf)!=NULL) {
 		if(strncmp(str, "#", 1)!=0) {
@@ -133,16 +132,8 @@ int preparser()
 		}
 		FILE *inprep = fopen(option->filename, "r");
 		while(fgets(str, sizeof(str), inprep)!=NULL) {
-			if(strncmp(str, "#", 1)!=0) {
-				count += 1;
-				if(endfile) {
-					fprintf(stderr, "ERROR in posdata file! Molecules must be listed last!\n");
-					exit(1);
-				}
-			}
 			if(strncmp(str, "#!", 2)==0) {
 				char molfile[200], molname[180], moltype[20];
-				
 				sscanf(str, "#!%s %s", moltype, molname);
 				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
 				if(access(molfile, F_OK) == 0) {
@@ -153,8 +144,8 @@ int preparser()
 					fprintf(stderr, "File \"%s\" not found!\n", molfile);
 					exit(1);
 				}
-				/*	Because of the way the parser below works molfiles NEED to be last in posdata.	*/
-				endfile = 1;
+			} else if(strncmp(str, "#", 1)!=0) {
+				count += 1;
 			}
 		}
 		fclose(inprep);
@@ -165,7 +156,7 @@ int preparser()
 
 int parser(data** object, char filename[200])
 {
-	int i = 0, link;
+	int i = 1, link;
 	char links[200], *linkstr, ignflag;
 	char molfile[200], molname[180], moltype[20], str[200];
 	float posx, posy, posz, velx, vely, velz, bond, radius;
@@ -177,7 +168,6 @@ int parser(data** object, char filename[200])
 		pprintf(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
 		while(fgets(str, sizeof(str), in)!= NULL) {
 			if(strncmp(str, "#", 1)!=0) {
-				i++;
 				sscanf(str, "%f %f %f %f %f %f %lf %lf %f %c \"%s\"", &posx, &posy, &posz, &velx, \
 				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
 				
@@ -194,11 +184,11 @@ int parser(data** object, char filename[200])
 				 */
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*option->elcharge;
-				(*object)[i].ignore = (bool)ignflag;
+				(*object)[i].ignore = 0;
 				(*object)[i].atomnumber = 0;
 				(*object)[i].radius = radius;
 				
-				pprintf(PRI_SPAM, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2E | %0.2E | %f | %c | ", \
+				pprintf(PRI_SPAM, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2E | %0.2E | %f | %i | ", \
 				(*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
 				(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
 				
@@ -207,13 +197,14 @@ int parser(data** object, char filename[200])
 					while(linkstr != NULL) {
 						sscanf(linkstr, "%i-%f", &link, &bond);
 						pprintf(PRI_SPAM, "%i - %f ", link, bond);
-						//(*object)[i].links[link] = bond;
+						(*object)[i].links[link] = bond;
 						linkstr = strtok(NULL,",");
 					}
 					bond = link = 0;
 					memset(links, 0, sizeof(links));
 				}
 				pprintf(PRI_SPAM, " \n");
+				i++;
 			}
 			if(strncmp(str, "#!", 2)==0) {
 				sscanf(str, "#!%s %s %f %f %f %f %f %f", moltype, molname, &posx, &posy, &posz, &velx, &vely, &velz);

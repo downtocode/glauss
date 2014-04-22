@@ -1,6 +1,6 @@
 /*
  * This file is part of physengine.
- * Copyright (c) 2012 Rostislav Pehlivanov <atomnuker@gmail.com>
+ * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  * 
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
@@ -207,7 +207,8 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 
 void drawobject(data object) 
 {
-	float dj = 1.2, pi=acos(-1);
+	/* Decrease dj to get better spheres. */
+	float dj = 0.5, pi=acos(-1);
 	int pointcount = 0;
 	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
 	
@@ -235,35 +236,39 @@ void drawobject(data object)
 	glUniform4fv(objattr_color, 1, textcolor);
 }
 
-void createlinks(data* object) {
+unsigned int createlinks(data* object, GLfloat (**links)[3])
+{
+	v4sd distvec;
+	double dist;
 	
-	
-	
+	unsigned int count = 0;
+	for(int i = 1; i < option->obj+1; i++) {
+		for(int j = 1; j < option->obj+1; j++) {
+			if(i<j) continue;
+			if(count>9999) continue;
+			distvec = object[j].pos - object[i].pos;
+			dist = sqrt(distvec[0]*distvec[0] + distvec[1]*distvec[1] + distvec[2]*distvec[2]);
+			if(dist < 1.5 && object[j].atomnumber == 6) {
+				(*links)[count][0] = object[i].pos[0];
+				(*links)[count][1] = object[i].pos[1];
+				(*links)[count][2] = object[i].pos[2];
+				count++;
+				(*links)[count][0] = object[j].pos[0];
+				(*links)[count][1] = object[j].pos[1];
+				(*links)[count][2] = object[j].pos[2];
+				count++;
+			}
+		}
+	}
+	return count-1;
 }
 
-void draw_obj_links(data* object, unsigned int index)
-{
-	if(object[index].totlinks == 0) return;
-	
-	GLfloat links[100][3];
-	unsigned int linkcount = 0;
-	
-	for(int i = 1; i < option->obj+1; i++)
-	{
-		links[linkcount][0] = object[index].pos[0];
-		links[linkcount][1] = object[index].pos[1];
-		links[linkcount][2] = object[index].pos[2];
-		linkcount++;
-		links[linkcount][0] = object[i].pos[0];
-		links[linkcount][1] = object[i].pos[1];
-		links[linkcount][2] = object[i].pos[2];
-		linkcount++;
-	}
-	
+void draw_obj_links(GLfloat (**links)[3], unsigned int linkcount)
+{	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(objattr_pos);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(links), links, GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_LINES, 0, linkcount-1);
+	glBufferData(GL_ARRAY_BUFFER, 10000*3*sizeof(GLfloat), **links, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_LINE_LOOP, 0, linkcount);
 	glDisableVertexAttribArray(objattr_pos);
 }
 
@@ -287,11 +292,11 @@ void selected_box_text(data object)
 	render_text(osdstr, objpoint[0] + object.radius*scale[5], \
 	objpoint[1] + object.radius*scale[5], 1.0/option->width, 1.0/option->height, GL_RED);
 	
-	if(object.totlinks != 0) {
+	/*if(object.totlinks != 0) {
 		sprintf(osdstr, "Links: %u", object.totlinks);
 		render_text(osdstr, objpoint[0] + object.radius*scale[5], \
 		objpoint[1] + object.radius*scale[5] - 0.055, 1.0/option->width, 1.0/option->height, GL_BLUE);
-	}
+	}*/
 	
 	glEnableVertexAttribArray(textattr_coord);
 	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
