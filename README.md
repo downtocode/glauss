@@ -54,7 +54,6 @@ Argument | Action
 **--threads (int)** | Use (int) threads to speed up force calculation. Splits objects between cores.
 **--dump** | Dump entire system to an XYZ file every second.
 **--novid** | Disables SDL window creation and any OpenGL functions in the main loop.
-**--fullogl** | Initialize full OpenGL instead of ES. Look in simconf.conf to change versions.
 **--nosync** | Disables vertical synchronization.
 **--log** | Log all output at current verbose level to physengine.log.
 **--verb (uint)** | Sets how much to output to stout. 0 - nothing, 10 - everything.

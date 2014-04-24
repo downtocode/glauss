@@ -21,13 +21,12 @@ struct option_struct* option;
 
 struct option_struct {
 	float dt;
-	long sleepfor;
 	long double elcharge, gconst, epsno;
 	unsigned int obj;
 	unsigned long long processed;
-	unsigned short int avail_cores, oglmin, oglmax, verbosity;
+	unsigned short int avail_cores, verbosity;
 	int width, height;
-	bool vsync, novid, fullogl, moderandom, logenable;
+	bool nogrv, noele, noflj, moderandom, logenable, nosprings;
 	char fontname[200], filename[200];
 	FILE *logfile;
 };

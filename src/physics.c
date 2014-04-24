@@ -20,7 +20,6 @@
 #include <tgmath.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <SDL2/SDL.h>
 #include "physics.h"
 #include "options.h"
 #include "msg_phys.h"
@@ -41,13 +40,16 @@ static bool running, quit;
 
 int initphys(data** object)
 {
-	*object = calloc(option->obj+100,sizeof(data));
-	for(int i = 0; i < option->obj + 1; i++ ) {
-		(*object)[i].links = calloc(option->obj+1,sizeof(double));
+	*object = calloc(option->obj+1,sizeof(data));
+	
+	if(!option->nosprings) {
+		for(int i = 0; i < option->obj + 1; i++ ) {
+			(*object)[i].links = calloc(option->obj+1,sizeof(double));
+		}
 	}
 	
 	pprintf(5, "[\033[032m OK! \033[0m] Allocated %lu bytes to object array at %p.\n", \
-	((option->obj+1)*sizeof(data)+(option->obj+1)*sizeof(float)), *object);
+	(option->obj+1)*sizeof(data), *object);
 	
 	int online_cores = 0;
 	
@@ -157,8 +159,9 @@ void *resolveforces(void *arg)
 	 */
 	struct thread_settings *thread = &thread_opts[(long)arg];
 	v4sd vecnorm, accprev;
-	double dist, pi = acos(-1);;
-	long double gconst = option->gconst, epsno = option->epsno;
+	double dist, pi = acos(-1);
+	const long double gconst = option->gconst, epsno = option->epsno;
+	const bool noflj = option->noflj, noele = option->noele, nogrv = option->nogrv;
 	
 	pthread_getcpuclockid(pthread_self(), &thread->clockid);
 	
@@ -181,19 +184,22 @@ void *resolveforces(void *arg)
 				dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
 				
-				//thread->obj[i].acc += vecnorm*(double)(gconst*thread->obj[j].mass)/(dist*dist);
-				thread->obj[i].acc += -vecnorm*(double)((thread->obj[i].charge*thread->obj[j].charge)/(4*pi*epsno*dist*dist*thread->obj[i].mass));
-				thread->obj[i].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) - 6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[i].mass);
+				if(!nogrv)
+					thread->obj[i].acc += vecnorm*(double)(gconst*thread->obj[j].mass)/(dist*dist);
+				if(!noele)
+					thread->obj[i].acc += -vecnorm*(double)((thread->obj[i].charge*thread->obj[j].charge)/\
+											(4*pi*epsno*dist*dist*thread->obj[i].mass));
+				if(!noflj)
+					thread->obj[i].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) - 6*(pow(sigma, 6)/pow(dist, 7)))/\
+											thread->obj[i].mass);
 				
-				if(thread->obj[i].links[j] != 0) {
+				/*if(!option->nosprings && thread->obj[i].links[j] != 0) {
 					thread->obj[i].acc += vecnorm*(dist - thread->obj[i].links[j])*5000/thread->obj[i].mass;
-				}
+				}*/
 			}
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((thread->dt)/2);
 		}
 		if((long)arg == 1) option->processed++;
-		/* Using SDL_Delay because it's thread-safe. */
-		SDL_Delay(option->sleepfor);
 		pthread_barrier_wait(&barrier);
 	}
 	return 0;

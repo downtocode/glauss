@@ -50,17 +50,34 @@ int preparser()
 			if(strcmp(word, "elcharge") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				option->elcharge = anothervar*pow(base, power);
+				if(anothervar != 0.0) {
+					option->elcharge = anothervar*pow(base, power);
+				} else {
+					option->noele = 1;
+					option->elcharge = 0.0;
+					option->epsno = 0.0;
+				}
 			}
 			if(strcmp(word, "gconst") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				option->gconst = anothervar*pow(base, power);
+				if(anothervar != 0.0) {
+					option->gconst = anothervar*pow(base, power);
+				} else {
+					option->nogrv = 1;
+					option->gconst = 0.0;
+				}
 			}
 			if(strcmp(word, "epsno") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
 				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				option->epsno = anothervar*pow(base, power);
+				if(anothervar != 0.0) {
+					option->epsno = anothervar*pow(base, power);
+				} else {
+					option->noele = 1;
+					option->elcharge = 0.0;
+					option->epsno = 0.0;
+				}
 			}
 			if(strcmp(word, "width") == 0) {
 				option->width = (unsigned int)value;
@@ -95,18 +112,6 @@ int preparser()
 			}
 			if(strcmp(word, "posdata") == 0) {
 				sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
-			}
-			if(strcmp(word, "fullogl") == 0) {
-				if(!option->fullogl) option->fullogl = (bool)value;
-			}
-			if(strcmp(word, "oglmin") == 0) {
-				option->oglmin = (unsigned int)value;
-			}
-			if(strcmp(word, "oglmax") == 0) {
-				option->oglmax = (unsigned int)value;
-			}
-			if(strcmp(word, "sleep") == 0) {
-				option->sleepfor = (long)value;
 			}
 		} else {
 			memset(str, 0, sizeof(str));
@@ -192,7 +197,7 @@ int parser(data** object, char filename[200])
 				(*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
 				(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
 				
-				if( links[0] != 0 ) {
+				if(!option->nosprings && links[0] != 0 ) {
 					linkstr = strtok(links,",");
 					while(linkstr != NULL) {
 						sscanf(linkstr, "%i-%f", &link, &bond);

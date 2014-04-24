@@ -66,8 +66,9 @@ int main(int argc, char *argv[])
 		
 		*option = (struct option_struct){
 			.width = 1200, .height = 600,
-			.avail_cores = 0, .oglmin = 2, .oglmax = 0,
-			.dt = 0.008, .vsync = 1, .verbosity = 5,
+			.avail_cores = 0,
+			.dt = 0.008, .verbosity = 5,
+			.nosprings = 1, .noflj = 1,
 		};
 		strcpy(option->filename,"posdata.in");
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
@@ -85,8 +86,8 @@ int main(int argc, char *argv[])
 		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
-		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 1, dumplevel = 0;
-		bool start_selection = 0;
+		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0, dumplevel = 0;
+		bool start_selection = 0, vsync = 1, novid = 0;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 		GLuint* shaderprogs;
@@ -96,16 +97,13 @@ int main(int argc, char *argv[])
 		if(argc > 1) {
 			for(int i=1; i < argc; i++) {
 				if(!strcmp( "--novid", argv[i])) {
-					option->novid = 1;
+					novid = 1;
 				}
 				if(!strcmp( "-f", argv[i] ) ) {
 					strcpy( option->filename, argv[i+1]);
 				}
 				if(!strcmp( "--nosync", argv[i])) {
-					option->vsync = 0;
-				}
-				if(!strcmp( "--fullogl", argv[i])) {
-					option->fullogl = 1;
+					vsync = 0;
 				}
 				if(!strcmp( "--log", argv[i])) {
 					option->logenable = 1;
@@ -155,17 +153,17 @@ int main(int argc, char *argv[])
 		GLuint textvbo, pointvbo;
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
-		if(option->novid == 0) {
+		if(novid == 0) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-			if(!option->fullogl) SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, option->oglmin);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, option->oglmax);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 			window = SDL_CreateWindow(PACKAGE_STRING, \
 				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width, option->height, \
 				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|SDL_WINDOW_ALLOW_HIGHDPI);
 			resize_wind();
 			SDL_GL_CreateContext(window);
-			SDL_GL_SetSwapInterval(option->vsync);
+			SDL_GL_SetSwapInterval(vsync);
 			glViewport(0, 0, option->width, option->height);
 			create_shaders(&shaderprogs);
 			glEnable(GL_DEPTH_TEST);
@@ -179,7 +177,7 @@ int main(int argc, char *argv[])
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
 	/*	Freetype.	*/
-		if(option->novid == 0) {
+		if(novid == 0) {
 			if(FT_Init_FreeType(&library)) {
 				fprintf(stderr, "\033[031m Error! \033[0m] Could not init freetype library\n");
 				return 1;
@@ -334,7 +332,7 @@ int main(int argc, char *argv[])
 			fps = frames/totaltime;
 			totaltime = frames = 0;
 			
-			if(option->novid == 0) linkcounter = createlinks(object, &links);
+			if(!novid || drawlinks) linkcounter = createlinks(object, &links);
 			
 			if(dumplevel) toxyz(option->obj, object, timestep);
 			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", timestep);
@@ -346,7 +344,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		if(option->novid) {
+		if(novid) {
 			/* Prevents wasting CPU time by waking up once every 100 msec.
 			 * Using SDL_Delay because usleep is depricated and nanosleep is overkill. */
 			SDL_Delay(100);
@@ -373,7 +371,7 @@ int main(int argc, char *argv[])
 		
 		/*	Dynamic drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
-		//drawaxis();
+		drawaxis();
 		for(int i = 1; i < option->obj+1; i++) {
 			if(drawobj) drawobject(object[i]);
 		}
@@ -423,16 +421,16 @@ int main(int argc, char *argv[])
 	
 	quit:
 		printf("Quitting...\n");
-		if(option->novid == 0) {
+		if(!novid) {
 			FT_Done_Face(face);
-			//FT_Done_FreeType(library);
+			FT_Done_FreeType(library);
 			SDL_DestroyWindow(window);
 			free(links);
 			free(shaderprogs);
 		}
 		threadcontrol(PHYS_SHUTDOWN, &object);
 		free(option);
-		//free(object);
+		free(object);
 		if(option->logenable) fclose(option->logfile);
 		printf("Success!\n");
 		SDL_Quit();
