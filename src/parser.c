@@ -219,17 +219,24 @@ int parser(data** object, char filename[200])
 		}
 	} else {
 		for(i = 1; i < option->obj + 1; i++) {
-			(*object)[i].pos[0] = (((double)rand()/(double)RAND_MAX) - 0.5)*50;
-			(*object)[i].pos[1] = (((double)rand()/(double)RAND_MAX) - 0.5)*50;
-			(*object)[i].pos[2] = (((double)rand()/(double)RAND_MAX) - 0.5)*50;
-			(*object)[i].vel[0] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
-			(*object)[i].vel[1] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
-			(*object)[i].vel[2] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
+			double alpha = 2*((((double)rand()/(double)RAND_MAX))*acos(-1));
+			double beta = ((((double)rand()/(double)RAND_MAX))*acos(-1));
+			radius = (((double)rand()/(double)RAND_MAX))*40;
+			
+			(*object)[i].pos[0] = radius*sin(alpha)*cos(beta);
+			(*object)[i].pos[1] = radius*sin(alpha)*sin(beta);
+			(*object)[i].pos[2] = radius*cos(alpha);
+				
+			
+			//(*object)[i].vel[0] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
+			//(*object)[i].vel[1] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
+			//(*object)[i].vel[2] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
+			
 			(*object)[i].mass = (((double)rand()/(double)RAND_MAX))*massrand;
-			(*object)[i].charge = (((double)rand()/(double)RAND_MAX) - 0.5)*2;
-			(*object)[i].radius = (((float)rand()/(float)RAND_MAX))*sizerand*12 + 0.07;
+			(*object)[i].charge = 0;
+			(*object)[i].radius = 0.07;
 			(*object)[i].ignore = 0;
-			(*object)[i].atomnumber = (int)((((float)rand()/(float)RAND_MAX))*10);
+			(*object)[i].atomnumber = 0;
 		}
 	}
 	fclose(in);

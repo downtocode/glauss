@@ -84,24 +84,28 @@ int initphys(data** object)
 	return 0;
 }
 
-int threadseperate()
+int distribute_objects()
 {
-	/*
-	 * Split objects equally between cores
-	 * You can deliberatly load the last thread more by deducting a few objects in totcore.
-	 */
+	/* TODO: Once proper object distribution is implemented rewrite this function.
+	 * limits_up and limits_down are from the old implementation. */
+	unsigned int *limits_up = calloc(option->avail_cores, sizeof(unsigned int));
+	unsigned int *limits_down = calloc(option->avail_cores, sizeof(unsigned int));
+	
 	int totcore = (int)((float)option->obj/option->avail_cores);
 	for(int k = 1; k < option->avail_cores + 1; k++) {
-		thread_opts[k].threadid = k;
-		thread_opts[k].looplimit1 = thread_opts[k-1].looplimit2 + 1;
-		thread_opts[k].looplimit2 = thread_opts[k].looplimit1 + totcore - 1;
+		limits_down[k] = limits_up[k-1] + 1;
+		limits_up[k] = limits_down[k] + totcore - 1;
 		if(k == option->avail_cores) {
 			/*	Takes care of rounding problems with odd numbers.	*/
-			thread_opts[k].looplimit2 += option->obj - thread_opts[k].looplimit2;
+			limits_up[k] += option->obj - limits_up[k];
 		}
-		if(thread_opts[k].looplimit2 != 0)
-			pprintf(PRI_MEDIUM, "Thread %i's objects = [%u,%u]\n", \
-			k, thread_opts[k].looplimit1, thread_opts[k].looplimit2);
+		thread_opts[k].objcount = limits_up[k] - limits_down[k];
+		thread_opts[k].indices = calloc(thread_opts[k].objcount, sizeof(unsigned int));
+		
+		for(int i = 0; i < thread_opts[k].objcount + 1; i++) {
+			thread_opts[k].indices[i] = limits_down[k];
+			limits_down[k]++;
+		}
 	}
 	return 0;
 }
@@ -118,7 +122,7 @@ int threadcontrol(int status, data** object)
 	} else if(status == PHYS_STATUS) {
 		return running;
 	} else if(status == PHYS_START) {
-		threadseperate();
+		distribute_objects();
 		pthread_mutex_init(&movestop, NULL);
 		pthread_barrier_init(&barrier, NULL, option->avail_cores);
 		running = 1;
@@ -143,6 +147,7 @@ int threadcontrol(int status, data** object)
 		}
 		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);
+		free(threads);
 		running = 0;
 		quit = 0;
 	}
@@ -159,16 +164,17 @@ void *resolveforces(void *arg)
 	 */
 	struct thread_settings *thread = &thread_opts[(long)arg];
 	v4sd vecnorm, accprev;
-	double dist, pi = acos(-1);
+	double dist;
+	const double pi = acos(-1);
 	const long double gconst = option->gconst, epsno = option->epsno;
-	const bool noflj = option->noflj, noele = option->noele, nogrv = option->nogrv;
 	
 	pthread_getcpuclockid(pthread_self(), &thread->clockid);
 	
 	while(!quit) {
-		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
-			if(thread->obj[i].ignore) continue;
-			thread->obj[i].pos += (thread->obj[i].vel*thread->dt) + (thread->obj[i].acc)*((thread->dt*thread->dt)/2);
+		for(int i = 0; i < thread->objcount + 1; i++) {
+			if(thread->obj[thread->indices[i]].ignore) continue;
+			thread->obj[thread->indices[i]].pos += (thread->obj[thread->indices[i]].vel*thread->dt) +\
+				(thread->obj[thread->indices[i]].acc)*((thread->dt*thread->dt)/2);
 		}
 		
 		pthread_mutex_lock(&movestop);
@@ -176,28 +182,27 @@ void *resolveforces(void *arg)
 		if(running) pthread_mutex_unlock(&movestop);
 		pthread_barrier_wait(&barrier);
 		
-		for(int i = thread->looplimit1; i < thread->looplimit2 + 1; i++) {
-			accprev = thread->obj[i].acc;
+		for(int i = 0; i < thread->objcount + 1; i++) {
+			accprev = thread->obj[thread->indices[i]].acc;
 			for(int j = 1; j < option->obj + 1; j++) {
-				if(i==j) continue;
-				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
+				if(thread->indices[i]==j) continue;
+				vecnorm = thread->obj[j].pos - thread->obj[thread->indices[i]].pos;
 				dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
 				
-				if(!nogrv)
-					thread->obj[i].acc += vecnorm*(double)(gconst*thread->obj[j].mass)/(dist*dist);
-				if(!noele)
-					thread->obj[i].acc += -vecnorm*(double)((thread->obj[i].charge*thread->obj[j].charge)/\
-											(4*pi*epsno*dist*dist*thread->obj[i].mass));
-				if(!noflj)
-					thread->obj[i].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) - 6*(pow(sigma, 6)/pow(dist, 7)))/\
-											thread->obj[i].mass);
-				
+				if(!option->nogrv)
+					thread->obj[thread->indices[i]].acc += vecnorm*(double)(gconst*thread->obj[j].mass)/(dist*dist);
+				if(!option->noele)
+					thread->obj[thread->indices[i]].acc += -vecnorm*(double)((thread->obj[thread->indices[i]].charge*\
+						thread->obj[j].charge)/(4*pi*epsno*dist*dist*thread->obj[thread->indices[i]].mass));
+				if(!option->noflj)
+					thread->obj[thread->indices[i]].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
+						6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[thread->indices[i]].mass);
 				/*if(!option->nosprings && thread->obj[i].links[j] != 0) {
 					thread->obj[i].acc += vecnorm*(dist - thread->obj[i].links[j])*5000/thread->obj[i].mass;
 				}*/
 			}
-			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((thread->dt)/2);
+			thread->obj[thread->indices[i]].vel += (thread->obj[thread->indices[i]].acc + accprev)*((thread->dt)/2);
 		}
 		if((long)arg == 1) option->processed++;
 		pthread_barrier_wait(&barrier);
