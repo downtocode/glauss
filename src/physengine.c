@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <tgmath.h>
+#include <getopt.h>
 #include <sys/time.h>
 
 /*	Dependencies	*/
@@ -86,57 +87,71 @@ int main(int argc, char *argv[])
 		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
-		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0, dumplevel = 0;
-		bool start_selection = 0, vsync = 1, novid = 0;
+		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0;
+		bool start_selection = 0;
+		int novid = 0, dumplevel = 0, vsync = 0;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 		GLuint* shaderprogs;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
-		if(argc > 1) {
-			for(int i=1; i < argc; i++) {
-				if(!strcmp( "--novid", argv[i])) {
-					novid = 1;
-				}
-				if(!strcmp( "-f", argv[i] ) ) {
-					strcpy( option->filename, argv[i+1]);
-				}
-				if(!strcmp( "--nosync", argv[i])) {
-					vsync = 0;
-				}
-				if(!strcmp( "--log", argv[i])) {
-					option->logenable = 1;
-					option->logfile = fopen("physengine.log", "w");
-				}
-				if(!strcmp("--threads", argv[i])) {
-					sscanf(argv[i+1], "%hu", &option->avail_cores);
-					if(option->avail_cores == 0) {
-						fprintf(stderr, "ERROR! Requires at least 1 thread.\n");
-						return 1;
-					}
-				}
-				if(!strcmp("--dump", argv[i])) {
-					dumplevel = 1;
-				}
-				if(!strcmp("--verb", argv[i])) {
-					sscanf(argv[i+1], "%hu", &option->verbosity);
-				}
-				if( !strcmp("--help", argv[i])) {
-					printf("%s\n", PACKAGE_STRING);
-					printf("Usage:\n");
-					printf("	-f (filename)		Specify a posdata file. Takes priority over configfile.\n");
-					printf("	--novid 		Disable video output, do not initialize any graphical libraries.\n");
-					printf("	--nosync 		Disables vsync.\n");
-					printf("	--fullogl 		Initialize full OpenGL instead of ES.\n");
-					printf("	--threads (int)		Make the program run with this many threads.\n");
-					printf("	--verb (uint)		Set how much to output to stdout. Def. 5\n"); 
-					printf("	--log 		Log all output at current verbose level to physengine.log.\n");
-					printf("	--dump		Dump entire system to an XYZ file every second.\n"); 
-					printf("	--help  		What you're reading.\n");
-					return 0;
-				}
+		int c;
+		
+		while (1) {
+			struct option long_options[] =
+			{
+				{"novid",	no_argument,			&novid, 1},
+				{"nosync",	no_argument,			&vsync, 0},
+				{"dump",	no_argument,			&dumplevel, 1},
+				{"log",		required_argument,		0, 'l'},
+				{"threads",	required_argument,		0, 't'},
+				{"verb",	required_argument,		0, 'v'},
+				{"file",	required_argument,		0, 'f'},
+			};
+			/* getopt_long stores the option index here. */
+			int option_index = 0;
+			
+			c = getopt_long(argc, argv, "l:t:v:f:", long_options, &option_index);
+			
+			/* Detect the end of the options. */
+			if (c == -1)
+				break;
+			switch (c) {
+				case 0:
+					/* If this option set a flag, do nothing else now. */
+					if(long_options[option_index].flag != 0)
+						break;
+					printf("option %s", long_options[option_index].name);
+					if(optarg)
+						printf(" with arg %s", optarg);
+					printf("\n");
+					break;
+				case 'l':
+					option->logfile = fopen(optarg, "w");
+					break;
+				case 'v':
+					sscanf(optarg, "%hu", &option->verbosity);
+					break;
+				case 't':
+					sscanf(optarg, "%hu", &option->avail_cores);
+					break;
+				case 'f':
+					strcpy(option->filename, optarg);
+					break;
+				case '?':
+					exit(1);
+					break;
+				default:
+					abort();
 			}
+		}
+		if(optind < argc) {
+			printf("Error: non-option ARGV-elements: ");
+			while(optind < argc)
+				printf("%s ", argv[optind++]);
+			putchar('\n');
+			exit(1);
 		}
 		option->obj = preparser();
 	/*	Arguments	*/
@@ -428,10 +443,12 @@ int main(int argc, char *argv[])
 			free(links);
 			free(shaderprogs);
 		}
-		threadcontrol(PHYS_SHUTDOWN, &object);
+		if(option->logenable)
+			fclose(option->logfile);
 		free(option);
 		free(object);
-		if(option->logenable) fclose(option->logfile);
+		if(threadcontrol(PHYS_STATUS, &object))
+			threadcontrol(PHYS_SHUTDOWN, &object);
 		printf("Success!\n");
 		SDL_Quit();
 		return 0;
