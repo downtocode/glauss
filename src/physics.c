@@ -167,6 +167,7 @@ void *resolveforces(void *arg)
 	double dist;
 	const double pi = acos(-1);
 	const long double gconst = option->gconst, epsno = option->epsno;
+	const bool nogrv = option->nogrv, noele = option->noele, noflj = option->noflj;
 	
 	pthread_getcpuclockid(pthread_self(), &thread->clockid);
 	
@@ -190,12 +191,12 @@ void *resolveforces(void *arg)
 				dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
 				
-				if(!option->nogrv)
+				if(!nogrv)
 					thread->obj[thread->indices[i]].acc += vecnorm*(double)(gconst*thread->obj[j].mass)/(dist*dist);
-				if(!option->noele)
+				if(!noele)
 					thread->obj[thread->indices[i]].acc += -vecnorm*(double)((thread->obj[thread->indices[i]].charge*\
 						thread->obj[j].charge)/(4*pi*epsno*dist*dist*thread->obj[thread->indices[i]].mass));
-				if(!option->noflj)
+				if(!noflj)
 					thread->obj[thread->indices[i]].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
 						6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[thread->indices[i]].mass);
 				/*if(!option->nosprings && thread->obj[i].links[j] != 0) {

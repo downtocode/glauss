@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0;
 		bool start_selection = 0;
-		int novid = 0, dumplevel = 0, vsync = 0;
+		int novid = 0, dumplevel = 0, vsync = 0, bench = 0;
+		float timer = 1.0f;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 		GLuint* shaderprogs;
@@ -103,6 +104,7 @@ int main(int argc, char *argv[])
 			{
 				{"novid",	no_argument,			&novid, 1},
 				{"nosync",	no_argument,			&vsync, 0},
+				{"bench",	no_argument,			&bench, 1},
 				{"dump",	no_argument,			&dumplevel, 1},
 				{"log",		required_argument,		0, 'l'},
 				{"threads",	required_argument,		0, 't'},
@@ -153,6 +155,13 @@ int main(int argc, char *argv[])
 			putchar('\n');
 			exit(1);
 		}
+		if(bench) {
+			pprintf(PRI_ESSENTIAL, "Benchmark mode active.\n");
+			novid = 1;
+			option->avail_cores = 1;
+			option->verbosity = 9;
+			timer = 30.0f;
+		}
 		option->obj = preparser();
 	/*	Arguments	*/
 	
@@ -161,7 +170,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Error: no objects!\n");
 			return 1;
 		} else sprintf(osdobj, "Objects = %i", option->obj);
-		if(dumplevel) printf("Outputting XYZ file every second.\n");
+		if(dumplevel) printf("Outputting XYZ file every %f seconds.\n", timer);
 	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
@@ -343,7 +352,7 @@ int main(int argc, char *argv[])
 			totaltime += deltatime;
 			frames++;
 		}
-		if (totaltime >  1.0f) {
+		if (totaltime >  timer) {
 			fps = frames/totaltime;
 			totaltime = frames = 0;
 			
@@ -357,6 +366,7 @@ int main(int argc, char *argv[])
 				sprintf(threadtime[i], "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 				pprintf(PRI_SPAM, "%s\n", threadtime[i]);
 			}
+			if(bench) goto quit;
 		}
 		
 		if(novid) {
