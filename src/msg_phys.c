@@ -22,17 +22,34 @@
 
 /* pprintf - a priority printing function. */
 
+static const char *okmsg = "[\033[032m Ok! \033[0m] ";
+static const char *warnmsg = "[\033[033m Warning! \033[0m] ";
+static const char *errmsg = "[\033[031m Error! \033[0m] ";
+
 void pprintf(unsigned int priority, const char *format, ...)
 {
+	/* vararags was acting up. I figure if there's one thing this program should
+	 * do it should damn always be to print the things it does on a terminal reliably.
+	 * You can't print to format, you can't change format to some other string and
+	 * send that over to vararargs because it doesn't know where to start. You can do
+	 * alot of other things however you'll get junk and segfaults. So better to keep it
+	 * simple and print that damn bling normally. */
 	va_list args;
-	if(priority <= option->verbosity) {
+	if(option->logenable) {
+		va_start(args, format);
+		vfprintf(option->logfile, format, args);
+		va_end(args);
+	}
+	if(priority == PRI_ERR) {
+		fprintf(stderr, "%s", errmsg);
+		va_start(args, format);
+		vfprintf(stderr, format, args);
+		va_end(args);
+	} else if(priority <= option->verbosity || priority == PRI_OK || priority == PRI_WARN) {
+		if(priority == PRI_OK) printf("%s", okmsg);
+		if(priority == PRI_WARN) printf("%s", warnmsg);
 		va_start(args, format);
 		vprintf(format, args);
 		va_end(args);
-		if(option->logenable) {
-			va_start(args, format);
-			vfprintf(option->logfile, format, args);
-			va_end(args);
-		}
 	}
 }

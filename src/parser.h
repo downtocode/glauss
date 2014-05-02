@@ -18,8 +18,8 @@
 #ifndef PHYSENGINE_PARS
 #define PHYSENGINE_PARS
 
-int preparser();
-int parser(data** object, char filename[200]);
+int preparser(const char* filename);
+int parser(data** object, const char* filename);
 char* readshader(const char* filename);
 
 #endif

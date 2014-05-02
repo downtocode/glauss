@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
 			.dt = 0.008, .verbosity = 5,
 			.nosprings = 1, .noflj = 1,
 		};
-		strcpy(option->filename,"posdata.in");
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
 	
@@ -108,13 +107,14 @@ int main(int argc, char *argv[])
 				{"dump",	no_argument,			&dumplevel, 1},
 				{"log",		required_argument,		0, 'l'},
 				{"threads",	required_argument,		0, 't'},
+				{"timer",	required_argument,		0, 'r'},
 				{"verb",	required_argument,		0, 'v'},
 				{"file",	required_argument,		0, 'f'},
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "l:t:v:f:", long_options, &option_index);
+			c = getopt_long(argc, argv, "l:t:r:v:f:", long_options, &option_index);
 			
 			/* Detect the end of the options. */
 			if (c == -1)
@@ -131,15 +131,21 @@ int main(int argc, char *argv[])
 					break;
 				case 'l':
 					option->logfile = fopen(optarg, "w");
-					break;
-				case 'v':
-					sscanf(optarg, "%hu", &option->verbosity);
+					pprintf(PRI_ESSENTIAL, "Writing log to file %s.\n", optarg);
 					break;
 				case 't':
 					sscanf(optarg, "%hu", &option->avail_cores);
 					break;
+				case 'r':
+					sscanf(optarg, "%f", &timer);
+					pprintf(PRI_ESSENTIAL, "Timer set to %f seconds.\n", timer);
+					break;
+				case 'v':
+					sscanf(optarg, "%hu", &option->verbosity);
+					break;
 				case 'f':
 					strcpy(option->filename, optarg);
+					pprintf(PRI_ESSENTIAL, "Opened input file %s.\n", optarg);
 					break;
 				case '?':
 					exit(1);
@@ -149,25 +155,25 @@ int main(int argc, char *argv[])
 			}
 		}
 		if(optind < argc) {
-			printf("Error: non-option ARGV-elements: ");
+			pprintf(PRI_ERR, "Non-option ARGV-elements: ");
 			while(optind < argc)
 				printf("%s ", argv[optind++]);
 			putchar('\n');
 			exit(1);
 		}
 		if(bench) {
-			pprintf(PRI_ESSENTIAL, "Benchmark mode active.\n");
+			pprintf(PRI_WARN, "Benchmark mode active.\n");
 			novid = 1;
 			option->avail_cores = 1;
 			option->verbosity = 9;
-			timer = 30.0f;
+			if(timer==1.0f) timer=30.0f;
 		}
-		option->obj = preparser();
+		option->obj = preparser(option->filename);
 	/*	Arguments	*/
 	
 	/*	Error handling.	*/
 		if(option->obj == 0) {
-			fprintf(stderr, "Error: no objects!\n");
+			pprintf(PRI_ERR, "Error: no objects!\n");
 			return 1;
 		} else sprintf(osdobj, "Objects = %i", option->obj);
 		if(dumplevel) printf("Outputting XYZ file every %f seconds.\n", timer);
@@ -203,11 +209,11 @@ int main(int argc, char *argv[])
 	/*	Freetype.	*/
 		if(novid == 0) {
 			if(FT_Init_FreeType(&library)) {
-				fprintf(stderr, "\033[031m Error! \033[0m] Could not init freetype library\n");
+				pprintf(PRI_ERR, "Could not init freetype library.\n");
 				return 1;
 			}
 			if(FT_New_Face(library, option->fontname, 0, &face)) {
-				fprintf(stderr, "\033[031m Error! \033[0m] Could not open font\n");
+				pprintf(PRI_ERR, "Could not open font.\n");
 				return 1;
 			}
 			FT_Set_Pixel_Sizes(face, 0, 34);
@@ -224,7 +230,7 @@ int main(int argc, char *argv[])
 		/*	Mallocs and wipes	*/
 		initphys(&object);
 		char threadtime[option->avail_cores][100];
-		if(!init_elements()) pprintf(7, "[\033[032m OK! \033[0m] Successfully read ./resources/elements.conf!\n");
+		if(!init_elements()) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
 		parser(&object, option->filename);
 	/*	Physics.	*/
 	
@@ -354,7 +360,6 @@ int main(int argc, char *argv[])
 		}
 		if (totaltime >  timer) {
 			fps = frames/totaltime;
-			totaltime = frames = 0;
 			
 			if(!novid || drawlinks) linkcounter = createlinks(object, &links);
 			
@@ -366,7 +371,12 @@ int main(int argc, char *argv[])
 				sprintf(threadtime[i], "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 				pprintf(PRI_SPAM, "%s\n", threadtime[i]);
 			}
-			if(bench) goto quit;
+			if(bench) {
+				pprintf(PRI_ESSENTIAL, "Progressed %f timeunits over %f seconds.\n", timestep, totaltime);
+				pprintf(PRI_ESSENTIAL, "Average = %f timeunits per second.\n", timestep/totaltime);
+				goto quit;
+			}
+			totaltime = frames = 0;
 		}
 		
 		if(novid) {
@@ -450,6 +460,7 @@ int main(int argc, char *argv[])
 			FT_Done_Face(face);
 			FT_Done_FreeType(library);
 			SDL_DestroyWindow(window);
+			SDL_Quit();
 			free(links);
 			free(shaderprogs);
 		}
@@ -459,7 +470,5 @@ int main(int argc, char *argv[])
 		free(object);
 		if(threadcontrol(PHYS_STATUS, &object))
 			threadcontrol(PHYS_SHUTDOWN, &object);
-		printf("Success!\n");
-		SDL_Quit();
 		return 0;
 }

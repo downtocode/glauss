@@ -28,6 +28,10 @@
 #define PRI_VERYLOW 8
 #define PRI_SPAM 9
 
+#define PRI_OK 10
+#define PRI_WARN 11
+#define PRI_ERR 12
+
 void pprintf(unsigned int priority, const char *format, ...);
 
 #endif

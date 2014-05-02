@@ -42,13 +42,7 @@ int initphys(data** object)
 {
 	*object = calloc(option->obj+1,sizeof(data));
 	
-	if(!option->nosprings) {
-		for(int i = 0; i < option->obj + 1; i++ ) {
-			(*object)[i].links = calloc(option->obj+1,sizeof(double));
-		}
-	}
-	
-	pprintf(5, "[\033[032m OK! \033[0m] Allocated %lu bytes to object array at %p.\n", \
+	if(*object != NULL) pprintf(PRI_OK, "Allocated %lu bytes to object array at %p.\n", \
 	(option->obj+1)*sizeof(data), *object);
 	
 	int online_cores = 0;
@@ -59,7 +53,7 @@ int initphys(data** object)
 	
 	if(option->avail_cores == 0 && online_cores != 0 ) {
 		option->avail_cores = online_cores;
-		pprintf(PRI_VERYHIGH, "Detected %i threads, will use all.\n", online_cores);
+		pprintf(PRI_OK, "Detected %i threads, will use all.\n", online_cores);
 	} else if( option->avail_cores != 0 && online_cores != 0 && online_cores > option->avail_cores ) {
 		pprintf(PRI_VERYHIGH, "Using %i out of %i threads.\n", option->avail_cores, online_cores);
 	} else if(option->avail_cores == 1) {
@@ -69,7 +63,7 @@ int initphys(data** object)
 	} else if(option->avail_cores == 0 ) {
 		/*	Poor Mac OS...	*/
 		option->avail_cores = failsafe_cores;
-		pprintf(PRI_VERYHIGH, "[\033[033m Warning! \033[0m] Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
+		pprintf(PRI_WARN, "Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
 	}
 	
 	threads = calloc(option->avail_cores+1, sizeof(pthread_t));
@@ -127,12 +121,11 @@ int threadcontrol(int status, data** object)
 		pthread_barrier_init(&barrier, NULL, option->avail_cores);
 		running = 1;
 		for(int k = 1; k < option->avail_cores + 1; k++) {
-			if(thread_opts[k].obj != NULL) continue;
+			pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
 			thread_opts[k].dt = option->dt;
 			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
-			pprintf(5, "[\033[032m OK! \033[0m] Thread %i - %p started using object array at %p.\n", \
-			k, &threads[k], *object);
+			pprintf(PRI_OK, "\n");
 		}
 	} else if(status == PHYS_SHUTDOWN) {
 		/* Shutting down's always been unstable as we use a mutex for pausing. Current code works fine. */
@@ -140,10 +133,10 @@ int threadcontrol(int status, data** object)
 		pthread_mutex_unlock(&movestop);
 		quit = 1;
 		for(int k = 1; k < option->avail_cores + 1; k++) {
-			pprintf(5, "Thread %i - %p shutting down...", k, &threads[k]);
+			pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
 			pthread_join(threads[k], NULL);
 			thread_opts[k].obj = NULL;
-			pprintf(5, "\r[\033[032m OK! \033[0m] Thread %i - %p shut down.\n", k, &threads[k]);
+			pprintf(PRI_OK, "\n");
 		}
 		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);
@@ -156,12 +149,6 @@ int threadcontrol(int status, data** object)
 
 void *resolveforces(void *arg)
 {
-	/*
-	 * There shouldn't be any need to use a mutex for synchronizing access to the object array.
-	 * Each thread reads every object(including other threads' objects) however it only writes
-	 * to its own set of objects. Therefore synchronizing common objects reads, which is the
-	 * only time threads overlap, is not required.
-	 */
 	struct thread_settings *thread = &thread_opts[(long)arg];
 	v4sd vecnorm, accprev;
 	double dist;
@@ -179,7 +166,6 @@ void *resolveforces(void *arg)
 		}
 		
 		pthread_mutex_lock(&movestop);
-		/* Mutex here is only used for pausing the execution. Using it as a barrier not possible.(?) */
 		if(running) pthread_mutex_unlock(&movestop);
 		pthread_barrier_wait(&barrier);
 		
@@ -199,9 +185,6 @@ void *resolveforces(void *arg)
 				if(!noflj)
 					thread->obj[thread->indices[i]].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
 						6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[thread->indices[i]].mass);
-				/*if(!option->nosprings && thread->obj[i].links[j] != 0) {
-					thread->obj[i].acc += vecnorm*(dist - thread->obj[i].links[j])*5000/thread->obj[i].mass;
-				}*/
 			}
 			thread->obj[thread->indices[i]].vel += (thread->obj[thread->indices[i]].acc + accprev)*((thread->dt)/2);
 		}

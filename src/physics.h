@@ -51,7 +51,6 @@ typedef struct {
 	float radius;
 	unsigned short int atomnumber;
 	bool ignore;
-	double *links;
 } data;
 
 struct thread_settings {

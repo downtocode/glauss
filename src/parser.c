@@ -31,10 +31,10 @@
 /*	Static variables	*/
 static float velmax, massrand, chargerand, sizerand;
 
-int preparser()
+int preparser(const char* filename)
 {
 	int count = 0;
-	char word[200], variable[200], namebuff[200], str[200];
+	char word[200], variable[200], str[200];
 	long double anothervar;
 	float value, base, power;
 	FILE *inconf = fopen ("simconf.ini", "r");
@@ -110,9 +110,6 @@ int preparser()
 				/*	6-Default value	*/
 				if(option->verbosity == 6) option->verbosity = (unsigned int)value;
 			}
-			if(strcmp(word, "posdata") == 0) {
-				sscanf(str, "%s = \"%100[^\"]\"", word, namebuff);
-			}
 		} else {
 			memset(str, 0, sizeof(str));
 		}
@@ -125,17 +122,15 @@ int preparser()
 		srand(time(NULL));
 	} else {
 		count = 0;
-		if(access(option->filename, F_OK) == -1) {
-			pprintf(PRI_VERYHIGH, "[\033[033m Warning! \033[0m] Argument/default set filename %s not found! Trying %s from configuration file...", option->filename, namebuff);
-			if(access(namebuff, F_OK) == 0) {
-				strcpy(option->filename, namebuff);
-				fprintf(stderr, " Success!\n");
+		if(access(filename, F_OK) == -1) {
+			if(filename[0] == '\0') {
+				pprintf(PRI_ERR, "No file input. Use the argument -f to input one(like -f posdata.in)\n", filename);
 			} else {
-				fprintf(stderr, " Fail!\n");
-				return 0;
+				pprintf(PRI_ERR, "No file %s found!\n", filename);
 			}
+			return 0;
 		}
-		FILE *inprep = fopen(option->filename, "r");
+		FILE *inprep = fopen(filename, "r");
 		while(fgets(str, sizeof(str), inprep)!=NULL) {
 			if(strncmp(str, "#!", 2)==0) {
 				char molfile[200], molname[180], moltype[20];
@@ -159,22 +154,22 @@ int preparser()
 	return count;
 }
 
-int parser(data** object, char filename[200])
+int parser(data** object, const char* filename)
 {
-	int i = 1, link;
-	char links[200], *linkstr, ignflag;
+	int i = 1;
+	char ignflag;
 	char molfile[200], molname[180], moltype[20], str[200];
-	float posx, posy, posz, velx, vely, velz, bond, radius;
+	float posx, posy, posz, velx, vely, velz, radius;
 	double mass, chargetemp;
 	
-	FILE *in = fopen ( option->filename, "r" );
+	FILE *in = fopen(filename, "r");
 	
 	if(option->moderandom == 0) {
-		pprintf(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|   Links:\n");
+		pprintf(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|\n");
 		while(fgets(str, sizeof(str), in)!= NULL) {
 			if(strncmp(str, "#", 1)!=0) {
-				sscanf(str, "%f %f %f %f %f %f %lf %lf %f %c \"%s\"", &posx, &posy, &posz, &velx, \
-				&vely, &velz, &mass, &chargetemp, &radius, &ignflag, links);
+				sscanf(str, "%f %f %f %f %f %f %lf %lf %f %c", &posx, &posy, &posz, &velx, \
+				&vely, &velz, &mass, &chargetemp, &radius, &ignflag);
 				
 				(*object)[i].pos[0] = posx;
 				(*object)[i].pos[1] = posy;
@@ -182,33 +177,19 @@ int parser(data** object, char filename[200])
 				(*object)[i].vel[0] = velx;
 				(*object)[i].vel[1] = vely;
 				(*object)[i].vel[2] = velz;
-				/*
-				 * Clang is strongly opposed to this assignment.
+				/* Clang is strongly opposed to this assignment.
 				 * (*object)[i].pos = (v4sd){ posx, posy, posz };
-				 * (*object)[i].vel = (v4sd){ velx, vely, velz };
-				 */
+				 * (*object)[i].vel = (v4sd){ velx, vely, velz }; */
 				(*object)[i].mass = mass;
 				(*object)[i].charge = chargetemp*option->elcharge;
 				(*object)[i].ignore = 0;
 				(*object)[i].atomnumber = 0;
 				(*object)[i].radius = radius;
 				
-				pprintf(PRI_SPAM, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2E | %0.2E | %f | %i | ", \
+				pprintf(PRI_SPAM, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2E | %0.2E | %f | %i |\n", \
 				(*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
 				(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
 				
-				if(!option->nosprings && links[0] != 0 ) {
-					linkstr = strtok(links,",");
-					while(linkstr != NULL) {
-						sscanf(linkstr, "%i-%f", &link, &bond);
-						pprintf(PRI_SPAM, "%i - %f ", link, bond);
-						(*object)[i].links[link] = bond;
-						linkstr = strtok(NULL,",");
-					}
-					bond = link = 0;
-					memset(links, 0, sizeof(links));
-				}
-				pprintf(PRI_SPAM, " \n");
 				i++;
 			}
 			if(strncmp(str, "#!", 2)==0) {
@@ -226,7 +207,6 @@ int parser(data** object, char filename[200])
 			(*object)[i].pos[0] = radius*sin(alpha)*cos(beta);
 			(*object)[i].pos[1] = radius*sin(alpha)*sin(beta);
 			(*object)[i].pos[2] = radius*cos(alpha);
-				
 			
 			//(*object)[i].vel[0] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
 			//(*object)[i].vel[1] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
