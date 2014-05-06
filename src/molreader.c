@@ -24,22 +24,34 @@
 #include "msg_phys.h"
 #include "elements.h"
 
-int probefile(char filename[200], char moltype[20])
+int probefile(const char *molfile)
 {
 	char str[500];
 	int counter = 0;
-	FILE *inprep = fopen(filename, "r");
+	FILE *inprep = fopen(molfile, "r");
+	
+	int moltype = 0;
+	
+	/* Put format specific quirks here. */
+	if(strstr(molfile, "xyz")!=NULL) {
+		moltype = MOL_XYZ;
+	} else if(strstr(molfile, "pdb")!=NULL) {
+		moltype = MOL_PDB;
+	} else {
+		fprintf(stderr, "Error! Filetype of %s not recognized!\n", molfile);
+		exit(1);
+	}
 	
 	/* 
 	 * XYZ files have total number of atoms in their first line.
 	 * PDB files contain an incrementing index, but I'd like to avoid using sscanf here.
 	 */
-	if(strstr(moltype, "xyz")!=NULL) {
+	if(moltype == MOL_XYZ) {
 		fgets(str, sizeof(str), inprep);
 		fclose(inprep);
 		sscanf(str, "%i", &counter);
 		return counter;
-	} else if(strstr(moltype, "pdb")!=NULL) {
+	} else if(moltype == MOL_PDB) {
 		while(fgets (str, sizeof(str), inprep)!= NULL) {
 			if(strstr(str, "#") == NULL) {
 				if(strncmp(str, "ATOM", 4)==0) counter++;
@@ -50,23 +62,24 @@ int probefile(char filename[200], char moltype[20])
 	return 0;
 }
 
-int readmolecule(char filename[200], char moltype[20], data *object, v4sd position, v4sd velocity, int *i)
+
+int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 {
 	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10], pdbreschain;
 	int filetype, pdbatomindex, pdbresidueseq;
 	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
-	FILE *inpars = fopen(filename, "r");
+	FILE *inpars = fopen(molfile, "r");
 	
 	/* Put format specific quirks here. */
-	if(strstr(moltype, "xyz")!=NULL) {
+	if(strstr(molfile, "xyz")!=NULL) {
 		filetype = MOL_XYZ;
 		/* Skip first two lines of XYZ files. */
 		fgets(str, sizeof(str), inpars);
 		fgets(str, sizeof(str), inpars);
-	} else if(strstr(moltype, "pdb")!=NULL) {
+	} else if(strstr(molfile, "pdb")!=NULL) {
 		filetype = MOL_PDB;
 	} else {
-		fprintf(stderr, "Error! Filetype %s not recognized!\n", moltype);
+		fprintf(stderr, "Error! Filetype of %s not recognized!\n", molfile);
 		exit(1);
 	}
 	
@@ -83,12 +96,12 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 			}
 			object[*i].atomnumber = return_atom_num(atom);
 			/* Look in parser.c for info on why do this. */
-			object[*i].pos[0] = (double)xpos + position[0];
-			object[*i].pos[1] = (double)ypos + position[1];
-			object[*i].pos[2] = (double)zpos + position[2];
-			object[*i].vel[0] = velocity[0];
-			object[*i].vel[1] = velocity[1];
-			object[*i].vel[2] = velocity[2];
+			object[*i].pos[0] = (double)xpos + buffer->pos[0];
+			object[*i].pos[1] = (double)ypos + buffer->pos[1];
+			object[*i].pos[2] = (double)zpos + buffer->pos[2];
+			object[*i].vel[0] = buffer->vel[0];
+			object[*i].vel[1] = buffer->vel[1];
+			object[*i].vel[2] = buffer->vel[2];
 			if(object[*i].atomnumber == 1) {
 				object[*i].charge = 2200*option->elcharge;
 				object[*i].ignore = 0;
@@ -105,6 +118,10 @@ int readmolecule(char filename[200], char moltype[20], data *object, v4sd positi
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			}
+			if(object[*i].mass == 0) {
+				pprintf(PRI_ERR, "Object %i has no mass!\n", *i);
+			}
+			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", molfile, *i, object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);
 			*i = *i + 1;
 		}
 	}

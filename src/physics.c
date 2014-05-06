@@ -40,10 +40,10 @@ static bool running, quit;
 
 int initphys(data** object)
 {
-	*object = calloc(option->obj+1,sizeof(data));
+	*object = calloc(option->obj+100,sizeof(data));
 	
-	if(*object != NULL) pprintf(PRI_OK, "Allocated %lu bytes to object array at %p.\n", \
-	(option->obj+1)*sizeof(data), *object);
+	if(*object != NULL) pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n", \
+	(option->obj+1)*sizeof(data), option->obj+1, *object);
 	
 	int online_cores = 0;
 	

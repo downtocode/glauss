@@ -10,9 +10,8 @@ AM_INIT_AUTOMAKE
 AC_PROG_CC([cc])
 AM_SILENT_RULES([yes])
 
-CFLAGS=" -Wall -pedantic"
+CFLAGS+=" -Wall -pedantic"
 CFLAGS+=" -std=gnu11 -march=native -g -O3"
-LDFLAGS=""
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [main], [LDFLAGS+=" -lm"],[
@@ -26,6 +25,9 @@ AC_CHECK_LIB([SDL2], [main], [LDFLAGS+=" `sdl2-config --libs`" CFLAGS+=" `sdl2-c
          exit -1])
 AC_CHECK_LIB([GLESv2], [main], [LDFLAGS+=" -lGLESv2"],[
          echo "OpenGL ES 2.0 library is required to build this program."
+         exit -1])
+AC_CHECK_LIB([lua5.2], [main], [LDFLAGS+=" -llua5.2"],[
+         echo "The Lua 5.2 library is required to compile this program."
          exit -1])
 AC_CHECK_LIB([freetype], [main], [LDFLAGS+=" `freetype-config --libs`" CFLAGS+=" `freetype-config --cflags`"],[
          echo "Freetype 2 libary is required to build this program."

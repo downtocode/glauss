@@ -64,12 +64,11 @@ int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
-		
 		*option = (struct option_struct){
 			.width = 1200, .height = 600,
 			.avail_cores = 0,
 			.dt = 0.008, .verbosity = 5,
-			.nosprings = 1, .noflj = 1,
+			.noflj = 1,
 		};
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
@@ -88,7 +87,7 @@ int main(int argc, char *argv[])
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0;
 		bool start_selection = 0;
-		int novid = 0, dumplevel = 0, vsync = 0, bench = 0;
+		int novid = 0, dumplevel = 0, vsync = 1, bench = 0;
 		float timer = 1.0f;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
@@ -168,14 +167,25 @@ int main(int argc, char *argv[])
 			option->verbosity = 9;
 			if(timer==1.0f) timer=30.0f;
 		}
-		option->obj = preparser(option->filename);
 	/*	Arguments	*/
 	
+	/*	Physics.	*/
+		data* object;
+		if(!init_elements()) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
+		if(parse_lua_simconf("simconf.lua", &object)) {
+			pprintf(PRI_ERR, "Could not parse simconf!\n");
+			return 0;
+		}
+		
+		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
+		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
+		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
+		, option->elcharge, option->gconst, option->epsno);
+		char threadtime[option->avail_cores][100];
+	/*	Physics.	*/
+	
 	/*	Error handling.	*/
-		if(option->obj == 0) {
-			pprintf(PRI_ERR, "Error: no objects!\n");
-			return 1;
-		} else sprintf(osdobj, "Objects = %i", option->obj);
+		sprintf(osdobj, "Objects = %i", option->obj);
 		if(dumplevel) printf("Outputting XYZ file every %f seconds.\n", timer);
 	/*	Error handling.	*/
 	
@@ -220,19 +230,6 @@ int main(int argc, char *argv[])
 			g = face->glyph;
 		}
 	/*	Freetype.	*/
-	
-	/*	Physics.	*/
-		data* object;
-		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
-		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
-		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
-		, option->elcharge, option->gconst, option->epsno);
-		/*	Mallocs and wipes	*/
-		initphys(&object);
-		char threadtime[option->avail_cores][100];
-		if(!init_elements()) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
-		parser(&object, option->filename);
-	/*	Physics.	*/
 	
 	/*	Links.	*/
 		GLfloat (*links)[3] = calloc(10000, sizeof(*links));

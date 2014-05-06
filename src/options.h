@@ -26,7 +26,7 @@ struct option_struct {
 	unsigned long long processed;
 	unsigned short int avail_cores, verbosity;
 	int width, height;
-	bool nogrv, noele, noflj, moderandom, logenable, nosprings;
+	bool nogrv, noele, noflj, moderandom, logenable;
 	char fontname[200], filename[200];
 	FILE *logfile;
 };

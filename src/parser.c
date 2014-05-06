@@ -18,208 +18,191 @@
 #include <stdio.h>
 #include <tgmath.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <lua5.2/lua.h>
+#include <lua5.2/lauxlib.h>
+#include <lua5.2/lualib.h>
 #include "physics.h"
 #include "parser.h"
 #include "options.h"
 #include "molreader.h"
 #include "msg_phys.h"
-#include "elements.h"
 
-/*	Static variables	*/
-static float velmax, massrand, chargerand, sizerand;
+struct buffer_object {
+	unsigned int index;
+	v4sd pos, vel, acc;
+	double mass, charge;
+	float radius;
+	unsigned short int atomnumber;
+	bool ignore;
+};
 
-int preparser(const char* filename)
+static void conf_traverse_table(lua_State *L)
 {
-	int count = 0;
-	char word[200], variable[200], str[200];
-	long double anothervar;
-	float value, base, power;
-	FILE *inconf = fopen ("simconf.ini", "r");
-	while(fgets (str, sizeof(str), inconf)!=NULL) {
-		if(strncmp(str, "#", 1)!=0) {
-			sscanf(str, "%s = \"%f\"", word, &value);
-			if(strcmp(word, "dt") == 0) {
-				option->dt = value;
-			}
-			if(strcmp(word, "threads") == 0) {
-				if(!option->avail_cores) option->avail_cores = value;
-			}
-			if(strcmp(word, "elcharge") == 0) {
-				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
-				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				if(anothervar != 0.0) {
-					option->elcharge = anothervar*pow(base, power);
-				} else {
-					option->noele = 1;
-					option->elcharge = 0.0;
-					option->epsno = 0.0;
-				}
-			}
-			if(strcmp(word, "gconst") == 0) {
-				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
-				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				if(anothervar != 0.0) {
-					option->gconst = anothervar*pow(base, power);
-				} else {
-					option->nogrv = 1;
-					option->gconst = 0.0;
-				}
-			}
-			if(strcmp(word, "epsno") == 0) {
-				sscanf(str, "%s = \"%100[^\"]\"", word, variable);
-				sscanf(variable, "%Lfx%f^(%f)", &anothervar, &base, &power);
-				if(anothervar != 0.0) {
-					option->epsno = anothervar*pow(base, power);
-				} else {
-					option->noele = 1;
-					option->elcharge = 0.0;
-					option->epsno = 0.0;
-				}
-			}
-			if(strcmp(word, "width") == 0) {
-				option->width = (unsigned int)value;
-			}
-			if(strcmp(word, "height") == 0) {
-				option->height = (unsigned int)value;
-			}
-			if(strcmp(word, "fontname") == 0) {
-				sscanf(str, "%s = \"%100[^\"]\"", word, option->fontname);
-			}
-			if(strcmp(word, "random") == 0) {
-				option->moderandom = (bool)value;
-			}
-			if(strcmp(word, "randobjs") == 0) {
-				count = (int)value;
-			}
-			if(strcmp(word, "velmax") == 0) {
-				velmax = value;
-			}
-			if(strcmp(word, "massrand") == 0) {
-				massrand = value;
-			}
-			if(strcmp(word, "chargerand") == 0) {
-				chargerand = value;
-			}
-			if(strcmp(word, "sizerand") == 0) {
-				sizerand = value;
-			}
-			if(strcmp(word, "verbosity") == 0) {
-				/*	6-Default value	*/
-				if(option->verbosity == 6) option->verbosity = (unsigned int)value;
-			}
-		} else {
-			memset(str, 0, sizeof(str));
+	lua_pushnil(L);
+	while(lua_next(L, -2) != 0) {
+		if(lua_istable(L, -1)) {
+			conf_traverse_table(L);
+		} else if(lua_isnumber(L, -1)) {
+			/* lua_tonumber() always returns a real number, so we need to cast them.
+			 * Clang screams its damn lungs off "extension used". Since we don't care
+			 * about anything other than GCC or Clang, silence them. */
+			#ifdef __clang__
+			#pragma clang diagnostic push
+			#pragma clang diagnostic ignored "-Wlanguage-extension-token"
+			#endif
+			if(!strcmp("threads", lua_tostring(L, -2)))
+				option->avail_cores = (typeof(option->avail_cores))lua_tonumber(L, -1);
+			if(!strcmp("dt", lua_tostring(L, -2)))
+				option->dt = (typeof(option->dt))lua_tonumber(L, -1);
+			if(!strcmp("width", lua_tostring(L, -2)))
+				option->width = (typeof(option->width))lua_tonumber(L, -1);
+			if(!strcmp("height", lua_tostring(L, -2)))
+				option->height = (typeof(option->height))lua_tonumber(L, -1);
+			if(!strcmp("elcharge", lua_tostring(L, -2)))
+				option->elcharge = (typeof(option->elcharge))lua_tonumber(L, -1);
+			if(!strcmp("gconst", lua_tostring(L, -2)))
+				option->gconst = (typeof(option->gconst))lua_tonumber(L, -1);
+			if(!strcmp("epsno", lua_tostring(L, -2)))
+				option->epsno = (typeof(option->epsno))lua_tonumber(L, -1);
+			if(!strcmp("verbosity", lua_tostring(L, -2)))
+				option->verbosity = (typeof(option->verbosity))lua_tonumber(L, -1);
+			#ifdef __clang__
+			#pragma clang diagnostic pop
+			#endif
+		} else if(lua_isstring(L, -1)) {
+			if(!strcmp("fontname", lua_tostring(L, -2)))
+				strcpy(option->fontname, lua_tostring(L, -1));
 		}
+		lua_pop(L, 1);
 	}
-	fclose(inconf);
-	
-	memset(str, 0, sizeof(str));
-	
-	if(option->moderandom == 1) {
-		srand(time(NULL));
-	} else {
-		count = 0;
-		if(access(filename, F_OK) == -1) {
-			if(filename[0] == '\0') {
-				pprintf(PRI_ERR, "No file input. Use the argument -f to input one(like -f posdata.in)\n", filename);
-			} else {
-				pprintf(PRI_ERR, "No file %s found!\n", filename);
-			}
-			return 0;
-		}
-		FILE *inprep = fopen(filename, "r");
-		while(fgets(str, sizeof(str), inprep)!=NULL) {
-			if(strncmp(str, "#!", 2)==0) {
-				char molfile[200], molname[180], moltype[20];
-				sscanf(str, "#!%s %s", moltype, molname);
-				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
-				if(access(molfile, F_OK) == 0) {
-					int atoms = probefile(molfile, moltype);
-					pprintf(7, "File \"%s\" has %i atoms\n", molfile, atoms);
-					count += atoms;
-				} else {
-					fprintf(stderr, "File \"%s\" not found!\n", molfile);
-					exit(1);
-				}
-			} else if(strncmp(str, "#", 1)!=0) {
-				count += 1;
-			}
-		}
-		fclose(inprep);
-	}
-	memset(str, 0, sizeof(str));
-	return count;
 }
 
-int parser(data** object, const char* filename)
-{
-	int i = 1;
-	char ignflag;
-	char molfile[200], molname[180], moltype[20], str[200];
-	float posx, posy, posz, velx, vely, velz, radius;
-	double mass, chargetemp;
-	
-	FILE *in = fopen(filename, "r");
-	
-	if(option->moderandom == 0) {
-		pprintf(9, "	Position		Velocity   |   Mass   |  Charge  |  Radius  |Ign|\n");
-		while(fgets(str, sizeof(str), in)!= NULL) {
-			if(strncmp(str, "#", 1)!=0) {
-				sscanf(str, "%f %f %f %f %f %f %lf %lf %f %c", &posx, &posy, &posz, &velx, \
-				&vely, &velz, &mass, &chargetemp, &radius, &ignflag);
-				
-				(*object)[i].pos[0] = posx;
-				(*object)[i].pos[1] = posy;
-				(*object)[i].pos[2] = posz;
-				(*object)[i].vel[0] = velx;
-				(*object)[i].vel[1] = vely;
-				(*object)[i].vel[2] = velz;
-				/* Clang is strongly opposed to this assignment.
-				 * (*object)[i].pos = (v4sd){ posx, posy, posz };
-				 * (*object)[i].vel = (v4sd){ velx, vely, velz }; */
-				(*object)[i].mass = mass;
-				(*object)[i].charge = chargetemp*option->elcharge;
-				(*object)[i].ignore = 0;
-				(*object)[i].atomnumber = 0;
-				(*object)[i].radius = radius;
-				
-				pprintf(PRI_SPAM, "(%0.2f, %0.2f, %0.2f)	(%0.2f, %0.2f, %0.2f) | %0.2E | %0.2E | %f | %i |\n", \
-				(*object)[i].pos[0], (*object)[i].pos[1], (*object)[i].pos[2], (*object)[i].vel[0], (*object)[i].vel[1], \
-				(*object)[i].vel[2], (*object)[i].mass, (*object)[i].charge, (*object)[i].radius, (*object)[i].ignore);
-				
+static int i = 1;
+static bool molset = 0;
+static char molfile[100];
+
+static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
+	lua_pushnil(L);
+	while(lua_next(L, -2) != 0) {
+		if(lua_istable(L, -1)) {
+			if(molset) {
+				if(!access(molfile, R_OK)) {
+					pprintf(PRI_OK, "File %s found!\n", molfile);
+					readmolecule(*object, buffer, molfile, &i);
+					memset(molfile, 0, sizeof(molfile));
+					molset = 0;
+				} else {
+					pprintf(PRI_ERR, "File %s not found!\n", molfile);
+					exit(1);
+				}
+			} else if(!isnan(buffer->pos[0] + buffer->pos[1] + buffer->pos[2]) && buffer->mass != 0.0){
+				/* It's just an object. */
+				(*object)[i] = *buffer;
+				pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
 				i++;
 			}
-			if(strncmp(str, "#!", 2)==0) {
-				sscanf(str, "#!%s %s %f %f %f %f %f %f", moltype, molname, &posx, &posy, &posz, &velx, &vely, &velz);
-				sprintf(molfile, "./resources/molecules/%s.%s", molname, moltype);
-				readmolecule(molfile, moltype, *object, (v4sd){ posx, posy, posz }, (v4sd){ velx, vely, velz }, &i);
+			obj_traverse_table(L, object, buffer);
+		} else if(lua_isnumber(L, -1)) {
+			#ifdef __clang__
+			#pragma clang diagnostic push
+			#pragma clang diagnostic ignored "-Wlanguage-extension-token"
+			#endif
+			if(!strcmp("posx", lua_tostring(L, -2)))
+				buffer->pos[0] = (typeof(buffer->pos[0]))lua_tonumber(L, -1);
+			if(!strcmp("posy", lua_tostring(L, -2)))
+				buffer->pos[1] = (typeof(buffer->pos[1]))lua_tonumber(L, -1);
+			if(!strcmp("posz", lua_tostring(L, -2)))
+				buffer->pos[2] = (typeof(buffer->pos[2]))lua_tonumber(L, -1);
+			if(!strcmp("velx", lua_tostring(L, -2)))
+				buffer->vel[0] = (typeof(buffer->vel[0]))lua_tonumber(L, -1);
+			if(!strcmp("vely", lua_tostring(L, -2)))
+				buffer->vel[1] = (typeof(buffer->vel[1]))lua_tonumber(L, -1);
+			if(!strcmp("velz", lua_tostring(L, -2)))
+				buffer->vel[2] = (typeof(buffer->vel[2]))lua_tonumber(L, -1);
+			if(!strcmp("charge", lua_tostring(L, -2)))
+				buffer->charge = (typeof(buffer->charge))lua_tonumber(L, -1);
+			if(!strcmp("mass", lua_tostring(L, -2)))
+				buffer->mass = (typeof(buffer->mass))lua_tonumber(L, -1);
+			if(!strcmp("radius", lua_tostring(L, -2)))
+				buffer->radius = (typeof(buffer->radius))lua_tonumber(L, -1);
+			if(!strcmp("atom", lua_tostring(L, -2)))
+				buffer->atomnumber = (typeof(buffer->atomnumber))lua_tonumber(L, -1);
+			#ifdef __clang__
+			#pragma clang diagnostic pop
+			#endif
+		} else if(lua_isstring(L, -1)) {
+			if(!strcmp("molfile", lua_tostring(L, -2))) {
+				strcpy(molfile, lua_tostring(L, -1));
+				molset = 1;
 			}
 		}
-	} else {
-		for(i = 1; i < option->obj + 1; i++) {
-			double alpha = 2*((((double)rand()/(double)RAND_MAX))*acos(-1));
-			double beta = ((((double)rand()/(double)RAND_MAX))*acos(-1));
-			radius = (((double)rand()/(double)RAND_MAX))*40;
-			
-			(*object)[i].pos[0] = radius*sin(alpha)*cos(beta);
-			(*object)[i].pos[1] = radius*sin(alpha)*sin(beta);
-			(*object)[i].pos[2] = radius*cos(alpha);
-			
-			//(*object)[i].vel[0] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
-			//(*object)[i].vel[1] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
-			//(*object)[i].vel[2] = (((double)rand()/(double)RAND_MAX) - 0.5)*velmax;
-			
-			(*object)[i].mass = (((double)rand()/(double)RAND_MAX))*massrand;
-			(*object)[i].charge = 0;
-			(*object)[i].radius = 0.07;
-			(*object)[i].ignore = 0;
-			(*object)[i].atomnumber = 0;
-		}
+		lua_pop(L, 1);
 	}
-	fclose(in);
+}
+
+/* Using realloc is too much of a mess when we try to import molecules, so we scan beforehand. */
+static void molfiles_traverse_table(lua_State *L) {
+	lua_pushnil(L);
+	while(lua_next(L, -2) != 0) {
+		if(lua_istable(L, -1)) {
+			molfiles_traverse_table(L);
+		} else if(lua_isstring(L, -1)) {
+			if(!strcmp("molfile", lua_tostring(L, -2))) {
+				if(!access(lua_tostring(L, -1), R_OK)) {
+					pprintf(PRI_OK, "File %s found!\n", lua_tostring(L, -1));
+					option->obj += probefile(lua_tostring(L, -1));
+				} else {
+					pprintf(PRI_ERR, "File %s not found!\n", lua_tostring(L, -1));
+					exit(1);
+				}
+			}
+		}
+		lua_pop(L, 1);
+	}
+}
+
+int parse_lua_simconf(char *filename, data** object)
+{
+	lua_State *L = luaL_newstate();
+	luaL_openlibs(L);
+	/* Load file */
+	if(luaL_loadfile(L, filename)) {
+		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
+		return 1;
+	}
+	/* Call no functions to read global declarations */
+	lua_pcall(L, 0, 0, 0);
+	/* Read settings table */
+	lua_getglobal(L, "settings");
+	conf_traverse_table(L);
+	
+	if((option->epsno == 0.0) || (option->elcharge == 0.0)) {
+		option->noele = 1;
+	}
+	if(option->gconst == 0.0) {
+		option->nogrv = 1;
+	}
+	
+	/* Read returned table of objects */
+	lua_getglobal(L, "spawn_objects");
+	lua_pushnumber(L, option->obj);
+	/* The second returned value is the total number of objects */
+	lua_call(L, 1, 2);
+	/* Lua arrays are indexed from 1. Luckily, our object array is also
+	 * indexed from 1 as the 0th object is the identity and is always at {0}. */
+	option->obj = (unsigned int)lua_tonumber(L, -1);
+	lua_pop(L, 1);
+	
+	/* We still need to find the molfiles */
+	molfiles_traverse_table(L);
+	initphys(object);
+	/* Finally read the objects */
+	data buffer;
+	obj_traverse_table(L, object, &buffer);
+	
+	lua_close(L);
 	return 0;
 }
 

@@ -5,7 +5,7 @@ physengine
 
 Overview
 --------
-This program aims to implement a physics simulation engine capable of doing simulations on various scales, from molecular dynamics to planetary motion, all whilst maintaining maximum performance. Implemented using the SDL2, Freetype 2, and the OpenGL ES 2.0 libraries. Uses POSIX threads to implement multi-threading. Written in standard C and released under the GPLv3 License.
+This program aims to implement a physics simulation engine capable of doing simulations on various scales, from molecular dynamics to planetary motion, all whilst maintaining maximum performance. Implemented using the SDL2, Freetype 2, Lua 5.2 and the OpenGL ES 2.0 libraries. Uses POSIX threads to implement multi-threading. Written in standard C and released under the GPLv3 License.
 
 Compiling
 ---------
@@ -15,6 +15,7 @@ Dependencies:
  * OpenGL ES 2.0 development libraries (Debian: libgles2-mesa-dev; Fedora: mesa-libGLES)
  * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2) 
  * SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)
+ * Lua 5.2 (Debian: liblua5.2-dev)
 
 All are available on any up-to-date Linux distribution's package repositories. To compile, do the standard:
 
@@ -48,24 +49,23 @@ Button | Action
 
 Command line arguments
 ----------------------
-Argument | Action
----------|-------
-**-f (filename)** | Specifies a posdata.dat to use. Falls back on simconf.conf's setting.
-**--threads (int)** | Use (int) threads to speed up force calculation. Splits objects between cores.
-**--dump** | Dump entire system to an XYZ file every second.
-**--novid** | Disables SDL window creation and any OpenGL functions in the main loop.
-**--nosync** | Disables vertical synchronization.
-**--log** | Log all output at current verbose level to physengine.log.
-**--verb (uint)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
-**--help** | Print possible arguments and exit.
+Argument | Short | Action
+---------|-------|-------
+**-f (filename)** | none | Specifies a simconf file to use. **Required**.
+**--threads (int)** | **-t (int)** | Use this many threads to split the load. Overrides automatic thread detection.
+**--dump** | none | Dump entire system to an XYZ file every second/timer update.
+**--bench** | none | Benchmark mode, runs a single thread, no video, verbosity at 8, stops after 30 seconds(unless timer flag is set) and prints statistics. Useful for optimizations.
+**--novid** | none | Disables SDL window creation and any OpenGL functions in the main loop.
+**--nosync** | none | Disables vertical synchronization.
+**--log (filename)** | **-l (filename)** | Log all output at maximum verbosity to a file.
+**--verb (int)** | **-v (int)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
+**--timer (float)** | **-r (float)** | Sets update rate for GUI/benchmark/xyz timer.
 
-simconf.conf
-------------
-This file contains the program configuration. Most of the settings have self-explanatory names, with any remarks written as comments. Quotation marks (`variable = "value"`) around the value are **absolutely neccessary**. Section tags (`[section]`) are not required.
-
-posdata.in
+simconf.lua
 -----------
-This file determines the properties of all the objects to be simulated. The comment at the top describes the correct order and structure. Object numbers **must** be sequential, starting from 1. The argument `-f (filename)` overrides the filename in simconf.conf, however, the program will fall back on the configuration file should no such filename exists. If both filenames do not exist, the program will exit with a return 1. Currently, no error checking is present for this file, therefore should the physics engine misbehave, inspect both the objects table printed on the terminal and your posdata file. It's likely 2 objects share the same coordinates. In case nothing appears to be wrong, file a bug report with the file.
+This file determines the system to simulate. It's a Lua script, so make sure to follow the syntax. All Lua libraries(including math) are included and initialized, feel free to use them. Error handling is done by Lua interpreter.
+
+Physengine reads the settings table first, reads the global objects table and then calls the spawn_objects function, which returns its own local objects table along with a counter how many objects exist in it. Usually the global table contains any molecule files(in pdb or xyz formats) and any standalone objects. The function spawn_objects is for having your own distribution of objects.
 
 Contacts
 -------
@@ -75,4 +75,4 @@ Contacts
 
 Contributing
 ------------
-Got a bug fix? New feature? Sent a pull request here on Github. Just please use the project's coding style (which is almost the same as the Linux kernel's coding style except without the 80 characters per line limit).
+Got a bug fix? New feature? Sent a pull request here on Github. Just please use the project's coding style (which is almost the same as the Linux kernel's coding style except without the 80 characters per line limit). You can use the `--bench` option to benchmark the performance and see how it's affected.
