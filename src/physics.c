@@ -106,6 +106,7 @@ int distribute_objects()
 
 int threadcontrol(int status, data** object)
 {
+	if(!option->avail_cores) return 0;
 	if(status == PHYS_UNPAUSE && running == 0) {
 		for(int k = 1; k < option->avail_cores + 1; k++) thread_opts[k].dt = option->dt;
 		running = 1;

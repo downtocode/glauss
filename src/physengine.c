@@ -23,6 +23,7 @@
 #include <tgmath.h>
 #include <getopt.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 /*	Dependencies	*/
 #include <SDL2/SDL.h>
@@ -70,6 +71,7 @@ int main(int argc, char *argv[])
 			.dt = 0.008, .verbosity = 5,
 			.noflj = 1,
 		};
+		strcpy(option->filename,"simconf.lua");
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
 	
@@ -108,12 +110,12 @@ int main(int argc, char *argv[])
 				{"threads",	required_argument,		0, 't'},
 				{"timer",	required_argument,		0, 'r'},
 				{"verb",	required_argument,		0, 'v'},
-				{"file",	required_argument,		0, 'f'},
+				{"help",	no_argument,			0, 'h'},
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "l:t:r:v:f:", long_options, &option_index);
+			c = getopt_long(argc, argv, "l:t:r:v:h", long_options, &option_index);
 			
 			/* Detect the end of the options. */
 			if (c == -1)
@@ -142,11 +144,21 @@ int main(int argc, char *argv[])
 				case 'v':
 					sscanf(optarg, "%hu", &option->verbosity);
 					break;
-				case 'f':
-					strcpy(option->filename, optarg);
-					pprintf(PRI_ESSENTIAL, "Opened input file %s.\n", optarg);
+				case 'h':
+					printf("%s\nUsage: physengine (file) (arguments)\n", PACKAGE_STRING);
+					printf("	--novid			Disable video output.\n");
+					printf("	--nosync		Disable waiting for vblank.\n");
+					printf("	--bench			Benchmark mode(30 seconds, threads=1, novid\n");
+					printf("	--dump			Dump an xyz file of the system every second.\n");
+					printf("-l	--log (file)		Log everything to a file.\n");
+					printf("-t	--threads (int)		Use this amount of threads.\n");
+					printf("-r	--timer (int)		OSD update rate/benchmark duration.\n");
+					printf("-v	--verb (int)		STDOUT spam level.\n");
+					printf("-h	--help			What you're reading.\n");
+					exit(0);
 					break;
 				case '?':
+					printf("DSADASDA\n");
 					exit(1);
 					break;
 				default:
@@ -154,11 +166,17 @@ int main(int argc, char *argv[])
 			}
 		}
 		if(optind < argc) {
-			pprintf(PRI_ERR, "Non-option ARGV-elements: ");
-			while(optind < argc)
-				printf("%s ", argv[optind++]);
-			putchar('\n');
-			exit(1);
+			while(optind < argc) {
+				optind++;
+				if(!access(argv[optind-1], R_OK)) {
+					pprintf(PRI_OK, "Using file %s.\n", argv[optind-1]);
+					strcpy(option->filename, argv[optind-1]);
+					break;
+				} else {
+					pprintf(PRI_ERR, "File %s not found!\n", argv[optind-1]);
+					exit(1);
+				}
+			}
 		}
 		if(bench) {
 			pprintf(PRI_WARN, "Benchmark mode active.\n");
@@ -172,7 +190,7 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 		data* object;
 		if(!init_elements()) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
-		if(parse_lua_simconf("simconf.lua", &object)) {
+		if(parse_lua_simconf(option->filename, &object)) {
 			pprintf(PRI_ERR, "Could not parse simconf!\n");
 			return 0;
 		}

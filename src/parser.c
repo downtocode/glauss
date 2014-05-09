@@ -192,7 +192,8 @@ int parse_lua_simconf(char *filename, data** object)
 	lua_call(L, 1, 2);
 	/* Lua arrays are indexed from 1. Luckily, our object array is also
 	 * indexed from 1 as the 0th object is the identity and is always at {0}. */
-	option->obj = (unsigned int)lua_tonumber(L, -1)-2;
+	option->obj = (unsigned int)lua_tonumber(L, -1)-10;
+	/* LUA YOU PIECE OF SHIT */
 	lua_pop(L, 1);
 	
 	/* We still need to find the molfiles */

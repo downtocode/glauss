@@ -48,8 +48,8 @@ Button | Action
 **Spacebar** | Pause/unpause.
 **Esc**      | Quit the program. If running inside terminal with --novid, use Ctrl+C.
 
-Command line arguments
-----------------------
+Usage: `physengine (file) (arguments)`
+--------------------------------------
 Argument | Short | Action
 ---------|-------|-------
 **-f (filename)** | none | Specifies a simconf file to use. **Required**.
@@ -61,6 +61,7 @@ Argument | Short | Action
 **--log (filename)** | **-l (filename)** | Log all output at maximum verbosity to a file.
 **--verb (int)** | **-v (int)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
 **--timer (float)** | **-r (float)** | Sets update rate for GUI/benchmark/xyz timer.
+**--help** | **-h** | Print usage and flags.
 
 simconf.lua
 -----------
