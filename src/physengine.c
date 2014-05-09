@@ -463,9 +463,9 @@ int main(int argc, char *argv[])
 		}
 		if(option->logenable)
 			fclose(option->logfile);
-		free(option);
-		free(object);
 		if(threadcontrol(PHYS_STATUS, &object))
 			threadcontrol(PHYS_SHUTDOWN, &object);
+		free(option);
+		free(object);
 		return 0;
 }
