@@ -48,11 +48,13 @@ Button | Action
 **Spacebar** | Pause/unpause.
 **Esc**      | Quit the program. If running inside terminal with --novid, use Ctrl+C.
 
-Usage: `physengine (file) (arguments)`
---------------------------------------
+Usage:
+------
+
+`physengine (file) (arguments)`
+
 Argument | Short | Action
 ---------|-------|-------
-**-f (filename)** | none | Specifies a simconf file to use. **Required**.
 **--threads (int)** | **-t (int)** | Use this many threads to split the load. Overrides automatic thread detection.
 **--dump** | none | Dump entire system to an XYZ file every second/timer update.
 **--bench** | none | Benchmark mode, runs a single thread, no video, verbosity at 8, stops after 30 seconds(unless timer flag is set) and prints statistics. Useful for optimizations.
