@@ -205,7 +205,7 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 	if(col != 0) glUniform4fv(textattr_color, 1, textcolor);
 }
 
-void drawobject(data object) 
+void draw_obj_sphere(data object)
 {
 	/* Decrease dj to get better spheres. */
 	float dj = 0.5, pi=acos(-1);
@@ -230,6 +230,31 @@ void drawobject(data object)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
 	
 	glDrawArrays(GL_TRIANGLE_FAN, 0, pointcount);
+	
+	glDisableVertexAttribArray(objattr_pos);
+	glDisableVertexAttribArray(objattr_color);
+	glUniform4fv(objattr_color, 1, textcolor);
+}
+
+void draw_obj_points(data* object)
+{
+	float points[option->obj][3];
+	
+	glUniform4fv(objattr_color, 1, textcolor);
+	
+	for(int i = 1; i < option->obj+1; i++) {
+		points[i-1][0] = object[i].pos[0];
+		points[i-1][1] = object[i].pos[1];
+		points[i-1][2] = object[i].pos[2];
+	}
+	
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, textcolor);
+	glEnableVertexAttribArray(objattr_pos);
+	glEnableVertexAttribArray(objattr_color);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
+	
+	glDrawArrays(GL_POINTS, 0, option->obj);
 	
 	glDisableVertexAttribArray(objattr_pos);
 	glDisableVertexAttribArray(objattr_color);

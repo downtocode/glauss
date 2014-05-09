@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
-		bool flicked = 0, translate = 0, drawobj = 1, drawlinks = 0;
+		bool flicked = 0, translate = 0, drawobj = 0, drawlinks = 0;
 		bool start_selection = 0;
 		int novid = 0, dumplevel = 0, vsync = 1, bench = 0;
 		float timer = 1.0f;
@@ -332,13 +332,13 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_COMMA) {
 						if(chosen > 0) chosen--;
 					}
-					if(event.key.keysym.sym==SDLK_TAB) {
-						if(drawlinks && drawobj) drawobj = 0;
-						else if(drawlinks) {
-							drawlinks = 0;
-							drawobj = 1;
-						} else if(drawobj)
-							drawlinks = 1;
+					if(event.key.keysym.sym==SDLK_1) {
+						if(drawobj) drawobj = 0;
+						else drawobj = 1;
+					}
+					if(event.key.keysym.sym==SDLK_2) {
+						if(drawlinks) drawlinks = 0;
+						else drawlinks = 1;
 					}
 					break;
 				case SDL_QUIT:
@@ -405,8 +405,9 @@ int main(int argc, char *argv[])
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
 		drawaxis();
 		for(int i = 1; i < option->obj+1; i++) {
-			if(drawobj) drawobject(object[i]);
+			if(drawobj) draw_obj_sphere(object[i]);
 		}
+		if(!drawobj) draw_obj_points(object);
 		if(drawlinks) draw_obj_links(&links, linkcounter);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Dynamic drawing	*/

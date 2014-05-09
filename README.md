@@ -43,7 +43,8 @@ Button | Action
 **Enter**    | Press once to init object selection, input number and press again to select.
 **r**        | Reset view and deseclect object.
 **z**        | Dump entire system to an XYZ file.
-**TAB**      | Cycle - draw links/objects/both.
+**1**      | Draw objects as points/spheres.
+**2**      | Enable/disable link drawing.
 **Spacebar** | Pause/unpause.
 **Esc**      | Quit the program. If running inside terminal with --novid, use Ctrl+C.
 

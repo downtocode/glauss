@@ -37,7 +37,8 @@ void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
 				GLfloat scalefactor, GLfloat tr_x, GLfloat tr_y, GLfloat tr_z);
 
 void drawaxis();
-void drawobject(data object);
+void draw_obj_sphere(data object);
+void draw_obj_points(data* object);
 unsigned int createlinks(data* object, GLfloat (**links)[3]);
 void draw_obj_links(GLfloat (**links)[3], unsigned int linkcount);
 void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
