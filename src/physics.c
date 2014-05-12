@@ -82,8 +82,8 @@ int distribute_objects()
 {
 	/* TODO: Once proper object distribution is implemented rewrite this function.
 	 * limits_up and limits_down are from the old implementation. */
-	unsigned int *limits_up = calloc(option->avail_cores, sizeof(unsigned int));
-	unsigned int *limits_down = calloc(option->avail_cores, sizeof(unsigned int));
+	unsigned int *limits_up = calloc(option->avail_cores+1, sizeof(unsigned int));
+	unsigned int *limits_down = calloc(option->avail_cores+1, sizeof(unsigned int));
 	
 	int totcore = (int)((float)option->obj/option->avail_cores);
 	for(int k = 1; k < option->avail_cores + 1; k++) {
@@ -94,13 +94,15 @@ int distribute_objects()
 			limits_up[k] += option->obj - limits_up[k];
 		}
 		thread_opts[k].objcount = limits_up[k] - limits_down[k];
-		thread_opts[k].indices = calloc(thread_opts[k].objcount, sizeof(unsigned int));
+		thread_opts[k].indices = calloc(thread_opts[k].objcount+1, sizeof(unsigned int));
 		
 		for(int i = 0; i < thread_opts[k].objcount + 1; i++) {
 			thread_opts[k].indices[i] = limits_down[k];
 			limits_down[k]++;
 		}
 	}
+	free(limits_up);
+	free(limits_down);
 	return 0;
 }
 
@@ -141,6 +143,8 @@ int threadcontrol(int status, data** object)
 		}
 		pthread_barrier_destroy(&barrier);
 		pthread_mutex_destroy(&movestop);
+		free(thread_opts->indices);
+		free(thread_opts);
 		free(threads);
 		running = 0;
 		quit = 0;
