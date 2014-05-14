@@ -38,7 +38,6 @@
 #include "msg_phys.h"
 #include "elements.h"
 
-
 /* Function to input numbers in an array and later extract a single number out.
  * Used in selecting objects.*/
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status) {
@@ -145,16 +144,7 @@ int main(int argc, char *argv[])
 					sscanf(optarg, "%hu", &option->verbosity);
 					break;
 				case 'h':
-					printf("%s\nUsage: physengine (file) (arguments)\n", PACKAGE_STRING);
-					printf("	--novid			Disable video output.\n");
-					printf("	--nosync		Disable waiting for vblank.\n");
-					printf("	--bench			Benchmark mode(30 seconds, threads=1, novid\n");
-					printf("	--dump			Dump an xyz file of the system every second.\n");
-					printf("-l	--log (file)		Log everything to a file.\n");
-					printf("-t	--threads (int)		Use this amount of threads.\n");
-					printf("-r	--timer (int)		OSD update rate/benchmark duration.\n");
-					printf("-v	--verb (int)		STDOUT spam level.\n");
-					printf("-h	--help			What you're reading.\n");
+					printf("%s", ARGSTRING);
 					exit(0);
 					break;
 				case '?':
