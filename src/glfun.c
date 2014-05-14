@@ -27,17 +27,36 @@
 
 #define numshaders 2
 
-static GLint trn_matrix, rot_matrix, scl_matrix;
+static GLint trn_matrix, rot_matrix, scl_matrix, per_matrix;
 static GLint objattr_pos, objattr_color;
 static GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 
 static float aspect_ratio;
-static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale, *transl;
+static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale, *transl, *pers;
 static const GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 static const GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
 static const GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
 static const GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
+
+static void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
+{
+	#define A(row,col)  a[(col<<2)+row]
+	#define B(row,col)  b[(col<<2)+row]
+	#define P(row,col)  p[(col<<2)+row]
+	GLfloat p[16];
+	for(int i = 0; i < 4; i++) {
+		const GLfloat ai0=A(i,0),  ai1=A(i,1),  ai2=A(i,2),  ai3=A(i,3);
+		P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
+		P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
+		P(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
+		P(i,3) = ai0 * B(0,3) + ai1 * B(1,3) + ai2 * B(2,3) + ai3 * B(3,3);
+	}
+	memcpy(prod, p, sizeof(p));
+	#undef A
+	#undef B
+	#undef PROD
+}
 
 static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
@@ -91,7 +110,19 @@ static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 	m[15] = 1;
 }
 
-void transformpoint(GLfloat *p, GLfloat *m)
+static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat far, GLfloat *m) {
+	float D2R = acos(-1)/180.0;
+	float yScale = 1.0/tan(D2R * fov / 2);
+	float xScale = yScale/aspect;
+	float nearmfar = near - far;
+	m[0] = xScale;
+	m[5] = yScale;
+	m[11] = (far + near) / nearmfar;
+	m[12] = -1;
+	m[15] = 2*far*near / nearmfar;
+}
+
+static void transformpoint(GLfloat *p, GLfloat *m)
 {
 	GLfloat tempmat[16] = {0};
 	tempmat[0] = p[0];
@@ -104,37 +135,14 @@ void transformpoint(GLfloat *p, GLfloat *m)
 	p[2] = tempmat[10];
 }
 
-void movept2d(GLfloat *p, float x, float y)
-{
-	p[0] += x;
-	p[1] += y;
-}
-
-void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
-{
-#define A(row,col)  a[(col<<2)+row]
-#define B(row,col)  b[(col<<2)+row]
-#define P(row,col)  p[(col<<2)+row]
-	GLfloat p[16];
-	for(int i = 0; i < 4; i++) {
-		const GLfloat ai0=A(i,0),  ai1=A(i,1),  ai2=A(i,2),  ai3=A(i,3);
-		P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
-		P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
-		P(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
-		P(i,3) = ai0 * B(0,3) + ai1 * B(1,3) + ai2 * B(2,3) + ai3 * B(3,3);
-	}
-	memcpy(prod, p, sizeof(p));
-#undef A
-#undef B
-#undef PROD
-}
-
 void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
 				GLfloat scalefactor, GLfloat tr_x, GLfloat tr_y, GLfloat tr_z)
 {
 	make_translation_matrix(tr_x, tr_y, tr_z, transl);
 	
 	make_scale_matrix(aspect_ratio*scalefactor, scalefactor, scalefactor, scale);
+	
+	make_pers_matrix(10, option->width/option->height, -1, 10, pers);
 	
 	make_x_rot_matrix(view_rotx, rotx);
 	make_y_rot_matrix(view_roty, roty);
@@ -144,6 +152,7 @@ void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
 	glUniformMatrix4fv(trn_matrix, 1, GL_FALSE, transl);
 	glUniformMatrix4fv(scl_matrix, 1, GL_FALSE, scale);
 	glUniformMatrix4fv(rot_matrix, 1, GL_FALSE, rotation);
+	glUniformMatrix4fv(per_matrix, 1, GL_FALSE, pers);
 }
 
 void drawaxis()
@@ -311,7 +320,7 @@ void selected_box_text(data object)
 		{objpoint[0] + aspect_ratio*boxsize, chosenbox[3][1] = objpoint[1] - boxsize},
 	};
 
-	char osdstr[500];
+	char osdstr[20];
 	sprintf(osdstr, "Atom=%s", atom_prop[object.atomnumber].name);
 	
 	render_text(osdstr, objpoint[0] + object.radius*scale[5], \
@@ -412,6 +421,7 @@ void create_shaders(GLuint** shaderprogs)
 	trn_matrix = glGetUniformLocation((*shaderprogs)[0], "translMat");
 	rot_matrix = glGetUniformLocation((*shaderprogs)[0], "rotationMat");
 	scl_matrix = glGetUniformLocation((*shaderprogs)[0], "scalingMat");
+	per_matrix = glGetUniformLocation((*shaderprogs)[0], "perspectiveMat");
 	objattr_color = glGetUniformLocation((*shaderprogs)[0], "objcolor");
 	
 	glBindAttribLocation((*shaderprogs)[1], textattr_coord, "coord");
@@ -428,6 +438,7 @@ void create_shaders(GLuint** shaderprogs)
 	rotz = calloc(16, sizeof(GLfloat));
 	rotation = calloc(16, sizeof(GLfloat));
 	scale = calloc(16, sizeof(GLfloat));
+	pers = calloc(16, sizeof(GLfloat));
 	transl = calloc(16, sizeof(GLfloat));
 	
 	glUniform1i(textattr_tex, 0);

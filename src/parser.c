@@ -29,15 +29,6 @@
 #include "molreader.h"
 #include "msg_phys.h"
 
-struct buffer_object {
-	unsigned int index;
-	v4sd pos, vel, acc;
-	double mass, charge;
-	float radius;
-	unsigned short int atomnumber;
-	bool ignore;
-};
-
 static void conf_traverse_table(lua_State *L)
 {
 	lua_pushnil(L);

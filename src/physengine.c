@@ -485,6 +485,7 @@ int main(int argc, char *argv[])
 		if(threadcontrol(PHYS_STATUS, &object))
 			threadcontrol(PHYS_SHUTDOWN, &object);
 		free(option);
+		free(atom_prop);
 		free(object);
 		return 0;
 }
