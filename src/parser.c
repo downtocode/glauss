@@ -80,6 +80,11 @@ static void conf_traverse_table(lua_State *L)
 }
 
 static int i = 1;
+/* Lua's tables are weird since upon the very first traversal we're given
+ * valid strings for variables in the later layers of the table(posx, radius, etc)
+ * however they are 0. This throws the count off and causes explosions.
+ * Using a one-time switch seems to do the trick. Temorary solution. */
+static bool nullswitch = 0;
 static bool molset = 0;
 static char molfile[100];
 
@@ -97,11 +102,14 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 					pprintf(PRI_ERR, "File %s not found!\n", molfile);
 					exit(1);
 				}
-			} else if(!isnan(buffer->pos[0] + buffer->pos[1] + buffer->pos[2]) && buffer->mass != 0.0){
+			} else {
 				/* It's just an object. */
-				(*object)[i] = *buffer;
-				pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
-				i++;
+				if(nullswitch) {
+					(*object)[i] = *buffer;
+					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
+					i++;
+				} else
+					nullswitch = 1;
 			}
 			obj_traverse_table(L, object, buffer);
 		} else if(lua_isnumber(L, -1)) {
@@ -152,7 +160,8 @@ static void molfiles_traverse_table(lua_State *L) {
 			if(!strcmp("molfile", lua_tostring(L, -2))) {
 				if(!access(lua_tostring(L, -1), R_OK)) {
 					pprintf(PRI_OK, "File %s found!\n", lua_tostring(L, -1));
-					option->obj += probefile(lua_tostring(L, -1));
+					/* Lua counts a molecule as a single object which we need to get rid of. */
+					option->obj += probefile(lua_tostring(L, -1)) - 1;
 				} else {
 					pprintf(PRI_ERR, "File %s not found!\n", lua_tostring(L, -1));
 					exit(1);
@@ -192,8 +201,7 @@ int parse_lua_simconf(char *filename, data** object)
 	lua_call(L, 1, 2);
 	/* Lua arrays are indexed from 1. Luckily, our object array is also
 	 * indexed from 1 as the 0th object is the identity and is always at {0}. */
-	option->obj = (unsigned int)lua_tonumber(L, -1)-10;
-	/* LUA YOU PIECE OF SHIT */
+	option->obj = (unsigned int)lua_tonumber(L, -1)-1;
 	lua_pop(L, 1);
 	
 	/* We still need to find the molfiles */

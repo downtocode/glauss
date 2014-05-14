@@ -3,7 +3,7 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 2,
-		dt = 0.04,
+		dt = 0.00000004,
 	},
 	visual = {
 		width = 1280,
@@ -11,12 +11,12 @@ settings = {
 		fontname = "./resources/fonts/DejaVuSansMono.ttf",
 	},
 	constants = {
-		--elcharge = 1.602176565*10^-7,
-		--gconst = 6.67384*10^-11,
-		--epsno = 8.854187817*10^-12,
+		elcharge = 1.602176565*10^-7,
+		gconst = 6.67384*10^-11,
+		epsno = 8.854187817*10^-12,
 	},
 	misc = {
-		verbosity = 8,
+		verbosity = 6,
 	},
 }
 
@@ -36,7 +36,7 @@ objects[1] = {
 --If atom is set to a non-zero value, mass, charge and radius values will be ignored.
 function spawn_objects(varfromC)
 	--Get number of non-loop objects and add 1 to avoid overwriting.
-	for i = 1+(#objects), 1500, 1 do
+	for i = 1+(#objects), 950, 1 do
 		objects[i] = {
 			posx = 10*math.sin(i),
 			posy = 10*math.cos(i),
