@@ -202,7 +202,7 @@ void render_text(const char *text, float x, float y, float sx, float sy, unsigne
 			{x2 + w, -y2 - h, 1, 1},
 		};
 		
-		glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		
 		x += (g->advance.x >> 6) * sx;

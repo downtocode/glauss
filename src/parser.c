@@ -163,8 +163,7 @@ static void molfiles_traverse_table(lua_State *L) {
 	}
 }
 
-int parse_lua_simconf(char *filename, data** object)
-{
+int parse_lua_simconf_options(char *filename) {
 	lua_State *L = luaL_newstate();
 	luaL_openlibs(L);
 	/* Load file */
@@ -180,10 +179,29 @@ int parse_lua_simconf(char *filename, data** object)
 	
 	if((option->epsno == 0.0) || (option->elcharge == 0.0)) {
 		option->noele = 1;
+	} else {
+		option->noele = 0;
 	}
 	if(option->gconst == 0.0) {
 		option->nogrv = 1;
+	} else {
+		option->nogrv = 0;
 	}
+	lua_close(L);
+	return 0;
+}
+
+int parse_lua_simconf_objects(char *filename, data** object)
+{
+	lua_State *L = luaL_newstate();
+	luaL_openlibs(L);
+	/* Load file */
+	if(luaL_loadfile(L, filename)) {
+		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
+		return 1;
+	}
+	
+	lua_pcall(L, 0, 0, 0);
 	
 	/* Read returned table of objects */
 	lua_getglobal(L, "spawn_objects");

@@ -78,7 +78,7 @@ int initphys(data** object)
 	return 0;
 }
 
-int distribute_objects()
+static int per_core_distribution()
 {
 	/* TODO: Once proper object distribution is implemented rewrite this function.
 	 * limits_up and limits_down are from the old implementation. */
@@ -110,7 +110,6 @@ int threadcontrol(int status, data** object)
 {
 	if(!option->avail_cores) return 0;
 	if(status == PHYS_UNPAUSE && running == 0) {
-		for(int k = 1; k < option->avail_cores + 1; k++) thread_opts[k].dt = option->dt;
 		running = 1;
 		pthread_mutex_unlock(&movestop);
 	} else if(status == PHYS_PAUSE && running == 1) {
@@ -119,13 +118,12 @@ int threadcontrol(int status, data** object)
 	} else if(status == PHYS_STATUS) {
 		return running;
 	} else if(status == PHYS_START) {
-		distribute_objects();
+		per_core_distribution();
 		pthread_mutex_init(&movestop, NULL);
 		pthread_barrier_init(&barrier, NULL, option->avail_cores);
 		running = 1;
 		for(int k = 1; k < option->avail_cores + 1; k++) {
 			pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-			thread_opts[k].dt = option->dt;
 			thread_opts[k].obj = *object;
 			pthread_create(&threads[k], &thread_attribs, resolveforces, (void*)(long)k);
 			pprintf(PRI_OK, "\n");
@@ -152,9 +150,9 @@ int threadcontrol(int status, data** object)
 	return 0;
 }
 
-void *resolveforces(void *arg)
+void *resolveforces(void *thread_id)
 {
-	struct thread_settings *thread = &thread_opts[(long)arg];
+	struct thread_settings *thread = &thread_opts[(long)thread_id];
 	v4sd vecnorm, accprev;
 	double dist;
 	const double pi = acos(-1);
@@ -166,8 +164,8 @@ void *resolveforces(void *arg)
 	while(!quit) {
 		for(int i = 0; i < thread->objcount + 1; i++) {
 			if(thread->obj[thread->indices[i]].ignore) continue;
-			thread->obj[thread->indices[i]].pos += (thread->obj[thread->indices[i]].vel*thread->dt) +\
-				(thread->obj[thread->indices[i]].acc)*((thread->dt*thread->dt)/2);
+			thread->obj[thread->indices[i]].pos += (thread->obj[thread->indices[i]].vel*option->dt) +\
+				(thread->obj[thread->indices[i]].acc)*((option->dt*option->dt)/2);
 		}
 		
 		pthread_mutex_lock(&movestop);
@@ -191,9 +189,9 @@ void *resolveforces(void *arg)
 					thread->obj[thread->indices[i]].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
 						6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[thread->indices[i]].mass);
 			}
-			thread->obj[thread->indices[i]].vel += (thread->obj[thread->indices[i]].acc + accprev)*((thread->dt)/2);
+			thread->obj[thread->indices[i]].vel += (thread->obj[thread->indices[i]].acc + accprev)*((option->dt)/2);
 		}
-		if((long)arg == 1) option->processed++;
+		if((long)thread_id == 1) option->processed++;
 		pthread_barrier_wait(&barrier);
 	}
 	return 0;

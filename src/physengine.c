@@ -69,8 +69,9 @@ int main(int argc, char *argv[])
 			.avail_cores = 0,
 			.dt = 0.008, .verbosity = 5,
 			.noflj = 1,
+			.gconst = 0, .epsno = 0, .elcharge = 0,
+			.noele = 1, .nogrv = 1,
 		};
-		strcpy(option->filename,"simconf.lua");
 		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
 	
@@ -81,8 +82,7 @@ int main(int argc, char *argv[])
 		struct timespec ts;
 		struct numbers_selection numbers;
 		numbers.final_digit = 0;
-		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0;
-		static volatile float fps = 0.0; /* Volatile because GCC tends to improperly optimize it. */
+		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0, fps = 0.0;
 		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
 		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
 		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	/*	Arguments	*/
 		int c;
 		
-		while (1) {
+		while(1) {
 			struct option long_options[] =
 			{
 				{"novid",	no_argument,			&novid, 1},
@@ -109,17 +109,19 @@ int main(int argc, char *argv[])
 				{"threads",	required_argument,		0, 't'},
 				{"timer",	required_argument,		0, 'r'},
 				{"verb",	required_argument,		0, 'v'},
+				{"file",	required_argument,		0, 'f'},
 				{"help",	no_argument,			0, 'h'},
+				{NULL,		0,						0, 0}
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "l:t:r:v:h", long_options, &option_index);
+			c = getopt_long(argc, argv, "f:l:t:r:v:h", long_options, &option_index);
 			
 			/* Detect the end of the options. */
-			if (c == -1)
+			if(c == -1)
 				break;
-			switch (c) {
+			switch(c) {
 				case 0:
 					/* If this option set a flag, do nothing else now. */
 					if(long_options[option_index].flag != 0)
@@ -143,12 +145,18 @@ int main(int argc, char *argv[])
 				case 'v':
 					sscanf(optarg, "%hu", &option->verbosity);
 					break;
+				case 'f':
+					strcpy(option->filename, optarg);
+					if(parse_lua_simconf_options(option->filename)) {
+						pprintf(PRI_ERR, "Could not parse configuration from %s!\n", option->filename);
+						return 0;
+					}
+					break;
 				case 'h':
 					printf("%s", ARGSTRING);
 					exit(0);
 					break;
 				case '?':
-					printf("DSADASDA\n");
 					exit(1);
 					break;
 				default:
@@ -156,18 +164,18 @@ int main(int argc, char *argv[])
 			}
 		}
 		if(optind < argc) {
-			while(optind < argc) {
-				optind++;
-				if(!access(argv[optind-1], R_OK)) {
-					pprintf(PRI_OK, "Using file %s.\n", argv[optind-1]);
-					strcpy(option->filename, argv[optind-1]);
-					break;
-				} else {
-					pprintf(PRI_ERR, "File %s not found!\n", argv[optind-1]);
-					exit(1);
-				}
-			}
+			pprintf(PRI_ERR, "Arguments not recognized: ");
+			while(optind < argc)
+				printf("%s ", argv[optind++]);
+			printf("\n");
+			exit(1);
 		}
+		
+		if(option->filename[0] == '\0') {
+			pprintf(PRI_ERR, "No file specified! Use -f (filename) to specify one.\n");
+			exit(1);
+		}
+		
 		if(bench) {
 			pprintf(PRI_WARN, "Benchmark mode active.\n");
 			novid = 1;
@@ -180,8 +188,8 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 		data* object;
 		if(!init_elements()) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
-		if(parse_lua_simconf(option->filename, &object)) {
-			pprintf(PRI_ERR, "Could not parse simconf!\n");
+		if(parse_lua_simconf_objects(option->filename, &object)) {
+			pprintf(PRI_ERR, "Could not parse objects from %s!\n", option->filename);
 			return 0;
 		}
 		

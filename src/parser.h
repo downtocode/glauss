@@ -18,8 +18,8 @@
 #ifndef PHYSENGINE_PARS
 #define PHYSENGINE_PARS
 
-
-int parse_lua_simconf(char *filename, data** object);
+int parse_lua_simconf_options(char *filename);
+int parse_lua_simconf_objects(char *filename, data** object);
 char* readshader(const char* filename);
 
 #endif

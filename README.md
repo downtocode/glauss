@@ -51,7 +51,7 @@ Button | Action
 Usage:
 ------
 
-`physengine (file) (arguments)`
+`physengine (arguments)`
 
 Argument | Short | Action
 ---------|-------|-------
@@ -60,6 +60,7 @@ Argument | Short | Action
 **--bench** | none | Benchmark mode, runs a single thread, no video, verbosity at 8, stops after 30 seconds(unless timer flag is set) and prints statistics. Useful for optimizations.
 **--novid** | none | Disables SDL window creation and any OpenGL functions in the main loop.
 **--nosync** | none | Disables vertical synchronization.
+**--file (filename)** | **-f (filename)** | Specify which file to use for simulation.
 **--log (filename)** | **-l (filename)** | Log all output at maximum verbosity to a file.
 **--verb (int)** | **-v (int)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
 **--timer (float)** | **-r (float)** | Sets update rate for GUI/benchmark/xyz timer.
