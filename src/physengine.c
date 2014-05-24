@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
 				case 'l':
 					option->logfile = fopen(optarg, "w");
 					pprintf(PRI_ESSENTIAL, "Writing log to file %s.\n", optarg);
+					option->logenable = 1;
 					break;
 				case 't':
 					sscanf(optarg, "%hu", &option->avail_cores);
@@ -478,10 +479,10 @@ int main(int argc, char *argv[])
 			free(links);
 			free(shaderprogs);
 		}
-		if(option->logenable)
-			fclose(option->logfile);
 		if(threadcontrol(PHYS_STATUS, &object))
 			threadcontrol(PHYS_SHUTDOWN, &object);
+		if(option->logenable)
+			fclose(option->logfile);
 		free(option);
 		free(atom_prop);
 		free(object);

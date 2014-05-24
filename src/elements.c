@@ -43,10 +43,6 @@ int init_elements()
 	return 0;
 }
 
-/*
- * Used only in molreader.c and parser.c, before the physics have even initialized.
- * We can afford to waste time looping through all. Nothing faster than a C loop, right?
- */
 unsigned short int return_atom_num(char element[2])
 {
 	for(int i=1; i<121; i++) {

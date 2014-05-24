@@ -62,7 +62,6 @@ int probefile(const char *molfile)
 	return 0;
 }
 
-
 int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 {
 	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10], pdbreschain;
@@ -117,9 +116,6 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 				object[*i].ignore = 0;
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
-			}
-			if(object[*i].mass == 0) {
-				pprintf(PRI_ERR, "Object %i has no mass!\n", *i);
 			}
 			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", molfile, *i, object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);
 			*i = *i + 1;
