@@ -38,6 +38,18 @@
 #include "msg_phys.h"
 #include "elements.h"
 
+static const char *ARGSTRING =
+"Usage: physengine (file) (arguments)\n"
+"		--novid			Disable video output.\n"
+"		--nosync		Disable waiting for vblank.\n"
+"		--bench			Benchmark mode(30 seconds, threads=1, novid\n"
+"		--dump			Dump an xyz file of the system every second.\n"
+"	-l	--log (file)		Log everything to a file.\n"
+"	-t	--threads (int)		Use this amount of threads.\n"
+"	-r	--timer (int)		OSD update rate/benchmark duration.\n"
+"	-v	--verb (int)		STDOUT spam level.\n"
+"	-h	--help			What you're reading.\n";
+
 /* Function to input numbers in an array and later extract a single number out.
  * Used in selecting objects.*/
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status) {
@@ -415,8 +427,6 @@ int main(int argc, char *argv[])
 		glUseProgram(shaderprogs[0]);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		adjust_rot(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
-		
-		
 		
 		/*	Dynamic drawing	*/
 		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);

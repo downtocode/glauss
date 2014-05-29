@@ -39,15 +39,3 @@ struct numbers_selection {
 	int digits[20];
 	unsigned short int final_digit;
 };
-
-static const char *ARGSTRING =
-"Usage: physengine (file) (arguments)\n"
-"		--novid			Disable video output.\n"
-"		--nosync		Disable waiting for vblank.\n"
-"		--bench			Benchmark mode(30 seconds, threads=1, novid\n"
-"		--dump			Dump an xyz file of the system every second.\n"
-"	-l	--log (file)		Log everything to a file.\n"
-"	-t	--threads (int)		Use this amount of threads.\n"
-"	-r	--timer (int)		OSD update rate/benchmark duration.\n"
-"	-v	--verb (int)		STDOUT spam level.\n"
-"	-h	--help			What you're reading.\n";

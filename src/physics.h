@@ -55,7 +55,7 @@ typedef struct {
 
 struct thread_settings {
 	data* obj;
-	unsigned int objcount, *indices;
+	unsigned int id, objcount, *indices;
 	clockid_t clockid;
 };
 
@@ -63,6 +63,6 @@ struct thread_settings *thread_opts;
 
 int initphys(data** object);
 int threadcontrol(int status, data** object);
-void *resolveforces(void *arg);
+void *resolveforces(void *thread_setts);
 
 #endif

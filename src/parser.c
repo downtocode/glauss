@@ -234,7 +234,7 @@ char* readshader(const char* filename)
 	if(size == -1) return NULL;
 	if(fseek(input, 0, SEEK_SET) == -1) return NULL;
 	
-	char *content = malloc((size_t)size +1); 
+	char *content = malloc((size_t)size +1);
 	if(content == NULL) return NULL;
 	
 	fread(content, 1, (size_t)size, input);
