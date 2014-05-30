@@ -59,8 +59,6 @@ struct thread_settings {
 	clockid_t clockid;
 };
 
-struct thread_settings *thread_opts;
-
 int initphys(data** object);
 int threadcontrol(int status, data** object);
 void *resolveforces(void *thread_setts);

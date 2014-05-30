@@ -91,7 +91,6 @@ int main(int argc, char *argv[])
 		SDL_Event event;
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
-		struct timespec ts;
 		struct numbers_selection numbers;
 		numbers.final_digit = 0;
 		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0, fps = 0.0;
@@ -210,7 +209,6 @@ int main(int argc, char *argv[])
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
 		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
 		, option->elcharge, option->gconst, option->epsno);
-		char threadtime[option->avail_cores][100];
 	/*	Physics.	*/
 	
 	/*	Error handling.	*/
@@ -222,7 +220,7 @@ int main(int argc, char *argv[])
 		GLuint textvbo, pointvbo;
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
-		if(novid == 0) {
+		if(!novid) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -246,7 +244,7 @@ int main(int argc, char *argv[])
 	/*	OpenGL ES 2.0 + SDL2	*/
 	
 	/*	Freetype.	*/
-		if(novid == 0) {
+		if(!novid) {
 			if(FT_Init_FreeType(&library)) {
 				pprintf(PRI_ERR, "Could not init freetype library.\n");
 				return 1;
@@ -262,7 +260,8 @@ int main(int argc, char *argv[])
 	
 	/*	Links.	*/
 		GLfloat (*links)[3] = calloc(10000, sizeof(*links));
-		unsigned int linkcounter = createlinks(object, &links);
+		unsigned int linkcounter;
+		if(!novid) linkcounter = createlinks(object, &links);
 	/*	Links.	*/
 	
 	gettimeofday (&t1 , NULL);
@@ -392,11 +391,6 @@ int main(int argc, char *argv[])
 			if(dumplevel) toxyz(option->obj, object, timestep);
 			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", timestep);
 			
-			for(int i = 1; i < option->avail_cores + 1; i++) {
-				clock_gettime(thread_opts[i].clockid, &ts);
-				sprintf(threadtime[i], "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
-				pprintf(PRI_SPAM, "%s\n", threadtime[i]);
-			}
 			if(bench) {
 				pprintf(PRI_ESSENTIAL, "Progressed %f timeunits over %f seconds.\n", timestep, totaltime);
 				pprintf(PRI_ESSENTIAL, "Average = %f timeunits per second.\n", timestep/totaltime);
@@ -469,9 +463,6 @@ int main(int argc, char *argv[])
 		
 		if(!threadcontrol(PHYS_STATUS, &object))
 			render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);
-		
-		for(int i = 1; i < option->avail_cores + 1; i++) 
-			render_text(threadtime[i], 0.76, 0.95-((float)i/14), 0.75/option->width, 0.75/option->height, GL_WHITE);
 		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/*	Static drawing	*/

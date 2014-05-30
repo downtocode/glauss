@@ -34,13 +34,14 @@ pthread_mutex_t movestop;
 pthread_barrier_t barrier;
 struct sched_param parameters;
 static bool running, quit;
+static struct thread_settings *thread_opts;
 
 #define sigma 0.5
 #define epsilon 0.0001
 
 int initphys(data** object)
 {
-	*object = calloc(option->obj+100,sizeof(data));
+	*object = calloc(option->obj+1,sizeof(data));
 	
 	if(*object != NULL) pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n", \
 	(option->obj+1)*sizeof(data), option->obj+1, *object);
@@ -67,7 +68,6 @@ int initphys(data** object)
 	}
 	
 	threads = calloc(option->avail_cores+1, sizeof(pthread_t));
-	thread_opts = calloc(option->avail_cores+1, sizeof(struct thread_settings));
 	
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
@@ -78,7 +78,7 @@ int initphys(data** object)
 	return 0;
 }
 
-static int per_core_distribution()
+static int per_core_distribution(struct thread_settings *thread_opts)
 {
 	/* TODO: Once proper object distribution is implemented rewrite this function.
 	 * limits_up and limits_down are from the old implementation. */
@@ -109,45 +109,53 @@ static int per_core_distribution()
 int threadcontrol(int status, data** object)
 {
 	if(!option->avail_cores) return 0;
-	if(status == PHYS_UNPAUSE && running == 0) {
-		running = 1;
-		pthread_mutex_unlock(&movestop);
-	} else if(status == PHYS_PAUSE && running == 1) {
-		running = 0;
-		pthread_mutex_lock(&movestop);
-	} else if(status == PHYS_STATUS) {
-		return running;
-	} else if(status == PHYS_START) {
-		per_core_distribution();
-		pthread_mutex_init(&movestop, NULL);
-		pthread_barrier_init(&barrier, NULL, option->avail_cores);
-		running = 1;
-		for(int k = 1; k < option->avail_cores + 1; k++) {
-			pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-			thread_opts[k].obj = *object;
-			thread_opts[k].id = k;
-			pthread_create(&threads[k], &thread_attribs, resolveforces, &thread_opts[k]);
-			pthread_getcpuclockid(threads[k], &thread_opts[k].clockid);
-			pprintf(PRI_OK, "\n");
-		}
-	} else if(status == PHYS_SHUTDOWN) {
-		/* Shutting down's always been unstable as we use a mutex for pausing. Current code works fine. */
-		running = 1;
-		pthread_mutex_unlock(&movestop);
-		quit = 1;
-		for(int k = 1; k < option->avail_cores + 1; k++) {
-			pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
-			pthread_join(threads[k], NULL);
-			thread_opts[k].obj = NULL;
-			pprintf(PRI_OK, "\n");
-		}
-		pthread_barrier_destroy(&barrier);
-		pthread_mutex_destroy(&movestop);
-		free(thread_opts->indices);
-		free(thread_opts);
-		free(threads);
-		running = 0;
-		quit = 0;
+	switch(status) {
+		case PHYS_UNPAUSE:
+			if(running) return 1;
+			running = 1;
+			pthread_mutex_unlock(&movestop);
+			break;
+		case PHYS_PAUSE:
+			if(!running) return 1;
+			running = 0;
+			pthread_mutex_lock(&movestop);
+		case PHYS_STATUS:
+			return running;
+			break;
+		case PHYS_START:
+			thread_opts = calloc(option->avail_cores+1, sizeof(struct thread_settings));
+			per_core_distribution(thread_opts);
+			pthread_mutex_init(&movestop, NULL);
+			pthread_barrier_init(&barrier, NULL, option->avail_cores);
+			running = 1;
+			for(int k = 1; k < option->avail_cores + 1; k++) {
+				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
+				thread_opts[k].obj = *object;
+				thread_opts[k].id = k;
+				pthread_create(&threads[k], &thread_attribs, resolveforces, &thread_opts[k]);
+				pthread_getcpuclockid(threads[k], &thread_opts[k].clockid);
+				pprintf(PRI_OK, "\n");
+			}
+			break;
+		case PHYS_SHUTDOWN:
+			/* Shutting down's always been unstable as we use a mutex for pausing. Current code works fine. */
+			running = 1;
+			pthread_mutex_unlock(&movestop);
+			quit = 1;
+			for(int k = 1; k < option->avail_cores + 1; k++) {
+				pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
+				pthread_join(threads[k], NULL);
+				thread_opts[k].obj = NULL;
+				pprintf(PRI_OK, "\n");
+			}
+			pthread_barrier_destroy(&barrier);
+			pthread_mutex_destroy(&movestop);
+			free(thread_opts->indices);
+			free(thread_opts);
+			free(threads);
+			running = 0;
+			quit = 0;
+			break;
 	}
 	return 0;
 }
