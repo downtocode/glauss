@@ -67,8 +67,6 @@ int initphys(data** object)
 		pprintf(PRI_WARN, "Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
 	}
 	
-	threads = calloc(option->avail_cores+1, sizeof(pthread_t));
-	
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
 	pthread_attr_setinheritsched(&thread_attribs, PTHREAD_INHERIT_SCHED);
@@ -78,7 +76,7 @@ int initphys(data** object)
 	return 0;
 }
 
-static int per_core_distribution(struct thread_settings *thread_opts)
+static int distribute_nbody(struct thread_settings *thread_opts)
 {
 	/* TODO: Once proper object distribution is implemented rewrite this function.
 	 * limits_up and limits_down are from the old implementation. */
@@ -123,8 +121,9 @@ int threadcontrol(int status, data** object)
 			return running;
 			break;
 		case PHYS_START:
+			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
 			thread_opts = calloc(option->avail_cores+1, sizeof(struct thread_settings));
-			per_core_distribution(thread_opts);
+			distribute_nbody(thread_opts);
 			pthread_mutex_init(&movestop, NULL);
 			pthread_barrier_init(&barrier, NULL, option->avail_cores);
 			running = 1;
@@ -132,7 +131,7 @@ int threadcontrol(int status, data** object)
 				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
 				thread_opts[k].obj = *object;
 				thread_opts[k].id = k;
-				pthread_create(&threads[k], &thread_attribs, resolveforces, &thread_opts[k]);
+				pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_opts[k]);
 				pthread_getcpuclockid(threads[k], &thread_opts[k].clockid);
 				pprintf(PRI_OK, "\n");
 			}
@@ -160,7 +159,7 @@ int threadcontrol(int status, data** object)
 	return 0;
 }
 
-void *resolveforces(void *thread_setts)
+void *thread_nbody(void *thread_setts)
 {
 	struct thread_settings thread = *((struct thread_settings *)thread_setts);
 	v4sd vecnorm, accprev;

@@ -61,6 +61,6 @@ struct thread_settings {
 
 int initphys(data** object);
 int threadcontrol(int status, data** object);
-void *resolveforces(void *thread_setts);
+void *thread_nbody(void *thread_setts);
 
 #endif
