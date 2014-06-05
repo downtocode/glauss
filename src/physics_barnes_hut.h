@@ -15,27 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <stdbool.h>
+#ifndef PHYSENGINE_PHYS_BARNES_HUT
+#define PHYSENGINE_PHYS_BARNES_HUT
 
-struct option_struct* option;
-
-struct option_struct {
-	float dt;
-	long double elcharge, gconst, epsno;
-	unsigned int obj;
-	unsigned long long processed;
-	unsigned short int avail_cores, verbosity;
-	int width, height;
-	bool nogrv, noele, noflj, moderandom, logenable;
-	char *fontname, *filename, *algorithm;
-	FILE *logfile;
+struct phys_barnes_hut_octree {
+	unsigned int depth;
+	v4sd origin, halfdim;
+	bool leaf;
+	data *data, cellsum;
+	struct phys_barnes_hut_octree *cells[8];
 };
 
-#define NUM_ANOTHER 1
-#define NUM_GIVEME 2
-#define NUM_REMOVE 3
+void insert_into_octree(data *object, struct phys_barnes_hut_octree *octree);
+double max_disp_from_origin(data *object);
+void build_octree(data* object, struct phys_barnes_hut_octree *octree);
+void *thread_barnes_hut(void *thread_setts);
 
-struct numbers_selection {
-	int digits[20];
-	unsigned short int final_digit;
-};
+#endif

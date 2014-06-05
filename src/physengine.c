@@ -39,11 +39,12 @@
 #include "elements.h"
 
 static const char *ARGSTRING =
-"Usage: physengine (file) (arguments)\n"
+"Usage: physengine -f (file) (arguments)\n"
 "		--novid			Disable video output.\n"
 "		--nosync		Disable waiting for vblank.\n"
 "		--bench			Benchmark mode(30 seconds, threads=1, novid\n"
 "		--dump			Dump an xyz file of the system every second.\n"
+"	-a	--algorithm (string)	Select an algorithm to use. To list all: \"help\".\n"
 "	-l	--log (file)		Log everything to a file.\n"
 "	-t	--threads (int)		Use this amount of threads.\n"
 "	-r	--timer (int)		OSD update rate/benchmark duration.\n"
@@ -84,7 +85,6 @@ int main(int argc, char *argv[])
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
 		};
-		strcpy(option->fontname,"./resources/fonts/DejaVuSansMono.ttf");
 	/*	Default settings.	*/
 	
 	/*	Main function vars	*/
@@ -112,22 +112,23 @@ int main(int argc, char *argv[])
 		while(1) {
 			struct option long_options[] =
 			{
-				{"novid",	no_argument,			&novid, 1},
-				{"nosync",	no_argument,			&vsync, 0},
-				{"bench",	no_argument,			&bench, 1},
-				{"dump",	no_argument,			&dumplevel, 1},
-				{"log",		required_argument,		0, 'l'},
-				{"threads",	required_argument,		0, 't'},
-				{"timer",	required_argument,		0, 'r'},
-				{"verb",	required_argument,		0, 'v'},
-				{"file",	required_argument,		0, 'f'},
-				{"help",	no_argument,			0, 'h'},
-				{NULL,		0,						0, 0}
+				{"novid",		no_argument,			&novid, 1},
+				{"nosync",		no_argument,			&vsync, 0},
+				{"bench",		no_argument,			&bench, 1},
+				{"dump",		no_argument,			&dumplevel, 1},
+				{"log",			required_argument,		0, 'l'},
+				{"algorithm",	required_argument,		0, 'a'},
+				{"threads",		required_argument,		0, 't'},
+				{"timer",		required_argument,		0, 'r'},
+				{"verb",		required_argument,		0, 'v'},
+				{"file",		required_argument,		0, 'f'},
+				{"help",		no_argument,			0, 'h'},
+				{NULL,			0,						0, 0}
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "f:l:t:r:v:h", long_options, &option_index);
+			c = getopt_long(argc, argv, "a:f:l:t:r:v:h", long_options, &option_index);
 			
 			/* Detect the end of the options. */
 			if(c == -1)
@@ -141,6 +142,16 @@ int main(int argc, char *argv[])
 					if(optarg)
 						printf(" with arg %s", optarg);
 					printf("\n");
+					break;
+				case 'a':
+					if(strcmp(optarg, "help") == 0) {
+						printf("Implemented algorithms:\n");
+						for(int n = 0; phys_algorithms[n].name; n++) {
+							printf("    %s\n", phys_algorithms[n].name);
+						}
+						exit(0);
+					}
+					strcpy(option->algorithm, optarg);
 					break;
 				case 'l':
 					option->logfile = fopen(optarg, "w");
@@ -158,7 +169,7 @@ int main(int argc, char *argv[])
 					sscanf(optarg, "%hu", &option->verbosity);
 					break;
 				case 'f':
-					strcpy(option->filename, optarg);
+					option->filename = strdup(optarg);
 					if(parse_lua_simconf_options(option->filename)) {
 						pprintf(PRI_ERR, "Could not parse configuration from %s!\n", option->filename);
 						return 0;
@@ -183,7 +194,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		
-		if(option->filename[0] == '\0') {
+		if(option->filename == NULL) {
 			pprintf(PRI_ERR, "No file specified! Use -f (filename) to specify one.\n");
 			exit(1);
 		}
@@ -197,6 +208,10 @@ int main(int argc, char *argv[])
 		}
 	/*	Arguments	*/
 	
+	/*	Error handling.	*/
+	if(dumplevel) printf("Outputting XYZ file every %f seconds.\n", timer);
+	/*	Error handling.	*/
+	
 	/*	Physics.	*/
 		data* object;
 		if(!init_elements()) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
@@ -206,15 +221,11 @@ int main(int argc, char *argv[])
 		}
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
+		sprintf(osdobj, "Objects = %i", option->obj);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
 		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
 		, option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
-	
-	/*	Error handling.	*/
-		sprintf(osdobj, "Objects = %i", option->obj);
-		if(dumplevel) printf("Outputting XYZ file every %f seconds.\n", timer);
-	/*	Error handling.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
 		GLuint textvbo, pointvbo;

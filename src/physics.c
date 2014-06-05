@@ -20,32 +20,40 @@
 #include <tgmath.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 #include "physics.h"
 #include "options.h"
 #include "msg_phys.h"
+
+#include "physics_n_body.h"
+#include "physics_barnes_hut.h"
 
 /*	Default threads to use when system != linux.	*/
 #define failsafe_cores 2
 
 /*	Indexing of cores = 1, 2, 3...	*/
-pthread_t *threads;
-pthread_attr_t thread_attribs;
-pthread_mutex_t movestop;
-pthread_barrier_t barrier;
-struct sched_param parameters;
-static bool running, quit;
-static struct thread_settings *thread_opts;
-
-#define sigma 0.5
-#define epsilon 0.0001
+static pthread_t *threads;
+static pthread_attr_t thread_attribs;
+static struct sched_param parameters;
 
 int initphys(data** object)
 {
+	/* Check if physics algorithm is valid */
+	if(phys_find_algorithm(option->algorithm) == NULL) {
+		pprintf(PRI_ERR, "Algorithm \"%s\" not found! Implemented algorithms:\n", option->algorithm);
+		for(int n = 0; phys_algorithms[n].name; n++) {
+			printf("    %s\n", phys_algorithms[n].name);
+		}
+		exit(1);
+	}
+	
+	/* Calloc the object struct */
 	*object = calloc(option->obj+1,sizeof(data));
 	
 	if(*object != NULL) pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n", \
 	(option->obj+1)*sizeof(data), option->obj+1, *object);
 	
+	/* Set the amount of threads */
 	int online_cores = 0;
 	
 	#ifdef __linux__
@@ -67,40 +75,13 @@ int initphys(data** object)
 		pprintf(PRI_WARN, "Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
 	}
 	
+	/* pthreads configuration */
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
 	pthread_attr_setinheritsched(&thread_attribs, PTHREAD_INHERIT_SCHED);
 	/*	SCHED_RR - Round Robin, SCHED_FIFO - FIFO	*/
 	pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
 	pthread_attr_setschedparam(&thread_attribs, &parameters);
-	return 0;
-}
-
-static int distribute_nbody(struct thread_settings *thread_opts)
-{
-	/* TODO: Once proper object distribution is implemented rewrite this function.
-	 * limits_up and limits_down are from the old implementation. */
-	unsigned int *limits_up = calloc(option->avail_cores+1, sizeof(unsigned int));
-	unsigned int *limits_down = calloc(option->avail_cores+1, sizeof(unsigned int));
-	
-	int totcore = (int)((float)option->obj/option->avail_cores);
-	for(int k = 1; k < option->avail_cores + 1; k++) {
-		limits_down[k] = limits_up[k-1] + 1;
-		limits_up[k] = limits_down[k] + totcore - 1;
-		if(k == option->avail_cores) {
-			/*	Takes care of rounding problems with odd numbers.	*/
-			limits_up[k] += option->obj - limits_up[k];
-		}
-		thread_opts[k].objcount = limits_up[k] - limits_down[k];
-		thread_opts[k].indices = calloc(thread_opts[k].objcount+1, sizeof(unsigned int));
-		
-		for(int i = 0; i < thread_opts[k].objcount + 1; i++) {
-			thread_opts[k].indices[i] = limits_down[k];
-			limits_down[k]++;
-		}
-	}
-	free(limits_up);
-	free(limits_down);
 	return 0;
 }
 
@@ -122,19 +103,32 @@ int threadcontrol(int status, data** object)
 			break;
 		case PHYS_START:
 			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
-			thread_opts = calloc(option->avail_cores+1, sizeof(struct thread_settings));
-			distribute_nbody(thread_opts);
+			
+			if(!strcmp(option->algorithm, "n-body")) {
+				thread_opts_nbody = calloc(option->avail_cores+1, sizeof(struct thread_config_nbody));
+				distribute_nbody(thread_opts_nbody);
+			} else if(!strcmp(option->algorithm, "barnes-hut")) {
+				struct phys_barnes_hut_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
+				octree->depth = 0;
+				octree->data = NULL;
+				octree->leaf = 1;
+				for(int i=0; i < 8; i++) octree->cells[i] = NULL;
+				octree->origin = (v4sd){0,0,0};
+				octree->halfdim = max_disp_from_origin(*object);
+				build_octree(*object, octree);
+			}
+			
 			pthread_mutex_init(&movestop, NULL);
 			pthread_barrier_init(&barrier, NULL, option->avail_cores);
-			running = 1;
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-				thread_opts[k].obj = *object;
-				thread_opts[k].id = k;
-				pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_opts[k]);
-				pthread_getcpuclockid(threads[k], &thread_opts[k].clockid);
+				thread_opts_nbody[k].obj = *object;
+				thread_opts_nbody[k].id = k;
+				pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_opts_nbody[k]);
+				pthread_getcpuclockid(threads[k], &thread_opts_nbody[k].clockid);
 				pprintf(PRI_OK, "\n");
 			}
+			running = 1;
 			break;
 		case PHYS_SHUTDOWN:
 			/* Shutting down's always been unstable as we use a mutex for pausing. Current code works fine. */
@@ -144,13 +138,17 @@ int threadcontrol(int status, data** object)
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
 				pthread_join(threads[k], NULL);
-				thread_opts[k].obj = NULL;
+				thread_opts_nbody[k].obj = NULL;
 				pprintf(PRI_OK, "\n");
 			}
 			pthread_barrier_destroy(&barrier);
 			pthread_mutex_destroy(&movestop);
-			free(thread_opts->indices);
-			free(thread_opts);
+			
+			if(!strcmp(option->algorithm, "n-body")) {
+				free(thread_opts_nbody->indices);
+				free(thread_opts_nbody);
+			}
+			
 			free(threads);
 			running = 0;
 			quit = 0;
@@ -159,47 +157,26 @@ int threadcontrol(int status, data** object)
 	return 0;
 }
 
-void *thread_nbody(void *thread_setts)
+const struct list_algorithms phys_algorithms[] = {
+	{"n-body",		(void*)thread_nbody,	NULL},
+	{"barnes-hut",	(void*)thread_barnes_hut,	NULL},
+	{0}
+};
+
+void *phys_find_algorithm(const char *name)
 {
-	struct thread_settings thread = *((struct thread_settings *)thread_setts);
-	v4sd vecnorm, accprev;
-	double dist;
-	const double pi = acos(-1);
-	const long double gconst = option->gconst, epsno = option->epsno;
-	const bool nogrv = option->nogrv, noele = option->noele, noflj = option->noflj;
-	
-	while(!quit) {
-		for(int i = 0; i < thread.objcount + 1; i++) {
-			if(thread.obj[thread.indices[i]].ignore) continue;
-			thread.obj[thread.indices[i]].pos += (thread.obj[thread.indices[i]].vel*option->dt) +\
-				(thread.obj[thread.indices[i]].acc)*((option->dt*option->dt)/2);
-		}
-		
-		pthread_mutex_lock(&movestop);
-		if(running) pthread_mutex_unlock(&movestop);
-		pthread_barrier_wait(&barrier);
-		
-		for(int i = 0; i < thread.objcount + 1; i++) {
-			accprev = thread.obj[thread.indices[i]].acc;
-			for(int j = 1; j < option->obj + 1; j++) {
-				if(thread.indices[i]==j) continue;
-				vecnorm = thread.obj[j].pos - thread.obj[thread.indices[i]].pos;
-				dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
-				vecnorm /= dist;
-				
-				if(!nogrv)
-					thread.obj[thread.indices[i]].acc += vecnorm*(double)(gconst*thread.obj[j].mass)/(dist*dist);
-				if(!noele)
-					thread.obj[thread.indices[i]].acc += -vecnorm*(double)((thread.obj[thread.indices[i]].charge*\
-						thread.obj[j].charge)/(4*pi*epsno*dist*dist*thread.obj[thread.indices[i]].mass));
-				if(!noflj)
-					thread.obj[thread.indices[i]].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
-						6*(pow(sigma, 6)/pow(dist, 7)))/thread.obj[thread.indices[i]].mass);
-			}
-			thread.obj[thread.indices[i]].vel += (thread.obj[thread.indices[i]].acc + accprev)*((option->dt)/2);
-		}
-		if(thread.id == 1) option->processed++;
-		pthread_barrier_wait(&barrier);
+	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
+		if(!strcmp(i->name, name))
+			return i->thread_location;
 	}
-	return 0;
+	return NULL;
+}
+
+void *phys_find_config(const char *name)
+{
+	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
+		if(!strcmp(i->name, name))
+			return i->thread_config;
+	}
+	return NULL;
 }

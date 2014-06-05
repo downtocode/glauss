@@ -63,8 +63,10 @@ static void conf_traverse_table(lua_State *L)
 			#pragma clang diagnostic pop
 			#endif
 		} else if(lua_isstring(L, -1)) {
+			if(!strcmp("algorithm", lua_tostring(L, -2)))
+				option->algorithm = strdup(lua_tostring(L, -1));
 			if(!strcmp("fontname", lua_tostring(L, -2)))
-				strcpy(option->fontname, lua_tostring(L, -1));
+				option->fontname = strdup(lua_tostring(L, -1));
 		}
 		lua_pop(L, 1);
 	}
@@ -96,6 +98,7 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 			} else {
 				/* It's just an object. */
 				if(nullswitch) {
+					buffer->id = i;
 					(*object)[i] = *buffer;
 					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
 					i++;

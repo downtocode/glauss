@@ -15,27 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <stdbool.h>
+#ifndef PHYSENGINE_PHYS_N_BODY
+#define PHYSENGINE_PHYS_N_BODY
 
-struct option_struct* option;
+#define sigma 0.5
+#define epsilon 0.0001
 
-struct option_struct {
-	float dt;
-	long double elcharge, gconst, epsno;
-	unsigned int obj;
-	unsigned long long processed;
-	unsigned short int avail_cores, verbosity;
-	int width, height;
-	bool nogrv, noele, noflj, moderandom, logenable;
-	char *fontname, *filename, *algorithm;
-	FILE *logfile;
+struct thread_config_nbody {
+	data* obj;
+	unsigned int id, objcount, *indices;
+	clockid_t clockid;
 };
 
-#define NUM_ANOTHER 1
-#define NUM_GIVEME 2
-#define NUM_REMOVE 3
+struct thread_config_nbody *thread_opts_nbody;
 
-struct numbers_selection {
-	int digits[20];
-	unsigned short int final_digit;
-};
+int distribute_nbody(struct thread_config_nbody *thread_opts_nbody);
+void *thread_nbody(void *thread_setts);
+
+#endif

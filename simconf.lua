@@ -4,6 +4,7 @@ settings = {
 	physics = {
 		threads = 2,
 		dt = 0.000001,
+		algorithm = "n-body",
 	},
 	visual = {
 		width = 1280,
@@ -22,25 +23,16 @@ settings = {
 
 --Add molecules or any additional objects here
 objects = {}
-objects[1] = {
-	molfile = "./resources/molecules/benzene.xyz",
-	posx = 10,
-	posy = 10,
-	posz = 10,
-	velx = 0,
-	vely = 0,
-	velz = 0,
-}
 
 --Spawn objects here. Arrays for position and velocity are not supported yet. Stick to normal variables.
 --If atom is set to a non-zero value, mass, charge and radius values will be ignored.
 function spawn_objects(varfromC)
 	--Get number of non-loop objects and add 1 to avoid overwriting.
-	for i = 1+(#objects), 2950, 1 do
+	for i = 1, 10, 1 do
 		objects[i] = {
-			posx = 10*math.sin(i),
-			posy = 10*math.cos(i),
-			posz = math.cos(25*i),
+			posx = math.sin(i),
+			posy = i*math.cos(i),
+			posz = i,
 			velx = 0,
 			vely = 0,
 			velz = 100/i,

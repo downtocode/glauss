@@ -51,7 +51,7 @@ Button | Action
 Usage:
 ------
 
-`physengine (arguments)`
+`physengine -f (file) (arguments)`
 
 Argument | Short | Action
 ---------|-------|-------
@@ -61,6 +61,7 @@ Argument | Short | Action
 **--novid** | none | Disables SDL window creation and any OpenGL functions in the main loop.
 **--nosync** | none | Disables vertical synchronization.
 **--file (filename)** | **-f (filename)** | Specify which file to use for simulation.
+**--algorithm (string)** | **-a (string)** | Specify which algorithm to use. Type `help` to list all.
 **--log (filename)** | **-l (filename)** | Log all output at maximum verbosity to a file.
 **--verb (int)** | **-v (int)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
 **--timer (float)** | **-r (float)** | Sets update rate for GUI/benchmark/xyz timer.
