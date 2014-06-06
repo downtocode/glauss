@@ -39,9 +39,9 @@ static void init_octree_cell(struct phys_barnes_hut_octree *octree, short cell) 
 	octree->cells[cell]->leaf = 1;
 	for(int i=0; i < 8; i++) octree->cells[cell]->cells[i] = NULL;
 	v4sd newpos = octree->origin;
-	newpos[0] += octree->halfdim[0] * (cell&4 ? .5f : -.5f);
-	newpos[1] += octree->halfdim[1] * (cell&2 ? .5f : -.5f);
-	newpos[2] += octree->halfdim[2] * (cell&1 ? .5f : -.5f);
+	newpos[0] += octree->halfdim * (cell&4 ? .5f : -.5f);
+	newpos[1] += octree->halfdim * (cell&2 ? .5f : -.5f);
+	newpos[2] += octree->halfdim * (cell&1 ? .5f : -.5f);
 	octree->cells[cell]->origin = newpos;
 	octree->cells[cell]->halfdim = octree->halfdim/2;
 }

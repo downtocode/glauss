@@ -20,7 +20,8 @@
 
 struct phys_barnes_hut_octree {
 	unsigned int depth;
-	v4sd origin, halfdim;
+	v4sd origin;
+	double halfdim;
 	bool leaf;
 	data *data, cellsum;
 	struct phys_barnes_hut_octree *cells[8];
