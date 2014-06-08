@@ -36,32 +36,22 @@ static void conf_traverse_table(lua_State *L)
 		if(lua_istable(L, -1)) {
 			conf_traverse_table(L);
 		} else if(lua_isnumber(L, -1)) {
-			/* lua_tonumber() always returns a real number, so we need to cast them.
-			 * Clang screams its damn lungs off "extension used". Since we don't care
-			 * about anything other than GCC or Clang, silence them. */
-			#ifdef __clang__
-			#pragma clang diagnostic push
-			#pragma clang diagnostic ignored "-Wlanguage-extension-token"
-			#endif
 			if(!strcmp("threads", lua_tostring(L, -2)))
-				option->avail_cores = (typeof(option->avail_cores))lua_tonumber(L, -1);
+				option->avail_cores = (unsigned short int)lua_tonumber(L, -1);
 			if(!strcmp("dt", lua_tostring(L, -2)))
-				option->dt = (typeof(option->dt))lua_tonumber(L, -1);
+				option->dt = lua_tonumber(L, -1);
 			if(!strcmp("width", lua_tostring(L, -2)))
-				option->width = (typeof(option->width))lua_tonumber(L, -1);
+				option->width = (int)lua_tonumber(L, -1);
 			if(!strcmp("height", lua_tostring(L, -2)))
-				option->height = (typeof(option->height))lua_tonumber(L, -1);
+				option->height = (int)lua_tonumber(L, -1);
 			if(!strcmp("elcharge", lua_tostring(L, -2)))
-				option->elcharge = (typeof(option->elcharge))lua_tonumber(L, -1);
+				option->elcharge = lua_tonumber(L, -1);
 			if(!strcmp("gconst", lua_tostring(L, -2)))
-				option->gconst = (typeof(option->gconst))lua_tonumber(L, -1);
+				option->gconst = lua_tonumber(L, -1);
 			if(!strcmp("epsno", lua_tostring(L, -2)))
-				option->epsno = (typeof(option->epsno))lua_tonumber(L, -1);
+				option->epsno = lua_tonumber(L, -1);
 			if(!strcmp("verbosity", lua_tostring(L, -2)))
-				option->verbosity = (typeof(option->verbosity))lua_tonumber(L, -1);
-			#ifdef __clang__
-			#pragma clang diagnostic pop
-			#endif
+				option->verbosity = (unsigned short int)lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("algorithm", lua_tostring(L, -2)))
 				option->algorithm = strdup(lua_tostring(L, -1));
@@ -99,6 +89,7 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 				/* It's just an object. */
 				if(nullswitch) {
 					buffer->id = i;
+					printf("Buffer ign = %i\n", buffer->ignore);
 					(*object)[i] = *buffer;
 					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
 					i++;
@@ -107,38 +98,34 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 			}
 			obj_traverse_table(L, object, buffer);
 		} else if(lua_isnumber(L, -1)) {
-			#ifdef __clang__
-			#pragma clang diagnostic push
-			#pragma clang diagnostic ignored "-Wlanguage-extension-token"
-			#endif
 			if(!strcmp("posx", lua_tostring(L, -2)))
-				buffer->pos[0] = (typeof(buffer->pos[0]))lua_tonumber(L, -1);
+				buffer->pos[0] = lua_tonumber(L, -1);
 			if(!strcmp("posy", lua_tostring(L, -2)))
-				buffer->pos[1] = (typeof(buffer->pos[1]))lua_tonumber(L, -1);
+				buffer->pos[1] = lua_tonumber(L, -1);
 			if(!strcmp("posz", lua_tostring(L, -2)))
-				buffer->pos[2] = (typeof(buffer->pos[2]))lua_tonumber(L, -1);
+				buffer->pos[2] = lua_tonumber(L, -1);
 			if(!strcmp("velx", lua_tostring(L, -2)))
-				buffer->vel[0] = (typeof(buffer->vel[0]))lua_tonumber(L, -1);
+				buffer->vel[0] = lua_tonumber(L, -1);
 			if(!strcmp("vely", lua_tostring(L, -2)))
-				buffer->vel[1] = (typeof(buffer->vel[1]))lua_tonumber(L, -1);
+				buffer->vel[1] = lua_tonumber(L, -1);
 			if(!strcmp("velz", lua_tostring(L, -2)))
-				buffer->vel[2] = (typeof(buffer->vel[2]))lua_tonumber(L, -1);
+				buffer->vel[2] = lua_tonumber(L, -1);
 			if(!strcmp("charge", lua_tostring(L, -2)))
-				buffer->charge = (typeof(buffer->charge))lua_tonumber(L, -1);
+				buffer->charge = lua_tonumber(L, -1);
 			if(!strcmp("mass", lua_tostring(L, -2)))
-				buffer->mass = (typeof(buffer->mass))lua_tonumber(L, -1);
+				buffer->mass = lua_tonumber(L, -1);
 			if(!strcmp("radius", lua_tostring(L, -2)))
-				buffer->radius = (typeof(buffer->radius))lua_tonumber(L, -1);
+				buffer->radius = lua_tonumber(L, -1);
 			if(!strcmp("atom", lua_tostring(L, -2)))
-				buffer->atomnumber = (typeof(buffer->atomnumber))lua_tonumber(L, -1);
-			#ifdef __clang__
-			#pragma clang diagnostic pop
-			#endif
+				buffer->atomnumber = (unsigned short int)lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("molfile", lua_tostring(L, -2))) {
 				strcpy(molfile, lua_tostring(L, -1));
 				molset = 1;
 			}
+		} else if(lua_isboolean(L, -1)) {
+			if(!strcmp("ignore", lua_tostring(L, -2)))
+				buffer->ignore = lua_toboolean(L, -1);
 		}
 		lua_pop(L, 1);
 	}

@@ -2,9 +2,9 @@
 settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
-		threads = 2,
+		threads = 1,
 		dt = 0.000001,
-		algorithm = "n-body",
+		algorithm = "barnes-hut",
 	},
 	visual = {
 		width = 1280,
@@ -12,9 +12,12 @@ settings = {
 		fontname = "./resources/fonts/DejaVuSansMono.ttf",
 	},
 	constants = {
-		elcharge = 1.602176565*10^-7,
-		gconst = 6.67384*10^-11,
-		epsno = 8.854187817*10^-12,
+		--elcharge = 1.602176565*10^-7,
+		--gconst = 6.67384*10^-11,
+		--epsno = 8.854187817*10^-12,
+		elcharge = 0,
+		gconst = 0,
+		epsno = 0,
 	},
 	misc = {
 		verbosity = 8,
@@ -28,16 +31,16 @@ objects = {}
 --If atom is set to a non-zero value, mass, charge and radius values will be ignored.
 function spawn_objects(varfromC)
 	--Get number of non-loop objects and add 1 to avoid overwriting.
-	for i = 1, 10, 1 do
+	for i = 1, 200, 1 do
 		objects[i] = {
-			posx = math.sin(i),
-			posy = i*math.cos(i),
-			posz = i,
+			posx = math.sin(math.pi*i/200)*math.cos(math.pi*i/200),
+			posy = math.sin(math.pi*i/200)*math.sin(math.pi*i/200),
+			posz = math.cos(math.pi*i/200),
 			velx = 0,
 			vely = 0,
-			velz = 100/i,
+			velz = i,
 			charge = 10,
-			mass = 10000000000/i,
+			mass = 1,
 			radius = 0.2,
 			atom = 0,
 			ignore = false,

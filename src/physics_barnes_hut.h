@@ -27,6 +27,11 @@ struct phys_barnes_hut_octree {
 	struct phys_barnes_hut_octree *cells[8];
 };
 
+struct thread_config_bhut {
+	struct phys_barnes_hut_octree *octree;
+	unsigned int id;
+};
+
 void insert_into_octree(data *object, struct phys_barnes_hut_octree *octree);
 double max_disp_from_origin(data *object);
 void build_octree(data* object, struct phys_barnes_hut_octree *octree);

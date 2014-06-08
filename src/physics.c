@@ -36,6 +36,11 @@ static pthread_t *threads;
 static pthread_attr_t thread_attribs;
 static struct sched_param parameters;
 
+union thread_config_algo {
+	struct thread_config_nbody nbody;
+	struct thread_config_bhut bhut;
+};
+
 int initphys(data** object)
 {
 	/* Check if physics algorithm is valid */
@@ -103,31 +108,35 @@ int threadcontrol(int status, data** object)
 			break;
 		case PHYS_START:
 			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
+			union thread_config_algo *thread_config = calloc(option->avail_cores+1, sizeof(union thread_config_algo));
 			
 			if(!strcmp(option->algorithm, "n-body")) {
-				thread_opts_nbody = calloc(option->avail_cores+1, sizeof(struct thread_config_nbody));
-				distribute_nbody(thread_opts_nbody);
+				distribute_nbody(&thread_config->nbody);
 			} else if(!strcmp(option->algorithm, "barnes-hut")) {
-				struct phys_barnes_hut_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
-				octree->depth = 0;
-				octree->data = NULL;
-				octree->leaf = 1;
-				for(int i=0; i < 8; i++) octree->cells[i] = NULL;
-				octree->origin = (v4sd){0,0,0};
-				octree->halfdim = max_disp_from_origin(*object);
-				build_octree(*object, octree);
+				thread_config->bhut.octree = &(struct phys_barnes_hut_octree){
+					.depth=0, .data = NULL,
+					.leaf = 1, .origin = (v4sd){0,0,0},
+					.halfdim = max_disp_from_origin(*object),
+					.cells = {NULL},
+				};
+				build_octree(*object, thread_config->bhut.octree);
 			}
 			
 			pthread_mutex_init(&movestop, NULL);
 			pthread_barrier_init(&barrier, NULL, option->avail_cores);
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-				thread_opts_nbody[k].obj = *object;
-				thread_opts_nbody[k].id = k;
-				pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_opts_nbody[k]);
-				pthread_getcpuclockid(threads[k], &thread_opts_nbody[k].clockid);
+				thread_config[k].nbody.obj = *object;
+				thread_config[k].nbody.id = k;
+				pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_config[k].nbody);
+				pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
 				pprintf(PRI_OK, "\n");
 			}
+			
+			/* Remember -- we give the threads a pointer to their configuration(pthreads demands so) and inside
+			 * the threads we dereference the struct pointer as their own configuration and we create a copy of it.
+			 * That way we can free it immediatly after thread creation. As to why we malloc it -- BH trees can be big. */
+			free(thread_config);
 			running = 1;
 			break;
 		case PHYS_SHUTDOWN:
@@ -138,16 +147,10 @@ int threadcontrol(int status, data** object)
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
 				pthread_join(threads[k], NULL);
-				thread_opts_nbody[k].obj = NULL;
 				pprintf(PRI_OK, "\n");
 			}
 			pthread_barrier_destroy(&barrier);
 			pthread_mutex_destroy(&movestop);
-			
-			if(!strcmp(option->algorithm, "n-body")) {
-				free(thread_opts_nbody->indices);
-				free(thread_opts_nbody);
-			}
 			
 			free(threads);
 			running = 0;
@@ -158,8 +161,8 @@ int threadcontrol(int status, data** object)
 }
 
 const struct list_algorithms phys_algorithms[] = {
-	{"n-body",		(void*)thread_nbody,	NULL},
-	{"barnes-hut",	(void*)thread_barnes_hut,	NULL},
+	{"n-body",		(void*)thread_nbody},
+	{"barnes-hut",	(void*)thread_barnes_hut},
 	{0}
 };
 
@@ -168,15 +171,6 @@ void *phys_find_algorithm(const char *name)
 	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
 		if(!strcmp(i->name, name))
 			return i->thread_location;
-	}
-	return NULL;
-}
-
-void *phys_find_config(const char *name)
-{
-	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
-		if(!strcmp(i->name, name))
-			return i->thread_config;
 	}
 	return NULL;
 }

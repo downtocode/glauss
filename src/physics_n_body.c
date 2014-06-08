@@ -59,6 +59,8 @@ void *thread_nbody(void *thread_setts)
 	const long double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele, noflj = option->noflj;
 	
+	printf("THREAD %i STARTED\n", thread.id);
+	
 	while(!quit) {
 		for(int i = 0; i < thread.objcount + 1; i++) {
 			if(thread.obj[thread.indices[i]].ignore) continue;

@@ -27,7 +27,7 @@ All are available on any up-to-date Linux distribution's package repositories. T
 
 Running
 -------
-Run the shell script. The executable needs to be ran into the root directory of the build. Modify the options in simconf.conf and the object position data (posdata.dat) to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS). You can run `make rem` to remove all XYZ files in the current directory or `make clean` to remove them along with the program and compiled files.
+Run the shell script with the argument `-f (filename)`, with an appropriate file. A demo file(usually it's for testing the latest feature) called simconf.lua is present. A demo scripts directory will be created at a later version. The executable needs to be ran into the root directory of the build. Modify the options in simconf.conf to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS).
 
 This program **absolutely requires** the newest stable GCC or Clang releases to build. Vector extensions have always been a tricky things in C, but in the last few years the major compilers have roughly agreed on a standard. When using GCC, check that your processors has AVX extensions or performance will probably be affected.
 
@@ -46,7 +46,9 @@ Button | Action
 **1**      | Draw objects as points/spheres.
 **2**      | Enable/disable link drawing.
 **Spacebar** | Pause/unpause.
-**Esc**      | Quit the program. If running inside terminal with --novid, use Ctrl+C.
+**Esc**      | Safely[*] quit the program. If running inside a terminal you can use Ctrl+C too.
+
+#####[*]By default the program will wait until the physics threads safely quit by finishing a timestep/cycle. This can take time if the system is large/complex.
 
 Usage:
 ------
@@ -64,6 +66,7 @@ Argument | Short | Action
 **--algorithm (string)** | **-a (string)** | Specify which algorithm to use. Type `help` to list all.
 **--log (filename)** | **-l (filename)** | Log all output at maximum verbosity to a file.
 **--verb (int)** | **-v (int)** | Sets how much to output to stout. 0 - nothing, 10 - everything.
+**--version** | **-V** | Outputs the version of the program(+short git checksum).
 **--timer (float)** | **-r (float)** | Sets update rate for GUI/benchmark/xyz timer.
 **--help** | **-h** | Print usage and flags.
 
@@ -74,7 +77,8 @@ This file determines the system to simulate. It's a Lua script, so make sure to 
 Physengine reads the settings table first, reads the global objects table and then calls the spawn_objects function, which returns its own local objects table along with a counter how many objects exist in it. Usually the global table contains any molecule files(in pdb or xyz formats) and any standalone objects. The function spawn_objects is for having your own distribution of objects.
 
 Contacts
--------
+--------
+Want to chat? Life counselling? Psychology? Classical/wooden philosophy? Metaphysics? Pataphysics? Perfect. Though try to stay on topic. In between sessions.
 
  * **IRC Channel**: `#physengine` on `chat.freenode.net`
  * **Email**: `atomnuker@gmail.com`

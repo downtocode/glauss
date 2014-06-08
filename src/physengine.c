@@ -49,6 +49,7 @@ static const char *ARGSTRING =
 "	-t	--threads (int)		Use this amount of threads.\n"
 "	-r	--timer (int)		OSD update rate/benchmark duration.\n"
 "	-v	--verb (int)		STDOUT spam level.\n"
+"	-V	--version		Outputs the version of the program(+short git checksum).\n"
 "	-h	--help			What you're reading.\n";
 
 /* Function to input numbers in an array and later extract a single number out.
@@ -121,6 +122,7 @@ int main(int argc, char *argv[])
 				{"threads",		required_argument,		0, 't'},
 				{"timer",		required_argument,		0, 'r'},
 				{"verb",		required_argument,		0, 'v'},
+				{"version",		no_argument,			0, 'V'},
 				{"file",		required_argument,		0, 'f'},
 				{"help",		no_argument,			0, 'h'},
 				{NULL,			0,						0, 0}
@@ -128,7 +130,7 @@ int main(int argc, char *argv[])
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "a:f:l:t:r:v:h", long_options, &option_index);
+			c = getopt_long(argc, argv, "a:f:l:t:r:v:Vh", long_options, &option_index);
 			
 			/* Detect the end of the options. */
 			if(c == -1)
@@ -167,6 +169,10 @@ int main(int argc, char *argv[])
 					break;
 				case 'v':
 					sscanf(optarg, "%hu", &option->verbosity);
+					break;
+				case 'V':
+					printf("%s\n", PACKAGE_STRING);
+					exit(0);
 					break;
 				case 'f':
 					option->filename = strdup(optarg);

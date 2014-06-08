@@ -24,6 +24,9 @@
 #include "physics.h"
 #include "physics_barnes_hut.h"
 
+//Indent string when verbosely outputting octrees to stdout
+#define INDENT "  "
+
 static short getOctantContainingPoint(const v4sd point, const struct phys_barnes_hut_octree *octree) {
 	short oct = 0;
 	if(point[0] >= octree->origin[0]) oct |= 4;
@@ -47,6 +50,9 @@ static void init_octree_cell(struct phys_barnes_hut_octree *octree, short cell) 
 }
 
 void insert_into_octree(data *object, struct phys_barnes_hut_octree *octree) {
+	//Update octree mass/center of mass.
+	octree->cellsum.pos = (octree->cellsum.pos+object->pos)/2;
+	octree->cellsum.mass += object->mass;
 	if(octree->data == NULL && octree->leaf) {
 		//This cell has no object or subcells
 		octree->data = object;
@@ -73,16 +79,17 @@ void insert_into_octree(data *object, struct phys_barnes_hut_octree *octree) {
 
 static void print_octree(struct phys_barnes_hut_octree *octree) {
 	if(octree->data != NULL) {
-		for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, "    ");
+		for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
 		pprintf(PRI_SPAM, "Object %i(pos = {%f, %f, %f}) is at cell level %i\n", octree->data->id, octree->data->pos[0], octree->data->pos[1], octree->data->pos[2], octree->depth);
 	} else {
 		for(int i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
-				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, "    ");
-				pprintf(PRI_SPAM, "Cell(pos = {%f, %f, %f}) contents:\n", octree->cells[i]->origin[0], octree->cells[i]->origin[1], octree->cells[i]->origin[2]);
+				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
+				pprintf(PRI_SPAM, "Cell(pos = {%f, %f, %f}, mass(center) = {%f, %f, %f}, mass = %lf) contents:\n", octree->cells[i]->origin[0], octree->cells[i]->origin[1], octree->cells[i]->origin[2],\
+				octree->cells[i]->cellsum.pos[0], octree->cells[i]->cellsum.pos[1], octree->cells[i]->cellsum.pos[2], octree->cells[i]->cellsum.mass);
 				print_octree(octree->cells[i]);
 			} else {
-				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, "    ");
+				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
 				pprintf(PRI_SPAM, "Cell empty.\n",  octree->origin[0], octree->origin[1], octree->origin[2]);
 			}
 		}
@@ -106,19 +113,21 @@ void build_octree(data* object, struct phys_barnes_hut_octree *octree) {
 	}
 	printf("printing octree structure\n");
 	print_octree(octree);
+	pprintf(PRI_HIGH, "Root cell(pos = {%f, %f, %f}, mass(center) = {%f, %f, %f}, mass = %lf) contents:\n", octree->origin[0], octree->origin[1], octree->origin[2],\
+	octree->cellsum.pos[0], octree->cellsum.pos[1], octree->cellsum.pos[2], octree->cellsum.mass);
 	exit(0);
 }
 
 void *thread_barnes_hut(void *thread_setts)
 {
-	//struct thread_config_nbody thread = *((struct thread_config_nbody *)thread_setts);
+	struct thread_config_bhut thread = *((struct thread_config_bhut *)thread_setts);
 	
 	while(!quit) {
 		pthread_mutex_lock(&movestop);
 		if(running) pthread_mutex_unlock(&movestop);
 		pthread_barrier_wait(&barrier);
 		
-		//if(thread.id == 1) option->processed++;
+		if(thread.id == 1) option->processed++;
 		pthread_barrier_wait(&barrier);
 	}
 	return 0;

@@ -49,7 +49,6 @@ typedef struct {
 struct list_algorithms {
 	const char *name;
 	void *thread_location;
-	void *thread_config;
 };
 
 extern const struct list_algorithms phys_algorithms[];
