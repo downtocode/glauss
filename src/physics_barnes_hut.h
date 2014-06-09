@@ -32,9 +32,9 @@ struct thread_config_bhut {
 	unsigned int id;
 };
 
-void insert_into_octree(data *object, struct phys_barnes_hut_octree *octree);
-double max_disp_from_origin(data *object);
-void build_octree(data* object, struct phys_barnes_hut_octree *octree);
+void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree);
+double bh_max_displacement(data *object);
+void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree);
 void *thread_barnes_hut(void *thread_setts);
 
 #endif

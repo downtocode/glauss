@@ -24,7 +24,7 @@
 #include "physics.h"
 #include "physics_n_body.h"
 
-int distribute_nbody(struct thread_config_nbody *thread_opts_nbody)
+int nbody_distribute(struct thread_config_nbody *thread_opts_nbody)
 {
 	unsigned int *limits_up = calloc(option->avail_cores+1, sizeof(unsigned int));
 	unsigned int *limits_down = calloc(option->avail_cores+1, sizeof(unsigned int));
@@ -58,8 +58,6 @@ void *thread_nbody(void *thread_setts)
 	const double pi = acos(-1);
 	const long double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele, noflj = option->noflj;
-	
-	printf("THREAD %i STARTED\n", thread.id);
 	
 	while(!quit) {
 		for(int i = 0; i < thread.objcount + 1; i++) {

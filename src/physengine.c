@@ -27,6 +27,7 @@
 
 /*	Dependencies	*/
 #include <SDL2/SDL.h>
+#include <fontconfig/fontconfig.h>
 
 /*	Functions	*/
 #include "config.h"
@@ -259,6 +260,22 @@ int main(int argc, char *argv[])
 			pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
 		}
 	/*	OpenGL ES 2.0 + SDL2	*/
+	
+	/*	Fontconfig.	*/
+		if(!novid) {
+			FcConfig *fc_config = FcInitLoadConfigAndFonts();
+			FcPattern *fc_pattern = FcPatternCreate();
+			FcPatternAddString(fc_pattern, FC_FULLNAME, (const FcChar8 *)"Arial");
+			FcPatternAddBool(fc_pattern, FC_ANTIALIAS, 1);
+			FcResult fc_result;
+			FcDefaultSubstitute(fc_pattern);
+			FcConfigSubstitute(fc_config, fc_pattern, FcMatchPattern);
+			FcPattern *fc_font_chosen = FcFontMatch(fc_config, fc_pattern, &fc_result);
+			FcValue fc_value;
+			FcPatternGet(fc_font_chosen, "file", 0, &fc_value);
+			option->fontname = (char *)fc_value.u.s;
+		}
+	/*	Fontconfig.	*/
 	
 	/*	Freetype.	*/
 		if(!novid) {
@@ -496,6 +513,7 @@ int main(int argc, char *argv[])
 			SDL_Quit();
 			free(links);
 			free(shaderprogs);
+			//FcFini(); -- Blows up and cries, needs further investigation.
 		}
 		if(threadcontrol(PHYS_STATUS, &object))
 			threadcontrol(PHYS_SHUTDOWN, &object);

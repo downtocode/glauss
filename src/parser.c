@@ -89,7 +89,6 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 				/* It's just an object. */
 				if(nullswitch) {
 					buffer->id = i;
-					printf("Buffer ign = %i\n", buffer->ignore);
 					(*object)[i] = *buffer;
 					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
 					i++;

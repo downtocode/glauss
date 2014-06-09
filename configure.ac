@@ -32,6 +32,9 @@ AC_CHECK_LIB([lua5.2], [main], [LDFLAGS+=" -llua5.2"],[
 AC_CHECK_LIB([freetype], [main], [LDFLAGS+=" `freetype-config --libs`" CFLAGS+=" `freetype-config --cflags`"],[
          echo "Freetype 2 libary is required to build this program."
          exit -1])
+AC_CHECK_LIB([fontconfig], [main], [LDFLAGS+=" -lfontconfig"],[
+         echo "Fontconfig dev libary is required to build this program."
+         exit -1])
 
 AC_ARG_ENABLE([lto], AS_HELP_STRING([--enable-lto],
 		[enable link time optimizations @<:@default=no@:>@]), [LDFLAGS+=" -flto" CFLAGS+=" -flto"], [])

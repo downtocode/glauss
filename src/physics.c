@@ -111,15 +111,15 @@ int threadcontrol(int status, data** object)
 			union thread_config_algo *thread_config = calloc(option->avail_cores+1, sizeof(union thread_config_algo));
 			
 			if(!strcmp(option->algorithm, "n-body")) {
-				distribute_nbody(&thread_config->nbody);
+				nbody_distribute(&thread_config->nbody);
 			} else if(!strcmp(option->algorithm, "barnes-hut")) {
 				thread_config->bhut.octree = &(struct phys_barnes_hut_octree){
 					.depth=0, .data = NULL,
 					.leaf = 1, .origin = (v4sd){0,0,0},
-					.halfdim = max_disp_from_origin(*object),
+					.halfdim = bh_max_displacement(*object),
 					.cells = {NULL},
 				};
-				build_octree(*object, thread_config->bhut.octree);
+				bh_build_octree(*object, thread_config->bhut.octree);
 			}
 			
 			pthread_mutex_init(&movestop, NULL);
