@@ -30,11 +30,11 @@ objects = {}
 --If atom is set to a non-zero value, mass, charge and radius values will be ignored.
 function spawn_objects(varfromC)
 	--Get number of non-loop objects and add 1 to avoid overwriting.
-	for i = 1, 2000, 1 do
+	for i = 1, 1000, 1 do
 		objects[i] = {
-			posx = math.sin(math.pi*i/200)*math.cos(math.pi*i/200),
-			posy = math.sin(math.pi*i/200)*math.sin(math.pi*i/200),
-			posz = math.cos(math.pi*i/200),
+			posx = i*math.cos(math.pi*i/221)*math.cos(math.pi*i/159),
+			posy = i*i*math.sin(math.pi*i/124)*math.sin(math.pi*i/211),
+			posz = i/2000,
 			velx = 0,
 			vely = 0,
 			velz = i,

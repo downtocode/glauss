@@ -32,6 +32,7 @@
 /*	Functions	*/
 #include "config.h"
 #include "physics.h"
+#include "physics_barnes_hut.h"
 #include "parser.h"
 #include "glfun.h"
 #include "toxyz.h"
@@ -302,6 +303,9 @@ int main(int argc, char *argv[])
 	
 	threadcontrol(PHYS_START, &object);
 	
+	struct phys_barnes_hut_octree *octree = bh_init_tree(object);
+	bh_build_octree(object, octree);
+	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
 			switch(event.type) {
@@ -385,6 +389,9 @@ int main(int argc, char *argv[])
 						scalefactor = 0.1;
 						chosen = 0;
 					}
+					if(event.key.keysym.sym==SDLK_o) {
+						bh_build_octree(object, octree);
+					}
 					if(event.key.keysym.sym==SDLK_z) {
 						toxyz(option->obj, object, timestep);
 					}
@@ -419,6 +426,8 @@ int main(int argc, char *argv[])
 		}
 		if (totaltime >  timer) {
 			fps = frames/totaltime;
+
+			bh_build_octree(object, octree);
 			
 			if(!novid || drawlinks) linkcounter = createlinks(object, &links);
 			
