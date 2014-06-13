@@ -20,7 +20,7 @@
 #include <stdbool.h>
 #include "physics.h"
 #include "toxyz.h"
-#include "elements.h"
+#include "phys_misc.h"
 
 char extension[] = "xyz", file[] = "config", filetodump[120];
 

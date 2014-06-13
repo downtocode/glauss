@@ -160,7 +160,7 @@ int parse_lua_simconf_options(char *filename) {
 		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
 		return 1;
 	}
-	/* Call no functions to read global declarations */
+	/* Execute script */
 	lua_pcall(L, 0, 0, 0);
 	/* Read settings table */
 	lua_getglobal(L, "settings");

@@ -38,7 +38,7 @@
 #include "toxyz.h"
 #include "options.h"
 #include "msg_phys.h"
-#include "elements.h"
+#include "phys_misc.h"
 
 static const char *ARGSTRING =
 "Usage: physengine -f (file) (arguments)\n"
@@ -53,28 +53,6 @@ static const char *ARGSTRING =
 "	-v	--verb (int)		STDOUT spam level.\n"
 "	-V	--version		Outputs the version of the program(+short git checksum).\n"
 "	-h	--help			What you're reading.\n";
-
-/* Function to input numbers in an array and later extract a single number out.
- * Used in selecting objects.*/
-int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status) {
-	if(status == NUM_ANOTHER) {
-		numbers->digits[numbers->final_digit] = currentdigit;
-		numbers->final_digit+=1;
-		return 0;
-	} else if(status == NUM_GIVEME) {
-		unsigned int result = 0;
-		for(int i=0; i < numbers->final_digit; i++) {
-			result*=10;
-			result+=numbers->digits[i];
-		}
-		numbers->final_digit = 0;
-		return result;
-	} else if(status == NUM_REMOVE) {
-		numbers->final_digit-=1;
-		return 0;
-	}
-	return 0;
-}
 
 int main(int argc, char *argv[])
 {
@@ -304,7 +282,7 @@ int main(int argc, char *argv[])
 	threadcontrol(PHYS_START, &object);
 	
 	struct phys_barnes_hut_octree *octree = bh_init_tree(object);
-	bh_build_octree(object, octree);
+	//bh_build_octree(object, octree);
 	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
@@ -426,8 +404,6 @@ int main(int argc, char *argv[])
 		}
 		if (totaltime >  timer) {
 			fps = frames/totaltime;
-
-			bh_build_octree(object, octree);
 			
 			if(!novid || drawlinks) linkcounter = createlinks(object, &links);
 			
@@ -443,9 +419,9 @@ int main(int argc, char *argv[])
 		}
 		
 		if(novid) {
-			/* Prevents wasting CPU time by waking up once every 100 msec.
+			/* Prevents wasting CPU time by waking up once every 50 msec.
 			 * Using SDL_Delay because usleep is depricated and nanosleep is overkill. */
-			SDL_Delay(100);
+			SDL_Delay(50);
 			continue;
 		}
 		

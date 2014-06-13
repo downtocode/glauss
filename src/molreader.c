@@ -22,7 +22,7 @@
 #include "molreader.h"
 #include "options.h"
 #include "msg_phys.h"
-#include "elements.h"
+#include "phys_misc.h"
 
 int probefile(const char *molfile)
 {

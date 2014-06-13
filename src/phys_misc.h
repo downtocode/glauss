@@ -29,7 +29,17 @@ struct atomic_cont {
 
 struct atomic_cont *atom_prop;
 
+#define NUM_ANOTHER 1
+#define NUM_GIVEME 2
+#define NUM_REMOVE 3
+
+struct numbers_selection {
+	int digits[20];
+	unsigned short int final_digit;
+};
+
 int init_elements();
 unsigned short int return_atom_num(char element[2]);
+int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status);
 
 #endif

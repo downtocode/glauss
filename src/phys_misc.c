@@ -17,7 +17,7 @@
  */
 #include <string.h>
 #include <stdio.h>
-#include "elements.h"
+#include "phys_misc.h"
 
 int init_elements()
 {
@@ -49,6 +49,28 @@ unsigned short int return_atom_num(char element[2])
 		if(strcmp(element, atom_prop[i].name) == 0) {
 			return i;
 		}
+	}
+	return 0;
+}
+
+/* Function to input numbers in an array and later extract a single number out.
+ * Used in selecting objects.*/
+int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status) {
+	if(status == NUM_ANOTHER) {
+		numbers->digits[numbers->final_digit] = currentdigit;
+		numbers->final_digit+=1;
+		return 0;
+	} else if(status == NUM_GIVEME) {
+		unsigned int result = 0;
+		for(int i=0; i < numbers->final_digit; i++) {
+			result*=10;
+			result+=numbers->digits[i];
+		}
+		numbers->final_digit = 0;
+		return result;
+	} else if(status == NUM_REMOVE) {
+		numbers->final_digit-=1;
+		return 0;
 	}
 	return 0;
 }
