@@ -3,7 +3,7 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 1,
-		dt = 0.000001,
+		dt = 0.01,
 		algorithm = "n-body",
 	},
 	visual = {
@@ -11,17 +11,19 @@ settings = {
 		height = 720,
 	},
 	constants = {
-		--elcharge = 1.602176565*10^-7,
+		elcharge = 1.602176565*10^-12,
 		--gconst = 6.67384*10^-11,
-		--epsno = 8.854187817*10^-12,
-		elcharge = 0,
+		epsno = 8.854187817*10^-18,
+		--elcharge = 0,
 		gconst = 0,
-		epsno = 0,
+		--epsno = 0,
 	},
 	misc = {
 		verbosity = 6,
 	},
 }
+
+maxobjects = 1000;
 
 --Add molecules or any additional objects here
 objects = {}
@@ -30,15 +32,15 @@ objects = {}
 --If atom is set to a non-zero value, mass, charge and radius values will be ignored.
 function spawn_objects(varfromC)
 	--Get number of non-loop objects and add 1 to avoid overwriting.
-	for i = 1, 1000, 1 do
+	for i = 1, maxobjects, 1 do
 		objects[i] = {
-			posx = i*math.cos(math.pi*i/221)*math.cos(math.pi*i/159),
-			posy = i*i*math.sin(math.pi*i/124)*math.sin(math.pi*i/211),
-			posz = i/2000,
-			velx = 0,
-			vely = 0,
-			velz = i,
-			charge = 10,
+			posx = math.sin(i),
+			posy = math.cos(i),
+			posz = math.cos(i)*(math.random(0,10)-5),
+			velx = -math.sin(i),
+			vely = -math.cos(i),
+			velz = -math.cos(i)*(math.random(0,10)-5),
+			charge = 100*math.random(-1,1),
 			mass = 1,
 			radius = 0.2,
 			atom = 0,

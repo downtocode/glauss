@@ -38,7 +38,7 @@
 #include "toxyz.h"
 #include "options.h"
 #include "msg_phys.h"
-#include "phys_misc.h"
+#include "physics_aux.h"
 
 static const char *ARGSTRING =
 "Usage: physengine -f (file) (arguments)\n"
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 					sscanf(optarg, "%hu", &option->verbosity);
 					break;
 				case 'V':
-					printf("%s\n", PACKAGE_STRING);
+					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING, __DATE__, __TIME__);
 					exit(0);
 					break;
 				case 'f':
@@ -162,6 +162,7 @@ int main(int argc, char *argv[])
 					}
 					break;
 				case 'h':
+					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING, __DATE__, __TIME__);
 					printf("%s", ARGSTRING);
 					exit(0);
 					break;

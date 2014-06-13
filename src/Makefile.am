@@ -6,6 +6,6 @@ physengine_SOURCES = physengine.c options.h config.h\
 			parser.h parser.c\
 			toxyz.h toxyz.c\
 			physics.h physics.c\
-			phys_misc.h phys_misc.c\
+			physics_aux.h physics_aux.c\
 			physics_n_body.h physics_n_body.c\
 			physics_barnes_hut.h physics_barnes_hut.c

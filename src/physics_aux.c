@@ -17,7 +17,7 @@
  */
 #include <string.h>
 #include <stdio.h>
-#include "phys_misc.h"
+#include "physics_aux.h"
 
 int init_elements()
 {

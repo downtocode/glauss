@@ -110,7 +110,7 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 			if(!strcmp("velz", lua_tostring(L, -2)))
 				buffer->vel[2] = lua_tonumber(L, -1);
 			if(!strcmp("charge", lua_tostring(L, -2)))
-				buffer->charge = lua_tonumber(L, -1);
+				buffer->charge = lua_tonumber(L, -1)*option->elcharge;
 			if(!strcmp("mass", lua_tostring(L, -2)))
 				buffer->mass = lua_tonumber(L, -1);
 			if(!strcmp("radius", lua_tostring(L, -2)))

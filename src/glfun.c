@@ -23,7 +23,7 @@
 #include "physics.h"
 #include "parser.h"
 #include "options.h"
-#include "phys_misc.h"
+#include "physics_aux.h"
 
 #define numshaders 2
 
