@@ -22,6 +22,6 @@
 
 int parse_lua_simconf_options(char *filename);
 int parse_lua_simconf_objects(char *filename, data** object);
-char* readshader(const char* filename);
+const char* readshader(const char* filename);
 
 #endif

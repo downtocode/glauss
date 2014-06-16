@@ -63,7 +63,7 @@ void *thread_nbody(void *thread_setts)
 	
 	while(!quit) {
 		for(int i = 0; i < thread.objcount + 1; i++) {
-			//if(thread.obj[thread.indices[i]].ignore) continue;
+			if(thread.obj[thread.indices[i]].ignore) continue;
 			thread.obj[thread.indices[i]].pos += (thread.obj[thread.indices[i]].vel*option->dt) +\
 			(thread.obj[thread.indices[i]].acc)*((option->dt*option->dt)/2);
 		}

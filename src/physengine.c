@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 		bool start_selection = 0;
 		int novid = 0, dumplevel = 0, vsync = 1, bench = 0;
 		float timer = 1.0f;
-		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
+		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.1;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 	/*	Main function vars	*/
 	

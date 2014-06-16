@@ -151,8 +151,8 @@ unsigned int graph_compile_shader(const char *vertpath, const char *fragpath) {
 	const char *src_vert_shader = readshader(vertpath);
 	const char *src_frag_shader = readshader(fragpath);
 	
-	glShaderSource(vert_shader, 1, (const char **) &src_vert_shader, NULL);
-	glShaderSource(frag_shader, 1, (const char **) &src_frag_shader, NULL);
+	glShaderSource(vert_shader, 1, &src_vert_shader, NULL);
+	glShaderSource(frag_shader, 1, &src_frag_shader, NULL);
 	glCompileShader(vert_shader);
 	glCompileShader(frag_shader);
 	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &status_vert);

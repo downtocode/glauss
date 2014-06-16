@@ -213,7 +213,7 @@ int parse_lua_simconf_objects(char *filename, data** object)
 	return 0;
 }
 
-char* readshader(const char* filename)
+const char* readshader(const char* filename)
 {
 	FILE* input = fopen(filename, "r");
 	if(input == NULL) return NULL;
