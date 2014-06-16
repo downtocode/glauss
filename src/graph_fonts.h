@@ -15,13 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PARS
-#define PHYSENGINE_PARS
 
-#include "physics.h"
-
-int parse_lua_simconf_options(char *filename);
-int parse_lua_simconf_objects(char *filename, data** object);
-char* readshader(const char* filename);
-
-#endif
+const char *graph_init_fontconfig();
+GLuint graph_init_freetype(const char *fontname);
+void graph_stop_freetype();
+void graph_display_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
+void graph_display_object_info(data object);

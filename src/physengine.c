@@ -27,14 +27,13 @@
 
 /*	Dependencies	*/
 #include <SDL2/SDL.h>
-#include <fontconfig/fontconfig.h>
 
 /*	Functions	*/
+#include "graph.h"
 #include "config.h"
 #include "physics.h"
 #include "physics_barnes_hut.h"
 #include "parser.h"
-#include "glfun.h"
 #include "toxyz.h"
 #include "options.h"
 #include "msg_phys.h"
@@ -75,16 +74,14 @@ int main(int argc, char *argv[])
 		struct numbers_selection numbers;
 		numbers.final_digit = 0;
 		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0, fps = 0.0;
-		unsigned int frames = 0, chosen = 0, currentnum, fpscolor = GL_WHITE;
-		char osdfps[100] = "FPS = n/a", osdobj[100] = "Objects = n/a";
-		char osdtime[100] = "Timestep = 0.0", currentsel[100] = "Select object:";
+		unsigned int frames = 0, chosen = 0, currentnum;
+		char currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, drawobj = 0, drawlinks = 0;
 		bool start_selection = 0;
 		int novid = 0, dumplevel = 0, vsync = 1, bench = 0;
 		float timer = 1.0f;
 		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.01;
 		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
-		GLuint* shaderprogs;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -208,14 +205,12 @@ int main(int argc, char *argv[])
 		}
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
-		sprintf(osdobj, "Objects = %i", option->obj);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
 		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
 		, option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
-		GLuint textvbo, pointvbo;
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(!novid) {
@@ -226,57 +221,12 @@ int main(int argc, char *argv[])
 			window = SDL_CreateWindow(PACKAGE_STRING, \
 				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width, option->height, \
 				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|SDL_WINDOW_ALLOW_HIGHDPI);
-			resize_wind();
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(vsync);
-			glViewport(0, 0, option->width, option->height);
-			create_shaders(&shaderprogs);
-			glEnable(GL_DEPTH_TEST);
-			glDepthFunc(GL_LEQUAL);
-			glActiveTexture(GL_TEXTURE0);
-			glGenBuffers(1, &textvbo);
-			glGenBuffers(1, &pointvbo);
-			glClearColor(0.12, 0.12, 0.12, 1);
-			pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
+			/* We deal with any and all graphical vizualization through this function. */
+			graph_init();
 		}
 	/*	OpenGL ES 2.0 + SDL2	*/
-	
-	/*	Fontconfig.	*/
-		if(!novid) {
-			FcConfig *fc_config = FcInitLoadConfigAndFonts();
-			FcPattern *fc_pattern = FcPatternCreate();
-			FcPatternAddString(fc_pattern, FC_FULLNAME, (const FcChar8 *)"Arial");
-			FcPatternAddBool(fc_pattern, FC_ANTIALIAS, 1);
-			FcResult fc_result;
-			FcDefaultSubstitute(fc_pattern);
-			FcConfigSubstitute(fc_config, fc_pattern, FcMatchPattern);
-			FcPattern *fc_font_chosen = FcFontMatch(fc_config, fc_pattern, &fc_result);
-			FcValue fc_value;
-			FcPatternGet(fc_font_chosen, "file", 0, &fc_value);
-			option->fontname = (char *)fc_value.u.s;
-		}
-	/*	Fontconfig.	*/
-	
-	/*	Freetype.	*/
-		if(!novid) {
-			if(FT_Init_FreeType(&library)) {
-				pprintf(PRI_ERR, "Could not init freetype library.\n");
-				return 1;
-			}
-			if(FT_New_Face(library, option->fontname, 0, &face)) {
-				pprintf(PRI_ERR, "Could not open font.\n");
-				return 1;
-			}
-			FT_Set_Pixel_Sizes(face, 0, 34);
-			g = face->glyph;
-		}
-	/*	Freetype.	*/
-	
-	/*	Links.	*/
-		GLfloat (*links)[3] = calloc(10000, sizeof(*links));
-		unsigned int linkcounter;
-		if(!novid) linkcounter = createlinks(object, &links);
-	/*	Links.	*/
 	
 	gettimeofday (&t1 , NULL);
 	
@@ -291,7 +241,7 @@ int main(int argc, char *argv[])
 				case SDL_WINDOWEVENT:
 					if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
 						SDL_GetWindowSize(window, &option->width, &option->height);
-						resize_wind();
+						graph_resize_wind();
 					}
 					break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -406,8 +356,6 @@ int main(int argc, char *argv[])
 		if (totaltime >  timer) {
 			fps = frames/totaltime;
 			
-			if(!novid || drawlinks) linkcounter = createlinks(object, &links);
-			
 			if(dumplevel) toxyz(option->obj, object, timestep);
 			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", timestep);
 			
@@ -438,54 +386,9 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		glUseProgram(shaderprogs[0]);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		adjust_rot(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
+		graph_draw_scene(&object, fps);
 		
-		/*	Dynamic drawing	*/
-		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
-		drawaxis();
-		for(int i = 1; i < option->obj+1; i++) {
-			if(drawobj) draw_obj_sphere(object[i]);
-		}
-		if(!drawobj) draw_obj_points(object);
-		if(drawlinks) draw_obj_links(&links, linkcounter);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Dynamic drawing	*/
-		
-		
-		glUseProgram(shaderprogs[1]);
-		
-		/*	Static drawing	*/
-		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-		if(chosen != 0) {
-			selected_box_text(object[chosen]);
-			tr_x = -object[chosen].pos[0];
-			tr_y = -object[chosen].pos[1];
-			tr_z = -object[chosen].pos[2];
-		}
-		
-		{
-			if(fps < 25) fpscolor = GL_RED;
-			else if(fps < 48) fpscolor = GL_BLUE;
-			else fpscolor = GL_GREEN;
-			sprintf(osdfps, "FPS = %3.2f", fps);
-			render_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
-		}
-		
-		render_text(osdobj, -0.95, 0.75, 1.0/option->width, 1.0/option->height, GL_WHITE);
-		
-		sprintf(osdtime, "Timestep = %f", timestep);
-		render_text(osdtime, -0.95, 0.65, 1.0/option->width, 1.0/option->height, GL_WHITE);
-		
-		if(start_selection)
-			render_text(currentsel, 0.67, -0.95, 1.0/option->width, 1.0/option->height, GL_WHITE);
-		
-		if(!threadcontrol(PHYS_STATUS, &object))
-			render_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);
-		
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		/*	Static drawing	*/
 		
 		SDL_GL_SwapWindow(window);
 	}
@@ -493,13 +396,8 @@ int main(int argc, char *argv[])
 	quit:
 		printf("Quitting...\n");
 		if(!novid) {
-			FT_Done_Face(face);
-			FT_Done_FreeType(library);
 			SDL_DestroyWindow(window);
 			SDL_Quit();
-			free(links);
-			free(shaderprogs);
-			//FcFini(); -- Blows up and cries, needs further investigation.
 		}
 		if(threadcontrol(PHYS_STATUS, &object))
 			threadcontrol(PHYS_SHUTDOWN, &object);

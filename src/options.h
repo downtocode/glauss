@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdio.h>
 #include <stdbool.h>
 
 struct option_struct* option;

@@ -18,31 +18,21 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
-#include <GLES2/gl2.h>
-#include <ft2build.h>
 #include "physics.h"
-#include FT_FREETYPE_H
 
 #define GL_WHITE 0
 #define GL_RED 1
 #define GL_GREEN 2
 #define GL_BLUE 3
 
-FT_Library library;
-FT_Face face;
-FT_GlyphSlot g;
+extern float aspect_ratio;
 
-void adjust_rot(GLfloat view_rotx, GLfloat view_roty, GLfloat view_rotz, \
-				GLfloat scalefactor, GLfloat tr_x, GLfloat tr_y, GLfloat tr_z);
-void drawaxis();
-void draw_obj_sphere(data object);
-void draw_obj_points(data* object);
-unsigned int createlinks(data* object, GLfloat (**links)[3]);
-void draw_obj_links(GLfloat (**links)[3], unsigned int linkcount);
-void render_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
-void selected_box_text(data object);
+void adjust_rot(float view_rotx, float view_roty, float view_rotz, \
+				float scalefactor, float tr_x, float tr_y, float tr_z);
 
-int resize_wind();
-void create_shaders(GLuint** shaderprogs);
+void graph_resize_wind();
+void graph_draw_scene(data **object, float fps);
+unsigned int graph_compile_shader(const char *vertpath, const char *fragpath);
+void graph_init();
 
 #endif

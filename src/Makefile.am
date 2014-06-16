@@ -1,6 +1,8 @@
 bin_PROGRAMS = physengine
 physengine_SOURCES = physengine.c options.h config.h\
-			glfun.h glfun.c\
+			graph.h graph.c\
+			graph_objects.h graph_objects.c\
+			graph_fonts.h graph_fonts.c\
 			molreader.h molreader.c\
 			msg_phys.h msg_phys.c\
 			parser.h parser.c\
