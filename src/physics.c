@@ -131,6 +131,7 @@ int threadcontrol(int status, data** object)
 			/* Remember -- we give the threads a pointer to their configuration(pthreads demands so) and inside
 			 * the threads we dereference the struct pointer as their own configuration and we create a copy of it.
 			 * That way we can free it immediatly after thread creation. As to why we malloc it -- BH trees can be big. */
+			pthread_barrier_wait(&barrier); //--Wait until we're absolutely sure the threads have started
 			free(thread_config);
 			running = 1;
 			break;
