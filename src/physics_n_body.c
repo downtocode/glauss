@@ -59,8 +59,6 @@ void *thread_nbody(void *thread_setts)
 	const long double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele, noflj = option->noflj;
 	
-	pthread_barrier_wait(&barrier); //--Start all threads at the same time && inform threadcontrol.
-	
 	while(!quit) {
 		for(int i = 0; i < thread.objcount + 1; i++) {
 			if(thread.obj[thread.indices[i]].ignore) continue;

@@ -2,7 +2,7 @@
 settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
-		threads = 1,
+		threads = 2,
 		dt = 0.01,
 		algorithm = "n-body",
 	},

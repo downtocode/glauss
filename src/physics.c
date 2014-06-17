@@ -41,6 +41,8 @@ union thread_config_algo {
 	struct thread_config_bhut bhut;
 };
 
+static union thread_config_algo *thread_config;
+
 int initphys(data** object)
 {
 	/* Check if physics algorithm is valid */
@@ -108,7 +110,7 @@ int threadcontrol(int status, data** object)
 			break;
 		case PHYS_START:
 			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
-			union thread_config_algo *thread_config = calloc(option->avail_cores+1, sizeof(union thread_config_algo));
+			thread_config = calloc(option->avail_cores+1, sizeof(union thread_config_algo));
 			
 			if(!strcmp(option->algorithm, "n-body")) {
 				nbody_distribute(&thread_config->nbody);
@@ -128,11 +130,6 @@ int threadcontrol(int status, data** object)
 				pprintf(PRI_OK, "\n");
 			}
 			
-			/* Remember -- we give the threads a pointer to their configuration(pthreads demands so) and inside
-			 * the threads we dereference the struct pointer as their own configuration and we create a copy of it.
-			 * That way we can free it immediatly after thread creation. As to why we malloc it -- BH trees can be big. */
-			pthread_barrier_wait(&barrier); //--Wait until we're absolutely sure the threads have started
-			free(thread_config);
 			running = 1;
 			break;
 		case PHYS_SHUTDOWN:
@@ -149,6 +146,7 @@ int threadcontrol(int status, data** object)
 			pthread_mutex_destroy(&movestop);
 			
 			free(threads);
+			free(thread_config);
 			running = 0;
 			quit = 0;
 			break;
