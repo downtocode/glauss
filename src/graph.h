@@ -25,8 +25,6 @@
 #define GL_GREEN 2
 #define GL_BLUE 3
 
-extern float aspect_ratio;
-
 void adjust_rot(float view_rotx, float view_roty, float view_rotz, \
 				float scalefactor, float tr_x, float tr_y, float tr_z);
 

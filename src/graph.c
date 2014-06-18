@@ -27,8 +27,7 @@
 #include "graph_fonts.h"
 #include "options.h"
 
-float aspect_ratio;
-
+static float aspect_ratio;
 static GLuint pointvbo, textvbo;
 static GLuint object_shader, text_shader;
 static GLint trn_matrix, rot_matrix, scl_matrix, per_matrix;
@@ -139,6 +138,7 @@ void adjust_rot(float view_rotx, float view_roty, float view_rotz, \
 
 void graph_resize_wind()
 {
+	/* Usually it's the other way around */
 	aspect_ratio = (float)option->height/option->width;
 	glViewport(0, 0, option->width, option->height);
 }
