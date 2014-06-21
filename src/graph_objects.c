@@ -26,7 +26,7 @@
 static GLint objattr_pos, objattr_color;
 static const GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
-void drawaxis()
+void draw_obj_axis()
 {
 	GLfloat axis[6][3] = {
 		{0,0,0},
@@ -97,7 +97,8 @@ void draw_obj_points(data* object)
 	glUniform4fv(objattr_color, 1, textcolor);
 }
 
-GLuint graph_init_objects() {
+GLuint graph_init_objects()
+{
 	GLuint obj_program = graph_compile_shader("./resources/shaders/object_vs.glsl", "./resources/shaders/object_fs.glsl");
 	glBindAttribLocation(obj_program, objattr_pos, "pos");
 	glBindAttribLocation(obj_program, objattr_color, "objcolor");

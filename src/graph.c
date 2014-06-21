@@ -27,6 +27,11 @@
 #include "graph_fonts.h"
 #include "options.h"
 
+#define GL_WHITE 0
+#define GL_RED 1
+#define GL_GREEN 2
+#define GL_BLUE 3
+
 static float aspect_ratio;
 static GLuint pointvbo, textvbo;
 static GLuint object_shader, text_shader;
@@ -116,8 +121,7 @@ static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat 
 	m[15] = 2*far*near / nearmfar;
 }
 
-void adjust_rot(float view_rotx, float view_roty, float view_rotz, \
-				float scalefactor, float tr_x, float tr_y, float tr_z)
+void graph_view(float view_rotx, float view_roty, float view_rotz, float scalefactor, float tr_x, float tr_y, float tr_z)
 {
 	make_translation_matrix(tr_x, tr_y, tr_z, transl);
 	
@@ -143,7 +147,8 @@ void graph_resize_wind()
 	glViewport(0, 0, option->width, option->height);
 }
 
-unsigned int graph_compile_shader(const char *vertpath, const char *fragpath) {
+unsigned int graph_compile_shader(const char *vertpath, const char *fragpath)
+{
 	GLint status_vert, status_frag;
 	GLuint program = glCreateProgram();
 	GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -184,7 +189,8 @@ unsigned int graph_compile_shader(const char *vertpath, const char *fragpath) {
 	return program;
 }
 
-void graph_draw_scene(data **object, float fps) {
+void graph_draw_scene(data **object, float fps)
+{
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	char osdtime[50], osdfps[30];
 	int fpscolor;
@@ -216,7 +222,7 @@ void graph_draw_scene(data **object, float fps) {
 	glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
 	{
 		/* Axis */
-		drawaxis();
+		draw_obj_axis();
 		
 		/* Objects(as points) */
 		draw_obj_points(*object);

@@ -52,7 +52,8 @@ const char *graph_init_fontconfig()
 	return (const char *)fc_value.u.s;
 }
 
-GLuint graph_init_freetype(const char *fontname) {
+GLuint graph_init_freetype(const char *fontname)
+{
 	if(FT_Init_FreeType(&library)) {
 		pprintf(PRI_ERR, "Could not init freetype library.\n");
 		exit(1);

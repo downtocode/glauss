@@ -292,7 +292,9 @@ int main(int argc, char *argv[])
 							strcpy(currentsel, "Select object:");
 							start_selection = 0;
 							chosen = getnumber(&numbers, 0, NUM_GIVEME);
-							if(chosen > option->obj) chosen = 0;
+							if(chosen > option->obj)
+								chosen = 0;
+							else pprintf(PRI_HIGH, "Object %u selected.\n", chosen);
 							break;
 						}
 					}
@@ -386,7 +388,11 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		adjust_rot(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
+		if(chosen != 0)
+			graph_view(view_rotx, view_roty, view_rotz, scalefactor, object[chosen].pos[0], object[chosen].pos[1], object[chosen].pos[2]);
+		else
+			graph_view(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
+		
 		graph_draw_scene(&object, fps);
 		
 		

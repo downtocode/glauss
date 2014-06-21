@@ -20,14 +20,7 @@
 
 #include "physics.h"
 
-#define GL_WHITE 0
-#define GL_RED 1
-#define GL_GREEN 2
-#define GL_BLUE 3
-
-void adjust_rot(float view_rotx, float view_roty, float view_rotz, \
-				float scalefactor, float tr_x, float tr_y, float tr_z);
-
+void graph_view(float view_rotx, float view_roty, float view_rotz, float scalefactor, float tr_x, float tr_y, float tr_z);
 void graph_resize_wind();
 void graph_draw_scene(data **object, float fps);
 unsigned int graph_compile_shader(const char *vertpath, const char *fragpath);

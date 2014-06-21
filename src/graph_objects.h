@@ -15,10 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifdef PHYSENGINE_GRAPH
 
-void drawaxis();
+void draw_obj_axis();
 void draw_obj_sphere(data object);
 void draw_obj_points(data* object);
 unsigned int createlinks(data* object, GLfloat (**links)[3]);
 void draw_obj_links(GLfloat (**links)[3], unsigned int linkcount);
 GLuint graph_init_objects();
+
+#endif
