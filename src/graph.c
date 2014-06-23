@@ -20,6 +20,7 @@
 #include <string.h>
 #include <tgmath.h>
 #include <GLES2/gl2.h>
+#include "physics.h"
 #include "msg_phys.h"
 #include "parser.h"
 #include "graph.h"

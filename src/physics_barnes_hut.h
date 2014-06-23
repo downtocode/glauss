@@ -20,6 +20,7 @@
 
 struct phys_barnes_hut_octree {
 	unsigned int depth;
+	unsigned short score;
 	v4sd origin;
 	double halfdim;
 	bool leaf;
@@ -33,6 +34,7 @@ struct thread_config_bhut {
 };
 
 struct phys_barnes_hut_octree *bh_init_tree(data *object);
+void bh_cleanup_octree(struct phys_barnes_hut_octree *octree);
 void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree);
 double bh_max_displacement(data *object);
 void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree);

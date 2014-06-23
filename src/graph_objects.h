@@ -17,6 +17,8 @@
  */
 #ifdef PHYSENGINE_GRAPH
 
+#include "physics.h"
+
 void draw_obj_axis();
 void draw_obj_sphere(data object);
 void draw_obj_points(data* object);

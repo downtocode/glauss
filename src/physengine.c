@@ -29,9 +29,9 @@
 #include <SDL2/SDL.h>
 
 /*	Functions	*/
-#include "graph.h"
 #include "config.h"
 #include "physics.h"
+#include "graph.h"
 #include "physics_barnes_hut.h"
 #include "parser.h"
 #include "toxyz.h"
@@ -210,6 +210,8 @@ int main(int argc, char *argv[])
 		, option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	
+	struct phys_barnes_hut_octree *octree = bh_init_tree(object);
+	
 	/*	OpenGL ES 2.0 + SDL2	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
@@ -231,9 +233,6 @@ int main(int argc, char *argv[])
 	gettimeofday (&t1 , NULL);
 	
 	threadcontrol(PHYS_START, &object);
-	
-	struct phys_barnes_hut_octree *octree = bh_init_tree(object);
-	//bh_build_octree(object, octree);
 	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {
@@ -322,6 +321,8 @@ int main(int argc, char *argv[])
 					}
 					if(event.key.keysym.sym==SDLK_o) {
 						bh_build_octree(object, octree);
+						bh_cleanup_octree(octree);
+						printf("\n");
 					}
 					if(event.key.keysym.sym==SDLK_z) {
 						toxyz(option->obj, object, timestep);

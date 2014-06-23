@@ -27,23 +27,40 @@
 //Indent string when verbosely outputting octrees to stdout
 #define INDENT "  "
 
-static void bh_clean_octree(struct phys_barnes_hut_octree *octree) {
+//Octree's initial score, decremented every time it's empty, once it reaches 0 it's freed
+#define OCTREE_INIT_SCORE 5
+
+unsigned int allocated_cells;
+
+static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
+{
+	octree->cellsum = (data){0};
 	if(octree->data != NULL) {
-		for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
-		pprintf(PRI_SPAM, "Object %i(pos = {%f, %f, %f}) is at cell level %i\n", octree->data->id, octree->data->pos[0], octree->data->pos[1], octree->data->pos[2], octree->depth);
+		/* Remove object, reduce score */
+		octree->data = NULL;
+		return !octree->score-- ? 1 : 0;
 	} else {
+		int filled_cells = 8;
 		for(int i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
-				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
-				pprintf(PRI_SPAM, "Cell(pos = {%f, %f, %f}, mass(center) = {%f, %f, %f}, mass = %lf) contents:\n", octree->cells[i]->origin[0], octree->cells[i]->origin[1], octree->cells[i]->origin[2],\
-				octree->cells[i]->cellsum.pos[0], octree->cells[i]->cellsum.pos[1], octree->cells[i]->cellsum.pos[2], octree->cells[i]->cellsum.mass);
-				bh_clean_octree(octree->cells[i]);
-			} else {
-				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
-				pprintf(PRI_SPAM, "Cell empty.\n",  octree->origin[0], octree->origin[1], octree->origin[2]);
-			}
+				if(bh_clean_octree(octree->cells[i])) {
+					/* Since cell is empty, free it */
+					free(octree->cells[i]);
+					octree->cells[i] = NULL;
+					filled_cells--;
+					allocated_cells--;
+				}
+			} else filled_cells--;
 		}
+		return !filled_cells ? 1 : 0;
 	}
+}
+
+void bh_cleanup_octree(struct phys_barnes_hut_octree *octree)
+{
+	unsigned int prev_allocated_cells = allocated_cells;
+	bh_clean_octree(octree);
+	printf("Freed cells = %u\n", prev_allocated_cells-allocated_cells);
 }
 
 static short bh_get_octant(const v4sd point, const struct phys_barnes_hut_octree *octree)
@@ -55,11 +72,9 @@ static short bh_get_octant(const v4sd point, const struct phys_barnes_hut_octree
 	return oct;
 }
 
-int callocated;
-
 static void bh_init_cell(struct phys_barnes_hut_octree *octree, short cell)
 {
-	if(callocated++ > 100000) {
+	if(allocated_cells++ > 1000000) {
 		printf("Too many trees! Depth = %i\n", octree->depth);
 		exit(0);
 	}
@@ -67,6 +82,7 @@ static void bh_init_cell(struct phys_barnes_hut_octree *octree, short cell)
 	octree->cells[cell]->depth = octree->depth+1;
 	octree->cells[cell]->data = NULL;
 	octree->cells[cell]->leaf = 1;
+	octree->cells[cell]->score = OCTREE_INIT_SCORE;
 	for(int i=0; i < 8; i++) octree->cells[cell]->cells[i] = NULL;
 	v4sd newpos = octree->origin;
 	newpos[0] += octree->halfdim * (cell&4 ? .5f : -.5f);
@@ -137,7 +153,8 @@ double bh_max_displacement(data *object)
 	return maxdist;
 }
 
-struct phys_barnes_hut_octree *bh_init_tree(data *object) {
+struct phys_barnes_hut_octree *bh_init_tree(data *object)
+{
 	struct phys_barnes_hut_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
 	octree->depth=0;
 	octree->data = NULL;
@@ -153,11 +170,11 @@ void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree)
 	for(int i = 1; i < option->obj + 1; i++) {
 		bh_insert_object(&object[i], octree);
 	}
-	printf("printing octree structure\n");
 	bh_print_octree(octree);
+	
 	pprintf(PRI_HIGH, "Root cell(pos = {%f, %f, %f}, mass(center) = {%f, %f, %f}, mass = %lf) contents:\n", octree->origin[0], octree->origin[1], octree->origin[2],\
 	octree->cellsum.pos[0], octree->cellsum.pos[1], octree->cellsum.pos[2], octree->cellsum.mass);
-	callocated = 0;
+	printf("Allocated cells = %i\n", allocated_cells);
 }
 
 void *thread_barnes_hut(void *thread_setts)
