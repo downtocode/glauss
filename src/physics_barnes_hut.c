@@ -34,7 +34,7 @@ unsigned int allocated_cells;
 
 static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
 {
-	octree->cellsum = (data){0};
+	octree->cellsum = (data){{0}};
 	if(octree->data != NULL) {
 		/* Remove object, reduce score */
 		octree->data = NULL;
@@ -160,13 +160,15 @@ struct phys_barnes_hut_octree *bh_init_tree(data *object)
 	octree->data = NULL;
 	octree->leaf = 1;
 	octree->origin = (v4sd){0,0,0};
-	octree->halfdim = bh_max_displacement(object);
 	for(int i=0; i < 8; i++) octree->cells[i] = NULL;
 	return octree;
 }
 
 void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree)
 {
+	/* The distribution will change so we need to account for this. */
+	octree->halfdim = bh_max_displacement(object);
+	
 	for(int i = 1; i < option->obj + 1; i++) {
 		bh_insert_object(&object[i], octree);
 	}
