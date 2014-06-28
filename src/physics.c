@@ -34,6 +34,8 @@
 /*	Indexing of cores = 1, 2, 3...	*/
 static pthread_t *threads;
 static pthread_attr_t thread_attribs;
+static pthread_condattr_t cattr;
+static pthread_mutexattr_t mattr;
 static struct sched_param parameters;
 
 union thread_config_algo {
@@ -99,12 +101,11 @@ int threadcontrol(int status, data** object)
 		case PHYS_UNPAUSE:
 			if(running) return 1;
 			running = 1;
-			pthread_mutex_unlock(&movestop);
+			pthread_cond_broadcast(&thr_stop);
 			break;
 		case PHYS_PAUSE:
 			if(!running) return 1;
 			running = 0;
-			pthread_mutex_lock(&movestop);
 		case PHYS_STATUS:
 			return running;
 			break;
@@ -112,37 +113,46 @@ int threadcontrol(int status, data** object)
 			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
 			thread_config = calloc(option->avail_cores+1, sizeof(union thread_config_algo));
 			
-			if(!strcmp(option->algorithm, "n-body")) {
-				nbody_distribute(&thread_config->nbody);
-			} else if(!strcmp(option->algorithm, "barnes-hut")) {
-				struct phys_barnes_hut_octree *octree = bh_init_tree(*object);
-				bh_build_octree(*object, octree);
-			}
-			
-			pthread_mutex_init(&movestop, NULL);
 			pthread_barrier_init(&barrier, NULL, option->avail_cores);
-			for(int k = 1; k < option->avail_cores + 1; k++) {
-				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-				thread_config[k].nbody.obj = *object;
-				thread_config[k].nbody.id = k;
-				pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_config[k].nbody);
-				pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
-				pprintf(PRI_OK, "\n");
+			pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
+			pthread_cond_init(&thr_stop, &cattr);
+			pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+			pthread_mutex_init(&movestop, &mattr);
+			
+			if(!strcmp(option->algorithm, "n-body")) {
+				nbody_distribute(object, &thread_config->nbody);
+				for(int k = 1; k < option->avail_cores + 1; k++) {
+					pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
+					thread_config[k].nbody.obj = *object;
+					thread_config[k].nbody.id = k;
+					pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_config[k].nbody);
+					pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
+					pprintf(PRI_OK, "\n");
+				}
+			} else if(!strcmp(option->algorithm, "barnes-hut")) {
+				for(int k = 1; k < option->avail_cores + 1; k++) {
+					pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
+					thread_config[k].bhut.obj = *object;
+					thread_config[k].bhut.id = k;
+					pthread_create(&threads[k], &thread_attribs, thread_barnes_hut, &thread_config[k].bhut);
+					pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
+					pprintf(PRI_OK, "\n");
+				}
 			}
 			
 			running = 1;
 			break;
 		case PHYS_SHUTDOWN:
-			/* Shutting down's always been unstable as we use a mutex for pausing. Current code works fine. */
-			running = 1;
-			pthread_mutex_unlock(&movestop);
+			threadcontrol(PHYS_UNPAUSE, NULL);
 			quit = 1;
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
 				pthread_join(threads[k], NULL);
 				pprintf(PRI_OK, "\n");
 			}
+			
 			pthread_barrier_destroy(&barrier);
+			pthread_cond_destroy(&thr_stop);
 			pthread_mutex_destroy(&movestop);
 			
 			free(threads);
@@ -155,12 +165,12 @@ int threadcontrol(int status, data** object)
 }
 
 const struct list_algorithms phys_algorithms[] = {
-	{"n-body",		(void*)thread_nbody},
-	{"barnes-hut",	(void*)thread_barnes_hut},
+	{"n-body",		thread_nbody},
+	{"barnes-hut",	thread_barnes_hut},
 	{0}
 };
 
-void *phys_find_algorithm(const char *name)
+thread_location phys_find_algorithm(const char *name)
 {
 	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
 		if(!strcmp(i->name, name))

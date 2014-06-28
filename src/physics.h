@@ -48,16 +48,19 @@ typedef struct {
 
 struct list_algorithms {
 	const char *name;
-	void *thread_location;
+	void* (*thread_location)(void *thread_setts);
 };
 
+typedef void* (*thread_location)(void*);
+
 extern const struct list_algorithms phys_algorithms[];
+pthread_cond_t thr_stop;
 pthread_mutex_t movestop;
 pthread_barrier_t barrier;
 bool running, quit;
 
 int initphys(data** object);
 int threadcontrol(int status, data** object);
-void *phys_find_algorithm(const char *name);
+thread_location phys_find_algorithm(const char *name);
 
 #endif

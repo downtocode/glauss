@@ -27,7 +27,7 @@ struct thread_config_nbody {
 	clockid_t clockid;
 };
 
-int nbody_distribute(struct thread_config_nbody *thread_opts_nbody);
+int nbody_distribute(data** object, struct thread_config_nbody *thread_opts_nbody);
 void *thread_nbody(void *thread_setts);
 
 #endif

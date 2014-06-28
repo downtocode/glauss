@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 		, option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	
-	struct phys_barnes_hut_octree *octree = bh_init_tree(object);
+	struct phys_barnes_hut_octree *octree = bh_init_tree();
 	
 	/*	OpenGL ES 2.0 + SDL2	*/
 		SDL_Init(SDL_INIT_VIDEO);

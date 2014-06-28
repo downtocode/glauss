@@ -24,7 +24,7 @@
 #include "physics.h"
 #include "physics_n_body.h"
 
-int nbody_distribute(struct thread_config_nbody *thread_opts_nbody)
+int nbody_distribute(data** object, struct thread_config_nbody *thread_opts_nbody)
 {
 	unsigned int *limits_up = calloc(option->avail_cores+1, sizeof(unsigned int));
 	unsigned int *limits_down = calloc(option->avail_cores+1, sizeof(unsigned int));
@@ -66,8 +66,7 @@ void *thread_nbody(void *thread_setts)
 			(thread.obj[thread.indices[i]].acc)*((option->dt*option->dt)/2);
 		}
 		
-		pthread_mutex_lock(&movestop);
-		if(running) pthread_mutex_unlock(&movestop);
+		if(!running) pthread_cond_wait(&thr_stop, &movestop);
 		pthread_barrier_wait(&barrier);
 		
 		for(int i = 0; i < thread.objcount + 1; i++) {
