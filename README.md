@@ -74,6 +74,8 @@ simconf.lua
 -----------
 This file determines the system to simulate. It's a Lua script, so make sure to follow the syntax. All Lua libraries(including math) are included and initialized, feel free to use them. Error handling is done by Lua interpreter.
 
+Currently, n-body and Barnes-Hut simulations have been implemented, which you can select using the "algorithm" variable in the configuration file or via the appropriate arguments. The Barnes-Hut algorithm has special settings: bh_ratio shall adjust the precision level while OCTREE_INIT_SCORE(compile time) sets the timeout for empty cells. The speed of the algorithm is dependent on the standard C library providing memory allocation.
+
 Physengine reads the settings table first, reads the global objects table and then calls the spawn_objects function, which returns its own local objects table along with a counter how many objects exist in it. Usually the global table contains any molecule files(in pdb or xyz formats) and any standalone objects. The function spawn_objects is for having your own distribution of objects.
 
 Contacts
