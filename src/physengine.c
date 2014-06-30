@@ -34,7 +34,7 @@
 #include "graph.h"
 #include "physics_barnes_hut.h"
 #include "parser.h"
-#include "toxyz.h"
+#include "out_xyz.h"
 #include "options.h"
 #include "msg_phys.h"
 #include "physics_aux.h"
@@ -72,6 +72,8 @@ int main(int argc, char *argv[])
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		struct numbers_selection numbers;
+		struct graph_cam_view camera = { 0, 0, 0, 0, 0, 0, 0.1 };
+		camera.scalefactor = 0.1;
 		numbers.final_digit = 0;
 		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0, fps = 0.0;
 		unsigned int frames = 0, chosen = 0, currentnum;
@@ -80,8 +82,6 @@ int main(int argc, char *argv[])
 		bool start_selection = 0;
 		int novid = 0, dumplevel = 0, vsync = 1, bench = 0;
 		float timer = 1.0f;
-		GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0, scalefactor = 0.1;
-		GLfloat tr_x = 0.0, tr_y = 0.0, tr_z = 0.0;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -198,7 +198,9 @@ int main(int argc, char *argv[])
 	
 	/*	Physics.	*/
 		data* object;
-		if(!init_elements()) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
+		if(!init_elements(NULL)) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
+		else return 1;
+		
 		if(parse_lua_simconf_objects(option->filename, &object)) {
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n", option->filename);
 			return 0;
@@ -212,7 +214,7 @@ int main(int argc, char *argv[])
 	
 	struct phys_barnes_hut_octree *octree = bh_init_tree();
 	
-	/*	OpenGL ES 2.0 + SDL2	*/
+	/*	SDL2	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		if(!novid) {
@@ -228,7 +230,7 @@ int main(int argc, char *argv[])
 			/* We deal with any and all graphical vizualization through this function. */
 			graph_init();
 		}
-	/*	OpenGL ES 2.0 + SDL2	*/
+	/*	SDL2	*/
 	
 	gettimeofday (&t1 , NULL);
 	
@@ -264,9 +266,9 @@ int main(int argc, char *argv[])
 					}
 					break;
 				case SDL_MOUSEWHEEL:
-					if(event.wheel.y == 1) scalefactor *= 1.11;
-					if(event.wheel.y == -1) scalefactor /= 1.11;
-					if(scalefactor < 0.005) scalefactor = 0.005;
+					if(event.wheel.y == 1) camera.scalefactor *= 1.11;
+					if(event.wheel.y == -1) camera.scalefactor /= 1.11;
+					if(camera.scalefactor < 0.005) camera.scalefactor = 0.005;
 					break;
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym==SDLK_ESCAPE) {
@@ -314,9 +316,9 @@ int main(int argc, char *argv[])
 						else threadcontrol(PHYS_UNPAUSE, &object);
 					}
 					if(event.key.keysym.sym==SDLK_r) {
-						view_roty = view_rotx = view_rotz = 0.0;
-						tr_x = tr_y = tr_z = 0.0;
-						scalefactor = 0.1;
+						camera.view_roty = camera.view_rotx = camera.view_rotz = 0.0;
+						camera.tr_x = camera.tr_y = camera.tr_z = 0.0;
+						camera.scalefactor = 0.1;
 						chosen = 0;
 					}
 					if(event.key.keysym.sym==SDLK_o) {
@@ -380,19 +382,21 @@ int main(int argc, char *argv[])
 		if(flicked || translate) {
 			SDL_GetRelativeMouseState(&mousex, &mousey);
 			if(flicked) {
-				view_roty += (float)mousex/4;
-				view_rotx += (float)mousey/4;
+				camera.view_roty += (float)mousex/4;
+				camera.view_rotx += (float)mousey/4;
 			}
 			if(translate) {
-				tr_x += -(float)mousex/100;
-				tr_y += (float)mousey/100;
+				camera.tr_x += -(float)mousex/100;
+				camera.tr_y += (float)mousey/100;
 			}
 		}
 		
-		if(chosen != 0)
-			graph_view(view_rotx, view_roty, view_rotz, scalefactor, object[chosen].pos[0], object[chosen].pos[1], object[chosen].pos[2]);
-		else
-			graph_view(view_rotx, view_roty, view_rotz, scalefactor, tr_x, tr_y, tr_z);
+		if(chosen != 0) {
+			camera.tr_x = object[chosen].pos[0];
+			camera.tr_y = object[chosen].pos[1];
+			camera.tr_z = object[chosen].pos[2];
+		}
+		graph_view(&camera);
 		
 		graph_draw_scene(&object, fps);
 		

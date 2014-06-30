@@ -17,36 +17,95 @@
  */
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <lua5.2/lua.h>
+#include <lua5.2/lauxlib.h>
+#include <lua5.2/lualib.h>
 #include "physics_aux.h"
+#include "msg_phys.h"
 
-int init_elements()
+struct lua_parser_state {
+	int i, buffer_cont;
+	bool nullswitch;
+	bool colset;
+};
+
+static const char elements_internal[] =
+// Generated from elements.lua
+#include "resources/elements.h"
+;
+
+static void elements_traverse_table(lua_State *L, struct atomic_cont **element, struct atomic_cont *buffer, struct lua_parser_state *parser_state)
+{
+	lua_pushnil(L);
+	while(lua_next(L, -2) != 0) {
+		if(lua_istable(L, -1)) {
+			
+			if(parser_state->nullswitch) {
+				element[parser_state->i++] = buffer;
+			} else parser_state->nullswitch = 1;
+			elements_traverse_table(L, element, buffer, parser_state);
+			
+		} else if(lua_isnumber(L, -1)) {
+			
+			if(!strcmp("mass", lua_tostring(L, -2)))
+				buffer->mass = lua_tonumber(L, -1);
+			if(!strcmp("R", lua_tostring(L, -2)))
+				buffer->color[0] = lua_tonumber(L, -1);
+			if(!strcmp("G", lua_tostring(L, -2)))
+				buffer->color[1] = lua_tonumber(L, -1);
+			if(!strcmp("B", lua_tostring(L, -2)))
+				buffer->color[2] = lua_tonumber(L, -1);
+			if(!strcmp("A", lua_tostring(L, -2)))
+				buffer->color[3] = lua_tonumber(L, -1);
+			
+		} else if(lua_isstring(L, -1)) {
+			
+			if(!strcmp("name", lua_tostring(L, -2))) 
+				buffer->name = strdup(lua_tostring(L, -1));
+			
+		}
+		lua_pop(L, 1);
+	}
+}
+
+int init_elements(const char *filepath)
 {
 	atom_prop = calloc(120, sizeof(struct atomic_cont));
-	short unsigned int index;
-	double mass;
-	char str[500], name[2];
-	int colR, colG, colB, colA;
-	FILE *inelements = fopen("./resources/elements.conf", "r");
-	while(fgets (str, sizeof(str), inelements)!=NULL) {
-		if(strncmp(str, "#", 1)!=0) {
-			sscanf(str, "index=%hu; mass=%lf; color={%i, %i, %i, %i}; name=%s", \
-						&index, &mass, &colR, &colG, &colB, &colA, name);
-			atom_prop[index].mass = mass;
-			strcpy(atom_prop[index].name, name);
-			atom_prop[index].color[0] = (float)colR/255;
-			atom_prop[index].color[1] = (float)colG/255;
-			atom_prop[index].color[2] = (float)colB/255;
-			atom_prop[index].color[3] = (float)colA/255;
+	
+	lua_State *L = luaL_newstate();
+	luaL_openlibs(L);
+	
+	/* Load file */
+	if(filepath != NULL) {
+		if(luaL_loadfile(L, "./resources/elements.lua"))
+			pprintf(PRI_ERR, "Opening Lua file %s failed! Will use internal DB instead.\n", filepath);
+	} else {
+		if(luaL_loadstring (L, elements_internal)) {
+			pprintf(PRI_ERR, "Failed to open internal DB.\n");
+			return 1;
 		}
 	}
-	fclose(inelements);
+	/* Execute script */
+	lua_pcall(L, 0, 0, 0);
+	/* Read settings table */
+	lua_getglobal(L, "elements");
+	
+	struct atomic_cont buffer = {0};
+	struct lua_parser_state parser_state = {1, 0, 0, 0};
+	
+	elements_traverse_table(L, &atom_prop, &buffer, &parser_state);
+	
+	lua_close(L);
+	
 	return 0;
 }
 
-unsigned short int return_atom_num(char element[2])
+unsigned short int return_atom_num(const char *name)
 {
 	for(int i=1; i<121; i++) {
-		if(strcmp(element, atom_prop[i].name) == 0) {
+		if(strcmp(name, atom_prop[i].name) == 0) {
 			return i;
 		}
 	}
@@ -54,8 +113,9 @@ unsigned short int return_atom_num(char element[2])
 }
 
 /* Function to input numbers in an array and later extract a single number out.
- * Used in selecting objects.*/
-int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status) {
+ * Used in selecting objects. */
+int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status)
+{
 	if(status == NUM_ANOTHER) {
 		numbers->digits[numbers->final_digit] = currentdigit;
 		numbers->final_digit+=1;

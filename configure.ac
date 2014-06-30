@@ -34,7 +34,7 @@ AC_CHECK_LIB([freetype], [main], [LDFLAGS+=" `freetype-config --libs`" CFLAGS+="
          exit -1])
 AC_CHECK_LIB([fontconfig], [main], [LDFLAGS+=" -lfontconfig"],[
          echo "Fontconfig dev libary is required to build this program."
-         exit -1])
+         exit -1]) 
 
 AC_ARG_ENABLE([lto], AS_HELP_STRING([--enable-lto],
 		[enable link time optimizations @<:@default=no@:>@]), [LDFLAGS+=" -flto" CFLAGS+=" -flto"], [])

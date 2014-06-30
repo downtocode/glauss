@@ -44,26 +44,26 @@ void draw_obj_axis()
 	glDisableVertexAttribArray(objattr_pos);
 }
 
-void draw_obj_sphere(data object)
+void draw_obj_sphere(data* object)
 {
 	/* Decrease dj to get better spheres. */
 	float dj = 0.5, pi=acos(-1);
 	int pointcount = 0;
 	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
 	
-	glUniform4fv(objattr_color, 1, atom_prop[object.atomnumber].color);
+	glUniform4fv(objattr_color, 1, atom_prop[object->atomnumber].color);
 	
 	for(float i = 0; i < pi; i+=dj) {
 		for(float j = 0; j < 2*pi; j+=dj) {
-			points[pointcount][0] = object.pos[0] + object.radius*sin(i)*cos(j);
-			points[pointcount][1] = object.pos[1] + object.radius*sin(i)*sin(j);
-			points[pointcount][2] = object.pos[2] + object.radius*cos(i);
+			points[pointcount][0] = object->pos[0] + object->radius*sin(i)*cos(j);
+			points[pointcount][1] = object->pos[1] + object->radius*sin(i)*sin(j);
+			points[pointcount][2] = object->pos[2] + object->radius*cos(i);
 			pointcount++;
 		}
 	}
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, atom_prop[object.atomnumber].color);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, atom_prop[object->atomnumber].color);
 	glEnableVertexAttribArray(objattr_pos);
 	glEnableVertexAttribArray(objattr_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
@@ -97,9 +97,19 @@ void draw_obj_points(data* object)
 	glUniform4fv(objattr_color, 1, textcolor);
 }
 
+static const char object_vs[] =
+// Generated from object_vs.glsl
+#include "shaders/object_vs.h"
+;
+
+static const char object_fs[] =
+// Generated from object_fs.glsl
+#include "shaders/object_fs.h"
+;
+
 GLuint graph_init_objects()
 {
-	GLuint obj_program = graph_compile_shader("./resources/shaders/object_vs.glsl", "./resources/shaders/object_fs.glsl");
+	GLuint obj_program = graph_compile_shader(object_vs, object_fs);
 	glBindAttribLocation(obj_program, objattr_pos, "pos");
 	glBindAttribLocation(obj_program, objattr_color, "objcolor");
 	objattr_color = glGetUniformLocation(obj_program, "objcolor");

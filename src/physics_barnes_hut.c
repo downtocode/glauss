@@ -22,7 +22,6 @@
 #include "options.h"
 #include "msg_phys.h"
 #include "physics.h"
-#include "physics_n_body.h"
 #include "physics_barnes_hut.h"
 
 //Indent string when verbosely outputting octrees to stdout
@@ -31,7 +30,34 @@
 //Octree's initial score, decremented every time it's empty, once it reaches 0 it's freed
 #define OCTREE_INIT_SCORE 48
 
-unsigned int allocated_cells;
+static unsigned int allocated_cells;
+
+void** bhut_init(data** object)
+{
+	struct thread_config_bhut **thread_config = calloc(option->avail_cores+1, sizeof(struct thread_config_bhut*));
+	for(int k = 0; k < option->avail_cores + 1; k++) {
+		thread_config[k] = calloc(1, sizeof(struct thread_config_bhut));
+	}
+	
+	thread_config[1]->root_octree = bh_init_tree();
+	
+	int totcore = (int)((float)option->obj/option->avail_cores);
+	
+	for(int k = 1; k < option->avail_cores + 1; k++) {
+		thread_config[k]->root_octree = thread_config[1]->root_octree;
+		thread_config[k]->octree = bh_init_tree();
+		thread_config[k]->obj = *object;
+		thread_config[k]->id = k;
+		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
+		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
+		if(k == option->avail_cores) {
+			/*	Takes care of rounding problems with odd numbers.	*/
+			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
+		}
+	}
+	
+	return (void**)thread_config;
+}
 
 static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
 {
@@ -64,22 +90,26 @@ unsigned int bh_cleanup_octree(struct phys_barnes_hut_octree *octree)
 	return prev_allocated_cells - allocated_cells;
 }
 
-static short bh_get_octant(const v4sd point, const struct phys_barnes_hut_octree *octree)
+static short bh_get_octant(data *object, const struct phys_barnes_hut_octree *octree)
 {
 	short oct = 0;
-	if(point[0] >= octree->origin[0]) oct |= 4;
-	if(point[1] >= octree->origin[1]) oct |= 2;
-	if(point[2] >= octree->origin[2]) oct |= 1;
+	if(object->pos[0] >= octree->origin[0]) oct |= 4;
+	if(object->pos[1] >= octree->origin[1]) oct |= 2;
+	if(object->pos[2] >= octree->origin[2]) oct |= 1;
 	return oct;
 }
+
+static double doublemax;
 
 static void bh_init_cell(struct phys_barnes_hut_octree *octree, short cell)
 {
 	
 	/* TODO: maybe try to use a gigantic array of structs and glue them together in post */
 	
-	if(allocated_cells++ > 1000000) {
+	if(allocated_cells++ > 2000000) {
 		printf("Too many cells! Total allocated cells = %i\n", allocated_cells);
+		printf("Total size of all cells = %lf Mb\n", (sizeof(struct phys_barnes_hut_octree)*allocated_cells)/1048576.0);
+		printf("Maxdist = %f\n", doublemax);
 		exit(0);
 	}
 	octree->cells[cell] = calloc(1, sizeof(struct phys_barnes_hut_octree));
@@ -108,8 +138,8 @@ static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree
 		pprintf(PRI_SPAM, "Object %i put in lvl %i\n", object->id, octree->depth);
 	} else if(octree->data != NULL && octree->leaf) {
 		//This cell has object but no subcells
-		short oct_current_obj = bh_get_octant(object->pos, octree);
-		short oct_octree_obj = bh_get_octant(octree->data->pos, octree);
+		short oct_current_obj = bh_get_octant(object, octree);
+		short oct_octree_obj = bh_get_octant(octree->data, octree);
 		
 		bh_init_cell(octree, oct_octree_obj);
 		bh_insert_object(octree->data, octree->cells[oct_octree_obj]);
@@ -120,7 +150,7 @@ static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree
 		
 	} else {
 		//This cell has subcells with objects
-		short oct_current_obj = bh_get_octant(object->pos, octree);
+		short oct_current_obj = bh_get_octant(object, octree);
 		if(octree->cells[oct_current_obj] == NULL) bh_init_cell(octree, oct_current_obj);
 		bh_insert_object(object, octree->cells[oct_current_obj]);
 	}
@@ -148,14 +178,16 @@ void bh_print_octree(struct phys_barnes_hut_octree *octree)
 
 double bh_max_displacement(data *object)
 {
-	double maxdist = 0.0, dist = 0.0;
+	double maxdist = 0.0;
 	for(int i = 1; i < option->obj + 1; i++) {
-		dist = sqrt(object[i].pos[0]*object[i].pos[0] + object[i].pos[1]*object[i].pos[1] + object[i].pos[2]*object[i].pos[2]);
-		if(dist > maxdist) {
-			maxdist = dist;
+		for(int j = 0; j < 3; j++) {
+			if(object[i].pos[j] > maxdist) {
+				maxdist = object[i].pos[j];
+			}
 		}
 	}
-	return maxdist;
+	doublemax = maxdist;
+	return doublemax;
 }
 
 struct phys_barnes_hut_octree *bh_init_tree()
@@ -178,23 +210,21 @@ void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree)
 	}
 }
 
-static void bh_calculate_force(data* object, struct phys_barnes_hut_octree *octree, double alpha)
+static void bh_calculate_force(data* object, struct phys_barnes_hut_octree *octree)
 {
+	if(octree->leaf && octree->data == NULL) return;
+	if(octree->data == object) return;
 	v4sd vecnorm = object->pos - octree->origin;
 	double dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 	vecnorm /= dist;
 	if(octree->data != NULL) {
-		
 		object->acc += vecnorm*(double)(option->gconst*octree->data->mass)/(dist*dist);
-		
-	} else if((octree->halfdim/dist) < alpha) {
-		
-		object->acc += vecnorm*(double)(option->gconst)/(dist*dist);
-		
+	} else if((octree->halfdim/dist) < option->bh_ratio) {
+		object->acc += vecnorm*(double)(option->gconst*octree->cellsum.mass)/(dist*dist);
 	} else {
 		for(int i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
-				bh_calculate_force(object, octree->cells[i], alpha);
+				bh_calculate_force(object, octree->cells[i]);
 			}
 		}
 	}
@@ -205,29 +235,28 @@ void *thread_barnes_hut(void *thread_setts)
 	struct thread_config_bhut *thread = (struct thread_config_bhut *)thread_setts;
 	v4sd accprev;
 	
-	struct phys_barnes_hut_octree *octree = bh_init_tree();
-	
 	while(!quit) {
-		for(int i = 1; i < option->obj + 1; i++) {
+		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			if(thread->obj[i].ignore) continue;
 			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
 			(thread->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
-		bh_build_octree(thread->obj, octree);
-		bh_cleanup_octree(octree);
+		if(thread->id == 1) bh_build_octree(thread->obj, thread->root_octree);
 		
-		if(!running) pthread_cond_wait(&thr_stop, &movestop);
 		pthread_barrier_wait(&barrier);
 		
-		for(int i = 1; i < option->obj + 1; i++) {
+		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			accprev = thread->obj[i].acc;
-			bh_calculate_force(&thread->obj[i], octree, 0.5);
+			bh_calculate_force(&thread->obj[i], thread->root_octree);
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
 		}
-		if(thread->id == 1) option->processed++;
-		pthread_barrier_wait(&barrier);
 		
+		if(thread->id == 1) option->processed++;
+		
+		if(thread->id == 1) bh_cleanup_octree(thread->root_octree);
+		
+		pthread_barrier_wait(&barrier);
 	}
 	return 0;
 }

@@ -24,9 +24,13 @@
 #include "physics.h"
 #include "options.h"
 #include "msg_phys.h"
-
 #include "physics_n_body.h"
 #include "physics_barnes_hut.h"
+
+/* Thread controls */
+pthread_mutex_t movestop;
+pthread_barrier_t barrier;
+bool running, quit;
 
 /*	Default threads to use when system != linux.	*/
 #define failsafe_cores 2
@@ -34,16 +38,32 @@
 /*	Indexing of cores = 1, 2, 3...	*/
 static pthread_t *threads;
 static pthread_attr_t thread_attribs;
-static pthread_condattr_t cattr;
 static pthread_mutexattr_t mattr;
 static struct sched_param parameters;
 
-union thread_config_algo {
-	struct thread_config_nbody nbody;
-	struct thread_config_bhut bhut;
+const struct list_algorithms phys_algorithms[] = {
+	{"n-body",		thread_nbody,		nbody_init},
+	{"barnes-hut",	thread_barnes_hut,	bhut_init},
+	{0}
 };
 
-static union thread_config_algo *thread_config;
+thread_function phys_find_algorithm(const char *name)
+{
+	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
+		if(!strcmp(i->name, name))
+			return i->thread_location;
+	}
+	return NULL;
+}
+
+thread_configuration phys_find_config(const char *name)
+{
+	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
+		if(!strcmp(i->name, name))
+			return i->thread_configuration;
+	}
+	return NULL;
+}
 
 int initphys(data** object)
 {
@@ -99,45 +119,35 @@ int threadcontrol(int status, data** object)
 	if(!option->avail_cores) return 0;
 	switch(status) {
 		case PHYS_UNPAUSE:
-			if(running) return 1;
+			return 0;
+			/*if(running) return 1;
 			running = 1;
-			pthread_cond_broadcast(&thr_stop);
+			pthread_mutex_unlock(&movestop);*/
 			break;
 		case PHYS_PAUSE:
-			if(!running) return 1;
+			return 0;
+			// Pausing temporarily disabled until a better way is found. Yanking mutexes around was not wise.
+			/*if(!running) return 1;
 			running = 0;
+			pthread_mutex_lock(&movestop);*/
+			break;
 		case PHYS_STATUS:
 			return running;
 			break;
 		case PHYS_START:
 			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
-			thread_config = calloc(option->avail_cores+1, sizeof(union thread_config_algo));
 			
 			pthread_barrier_init(&barrier, NULL, option->avail_cores);
-			pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
-			pthread_cond_init(&thr_stop, &cattr);
-			pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+			//pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_PRIVATE);
 			pthread_mutex_init(&movestop, &mattr);
 			
-			if(!strcmp(option->algorithm, "n-body")) {
-				nbody_distribute(object, &thread_config->nbody);
-				for(int k = 1; k < option->avail_cores + 1; k++) {
-					pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-					thread_config[k].nbody.obj = *object;
-					thread_config[k].nbody.id = k;
-					pthread_create(&threads[k], &thread_attribs, thread_nbody, &thread_config[k].nbody);
-					pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
-					pprintf(PRI_OK, "\n");
-				}
-			} else if(!strcmp(option->algorithm, "barnes-hut")) {
-				for(int k = 1; k < option->avail_cores + 1; k++) {
-					pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-					thread_config[k].bhut.obj = *object;
-					thread_config[k].bhut.id = k;
-					pthread_create(&threads[k], &thread_attribs, thread_barnes_hut, &thread_config[k].bhut);
-					pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
-					pprintf(PRI_OK, "\n");
-				}
+			void** thread_conf = (phys_find_config(option->algorithm))(object);
+			
+			for(int k = 1; k < option->avail_cores + 1; k++) {
+				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
+				pthread_create(&threads[k], &thread_attribs, phys_find_algorithm(option->algorithm), thread_conf[k]);
+				//pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
+				pprintf(PRI_OK, "\n");
 			}
 			
 			running = 1;
@@ -152,29 +162,12 @@ int threadcontrol(int status, data** object)
 			}
 			
 			pthread_barrier_destroy(&barrier);
-			pthread_cond_destroy(&thr_stop);
 			pthread_mutex_destroy(&movestop);
 			
 			free(threads);
-			free(thread_config);
 			running = 0;
 			quit = 0;
 			break;
 	}
 	return 0;
-}
-
-const struct list_algorithms phys_algorithms[] = {
-	{"n-body",		thread_nbody},
-	{"barnes-hut",	thread_barnes_hut},
-	{0}
-};
-
-thread_location phys_find_algorithm(const char *name)
-{
-	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
-		if(!strcmp(i->name, name))
-			return i->thread_location;
-	}
-	return NULL;
 }

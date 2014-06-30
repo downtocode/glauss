@@ -122,17 +122,17 @@ static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat 
 	m[15] = 2*far*near / nearmfar;
 }
 
-void graph_view(float view_rotx, float view_roty, float view_rotz, float scalefactor, float tr_x, float tr_y, float tr_z)
+void graph_view(struct graph_cam_view *camera)
 {
-	make_translation_matrix(tr_x, tr_y, tr_z, transl);
+	make_translation_matrix(camera->tr_x, camera->tr_y, camera->tr_z, transl);
 	
-	make_scale_matrix(aspect_ratio*scalefactor, scalefactor, scalefactor, scale);
+	make_scale_matrix(aspect_ratio*camera->scalefactor, camera->scalefactor, camera->scalefactor, scale);
 	
 	make_pers_matrix(10, option->width/option->height, -1, 10, pers);
 	
-	make_x_rot_matrix(view_rotx, rotx);
-	make_y_rot_matrix(view_roty, roty);
-	make_z_rot_matrix(view_rotz, rotz);
+	make_x_rot_matrix(camera->view_rotx, rotx);
+	make_y_rot_matrix(camera->view_roty, roty);
+	make_z_rot_matrix(camera->view_rotz, rotz);
 	mul_matrix(mat, roty, rotx);
 	mul_matrix(rotation, mat, rotz);
 	glUniformMatrix4fv(trn_matrix, 1, GL_FALSE, transl);
@@ -141,21 +141,20 @@ void graph_view(float view_rotx, float view_roty, float view_rotz, float scalefa
 	glUniformMatrix4fv(per_matrix, 1, GL_FALSE, pers);
 }
 
-void graph_resize_wind()
+float graph_resize_wind()
 {
 	/* Usually it's the other way around */
 	aspect_ratio = (float)option->height/option->width;
 	glViewport(0, 0, option->width, option->height);
+	return aspect_ratio;
 }
 
-unsigned int graph_compile_shader(const char *vertpath, const char *fragpath)
+unsigned int graph_compile_shader(const char *src_vert_shader, const char *src_frag_shader)
 {
 	GLint status_vert, status_frag;
 	GLuint program = glCreateProgram();
 	GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
 	GLuint frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	const char *src_vert_shader = readshader(vertpath);
-	const char *src_frag_shader = readshader(fragpath);
 	
 	glShaderSource(vert_shader, 1, &src_vert_shader, NULL);
 	glShaderSource(frag_shader, 1, &src_frag_shader, NULL);
@@ -164,8 +163,8 @@ unsigned int graph_compile_shader(const char *vertpath, const char *fragpath)
 	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &status_vert);
 	glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &status_frag);
 	if(!status_vert || !status_frag) {
-		if(!status_vert) pprintf(PRI_ERR, "VS %s did not compile.\n", vertpath);
-		if(!status_frag) pprintf(PRI_ERR, "FS %s did not compile.\n", fragpath);
+		if(!status_vert) pprintf(PRI_ERR, "VS %s did not compile.\n");
+		if(!status_frag) pprintf(PRI_ERR, "FS %s did not compile.\n");
 		exit(1);
 	}
 	
@@ -184,9 +183,6 @@ unsigned int graph_compile_shader(const char *vertpath, const char *fragpath)
 	
 	glDeleteShader(vert_shader);
 	glDeleteShader(frag_shader);
-	/*	Casting to void* to prevent compiler from complaining.	*/
-	free((void *)src_vert_shader);
-	free((void *)src_frag_shader);
 	return program;
 }
 

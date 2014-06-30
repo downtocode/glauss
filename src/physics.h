@@ -38,6 +38,7 @@ typedef double v4sd __attribute__ ((vector_size (32)));
 #error You need to update your compilers. Needs at least gcc 4.8 or clang 3.4 to compile.
 #endif
 
+/* Object structure */
 typedef struct {
 	v4sd pos, vel, acc;
 	double mass, charge;
@@ -46,21 +47,29 @@ typedef struct {
 	bool ignore;
 } data;
 
+/* Algorithm structure */
 struct list_algorithms {
 	const char *name;
 	void* (*thread_location)(void *thread_setts);
+	void** (*thread_configuration)(data **);
 };
 
-typedef void* (*thread_location)(void*);
-
 extern const struct list_algorithms phys_algorithms[];
-pthread_cond_t thr_stop;
+
+typedef void* (*thread_function)(void*);
+typedef void** (*thread_configuration)(data **);
+
+/* These functions will return a function pointer */
+thread_function phys_find_algorithm(const char *name);
+thread_configuration phys_find_config(const char *name);
+
+/* Thread controls */
 pthread_mutex_t movestop;
 pthread_barrier_t barrier;
 bool running, quit;
 
+/* External functions for control */
 int initphys(data** object);
 int threadcontrol(int status, data** object);
-thread_location phys_find_algorithm(const char *name);
 
 #endif

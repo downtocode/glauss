@@ -23,11 +23,11 @@
 
 struct thread_config_nbody {
 	data* obj;
-	unsigned int id, objcount, *indices;
+	unsigned int id, objs_low, objs_high;
 	clockid_t clockid;
 };
 
-int nbody_distribute(data** object, struct thread_config_nbody *thread_opts_nbody);
+void** nbody_init(data** object);
 void *thread_nbody(void *thread_setts);
 
 #endif

@@ -5,6 +5,7 @@ settings = {
 		threads = 1,
 		dt = 0.00001,
 		algorithm = "barnes-hut",
+		bh_ratio = 0.50,
 	},
 	visual = {
 		width = 1024,
@@ -12,7 +13,7 @@ settings = {
 	},
 	constants = {
 		--elcharge = 1.602176565*10^-2,
-		gconst = 6.67384*10^-4,
+		gconst = 6.67384*10^-12,
 		--epsno = 8.854187817*10^-4,
 		elcharge = 0,
 		--gconst = 0,

@@ -26,8 +26,15 @@
 #include "physics.h"
 #include "parser.h"
 #include "options.h"
-#include "molreader.h"
+#include "in_molecule.h"
 #include "msg_phys.h"
+
+struct lua_parser_state {
+	int i;
+	bool nullswitch;
+	bool molset;
+	char molfile[100];
+};
 
 static void conf_traverse_table(lua_State *L)
 {
@@ -40,6 +47,8 @@ static void conf_traverse_table(lua_State *L)
 				option->avail_cores = (unsigned short int)lua_tonumber(L, -1);
 			if(!strcmp("dt", lua_tostring(L, -2)))
 				option->dt = lua_tonumber(L, -1);
+			if(!strcmp("bh_ratio", lua_tostring(L, -2)))
+				option->bh_ratio = lua_tonumber(L, -1);
 			if(!strcmp("width", lua_tostring(L, -2)))
 				option->width = (int)lua_tonumber(L, -1);
 			if(!strcmp("height", lua_tostring(L, -2)))
@@ -62,40 +71,31 @@ static void conf_traverse_table(lua_State *L)
 	}
 }
 
-static int i = 1;
-/* Lua's tables are weird since upon the very first traversal we're given
- * valid strings for variables in the later layers of the table(posx, radius, etc)
- * however they are 0. This throws the count off and causes explosions.
- * Using a one-time switch seems to do the trick. Temorary solution. */
-static bool nullswitch = 0;
-static bool molset = 0;
-static char molfile[100];
-
-static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
+static void obj_traverse_table(lua_State *L, data** object, data *buffer, struct lua_parser_state *parser_state)
+{
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
 		if(lua_istable(L, -1)) {
-			if(molset) {
-				if(!access(molfile, R_OK)) {
-					pprintf(PRI_OK, "File %s found!\n", molfile);
-					readmolecule(*object, buffer, molfile, &i);
-					memset(molfile, 0, sizeof(molfile));
-					molset = 0;
+			if(parser_state->molset) {
+				if(!access(parser_state->molfile, R_OK)) {
+					pprintf(PRI_OK, "File %s found!\n", parser_state->molfile);
+					readmolecule(*object, buffer, parser_state->molfile, &parser_state->i);
+					memset(parser_state->molfile, 0, sizeof(parser_state->molfile));
+					parser_state->molset = 0;
 				} else {
-					pprintf(PRI_ERR, "File %s not found!\n", molfile);
+					pprintf(PRI_ERR, "File %s not found!\n", parser_state->molfile);
 					exit(1);
 				}
 			} else {
 				/* It's just an object. */
-				if(nullswitch) {
-					buffer->id = i;
-					(*object)[i] = *buffer;
-					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
-					i++;
-				} else
-					nullswitch = 1;
+				if(parser_state->nullswitch) {
+					buffer->id = parser_state->i;
+					(*object)[parser_state->i] = *buffer;
+					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", parser_state->i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
+					parser_state->i++;
+				} else parser_state->nullswitch = 1;
 			}
-			obj_traverse_table(L, object, buffer);
+			obj_traverse_table(L, object, buffer, parser_state);
 		} else if(lua_isnumber(L, -1)) {
 			if(!strcmp("posx", lua_tostring(L, -2)))
 				buffer->pos[0] = lua_tonumber(L, -1);
@@ -119,8 +119,8 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 				buffer->atomnumber = (unsigned short int)lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("molfile", lua_tostring(L, -2))) {
-				strcpy(molfile, lua_tostring(L, -1));
-				molset = 1;
+				strcpy(parser_state->molfile, lua_tostring(L, -1));
+				parser_state->molset = 1;
 			}
 		} else if(lua_isboolean(L, -1)) {
 			if(!strcmp("ignore", lua_tostring(L, -2)))
@@ -131,7 +131,8 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer) {
 }
 
 /* Using realloc is too much of a mess when we try to import molecules, so we scan beforehand. */
-static void molfiles_traverse_table(lua_State *L) {
+static void molfiles_traverse_table(lua_State *L)
+{
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
 		if(lua_istable(L, -1)) {
@@ -152,7 +153,8 @@ static void molfiles_traverse_table(lua_State *L) {
 	}
 }
 
-int parse_lua_simconf_options(char *filename) {
+int parse_lua_simconf_options(char *filename)
+{
 	lua_State *L = luaL_newstate();
 	luaL_openlibs(L);
 	/* Load file */
@@ -194,6 +196,7 @@ int parse_lua_simconf_objects(char *filename, data** object)
 	
 	/* Read returned table of objects */
 	lua_getglobal(L, "spawn_objects");
+	/* Can send arguments here, currently unused. */
 	lua_pushnumber(L, option->obj);
 	/* The second returned value is the total number of objects */
 	lua_call(L, 1, 2);
@@ -207,13 +210,15 @@ int parse_lua_simconf_objects(char *filename, data** object)
 	initphys(object);
 	/* Finally read the objects */
 	data buffer;
-	obj_traverse_table(L, object, &buffer);
+	struct lua_parser_state parser_state = { 1, 0, 0, {'\n'} };
+	
+	obj_traverse_table(L, object, &buffer, &parser_state);
 	
 	lua_close(L);
 	return 0;
 }
 
-const char* readshader(const char* filename)
+const char* parse_file_to_str(const char* filename)
 {
 	FILE* input = fopen(filename, "r");
 	if(input == NULL) return NULL;

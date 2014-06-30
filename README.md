@@ -17,17 +17,19 @@ Dependencies:
  * SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)
  * Lua 5.2 (Debian: liblua5.2-dev)
 
-All are available on any up-to-date Linux distribution's package repositories. To compile, do the standard:
+All are available on any up-to-date Linux distribution's package repositories. To compile and install, do the standard:
 
 `./autogen.sh`
 
 `./configure`
 
-`make`
+`make install`
+
+The program can be run in any directory as it has no dependence on any external files. For developer convenience, it's possible to avoid program installation. Just run `make` without the install part and then the ./physengine.sh shell script.
 
 Running
 -------
-Run the shell script with the argument `-f (filename)`, with an appropriate file. A demo file(usually it's for testing the latest feature) called simconf.lua is present. A demo scripts directory will be created at a later version. The executable needs to be ran into the root directory of the build. Modify the options in simconf.conf to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS).
+Run the program with the argument `-f (filename)`, with an appropriate file. A demo file(usually it's for testing the latest feature) called simconf.lua is present. A demo scripts directory will be created at a later version. The executable needs to be ran into the root directory of the build. Modify the options in simconf.conf to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS).
 
 This program **absolutely requires** the newest stable GCC or Clang releases to build. Vector extensions have always been a tricky things in C, but in the last few years the major compilers have roughly agreed on a standard. When using GCC, check that your processors has AVX extensions or performance will probably be affected.
 

@@ -18,12 +18,19 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
+struct graph_cam_view {
+	float view_rotx, view_roty, view_rotz;
+	float tr_x, tr_y, tr_z;
+	float scalefactor;
+};
+
+void graph_init();
+void graph_view(struct graph_cam_view *camera);
+float graph_resize_wind();
+unsigned int graph_compile_shader(const char *src_vert_shader, const char *src_frag_shader);
+
 #include "physics.h"
 
-void graph_view(float view_rotx, float view_roty, float view_rotz, float scalefactor, float tr_x, float tr_y, float tr_z);
-void graph_resize_wind();
 void graph_draw_scene(data **object, float fps);
-unsigned int graph_compile_shader(const char *vertpath, const char *fragpath);
-void graph_init();
 
 #endif

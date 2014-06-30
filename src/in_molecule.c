@@ -19,7 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <tgmath.h>
-#include "molreader.h"
+#include "in_molecule.h"
 #include "options.h"
 #include "msg_phys.h"
 #include "physics_aux.h"

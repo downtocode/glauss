@@ -19,7 +19,7 @@
 #define PHYSENGINE_FONTS
 
 const char *graph_init_fontconfig();
-GLuint graph_init_freetype(const char *fontname);
+unsigned int graph_init_freetype(const char *fontname);
 void graph_stop_freetype();
 void graph_display_text(const char *text, float x, float y, float sx, float sy, unsigned int col);
 void graph_display_object_info(data object);

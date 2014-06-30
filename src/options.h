@@ -21,7 +21,7 @@
 struct option_struct* option;
 
 struct option_struct {
-	float dt;
+	float dt, bh_ratio;
 	long double elcharge, gconst, epsno;
 	unsigned int obj;
 	unsigned long long processed;

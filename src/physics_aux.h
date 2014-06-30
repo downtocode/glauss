@@ -18,28 +18,26 @@
 #ifndef PHYSENGINE_ELARR
 #define PHYSENGINE_ELARR
 
-#include <GLES2/gl2.h>
-
 struct atomic_cont {
-	char name[2];
+	const char *name;
 	double mass;
 	double charge;
-	GLfloat color[4];
+	float color[4];
 };
 
 struct atomic_cont *atom_prop;
 
 #define NUM_ANOTHER 1
-#define NUM_GIVEME 2
-#define NUM_REMOVE 3
+#define NUM_GIVEME  2
+#define NUM_REMOVE  3
 
 struct numbers_selection {
 	int digits[20];
 	unsigned short int final_digit;
 };
 
-int init_elements();
-unsigned short int return_atom_num(char element[2]);
+int init_elements(const char *filepath);
+unsigned short int return_atom_num(const char *name);
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status);
 
 #endif

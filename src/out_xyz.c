@@ -19,12 +19,13 @@
 #include <string.h>
 #include <stdbool.h>
 #include "physics.h"
-#include "toxyz.h"
+#include "out_xyz.h"
 #include "physics_aux.h"
 
-char extension[] = "xyz", file[] = "config", filetodump[120];
-
-int toxyz(int obj, data *object, float timestep) {
+int toxyz(int obj, data *object, float timestep)
+{
+	const char extension[] = "xyz", file[] = "config";
+	char filetodump[120];
 	sprintf(filetodump, "%s_%0.2f.%s", file, timestep, extension);
 	FILE *out = fopen ( filetodump, "w" );
 	fprintf(stderr, "Created %s\n", filetodump);

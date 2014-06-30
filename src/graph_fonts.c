@@ -25,6 +25,16 @@
 #include "graph_fonts.h"
 #include "physics.h"
 
+static const char text_vs[] =
+// Generated from text_vs.glsl
+#include "shaders/text_vs.h"
+;
+
+static const char text_fs[] =
+// Generated from text_fs.glsl
+#include "shaders/text_fs.h"
+;
+
 static FT_Library library;
 static FT_Face face;
 static FT_GlyphSlot g;
@@ -52,7 +62,7 @@ const char *graph_init_fontconfig()
 	return (const char *)fc_value.u.s;
 }
 
-GLuint graph_init_freetype(const char *fontname)
+unsigned int graph_init_freetype(const char *fontname)
 {
 	if(FT_Init_FreeType(&library)) {
 		pprintf(PRI_ERR, "Could not init freetype library.\n");
@@ -65,7 +75,7 @@ GLuint graph_init_freetype(const char *fontname)
 	FT_Set_Pixel_Sizes(face, 0, 34);
 	g = face->glyph;
 	
-	GLuint text_program = graph_compile_shader("./resources/shaders/text_vs.glsl", "./resources/shaders/text_fs.glsl");
+	GLuint text_program = graph_compile_shader(text_vs, text_fs);
 	
 	glBindAttribLocation(text_program, textattr_coord, "coord");
 	glBindAttribLocation(text_program, textattr_texcoord, "textcolor");
@@ -84,7 +94,8 @@ GLuint graph_init_freetype(const char *fontname)
 	return text_program;
 }
 
-void graph_stop_freetype() {
+void graph_stop_freetype()
+{
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
 }
