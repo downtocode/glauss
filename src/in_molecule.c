@@ -95,7 +95,6 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 			}
 			object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;
-			/* Look in parser.c for info on why do this. */
 			object[*i].pos[0] = (double)xpos + buffer->pos[0];
 			object[*i].pos[1] = (double)ypos + buffer->pos[1];
 			object[*i].pos[2] = (double)zpos + buffer->pos[2];

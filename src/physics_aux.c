@@ -36,16 +36,16 @@ static const char elements_internal[] =
 #include "resources/elements.h"
 ;
 
-static void elements_traverse_table(lua_State *L, struct atomic_cont **element, struct atomic_cont *buffer, struct lua_parser_state *parser_state)
+static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer, struct lua_parser_state *parser_state)
 {
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
 		if(lua_istable(L, -1)) {
 			
 			if(parser_state->nullswitch) {
-				element[parser_state->i++] = buffer;
+				atom_prop[parser_state->i++] = *buffer;
 			} else parser_state->nullswitch = 1;
-			elements_traverse_table(L, element, buffer, parser_state);
+			elements_traverse_table(L, buffer, parser_state);
 			
 		} else if(lua_isnumber(L, -1)) {
 			
@@ -95,7 +95,7 @@ int init_elements(const char *filepath)
 	struct atomic_cont buffer = {0};
 	struct lua_parser_state parser_state = {1, 0, 0, 0};
 	
-	elements_traverse_table(L, &atom_prop, &buffer, &parser_state);
+	elements_traverse_table(L, &buffer, &parser_state);
 	
 	lua_close(L);
 	

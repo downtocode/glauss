@@ -198,6 +198,7 @@ int main(int argc, char *argv[])
 	
 	/*	Physics.	*/
 		data* object;
+		
 		if(!init_elements(NULL)) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
 		else return 1;
 		

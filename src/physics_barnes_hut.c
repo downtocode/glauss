@@ -79,7 +79,6 @@ static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
 				}
 			} else filled_cells--;
 		}
-		if(filled_cells == 0) octree->leaf = 1;
 		return !filled_cells ? 1 : 0;
 	}
 }
@@ -100,36 +99,31 @@ static short bh_get_octant(data *object, const struct phys_barnes_hut_octree *oc
 	return oct;
 }
 
-static double doublemax;
 
-static void bh_init_cell(struct phys_barnes_hut_octree *octree, short cell)
+static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 {
 	
 	/* TODO: maybe try to use a gigantic array of structs and glue them together in post */
 	if(allocated_cells > 100000) {
 		printf("Too many cells! Total allocated cells = %i\n", allocated_cells);
-		printf("Total size of all cells = %lf Mb\n", (sizeof(struct phys_barnes_hut_octree)*allocated_cells)/1048576.0);
-		printf("Maxdist = %f\n", doublemax);
 		exit(0);
 	}
-	
-	if(octree->cells[cell] == NULL) {
-		octree->cells[cell] = calloc(1, sizeof(struct phys_barnes_hut_octree));
-		for(int i=0; i < 8; i++) octree->cells[cell]->cells[i] = NULL;
-		octree->cells[cell]->depth = octree->depth+1;
-		octree->cells[cell]->data = NULL;
-		octree->cells[cell]->leaf = 1;
+	if(octree->cells[k] == NULL) {
+		octree->cells[k] = calloc(1, sizeof(struct phys_barnes_hut_octree));
+		for(int i=0; i < 8; i++) octree->cells[k]->cells[i] = NULL;
+		octree->cells[k]->depth = octree->depth+1;
+		octree->cells[k]->data = NULL;
+		octree->cells[k]->leaf = 1;
 		allocated_cells++;
 	}
-	
-	octree->cells[cell]->score = OCTREE_INIT_SCORE;
-	
-	v4sd newpos = octree->origin;
-	newpos[0] += octree->halfdim * (cell&4 ? .5f : -.5f);
-	newpos[1] += octree->halfdim * (cell&2 ? .5f : -.5f);
-	newpos[2] += octree->halfdim * (cell&1 ? .5f : -.5f);
-	octree->cells[cell]->origin = newpos;
-	octree->cells[cell]->halfdim = octree->halfdim/2;
+	octree->cells[k]->score = OCTREE_INIT_SCORE;
+	octree->cells[k]->halfdim = octree->halfdim/2;
+	octree->cells[k]->origin = octree->origin + (octree->halfdim*\
+				(v4sd){
+						(k&4 ? .5f : -.5f),
+						(k&2 ? .5f : -.5f),
+						(k&1 ? .5f : -.5f)
+				});
 }
 
 static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree)
@@ -192,7 +186,6 @@ double bh_max_displacement(data *object)
 			}
 		}
 	}
-	doublemax = maxdist;
 	return maxdist;
 }
 

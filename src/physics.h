@@ -59,6 +59,13 @@ extern const struct list_algorithms phys_algorithms[];
 typedef void* (*thread_function)(void*);
 typedef void** (*thread_configuration)(data **);
 
+/* Statistics structure */
+struct thread_statistics {
+	double progress;
+	unsigned int bh_allocated;
+	unsigned int bh_cleaned;
+};
+
 /* These functions will return a function pointer */
 thread_function phys_find_algorithm(const char *name);
 thread_configuration phys_find_config(const char *name);
