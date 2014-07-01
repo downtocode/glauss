@@ -20,15 +20,16 @@
 #include <stdbool.h>
 #include "physics.h"
 #include "out_xyz.h"
+#include "msg_phys.h"
 #include "physics_aux.h"
 
 int toxyz(int obj, data *object, float timestep)
 {
-	const char extension[] = "xyz", file[] = "config";
+	const char *extension = "xyz", *file = "config";
 	char filetodump[120];
 	sprintf(filetodump, "%s_%0.2f.%s", file, timestep, extension);
 	FILE *out = fopen ( filetodump, "w" );
-	fprintf(stderr, "Created %s\n", filetodump);
+	pprintf(PRI_ESSENTIAL, "Created %s\n", filetodump);
 	fprintf(out, "%i\n", obj);
 	fprintf(out, "#Current dump = %0.2f\n", timestep);
 	for(int i = 1; i < obj + 1; i++) {

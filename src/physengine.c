@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
 						printf("\n");
 					}
 					if(event.key.keysym.sym==SDLK_z) {
-						toxyz(option->obj, object, timestep);
+						toxyz(option->obj, object, option->processed);
 					}
 					if(event.key.keysym.sym==SDLK_PERIOD) {
 						if(chosen < option->obj) chosen++;
