@@ -79,6 +79,7 @@ static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
 				}
 			} else filled_cells--;
 		}
+		if(filled_cells == 0) octree->leaf = 1;
 		return !filled_cells ? 1 : 0;
 	}
 }
@@ -105,19 +106,24 @@ static void bh_init_cell(struct phys_barnes_hut_octree *octree, short cell)
 {
 	
 	/* TODO: maybe try to use a gigantic array of structs and glue them together in post */
-	
-	if(allocated_cells++ > 2000000) {
+	if(allocated_cells > 100000) {
 		printf("Too many cells! Total allocated cells = %i\n", allocated_cells);
 		printf("Total size of all cells = %lf Mb\n", (sizeof(struct phys_barnes_hut_octree)*allocated_cells)/1048576.0);
 		printf("Maxdist = %f\n", doublemax);
 		exit(0);
 	}
-	octree->cells[cell] = calloc(1, sizeof(struct phys_barnes_hut_octree));
-	octree->cells[cell]->depth = octree->depth+1;
-	octree->cells[cell]->data = NULL;
-	octree->cells[cell]->leaf = 1;
+	
+	if(octree->cells[cell] == NULL) {
+		octree->cells[cell] = calloc(1, sizeof(struct phys_barnes_hut_octree));
+		for(int i=0; i < 8; i++) octree->cells[cell]->cells[i] = NULL;
+		octree->cells[cell]->depth = octree->depth+1;
+		octree->cells[cell]->data = NULL;
+		octree->cells[cell]->leaf = 1;
+		allocated_cells++;
+	}
+	
 	octree->cells[cell]->score = OCTREE_INIT_SCORE;
-	for(int i=0; i < 8; i++) octree->cells[cell]->cells[i] = NULL;
+	
 	v4sd newpos = octree->origin;
 	newpos[0] += octree->halfdim * (cell&4 ? .5f : -.5f);
 	newpos[1] += octree->halfdim * (cell&2 ? .5f : -.5f);
@@ -145,13 +151,13 @@ static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree
 		bh_insert_object(octree->data, octree->cells[oct_octree_obj]);
 		octree->data = NULL;
 		octree->leaf = 0;
-		if(octree->cells[oct_current_obj] == NULL) bh_init_cell(octree, oct_current_obj);
+		bh_init_cell(octree, oct_current_obj);
 		bh_insert_object(object, octree->cells[oct_current_obj]);
 		
 	} else {
 		//This cell has subcells with objects
 		short oct_current_obj = bh_get_octant(object, octree);
-		if(octree->cells[oct_current_obj] == NULL) bh_init_cell(octree, oct_current_obj);
+		bh_init_cell(octree, oct_current_obj);
 		bh_insert_object(object, octree->cells[oct_current_obj]);
 	}
 }
@@ -187,7 +193,7 @@ double bh_max_displacement(data *object)
 		}
 	}
 	doublemax = maxdist;
-	return doublemax;
+	return maxdist;
 }
 
 struct phys_barnes_hut_octree *bh_init_tree()
