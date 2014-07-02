@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 		struct graph_cam_view camera = { 0, 0, 0, 0, 0, 0, 0.1 };
 		camera.scalefactor = 0.1;
 		numbers.final_digit = 0;
-		float deltatime = 0.0, totaltime = 0.0f, timestep = 0.0, fps = 0.0;
+		float deltatime = 0.0, totaltime = 0.0f, fps = 0.0;
 		unsigned int frames = 0, chosen = 0, currentnum;
 		char currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, drawobj = 0, drawlinks = 0;
@@ -186,7 +186,6 @@ int main(int argc, char *argv[])
 		if(bench) {
 			pprintf(PRI_WARN, "Benchmark mode active.\n");
 			novid = 1;
-			option->avail_cores = 1;
 			option->verbosity = 9;
 			if(timer==1.0f) timer=30.0f;
 		}
@@ -328,7 +327,7 @@ int main(int argc, char *argv[])
 						printf("\n");
 					}
 					if(event.key.keysym.sym==SDLK_z) {
-						toxyz(option->obj, object, option->processed);
+						toxyz(option->obj, object, t_stats[1]->progress);
 					}
 					if(event.key.keysym.sym==SDLK_PERIOD) {
 						if(chosen < option->obj) chosen++;
@@ -352,7 +351,6 @@ int main(int argc, char *argv[])
 		}
 		
 		{
-			timestep = option->processed*option->dt;
 			gettimeofday(&t2, NULL);
 			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
 			t1 = t2;
@@ -362,12 +360,12 @@ int main(int argc, char *argv[])
 		if (totaltime >  timer) {
 			fps = frames/totaltime;
 			
-			if(dumplevel) toxyz(option->obj, object, timestep);
-			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", timestep);
+			if(dumplevel) toxyz(option->obj, object, t_stats[1]->progress);
+			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", t_stats[1]->progress);
 			
 			if(bench) {
-				pprintf(PRI_ESSENTIAL, "Progressed %f timeunits over %f seconds.\n", timestep, totaltime);
-				pprintf(PRI_ESSENTIAL, "Average = %f timeunits per second.\n", timestep/totaltime);
+				pprintf(PRI_ESSENTIAL, "Progressed %f timeunits over %f seconds.\n", t_stats[1]->progress, totaltime);
+				pprintf(PRI_ESSENTIAL, "Average = %f timeunits per second.\n", t_stats[1]->progress/totaltime);
 				goto quit;
 			}
 			totaltime = frames = 0;

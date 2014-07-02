@@ -28,11 +28,11 @@
 #define INDENT "  "
 
 //Octree's initial score, decremented every time it's empty, once it reaches 0 it's freed
-#define OCTREE_INIT_SCORE 48
+#define OCTREE_INIT_SCORE 50
 
 static unsigned int allocated_cells;
 
-void** bhut_init(data** object)
+void** bhut_init(data** object, struct thread_statistics **stats)
 {
 	struct thread_config_bhut **thread_config = calloc(option->avail_cores+1, sizeof(struct thread_config_bhut*));
 	for(int k = 0; k < option->avail_cores + 1; k++) {
@@ -44,6 +44,7 @@ void** bhut_init(data** object)
 	int totcore = (int)((float)option->obj/option->avail_cores);
 	
 	for(int k = 1; k < option->avail_cores + 1; k++) {
+		thread_config[k]->stats = stats[k];
 		thread_config[k]->root_octree = thread_config[1]->root_octree;
 		thread_config[k]->octree = bh_init_tree();
 		thread_config[k]->obj = *object;
@@ -79,7 +80,7 @@ static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
 				}
 			} else filled_cells--;
 		}
-		return !filled_cells ? 1 : 0;
+		return !filled_cells ? (!octree->score-- ? 1 : 0) : 0;
 	}
 }
 
@@ -135,7 +136,6 @@ static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree
 	if(octree->data == NULL && octree->leaf) {
 		//This cell has no object or subcells
 		octree->data = object;
-		pprintf(PRI_SPAM, "Object %i put in lvl %i\n", object->id, octree->depth);
 	} else if(octree->data != NULL && octree->leaf) {
 		//This cell has object but no subcells
 		short oct_current_obj = bh_get_octant(object, octree);
@@ -251,9 +251,11 @@ void *thread_barnes_hut(void *thread_setts)
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
 		}
 		
-		if(thread->id == 1) option->processed++;
-		
-		if(thread->id == 1) bh_cleanup_octree(thread->root_octree);
+		thread->stats->progress += option->dt;
+		if(thread->id == 1) {
+			thread->stats->bh_allocated = allocated_cells;
+			thread->stats->bh_cleaned = bh_cleanup_octree(thread->root_octree);
+		}
 		
 		pthread_barrier_wait(&barrier);
 	}

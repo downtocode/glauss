@@ -47,24 +47,26 @@ typedef struct {
 	bool ignore;
 } data;
 
+/* Statistics structure */
+struct thread_statistics {
+	long double progress;
+	clockid_t clockid;
+	unsigned int bh_allocated;
+	unsigned int bh_cleaned;
+};
+
 /* Algorithm structure */
 struct list_algorithms {
 	const char *name;
 	void* (*thread_location)(void *thread_setts);
-	void** (*thread_configuration)(data **);
+	void** (*thread_configuration)(data **, struct thread_statistics **);
 };
 
+extern struct thread_statistics **t_stats;
 extern const struct list_algorithms phys_algorithms[];
 
 typedef void* (*thread_function)(void*);
-typedef void** (*thread_configuration)(data **);
-
-/* Statistics structure */
-struct thread_statistics {
-	double progress;
-	unsigned int bh_allocated;
-	unsigned int bh_cleaned;
-};
+typedef void** (*thread_configuration)(data **, struct thread_statistics **);
 
 /* These functions will return a function pointer */
 thread_function phys_find_algorithm(const char *name);

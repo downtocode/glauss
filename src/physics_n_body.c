@@ -24,7 +24,7 @@
 #include "physics.h"
 #include "physics_n_body.h"
 
-void** nbody_init(data** object)
+void** nbody_init(data** object, struct thread_statistics **stats)
 {
 	struct thread_config_nbody **thread_config = calloc(option->avail_cores+1, sizeof(struct thread_config_nbody*));
 	for(int k = 0; k < option->avail_cores + 1; k++) {
@@ -34,6 +34,7 @@ void** nbody_init(data** object)
 	int totcore = (int)((float)option->obj/option->avail_cores);
 	
 	for(int k = 1; k < option->avail_cores + 1; k++) {
+		thread_config[k]->stats = stats[k];
 		thread_config[k]->obj = *object;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
@@ -84,7 +85,7 @@ void *thread_nbody(void *thread_setts)
 			}
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
 		}
-		if(thread->id == 1) option->processed++;
+		thread->stats->progress += option->dt;
 		pthread_barrier_wait(&barrier);
 	}
 	return 0;

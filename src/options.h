@@ -24,7 +24,6 @@ struct option_struct {
 	float dt, bh_ratio;
 	long double elcharge, gconst, epsno;
 	unsigned int obj;
-	unsigned long long processed;
 	unsigned short int avail_cores, verbosity;
 	int width, height;
 	bool nogrv, noele, noflj, moderandom, logenable;

@@ -41,6 +41,8 @@ static pthread_attr_t thread_attribs;
 static pthread_mutexattr_t mattr;
 static struct sched_param parameters;
 
+struct thread_statistics **t_stats;
+
 const struct list_algorithms phys_algorithms[] = {
 	{"n-body",		thread_nbody,		nbody_init},
 	{"barnes-hut",	thread_barnes_hut,	bhut_init},
@@ -141,12 +143,20 @@ int threadcontrol(int status, data** object)
 			//pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_PRIVATE);
 			pthread_mutex_init(&movestop, &mattr);
 			
-			void** thread_conf = (phys_find_config(option->algorithm))(object);
+			
+			struct thread_statistics **stats = calloc(option->avail_cores+1, sizeof(struct thread_statistics*));
+			for(int k = 1; k < option->avail_cores + 1; k++) {
+				stats[k] = calloc(1, sizeof(struct thread_statistics));
+			}
+			
+			t_stats = stats;
+			
+			void** thread_conf = (phys_find_config(option->algorithm))(object, stats);
 			
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
 				pthread_create(&threads[k], &thread_attribs, phys_find_algorithm(option->algorithm), thread_conf[k]);
-				//pthread_getcpuclockid(threads[k], &thread_config[k].nbody.clockid);
+				pthread_getcpuclockid(threads[k], &stats[k]->clockid);
 				pprintf(PRI_OK, "\n");
 			}
 			

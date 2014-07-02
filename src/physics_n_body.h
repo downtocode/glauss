@@ -24,10 +24,10 @@
 struct thread_config_nbody {
 	data* obj;
 	unsigned int id, objs_low, objs_high;
-	clockid_t clockid;
+	struct thread_statistics *stats;
 };
 
-void** nbody_init(data** object);
+void** nbody_init(data** object, struct thread_statistics **stats);
 void *thread_nbody(void *thread_setts);
 
 #endif

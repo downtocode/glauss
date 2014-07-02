@@ -28,22 +28,22 @@ maxobjects = 1000;
 
 --Add molecules or any additional objects here
 objects = {
-	{
-		molfile = "./resources/molecules/1UAO.pdb",
-		posx = 0,
-		posy = 0,
-		posz = 0,
-		velz = 0,
-		vely = 0,
-		velz = 0,
-	}
+-- 	{
+-- 		molfile = "./resources/molecules/1UAO.pdb",
+-- 		posx = 0,
+-- 		posy = 0,
+-- 		posz = 0,
+-- 		velz = 0,
+-- 		vely = 0,
+-- 		velz = 0,
+-- 	}
 }
 
 --Spawn objects here. Arrays for position and velocity are not supported yet. Stick to normal variables.
 --If atom is set to a non-zero value, mass, charge and radius values will be ignored.
 function spawn_objects(varfromC)
 	--Get number of non-loop objects and add 1 to avoid overwriting.
-	for i = 2, maxobjects, 1 do
+	for i = 1, maxobjects, 1 do
 		objects[i] = {
 			posx = math.sin(i),
 			posy = math.cos(i),
