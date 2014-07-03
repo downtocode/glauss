@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tgmath.h>
-#include <stdatomic.h>
 #include <pthread.h>
 #include "options.h"
 #include "msg_phys.h"
@@ -29,12 +28,12 @@
 #define INDENT "  "
 
 //Octree's initial score, decremented every time it's empty, once it reaches 0 it's freed
-#define OCTREE_INIT_SCORE 100
+#define OCTREE_INIT_SCORE 24
 
 //Maximum amount of octrees
 #define OCTREE_MAX_ALLOCATED 3000000
 
-static atomic_uint allocated_cells;
+static unsigned int allocated_cells;
 
 void** bhut_init(data** object, struct thread_statistics **stats)
 {
@@ -70,14 +69,17 @@ static void bh_decimate_octree(struct phys_barnes_hut_octree *octree) {
 	}
 }
 
-static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
+static bool bh_clean_octree(struct phys_barnes_hut_octree *octree)
 {
 	octree->cellsum = (data){{0}};
 	if(octree->data != NULL) {
-		/* Remove object, reduce score */
+		/* Object was here, chances are cell will be used, do not free */
 		octree->data = NULL;
-		return !octree->score-- ? 1 : 0;
+		return 0;
 	} else {
+		/* No object, if end node we reduce its score and check if 0 */
+		if(octree->leaf) return !octree->score-- ? 1 : 0;
+		/* Not end node, see recursively check non-empty cells */
 		short filled_cells = 8;
 		for(short i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
@@ -90,7 +92,12 @@ static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
 				}
 			} else filled_cells--;
 		}
-		return !filled_cells ? (!octree->score-- ? 1 : 0) : 0;
+		if(!filled_cells) {
+			/* No child cells, set as leaf and reduce score */
+			octree->leaf = 1;
+			return !octree->score-- ? 1 : 0;
+		} else return 0;
+		
 	}
 }
 

@@ -32,7 +32,6 @@
 #include "config.h"
 #include "physics.h"
 #include "graph.h"
-#include "physics_barnes_hut.h"
 #include "parser.h"
 #include "out_xyz.h"
 #include "options.h"
@@ -212,8 +211,6 @@ int main(int argc, char *argv[])
 		, option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	
-	struct phys_barnes_hut_octree *octree = bh_init_tree();
-	
 	/*	SDL2	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
@@ -320,11 +317,6 @@ int main(int argc, char *argv[])
 						camera.tr_x = camera.tr_y = camera.tr_z = 0.0;
 						camera.scalefactor = 0.1;
 						chosen = 0;
-					}
-					if(event.key.keysym.sym==SDLK_o) {
-						bh_build_octree(object, octree);
-						bh_cleanup_octree(octree);
-						printf("\n");
 					}
 					if(event.key.keysym.sym==SDLK_z) {
 						toxyz(option->obj, object, t_stats[1]->progress);

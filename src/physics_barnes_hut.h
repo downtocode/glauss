@@ -19,8 +19,7 @@
 #define PHYSENGINE_PHYS_BARNES_HUT
 
 struct phys_barnes_hut_octree {
-	unsigned int depth;
-	unsigned short score;
+	unsigned short score, depth;
 	v4sd origin;
 	double halfdim;
 	bool leaf;

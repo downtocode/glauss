@@ -45,7 +45,7 @@ function spawn_objects(varfromC)
 	for i = 1, maxobjects, 1 do
 		objects[i] = {
 			posx = math.sin(i)*(i/maxobjects),
-			posy = (math.random()-0.5)/(i/maxobjects*100),
+			posy = (math.random()-0.5)/10,
 			posz = math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,
