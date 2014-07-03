@@ -3,7 +3,7 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 1,
-		dt = 0.00001,
+		dt = 0.005,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
 	},
@@ -24,7 +24,7 @@ settings = {
 	},
 }
 
-maxobjects = 1000;
+maxobjects = 10000;
 
 --Add molecules or any additional objects here
 objects = {
@@ -39,22 +39,21 @@ objects = {
 -- 	}
 }
 
---Spawn objects here. Arrays for position and velocity are not supported yet. Stick to normal variables.
---If atom is set to a non-zero value, mass, charge and radius values will be ignored.
+--Spawn objects here. Arrays for position and velocity are not supported. Stick to normal variables.
 function spawn_objects(varfromC)
-	--Get number of non-loop objects and add 1 to avoid overwriting.
+	math.randomseed( os.time() )
 	for i = 1, maxobjects, 1 do
 		objects[i] = {
-			posx = math.sin(i),
-			posy = math.cos(i),
-			posz = math.cos(i)*(math.random(0,10)-5),
+			posx = math.sin(i)*(i/maxobjects),
+			posy = (math.random()-0.5)/(i/maxobjects*100),
+			posz = math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,
 			velz = 0,
 			charge = 100,
-			mass = 1000000,
+			mass = i*1000,
 			radius = 0.2,
-			atom = 0,
+			atom = math.random(1,10),
 			ignore = false,
 		}
 	end

@@ -33,7 +33,9 @@ int toxyz(int obj, data *object, float timestep)
 	fprintf(out, "%i\n", obj);
 	fprintf(out, "#Current dump = %0.2f\n", timestep);
 	for(int i = 1; i < obj + 1; i++) {
-		fprintf(out, "%s %f %f %f\n", atom_prop[object[i].atomnumber].name, object[i].pos[0], object[i].pos[1], object[i].pos[2]);
+		fprintf(out, "%s %f %f %f\n", atom_prop[object[i].atomnumber].name,\
+				(float)object[i].pos[0], (float)object[i].pos[1],\
+				(float)object[i].pos[2]);
 	}
 	fclose(out);
 	return 0;

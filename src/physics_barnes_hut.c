@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tgmath.h>
+#include <stdatomic.h>
 #include <pthread.h>
 #include "options.h"
 #include "msg_phys.h"
@@ -28,9 +29,12 @@
 #define INDENT "  "
 
 //Octree's initial score, decremented every time it's empty, once it reaches 0 it's freed
-#define OCTREE_INIT_SCORE 50
+#define OCTREE_INIT_SCORE 100
 
-static unsigned int allocated_cells;
+//Maximum amount of octrees
+#define OCTREE_MAX_ALLOCATED 3000000
+
+static atomic_uint allocated_cells;
 
 void** bhut_init(data** object, struct thread_statistics **stats)
 {
@@ -38,11 +42,8 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 	for(int k = 0; k < option->avail_cores + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_bhut));
 	}
-	
 	thread_config[1]->root_octree = bh_init_tree();
-	
 	int totcore = (int)((float)option->obj/option->avail_cores);
-	
 	for(int k = 1; k < option->avail_cores + 1; k++) {
 		thread_config[k]->stats = stats[k];
 		thread_config[k]->root_octree = thread_config[1]->root_octree;
@@ -56,8 +57,17 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
 	}
-	
 	return (void**)thread_config;
+}
+
+static void bh_decimate_octree(struct phys_barnes_hut_octree *octree) {
+	for(short i=0; i < 8; i++) {
+		if(octree->cells[i] != NULL) {
+			bh_decimate_octree(octree->cells[i]);
+			free(octree->cells[i]);
+			allocated_cells--;
+		}
+	}
 }
 
 static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
@@ -68,8 +78,8 @@ static int bh_clean_octree(struct phys_barnes_hut_octree *octree)
 		octree->data = NULL;
 		return !octree->score-- ? 1 : 0;
 	} else {
-		int filled_cells = 8;
-		for(int i=0; i < 8; i++) {
+		short filled_cells = 8;
+		for(short i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
 				if(bh_clean_octree(octree->cells[i])) {
 					/* Since cell is empty, free it */
@@ -103,9 +113,7 @@ static short bh_get_octant(data *object, const struct phys_barnes_hut_octree *oc
 
 static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 {
-	
-	/* TODO: maybe try to use a gigantic array of structs and glue them together in post */
-	if(allocated_cells > 100000) {
+	if(allocated_cells > OCTREE_MAX_ALLOCATED) {
 		printf("Too many cells! Total allocated cells = %i\n", allocated_cells);
 		exit(0);
 	}
@@ -117,6 +125,7 @@ static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 		octree->cells[k]->leaf = 1;
 		allocated_cells++;
 	}
+	/* TODO: Make dependent on previous value */
 	octree->cells[k]->score = OCTREE_INIT_SCORE;
 	octree->cells[k]->halfdim = octree->halfdim/2;
 	octree->cells[k]->origin = octree->origin + (octree->halfdim*\
@@ -140,14 +149,12 @@ static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree
 		//This cell has object but no subcells
 		short oct_current_obj = bh_get_octant(object, octree);
 		short oct_octree_obj = bh_get_octant(octree->data, octree);
-		
 		bh_init_cell(octree, oct_octree_obj);
 		bh_insert_object(octree->data, octree->cells[oct_octree_obj]);
 		octree->data = NULL;
 		octree->leaf = 0;
 		bh_init_cell(octree, oct_current_obj);
 		bh_insert_object(object, octree->cells[oct_current_obj]);
-		
 	} else {
 		//This cell has subcells with objects
 		short oct_current_obj = bh_get_octant(object, octree);
@@ -217,9 +224,9 @@ static void bh_calculate_force(data* object, struct phys_barnes_hut_octree *octr
 	double dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 	vecnorm /= dist;
 	if(octree->data != NULL) {
-		object->acc += vecnorm*(double)(option->gconst*octree->data->mass)/(dist*dist);
+		object->acc += -vecnorm*(option->gconst*octree->data->mass)/(dist*dist);
 	} else if((octree->halfdim/dist) < option->bh_ratio) {
-		object->acc += vecnorm*(double)(option->gconst*octree->cellsum.mass)/(dist*dist);
+		object->acc += -vecnorm*(option->gconst*octree->cellsum.mass)/(dist*dist);
 	} else {
 		for(int i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
@@ -259,5 +266,7 @@ void *thread_barnes_hut(void *thread_setts)
 		
 		pthread_barrier_wait(&barrier);
 	}
+	if(thread->id == 1) bh_decimate_octree(thread->root_octree);
+	allocated_cells = 0;
 	return 0;
 }

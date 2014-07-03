@@ -22,7 +22,7 @@ struct option_struct* option;
 
 struct option_struct {
 	float dt, bh_ratio;
-	long double elcharge, gconst, epsno;
+	double elcharge, gconst, epsno;
 	unsigned int obj;
 	unsigned short int avail_cores, verbosity;
 	int width, height;

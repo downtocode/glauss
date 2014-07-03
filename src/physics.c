@@ -78,11 +78,12 @@ int initphys(data** object)
 		exit(1);
 	}
 	
-	/* Calloc the object struct */
+	/* Allocate memory for all the objects */
 	*object = calloc(option->obj+1,sizeof(data));
 	
 	if(*object != NULL) pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n", \
 	(option->obj+1)*sizeof(data), option->obj+1, *object);
+	else return 1;
 	
 	/* Set the amount of threads */
 	int online_cores = 0;
@@ -101,7 +102,7 @@ int initphys(data** object)
 	} else if(option->avail_cores > 1) {
 		pprintf(PRI_VERYHIGH, "Running program with %i threads.\n", option->avail_cores);
 	} else if(option->avail_cores == 0 ) {
-		/*	Poor Mac OS...	*/
+		/*	Poor OSX...	*/
 		option->avail_cores = failsafe_cores;
 		pprintf(PRI_WARN, "Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
 	}
@@ -137,19 +138,18 @@ int threadcontrol(int status, data** object)
 			return running;
 			break;
 		case PHYS_START:
+			if(running) return 1;
+			running = 1;
 			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
 			
 			pthread_barrier_init(&barrier, NULL, option->avail_cores);
 			//pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_PRIVATE);
 			pthread_mutex_init(&movestop, &mattr);
 			
-			
 			struct thread_statistics **stats = calloc(option->avail_cores+1, sizeof(struct thread_statistics*));
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				stats[k] = calloc(1, sizeof(struct thread_statistics));
 			}
-			
-			t_stats = stats;
 			
 			void** thread_conf = (phys_find_config(option->algorithm))(object, stats);
 			
@@ -159,10 +159,10 @@ int threadcontrol(int status, data** object)
 				pthread_getcpuclockid(threads[k], &stats[k]->clockid);
 				pprintf(PRI_OK, "\n");
 			}
-			
-			running = 1;
+			t_stats = stats;
 			break;
 		case PHYS_SHUTDOWN:
+			if(!running) return 1;
 			threadcontrol(PHYS_UNPAUSE, NULL);
 			quit = 1;
 			for(int k = 1; k < option->avail_cores + 1; k++) {

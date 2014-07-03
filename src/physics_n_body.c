@@ -54,7 +54,7 @@ void *thread_nbody(void *thread_setts)
 	v4sd vecnorm, accprev;
 	double dist;
 	const double pi = acos(-1);
-	const long double gconst = option->gconst, epsno = option->epsno;
+	const double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele, noflj = option->noflj;
 	
 	while(!quit) {
@@ -75,9 +75,9 @@ void *thread_nbody(void *thread_setts)
 				vecnorm /= dist;
 				
 				if(!nogrv)
-					thread->obj[i].acc += vecnorm*(double)(gconst*thread->obj[j].mass)/(dist*dist);
+					thread->obj[i].acc += vecnorm*(gconst*thread->obj[j].mass)/(dist*dist);
 				if(!noele)
-					thread->obj[i].acc += -vecnorm*(double)((thread->obj[i].charge*\
+					thread->obj[i].acc += -vecnorm*((thread->obj[i].charge*\
 					thread->obj[j].charge)/(4*pi*epsno*dist*dist*thread->obj[i].mass));
 				if(!noflj)
 					thread->obj[i].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\

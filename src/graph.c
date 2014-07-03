@@ -204,7 +204,7 @@ void graph_draw_scene(data **object, float fps)
 		graph_display_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
 		
 		/* Timestep display */
-		snprintf(osdtime, sizeof(osdtime), "Timestep = %Lf", t_stats[1]->progress);
+		snprintf(osdtime, sizeof(osdtime), "Timestep = %0.4Lf", t_stats[1]->progress);
 		graph_display_text(osdtime, -0.95, 0.75, 1.0/option->width, 1.0/option->height, GL_WHITE);
 		
 		/* Simulation status */
@@ -214,11 +214,12 @@ void graph_draw_scene(data **object, float fps)
 		/* BH tree stats */
 		if(t_stats[1]->bh_allocated != 0) {
 			char bh_tree_allocated[50], bh_tree_cleaned[50], bh_tree_size[50];
-			sprintf(bh_tree_allocated, "Allocated octrees = %i", t_stats[1]->bh_allocated);
-			sprintf(bh_tree_cleaned, "Cleaned octrees = %i", t_stats[1]->bh_cleaned);
-			sprintf(bh_tree_size, "Size of octrees = %lf Mb", (288*t_stats[1]->bh_allocated)/1048576.0);
-			graph_display_text(bh_tree_allocated, -0.95, -0.75, 0.75/option->width, 0.75/option->height, GL_WHITE);
-			graph_display_text(bh_tree_cleaned, -0.95, -0.80, 0.75/option->width, 0.75/option->height, GL_WHITE);
+			sprintf(bh_tree_allocated, "Allocated = %i", t_stats[1]->bh_allocated);
+			sprintf(bh_tree_cleaned,   "Cleaned = %i", t_stats[1]->bh_cleaned);
+			sprintf(bh_tree_size, "Total size = %0.3lf MiB", (288*t_stats[1]->bh_allocated)/1048576.0);
+			graph_display_text("Octree:", -0.95, -0.70, 0.75/option->width, 0.75/option->height, GL_WHITE);
+			graph_display_text(bh_tree_allocated, -0.95, -0.75, 0.75/option->width, 0.75/option->height, GL_GREEN);
+			graph_display_text(bh_tree_cleaned, -0.95, -0.80, 0.75/option->width, 0.75/option->height, GL_RED);
 			graph_display_text(bh_tree_size, -0.95, -0.85, 0.75/option->width, 0.75/option->height, GL_WHITE);
 		}
 		
@@ -230,7 +231,6 @@ void graph_draw_scene(data **object, float fps)
 			sprintf(threadtime, "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 			graph_display_text(threadtime, 0.73, 0.95-((float)i/14), 0.75/option->width, 0.75/option->height, GL_WHITE);
 		}
-		
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	/*	Text/static drawing	*/

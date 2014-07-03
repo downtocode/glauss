@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1, t2;
 		struct numbers_selection numbers;
-		struct graph_cam_view camera = { 0, 0, 0, 0, 0, 0, 0.1 };
+		struct graph_cam_view camera = { 32.0, 315.0, 0, 0, 0, 0, 0.1 };
 		camera.scalefactor = 0.1;
 		numbers.final_digit = 0;
 		float deltatime = 0.0, totaltime = 0.0f, fps = 0.0;
@@ -206,9 +206,9 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 		
-		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
+		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj+1);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
-		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%LE C, gconst=%LE m^3 kg^-1 s^-2, epsno=%LE F m^-1\n" \
+		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%E C, gconst=%E m^3 kg^-1 s^-2, epsno=%E F m^-1\n" \
 		, option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	

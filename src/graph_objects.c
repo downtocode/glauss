@@ -24,7 +24,7 @@
 #include "graph_objects.h"
 
 static GLint objattr_pos, objattr_color;
-static const GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+static const GLfloat gl_col_white[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 void draw_obj_axis()
 {
@@ -72,14 +72,17 @@ void draw_obj_sphere(data* object)
 	
 	glDisableVertexAttribArray(objattr_pos);
 	glDisableVertexAttribArray(objattr_color);
-	glUniform4fv(objattr_color, 1, textcolor);
+	glUniform4fv(objattr_color, 1, gl_col_white);
 }
 
 void draw_obj_points(data* object)
 {
 	float points[option->obj][3];
 	
-	glUniform4fv(objattr_color, 1, textcolor);
+	glUniform4fv(objattr_color, 1, gl_col_white);
+	
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(objattr_pos);
 	
 	for(int i = 1; i < option->obj+1; i++) {
 		points[i-1][0] = object[i].pos[0];
@@ -87,14 +90,12 @@ void draw_obj_points(data* object)
 		points[i-1][2] = object[i].pos[2];
 	}
 	
-	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(objattr_pos);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
 	
 	glDrawArrays(GL_POINTS, 0, option->obj);
 	
 	glDisableVertexAttribArray(objattr_pos);
-	glUniform4fv(objattr_color, 1, textcolor);
+	glUniform4fv(objattr_color, 1, gl_col_white);
 }
 
 static const char object_vs[] =
