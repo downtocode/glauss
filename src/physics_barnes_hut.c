@@ -30,10 +30,11 @@
 //Octree's initial score, decremented every time it's empty, once it reaches 0 it's freed
 #define OCTREE_INIT_SCORE 24
 
-//Maximum amount of octrees
-#define OCTREE_MAX_ALLOCATED 3000000
+//Maximum amount of octrees per thread
+#define OCTREE_MAX_ALLOCATED 750000
 
-static unsigned int allocated_cells;
+//Thread local storage allocation stats
+static _Thread_local unsigned int allocated_cells;
 
 void** bhut_init(data** object, struct thread_statistics **stats)
 {
