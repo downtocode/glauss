@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
 			.noflj = 1,
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
+			.bh_ratio = 0.5, .bh_lifetime = 24,
 		};
 	/*	Default settings.	*/
 	
@@ -106,7 +107,8 @@ int main(int argc, char *argv[])
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "a:f:l:t:r:v:Vh", long_options, &option_index);
+			c = getopt_long(argc, argv, "a:f:l:t:r:v:Vh", long_options,
+							&option_index);
 			
 			/* Detect the end of the options. */
 			if(c == -1)
@@ -147,18 +149,22 @@ int main(int argc, char *argv[])
 					sscanf(optarg, "%hu", &option->verbosity);
 					break;
 				case 'V':
-					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING, __DATE__, __TIME__);
+					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING,
+						   __DATE__, __TIME__);
 					exit(0);
 					break;
 				case 'f':
 					option->filename = strdup(optarg);
 					if(parse_lua_simconf_options(option->filename)) {
-						pprintf(PRI_ERR, "Could not parse configuration from %s!\n", option->filename);
+						pprintf(PRI_ERR,
+								"Could not parse configuration from %s!\n",
+								option->filename);
 						return 0;
 					}
 					break;
 				case 'h':
-					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING, __DATE__, __TIME__);
+					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING,
+						   __DATE__, __TIME__);
 					printf("%s", ARGSTRING);
 					exit(0);
 					break;
@@ -178,7 +184,8 @@ int main(int argc, char *argv[])
 		}
 		
 		if(option->filename == NULL) {
-			pprintf(PRI_ERR, "No file specified! Use -f (filename) to specify one.\n");
+			pprintf(PRI_ERR,
+					"No file specified! Use -f (filename) to specify one.\n");
 			exit(1);
 		}
 		
@@ -197,18 +204,21 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 		data* object;
 		
-		if(!init_elements(NULL)) pprintf(PRI_OK, "Successfully read ./resources/elements.conf!\n");
+		if(!init_elements(NULL)) pprintf(PRI_OK,
+							  "Successfully read ./resources/elements.conf!\n");
 		else return 1;
 		
 		if(parse_lua_simconf_objects(option->filename, &object)) {
-			pprintf(PRI_ERR, "Could not parse objects from %s!\n", option->filename);
+			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
+					option->filename);
 			return 0;
 		}
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj+1);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
-		pprintf(PRI_ESSENTIAL, "Constants: elcharge=%E C, gconst=%E m^3 kg^-1 s^-2, epsno=%E F m^-1\n" \
-		, option->elcharge, option->gconst, option->epsno);
+		pprintf(PRI_ESSENTIAL,
+		"Constants: elcharge=%E C, gconst=%E m^3 kg^-1 s^-2, epsno=%E F m^-1\n", 
+							   option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	
 	/*	SDL2	*/
@@ -216,15 +226,17 @@ int main(int argc, char *argv[])
 		SDL_Window* window = NULL;
 		if(!novid) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+			SDL_GL_CONTEXT_PROFILE_ES);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 			window = SDL_CreateWindow(PACKAGE_STRING, \
-				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width, option->height, \
-				SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|SDL_WINDOW_ALLOW_HIGHDPI);
+				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width,
+				option->height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|\
+				SDL_WINDOW_ALLOW_HIGHDPI);
 			SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(vsync);
-			/* We deal with any and all graphical vizualization through this function. */
+			/* We deal with any and all graphical vizualization here */
 			graph_init();
 		}
 	/*	SDL2	*/
@@ -238,7 +250,8 @@ int main(int argc, char *argv[])
 			switch(event.type) {
 				case SDL_WINDOWEVENT:
 					if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
-						SDL_GetWindowSize(window, &option->width, &option->height);
+						SDL_GetWindowSize(window, &option->width,
+										  &option->height);
 						graph_resize_wind();
 					}
 					break;
@@ -272,17 +285,21 @@ int main(int argc, char *argv[])
 						goto quit;
 					}
 					if(start_selection) {
-						if(event.key.keysym.sym!=SDLK_RETURN && numbers.final_digit < 19) {
-							if(event.key.keysym.sym==SDLK_BACKSPACE && numbers.final_digit > 0) {
+						if(event.key.keysym.sym!=SDLK_RETURN &&\
+							numbers.final_digit < 19) {
+							if(event.key.keysym.sym==SDLK_BACKSPACE &&\
+								numbers.final_digit > 0) {
 								getnumber(&numbers, 0, NUM_REMOVE);
 								currentsel[strlen(currentsel)-1] = '\0';
 								break;
 							}
 							/*	sscanf will return 0 if nothing was done	*/
-							if(!sscanf(SDL_GetKeyName(event.key.keysym.sym), "%u", &currentnum)) {
+							if(!sscanf(SDL_GetKeyName(event.key.keysym.sym),
+								"%u", &currentnum)) {
 								break;
 							} else {
-								strcat(currentsel, SDL_GetKeyName(event.key.keysym.sym));
+								strcat(currentsel,
+									   SDL_GetKeyName(event.key.keysym.sym));
 								getnumber(&numbers, currentnum, NUM_ANOTHER);
 							}
 							break;
@@ -292,7 +309,8 @@ int main(int argc, char *argv[])
 							chosen = getnumber(&numbers, 0, NUM_GIVEME);
 							if(chosen > option->obj)
 								chosen = 0;
-							else pprintf(PRI_HIGH, "Object %u selected.\n", chosen);
+							else pprintf(PRI_HIGH, "Object %u selected.\n",
+										 chosen);
 							break;
 						}
 					}
@@ -309,13 +327,13 @@ int main(int argc, char *argv[])
 						printf("dt = %f\n", option->dt);
 					}
 					if(event.key.keysym.sym==SDLK_SPACE) {
-						if(threadcontrol(PHYS_STATUS, &object)) threadcontrol(PHYS_PAUSE, &object);
+						if(threadcontrol(PHYS_STATUS, &object))
+							threadcontrol(PHYS_PAUSE, &object);
 						else threadcontrol(PHYS_UNPAUSE, &object);
 					}
 					if(event.key.keysym.sym==SDLK_r) {
-						camera.view_roty = camera.view_rotx = camera.view_rotz = 0.0;
-						camera.tr_x = camera.tr_y = camera.tr_z = 0.0;
-						camera.scalefactor = 0.1;
+						camera = (struct graph_cam_view)\
+								 { 32.0, 315.0, 0, 0, 0, 0, 0.1 };
 						chosen = 0;
 					}
 					if(event.key.keysym.sym==SDLK_z) {
@@ -344,7 +362,8 @@ int main(int argc, char *argv[])
 		
 		{
 			gettimeofday(&t2, NULL);
-			deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
+			deltatime = (float)(t2.tv_sec - t1.tv_sec +\
+										(t2.tv_usec - t1.tv_usec) * 1e-6);
 			t1 = t2;
 			totaltime += deltatime;
 			frames++;
@@ -353,19 +372,23 @@ int main(int argc, char *argv[])
 			fps = frames/totaltime;
 			
 			if(dumplevel) toxyz(option->obj, object, t_stats[1]->progress);
-			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n", t_stats[1]->progress);
+			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n",
+					t_stats[1]->progress);
 			
 			if(bench) {
-				pprintf(PRI_ESSENTIAL, "Progressed %f timeunits over %f seconds.\n", t_stats[1]->progress, totaltime);
-				pprintf(PRI_ESSENTIAL, "Average = %f timeunits per second.\n", t_stats[1]->progress/totaltime);
+				pprintf(PRI_ESSENTIAL,
+						"Progressed %f timeunits over %f seconds.\n",
+						t_stats[1]->progress, totaltime);
+				pprintf(PRI_ESSENTIAL,
+						"Average = %f timeunits per second.\n",
+						t_stats[1]->progress/totaltime);
 				goto quit;
 			}
 			totaltime = frames = 0;
 		}
 		
 		if(novid) {
-			/* Prevents wasting CPU time by waking up once every 50 msec.
-			 * Using SDL_Delay because usleep is depricated and nanosleep is overkill. */
+			/* Prevents wasting CPU time by waking up once every 50 msec. */
 			SDL_Delay(50);
 			continue;
 		}

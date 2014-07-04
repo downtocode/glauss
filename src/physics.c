@@ -71,7 +71,9 @@ int initphys(data** object)
 {
 	/* Check if physics algorithm is valid */
 	if(phys_find_algorithm(option->algorithm) == NULL) {
-		pprintf(PRI_ERR, "Algorithm \"%s\" not found! Implemented algorithms:\n", option->algorithm);
+		pprintf(PRI_ERR,
+				"Algorithm \"%s\" not found! Implemented algorithms:\n",
+				option->algorithm);
 		for(int n = 0; phys_algorithms[n].name; n++) {
 			printf("    %s\n", phys_algorithms[n].name);
 		}
@@ -81,8 +83,10 @@ int initphys(data** object)
 	/* Allocate memory for all the objects */
 	*object = calloc(option->obj+1,sizeof(data));
 	
-	if(*object != NULL) pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n", \
-	(option->obj+1)*sizeof(data), option->obj+1, *object);
+	if(*object != NULL)
+		pprintf(PRI_OK,
+				"Allocated %lu bytes(%u objects) to object array at %p.\n", \
+				(option->obj+1)*sizeof(data), option->obj+1, *object);
 	else return 1;
 	
 	/* Set the amount of threads */
@@ -95,16 +99,21 @@ int initphys(data** object)
 	if(option->avail_cores == 0 && online_cores != 0 ) {
 		option->avail_cores = online_cores;
 		pprintf(PRI_OK, "Detected %i threads, will use all.\n", online_cores);
-	} else if( option->avail_cores != 0 && online_cores != 0 && online_cores > option->avail_cores ) {
-		pprintf(PRI_VERYHIGH, "Using %i out of %i threads.\n", option->avail_cores, online_cores);
-	} else if(option->avail_cores == 1) {
+	} else if( option->avail_cores != 0 && online_cores != 0\
+										 && online_cores > option->avail_cores )
+		pprintf(PRI_VERYHIGH, "Using %i out of %i threads.\n",
+				option->avail_cores, online_cores);
+	else if(option->avail_cores == 1)
 		pprintf(PRI_VERYHIGH, "Running program in a single thread.\n");
-	} else if(option->avail_cores > 1) {
-		pprintf(PRI_VERYHIGH, "Running program with %i threads.\n", option->avail_cores);
-	} else if(option->avail_cores == 0 ) {
+	else if(option->avail_cores > 1)
+		pprintf(PRI_VERYHIGH, "Running program with %i threads.\n",
+				option->avail_cores);
+	else if(option->avail_cores == 0 ) {
 		/*	Poor OSX...	*/
 		option->avail_cores = failsafe_cores;
-		pprintf(PRI_WARN, "Thread detection unavailable, running with %i thread(s).\n", failsafe_cores);
+		pprintf(PRI_WARN,
+				"Thread detection unavailable, running with %i thread(s).\n",
+				failsafe_cores);
 	}
 	
 	/* pthreads configuration */
@@ -129,7 +138,7 @@ int threadcontrol(int status, data** object)
 			break;
 		case PHYS_PAUSE:
 			return 0;
-			// Pausing temporarily disabled until a better way is found. Yanking mutexes around was not wise.
+			// Pausing temporarily disabled until a better way is found.
 			/*if(!running) return 1;
 			running = 0;
 			pthread_mutex_lock(&movestop);*/
@@ -146,16 +155,20 @@ int threadcontrol(int status, data** object)
 			//pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_PRIVATE);
 			pthread_mutex_init(&movestop, &mattr);
 			
-			struct thread_statistics **stats = calloc(option->avail_cores+1, sizeof(struct thread_statistics*));
+			struct thread_statistics **stats = calloc(option->avail_cores+1,
+									sizeof(struct thread_statistics*));
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				stats[k] = calloc(1, sizeof(struct thread_statistics));
 			}
 			
-			void** thread_conf = (phys_find_config(option->algorithm))(object, stats);
+			void** thread_conf = 
+						   (phys_find_config(option->algorithm))(object, stats);
 			
 			for(int k = 1; k < option->avail_cores + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
-				pthread_create(&threads[k], &thread_attribs, phys_find_algorithm(option->algorithm), thread_conf[k]);
+				pthread_create(&threads[k], &thread_attribs,
+							   phys_find_algorithm(option->algorithm),
+							   thread_conf[k]);
 				pthread_getcpuclockid(threads[k], &stats[k]->clockid);
 				pprintf(PRI_OK, "\n");
 			}

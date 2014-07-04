@@ -100,7 +100,8 @@ void graph_stop_freetype()
 	FT_Done_FreeType(library);
 }
 
-void graph_display_text(const char *text, float x, float y, float sx, float sy, unsigned int col)
+void graph_display_text(const char *text, float x, float y, float sx, float sy,
+						unsigned int col)
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -115,7 +116,9 @@ void graph_display_text(const char *text, float x, float y, float sx, float sy, 
 	for(const char *p = text; *p; p++) {
 		if(FT_Load_Char(face, *p, FT_LOAD_RENDER)) continue;
 		
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, g->bitmap.width, g->bitmap.rows, 0, GL_ALPHA,GL_UNSIGNED_BYTE, g->bitmap.buffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, g->bitmap.width,
+					 g->bitmap.rows, 0, GL_ALPHA,GL_UNSIGNED_BYTE,
+					 g->bitmap.buffer);
 		
 		float x2 = x + g->bitmap_left * sx;
 		float y2 = -y - g->bitmap_top * sy;

@@ -36,7 +36,8 @@ static const char elements_internal[] =
 #include "resources/elements.h"
 ;
 
-static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer, struct lua_parser_state *parser_state)
+static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer,
+									struct lua_parser_state *parser_state)
 {
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
@@ -80,7 +81,8 @@ int init_elements(const char *filepath)
 	/* Load file */
 	if(filepath != NULL) {
 		if(luaL_loadfile(L, "./resources/elements.lua"))
-			pprintf(PRI_ERR, "Opening Lua file %s failed! Will use internal DB instead.\n", filepath);
+			pprintf(PRI_ERR, "Opening Lua file %s failed! Using internal DB.\n",
+					filepath);
 	} else {
 		if(luaL_loadstring (L, elements_internal)) {
 			pprintf(PRI_ERR, "Failed to open internal DB.\n");

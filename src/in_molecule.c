@@ -44,7 +44,7 @@ int probefile(const char *molfile)
 	
 	/* 
 	 * XYZ files have total number of atoms in their first line.
-	 * PDB files contain an incrementing index, but I'd like to avoid using sscanf here.
+	 * PDB files contain an incrementing index, but I'd like to avoid sscanf.
 	 */
 	if(moltype == MOL_XYZ) {
 		fgets(str, sizeof(str), inprep);
@@ -64,7 +64,8 @@ int probefile(const char *molfile)
 
 int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 {
-	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10], pdbreschain;
+	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10];
+	char pdbreschain;
 	int filetype, pdbatomindex, pdbresidueseq;
 	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
 	FILE *inpars = fopen(molfile, "r");
@@ -85,12 +86,15 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
 		if(strstr(str, "#") == NULL) {
 			if(filetype == MOL_XYZ) {
-				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos, &zpos);
+				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos,
+					   &zpos);
 			} else if(filetype == MOL_PDB) {
 				if(strncmp(str, "ATOM", 4)==0) {
 					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",\
-							pdbtype, &pdbatomindex, pdbatomname, pdbresidue, &pdbreschain, &pdbresidueseq,\
-							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp, atom, &pdboffset);
+							pdbtype, &pdbatomindex, pdbatomname, pdbresidue,
+							&pdbreschain, &pdbresidueseq,\
+							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp,
+							atom, &pdboffset);
 				} else continue;
 			}
 			object[*i].atomnumber = return_atom_num(atom);
@@ -118,7 +122,9 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			}
-			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", molfile, *i, object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);
+			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", 
+					molfile, *i, 
+					object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);
 			*i = *i + 1;
 		}
 	}

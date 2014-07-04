@@ -49,6 +49,8 @@ static void conf_traverse_table(lua_State *L)
 				option->dt = lua_tonumber(L, -1);
 			if(!strcmp("bh_ratio", lua_tostring(L, -2)))
 				option->bh_ratio = lua_tonumber(L, -1);
+			if(!strcmp("bh_lifetime", lua_tostring(L, -2)))
+				option->bh_lifetime = lua_tonumber(L, -1);
 			if(!strcmp("width", lua_tostring(L, -2)))
 				option->width = (int)lua_tonumber(L, -1);
 			if(!strcmp("height", lua_tostring(L, -2)))
@@ -71,7 +73,8 @@ static void conf_traverse_table(lua_State *L)
 	}
 }
 
-static void obj_traverse_table(lua_State *L, data** object, data *buffer, struct lua_parser_state *parser_state)
+static void obj_traverse_table(lua_State *L, data** object, data *buffer,
+							   struct lua_parser_state *parser_state)
 {
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
@@ -79,11 +82,14 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer, struct
 			if(parser_state->molset) {
 				if(!access(parser_state->molfile, R_OK)) {
 					pprintf(PRI_OK, "File %s found!\n", parser_state->molfile);
-					readmolecule(*object, buffer, parser_state->molfile, &parser_state->i);
-					memset(parser_state->molfile, 0, sizeof(parser_state->molfile));
+					readmolecule(*object, buffer,
+								 parser_state->molfile, &parser_state->i);
+					memset(parser_state->molfile, 0,
+						   sizeof(parser_state->molfile));
 					parser_state->molset = 0;
 				} else {
-					pprintf(PRI_ERR, "File %s not found!\n", parser_state->molfile);
+					pprintf(PRI_ERR, "File %s not found!\n",
+							parser_state->molfile);
 					exit(1);
 				}
 			} else {
@@ -91,7 +97,9 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer, struct
 				if(parser_state->nullswitch) {
 					buffer->id = parser_state->i;
 					(*object)[parser_state->i] = *buffer;
-					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n", parser_state->i, buffer->pos[0], buffer->pos[1], buffer->pos[2]);
+					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n",
+							parser_state->i, buffer->pos[0], buffer->pos[1],
+							buffer->pos[2]);
 					parser_state->i++;
 				} else parser_state->nullswitch = 1;
 			}
@@ -130,7 +138,7 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer, struct
 	}
 }
 
-/* Using realloc is too much of a mess when we try to import molecules, so we scan beforehand. */
+/* We have to know the exact amount of objects we need memory for so we scan */
 static void molfiles_traverse_table(lua_State *L)
 {
 	lua_pushnil(L);
@@ -141,10 +149,11 @@ static void molfiles_traverse_table(lua_State *L)
 			if(!strcmp("molfile", lua_tostring(L, -2))) {
 				if(!access(lua_tostring(L, -1), R_OK)) {
 					pprintf(PRI_OK, "File %s found!\n", lua_tostring(L, -1));
-					/* Lua counts a molecule as a single object which we need to get rid of. */
+					/* A molecule is a single object which we get rid of. */
 					option->obj += probefile(lua_tostring(L, -1)) - 1;
 				} else {
-					pprintf(PRI_ERR, "File %s not found!\n", lua_tostring(L, -1));
+					pprintf(PRI_ERR, "File %s not found!\n",
+							lua_tostring(L, -1));
 					exit(1);
 				}
 			}

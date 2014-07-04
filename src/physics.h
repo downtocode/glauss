@@ -29,13 +29,15 @@
 #include <time.h>
 
 #if (__clang_major__ >= 3) &&  (__clang_minor__ >= 5)
-/* Use OpenCL's vectors when compiling with Clang since it doesn't support scalar operations on vectors. */
+/* Use OpenCL's vectors when compiling with Clang
+ *  since it doesn't support scalar operations on vectors. */
 typedef double v4sd __attribute__((ext_vector_type(3)));
-/*	Clang also defines __GNUC__ however it doesn't matter since the first condition has already been met in that case.	*/
+/* Clang also defines __GNUC__ however it doesn't matter
+ *  since the first condition has already been met in that case. */
 #elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 9)
 typedef double v4sd __attribute__ ((vector_size (32)));
 #else
-#error You need to update your compilers. Needs at least gcc 4.9 or clang 3.5 to compile.
+#error You need to update your compilers. GCC 4.9 or Clang 3.5 required
 #endif
 
 /* Object structure */

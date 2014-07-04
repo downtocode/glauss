@@ -27,9 +27,6 @@
 //Indent string when verbosely outputting octrees to stdout
 #define INDENT "  "
 
-//Octree's initial score, decremented every time it's empty, once it reaches 0 it's freed
-#define OCTREE_INIT_SCORE 24
-
 //Maximum amount of octrees per thread
 #define OCTREE_MAX_ALLOCATED 750000
 
@@ -38,7 +35,8 @@ static _Thread_local unsigned int allocated_cells;
 
 void** bhut_init(data** object, struct thread_statistics **stats)
 {
-	struct thread_config_bhut **thread_config = calloc(option->avail_cores+1, sizeof(struct thread_config_bhut*));
+	struct thread_config_bhut **thread_config = calloc(option->avail_cores+1,
+											sizeof(struct thread_config_bhut*));
 	for(int k = 0; k < option->avail_cores + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_bhut));
 	}
@@ -109,7 +107,8 @@ unsigned int bh_cleanup_octree(struct phys_barnes_hut_octree *octree)
 	return prev_allocated_cells - allocated_cells;
 }
 
-static short bh_get_octant(data *object, const struct phys_barnes_hut_octree *octree)
+static short bh_get_octant(data *object,
+						   const struct phys_barnes_hut_octree *octree)
 {
 	short oct = 0;
 	if(object->pos[0] >= octree->origin[0]) oct |= 4;
@@ -134,7 +133,7 @@ static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 		allocated_cells++;
 	}
 	/* TODO: Make dependent on previous value */
-	octree->cells[k]->score = OCTREE_INIT_SCORE;
+	octree->cells[k]->score = option->bh_lifetime;
 	octree->cells[k]->halfdim = octree->halfdim/2;
 	octree->cells[k]->origin = octree->origin + (octree->halfdim*\
 				(v4sd){
@@ -144,7 +143,8 @@ static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 				});
 }
 
-static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree)
+static void bh_insert_object(data *object,
+							 struct phys_barnes_hut_octree *octree)
 {
 	//Update octree mass/center of mass.
 	octree->cellsum.pos = (octree->cellsum.pos+object->pos)/2;
@@ -175,17 +175,28 @@ void bh_print_octree(struct phys_barnes_hut_octree *octree)
 {
 	if(octree->data != NULL) {
 		for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
-		pprintf(PRI_SPAM, "Object %i(pos = {%f, %f, %f}) is at cell level %i\n", octree->data->id, octree->data->pos[0], octree->data->pos[1], octree->data->pos[2], octree->depth);
+		pprintf(PRI_SPAM, "Object %i(pos = {%f, %f, %f}) is at cell level %i\n",
+				octree->data->id, octree->data->pos[0], octree->data->pos[1],
+				octree->data->pos[2], octree->depth);
 	} else {
 		for(int i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
 				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
-				pprintf(PRI_SPAM, "Cell(pos = {%f, %f, %f}, mass(center) = {%f, %f, %f}, mass = %lf) contents:\n", octree->cells[i]->origin[0], octree->cells[i]->origin[1], octree->cells[i]->origin[2],\
-				octree->cells[i]->cellsum.pos[0], octree->cells[i]->cellsum.pos[1], octree->cells[i]->cellsum.pos[2], octree->cells[i]->cellsum.mass);
+				pprintf(PRI_SPAM, 
+						"Cell(pos = {%f, %f, %f},\
+						mass(center) = {%f, %f, %f},\
+						mass = %lf) contents:\n", octree->cells[i]->origin[0],
+						octree->cells[i]->origin[1], 
+						octree->cells[i]->origin[2],
+						octree->cells[i]->cellsum.pos[0],
+						octree->cells[i]->cellsum.pos[1],
+						octree->cells[i]->cellsum.pos[2],
+						octree->cells[i]->cellsum.mass);
 				bh_print_octree(octree->cells[i]);
 			} else {
 				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
-				pprintf(PRI_SPAM, "Cell empty.\n",  octree->origin[0], octree->origin[1], octree->origin[2]);
+				pprintf(PRI_SPAM, "Cell empty.\n",  octree->origin[0],
+						octree->origin[1], octree->origin[2]);
 			}
 		}
 	}
@@ -206,7 +217,8 @@ double bh_max_displacement(data *object)
 
 struct phys_barnes_hut_octree *bh_init_tree()
 {
-	struct phys_barnes_hut_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
+	struct phys_barnes_hut_octree *octree = calloc(1,
+		sizeof(struct phys_barnes_hut_octree));
 	octree->depth=0;
 	octree->data = NULL;
 	octree->leaf = 1;
@@ -229,12 +241,16 @@ static void bh_calculate_force(data* object, struct phys_barnes_hut_octree *octr
 	if(octree->leaf && octree->data == NULL) return;
 	if(octree->data == object) return;
 	v4sd vecnorm = object->pos - octree->origin;
-	double dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
+	double dist = sqrt(vecnorm[0]*vecnorm[0] +\
+					   vecnorm[1]*vecnorm[1] +\
+					   vecnorm[2]*vecnorm[2]);
 	vecnorm /= dist;
 	if(octree->data != NULL) {
-		object->acc += -vecnorm*(option->gconst*octree->data->mass)/(dist*dist);
+		object->acc += -vecnorm*\
+						(option->gconst*octree->data->mass)/(dist*dist);
 	} else if((octree->halfdim/dist) < option->bh_ratio) {
-		object->acc += -vecnorm*(option->gconst*octree->cellsum.mass)/(dist*dist);
+		object->acc += -vecnorm*\
+						(option->gconst*octree->cellsum.mass)/(dist*dist);
 	} else {
 		for(int i=0; i < 8; i++) {
 			if(octree->cells[i] != NULL) {
@@ -246,14 +262,14 @@ static void bh_calculate_force(data* object, struct phys_barnes_hut_octree *octr
 
 void *thread_barnes_hut(void *thread_setts)
 {
-	struct thread_config_bhut *thread = (struct thread_config_bhut *)thread_setts;
+	struct thread_config_bhut *thread = thread_setts;
 	v4sd accprev;
 	
 	while(!quit) {
 		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			if(thread->obj[i].ignore) continue;
 			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
-			(thread->obj[i].acc)*((option->dt*option->dt)/2);
+				(thread->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
 		if(thread->id == 1) bh_build_octree(thread->obj, thread->root_octree);

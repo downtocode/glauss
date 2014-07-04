@@ -55,15 +55,19 @@ void draw_obj_sphere(data* object)
 	
 	for(float i = 0; i < pi; i+=dj) {
 		for(float j = 0; j < 2*pi; j+=dj) {
-			points[pointcount][0] = object->pos[0] + object->radius*sin(i)*cos(j);
-			points[pointcount][1] = object->pos[1] + object->radius*sin(i)*sin(j);
-			points[pointcount][2] = object->pos[2] + object->radius*cos(i);
+			points[pointcount][0] = object->pos[0] +\
+												   object->radius*sin(i)*cos(j);
+			points[pointcount][1] = object->pos[1] +\
+												   object->radius*sin(i)*sin(j);
+			points[pointcount][2] = object->pos[2] +\
+												   object->radius*cos(i);
 			pointcount++;
 		}
 	}
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, atom_prop[object->atomnumber].color);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0,
+						  atom_prop[object->atomnumber].color);
 	glEnableVertexAttribArray(objattr_pos);
 	glEnableVertexAttribArray(objattr_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);

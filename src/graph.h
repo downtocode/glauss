@@ -27,7 +27,8 @@ struct graph_cam_view {
 void graph_init();
 void graph_view(struct graph_cam_view *camera);
 float graph_resize_wind();
-unsigned int graph_compile_shader(const char *src_vert_shader, const char *src_frag_shader);
+unsigned int graph_compile_shader(const char *src_vert_shader,
+								  const char *src_frag_shader);
 
 #include "physics.h"
 

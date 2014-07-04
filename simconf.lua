@@ -6,6 +6,7 @@ settings = {
 		dt = 0.005,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
+		bh_lifetime = 24,
 	},
 	visual = {
 		width = 1024,

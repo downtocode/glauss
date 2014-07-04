@@ -26,7 +26,8 @@
 
 void** nbody_init(data** object, struct thread_statistics **stats)
 {
-	struct thread_config_nbody **thread_config = calloc(option->avail_cores+1, sizeof(struct thread_config_nbody*));
+	struct thread_config_nbody **thread_config = calloc(option->avail_cores+1,
+		sizeof(struct thread_config_nbody*));
 	for(int k = 0; k < option->avail_cores + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_nbody));
 	}
@@ -50,12 +51,13 @@ void** nbody_init(data** object, struct thread_statistics **stats)
 
 void *thread_nbody(void *thread_setts)
 {
-	struct thread_config_nbody *thread = (struct thread_config_nbody *)thread_setts;
+	struct thread_config_nbody *thread = thread_setts;
 	v4sd vecnorm, accprev;
 	double dist;
 	const double pi = acos(-1);
 	const double gconst = option->gconst, epsno = option->epsno;
-	const bool nogrv = option->nogrv, noele = option->noele, noflj = option->noflj;
+	const bool nogrv = option->nogrv, noele = option->noele;
+	const bool noflj = option->noflj;
 	
 	while(!quit) {
 		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
@@ -71,17 +73,22 @@ void *thread_nbody(void *thread_setts)
 			for(int j = 1; j < option->obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
-				dist = sqrt(vecnorm[0]*vecnorm[0] + vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
+				dist = sqrt(vecnorm[0]*vecnorm[0] +\
+							vecnorm[1]*vecnorm[1] +\
+							vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
 				
 				if(!nogrv)
-					thread->obj[i].acc += vecnorm*(gconst*thread->obj[j].mass)/(dist*dist);
+					thread->obj[i].acc += vecnorm*\
+									   (gconst*thread->obj[j].mass)/(dist*dist);
 				if(!noele)
-					thread->obj[i].acc += -vecnorm*((thread->obj[i].charge*\
-					thread->obj[j].charge)/(4*pi*epsno*dist*dist*thread->obj[i].mass));
+					thread->obj[i].acc += -vecnorm*\
+								((thread->obj[i].charge*thread->obj[j].charge)/\
+									(4*pi*epsno*dist*dist*thread->obj[i].mass));
 				if(!noflj)
-					thread->obj[i].acc += vecnorm*(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
-					6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[i].mass);
+					thread->obj[i].acc += vecnorm*\
+								(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
+						   6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[i].mass);
 			}
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
 		}

@@ -21,7 +21,7 @@
 struct option_struct* option;
 
 struct option_struct {
-	float dt, bh_ratio;
+	float dt;
 	double elcharge, gconst, epsno;
 	unsigned int obj;
 	unsigned short int avail_cores, verbosity;
@@ -29,4 +29,9 @@ struct option_struct {
 	bool nogrv, noele, noflj, moderandom, logenable;
 	char *fontname, *filename, *algorithm;
 	FILE *logfile;
+	
+	
+	/* Barnes-Hut algorithm specifics */
+	float bh_ratio;
+	unsigned short bh_lifetime;
 };

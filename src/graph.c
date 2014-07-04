@@ -91,7 +91,8 @@ static void make_y_rot_matrix(GLfloat angle, GLfloat *m)
 	m[10] = c;
 }
 
-static void make_translation_matrix(GLfloat xpos, GLfloat ypos, GLfloat zpos, GLfloat *m)
+static void make_translation_matrix(GLfloat xpos, GLfloat ypos,
+									GLfloat zpos, GLfloat *m)
 {
 	m[0] = 1;
 	m[3] = xpos;
@@ -110,7 +111,8 @@ static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 	m[15] = 1;
 }
 
-static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near, GLfloat far, GLfloat *m) {
+static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near,
+							 GLfloat far, GLfloat *m) {
 	float D2R = acos(-1)/180.0;
 	float yScale = 1.0/tan(D2R * fov / 2);
 	float xScale = yScale/aspect;
@@ -126,7 +128,8 @@ void graph_view(struct graph_cam_view *camera)
 {
 	make_translation_matrix(camera->tr_x, camera->tr_y, camera->tr_z, transl);
 	
-	make_scale_matrix(aspect_ratio*camera->scalefactor, camera->scalefactor, camera->scalefactor, scale);
+	make_scale_matrix(aspect_ratio*camera->scalefactor, camera->scalefactor,
+					  camera->scalefactor, scale);
 	
 	make_pers_matrix(10, option->width/option->height, -1, 10, pers);
 	
@@ -149,7 +152,8 @@ float graph_resize_wind()
 	return aspect_ratio;
 }
 
-unsigned int graph_compile_shader(const char *src_vert_shader, const char *src_frag_shader)
+unsigned int graph_compile_shader(const char *src_vert_shader,
+								  const char *src_frag_shader)
 {
 	GLint status_vert, status_frag;
 	GLuint program = glCreateProgram();
@@ -201,26 +205,38 @@ void graph_draw_scene(data **object, float fps)
 		else if(fps < 48) fpscolor = GL_BLUE;
 		else fpscolor = GL_GREEN;
 		sprintf(osdfps, "FPS = %3.2f", fps);
-		graph_display_text(osdfps, -0.95, 0.85, 1.0/option->width, 1.0/option->height, fpscolor);
+		graph_display_text(osdfps, -0.95, 0.85, 1.0/option->width,
+						   1.0/option->height, fpscolor);
 		
 		/* Timestep display */
-		snprintf(osdtime, sizeof(osdtime), "Timestep = %0.4Lf", t_stats[1]->progress);
-		graph_display_text(osdtime, -0.95, 0.75, 1.0/option->width, 1.0/option->height, GL_WHITE);
+		snprintf(osdtime, sizeof(osdtime), "Timestep = %0.4Lf",
+				 t_stats[1]->progress);
+		graph_display_text(osdtime, -0.95, 0.75, 1.0/option->width,
+						   1.0/option->height, GL_WHITE);
 		
 		/* Simulation status */
 		if(!threadcontrol(PHYS_STATUS, NULL))
-			graph_display_text("Simulation stopped", -0.95, -0.95, 1.0/option->width, 1.0/option->height, GL_RED);
+			graph_display_text("Simulation stopped", -0.95, -0.95,
+							   1.0/option->width, 1.0/option->height, GL_RED);
 		
 		/* BH tree stats */
 		if(t_stats[1]->bh_allocated != 0) {
 			char bh_tree_allocated[50], bh_tree_cleaned[50], bh_tree_size[50];
-			sprintf(bh_tree_allocated, "Allocated = %i", t_stats[1]->bh_allocated);
+			sprintf(bh_tree_allocated, "Allocated = %i",
+					t_stats[1]->bh_allocated);
 			sprintf(bh_tree_cleaned,   "Cleaned = %i", t_stats[1]->bh_cleaned);
-			sprintf(bh_tree_size, "Total size = %0.3lf MiB", (288*t_stats[1]->bh_allocated)/1048576.0);
-			graph_display_text("Octree:", -0.95, -0.70, 0.75/option->width, 0.75/option->height, GL_WHITE);
-			graph_display_text(bh_tree_allocated, -0.95, -0.75, 0.75/option->width, 0.75/option->height, GL_GREEN);
-			graph_display_text(bh_tree_cleaned, -0.95, -0.80, 0.75/option->width, 0.75/option->height, GL_RED);
-			graph_display_text(bh_tree_size, -0.95, -0.85, 0.75/option->width, 0.75/option->height, GL_WHITE);
+			sprintf(bh_tree_size, "Total size = %0.3lf MiB",
+					(288*t_stats[1]->bh_allocated)/1048576.0);
+			graph_display_text("Octree:", -0.95, -0.70, 0.75/option->width,
+							   0.75/option->height, GL_WHITE);
+			graph_display_text(bh_tree_allocated, -0.95, -0.75,
+							   0.75/option->width, 0.75/option->height,
+							   GL_GREEN);
+			graph_display_text(bh_tree_cleaned, -0.95, -0.80,
+							   0.75/option->width, 0.75/option->height, GL_RED);
+			graph_display_text(bh_tree_size, -0.95, -0.85,
+							   0.75/option->width, 0.75/option->height,
+							   GL_WHITE);
 		}
 		
 		/* Thread time stats */
@@ -228,8 +244,11 @@ void graph_draw_scene(data **object, float fps)
 		char threadtime[50];
 			for(int i = 1; i < option->avail_cores + 1; i++) {
 			clock_gettime(t_stats[i]->clockid, &ts);
-			sprintf(threadtime, "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
-			graph_display_text(threadtime, 0.73, 0.95-((float)i/14), 0.75/option->width, 0.75/option->height, GL_WHITE);
+			sprintf(threadtime, "Thread %i = %ld.%ld", i, ts.tv_sec,
+					ts.tv_nsec / 1000000);
+			graph_display_text(threadtime, 0.73, 0.95-((float)i/14),
+							   0.75/option->width, 0.75/option->height,
+							   GL_WHITE);
 		}
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
