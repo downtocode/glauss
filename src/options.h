@@ -20,18 +20,25 @@
 
 struct option_struct* option;
 
+/* Options struct */
+/* //-- marks internal, non-parser settable variables */
+
 struct option_struct {
-	float dt;
-	double elcharge, gconst, epsno;
-	unsigned int obj;
-	unsigned short int avail_cores, verbosity;
+	/* Frontend */
+	unsigned short verbosity;
 	int width, height;
-	bool nogrv, noele, noflj, moderandom, logenable;
+	bool nogrv, noele, noflj, logenable;
 	char *fontname, *filename, *algorithm;
-	FILE *logfile;
+	FILE *logfile; //--
 	
+	/* Physics */
+	float dt;
+	unsigned int obj; //--
+	unsigned short avail_cores;
+	double elcharge, gconst, epsno;
 	
 	/* Barnes-Hut algorithm specifics */
 	float bh_ratio;
 	unsigned short bh_lifetime;
+	unsigned int bh_max_cells;
 };

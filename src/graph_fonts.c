@@ -24,6 +24,8 @@
 #include "graph_objects.h"
 #include "graph_fonts.h"
 #include "physics.h"
+#include "physics_aux.h"
+#include "options.h"
 
 static const char text_vs[] =
 // Generated from text_vs.glsl
@@ -58,7 +60,6 @@ const char *graph_init_fontconfig()
 	FcPattern *fc_font_chosen = FcFontMatch(fc_config, fc_pattern, &fc_result);
 	FcValue fc_value;
 	FcPatternGet(fc_font_chosen, "file", 0, &fc_value);
-	//FcFini();
 	return (const char *)fc_value.u.s;
 }
 
@@ -100,9 +101,9 @@ void graph_stop_freetype()
 	FT_Done_FreeType(library);
 }
 
-void graph_display_text(const char *text, float x, float y, float sx, float sy,
-						unsigned int col)
+void graph_display_text(const char *text, float x, float y, float s, short col)
 {
+	float sx = s/option->width, sy = s/option->height;
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
@@ -144,27 +145,27 @@ void graph_display_text(const char *text, float x, float y, float sx, float sy,
 	if(col != 0) glUniform4fv(textattr_color, 1, textcolor);
 }
 
-/*void graph_display_object_info(data object)
+void graph_display_object_info(data object)
 {
-	float boxsize = 0.13*scale[5]*(object.radius*15);
+	float boxsize = 0.13*(object.radius*15);
 	GLfloat objpoint[3] = {0,0,0};
 	
 	GLfloat chosenbox[4][2] = {
-		{objpoint[0] - aspect_ratio*boxsize, objpoint[1] - boxsize},
-		{objpoint[0] - aspect_ratio*boxsize, chosenbox[1][1] = objpoint[1] + boxsize},
-		{objpoint[0] + aspect_ratio*boxsize, objpoint[1] + boxsize},
-		{objpoint[0] + aspect_ratio*boxsize, chosenbox[3][1] = objpoint[1] - boxsize},
+		{objpoint[0] - boxsize, objpoint[1] - boxsize},
+		{objpoint[0] - boxsize, chosenbox[1][1] = objpoint[1] + boxsize},
+		{objpoint[0] + boxsize, objpoint[1] + boxsize},
+		{objpoint[0] + boxsize, chosenbox[3][1] = objpoint[1] - boxsize},
 	};
 	
 	char osdstr[20];
 	sprintf(osdstr, "Atom=%s", atom_prop[object.atomnumber].name);
 	
-	render_text(osdstr, objpoint[0] + object.radius*scale[5], \
-	objpoint[1] + object.radius*scale[5], 1.0/option->width, 1.0/option->height, GL_RED);
+	graph_display_text(osdstr, objpoint[0] + object.radius,\
+					   objpoint[1] + object.radius, 1.0, GL_RED);
 	
 	glEnableVertexAttribArray(textattr_coord);
 	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(chosenbox), chosenbox, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_LINE_LOOP, 0, 4);
 	glDisableVertexAttribArray(textattr_coord);
-}*/
+}

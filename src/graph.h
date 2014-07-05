@@ -18,6 +18,11 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
+#define GL_WHITE 0
+#define GL_RED 1
+#define GL_GREEN 2
+#define GL_BLUE 3
+
 struct graph_cam_view {
 	float view_rotx, view_roty, view_rotz;
 	float tr_x, tr_y, tr_z;
@@ -32,6 +37,6 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 
 #include "physics.h"
 
-void graph_draw_scene(data **object, float fps);
+void graph_draw_scene(data **object, float fps, unsigned int chosen);
 
 #endif

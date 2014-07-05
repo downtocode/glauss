@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
 			.bh_ratio = 0.5, .bh_lifetime = 24,
+			.bh_max_cells = 1000000,
 		};
 	/*	Default settings.	*/
 	
@@ -192,7 +193,7 @@ int main(int argc, char *argv[])
 		if(bench) {
 			pprintf(PRI_WARN, "Benchmark mode active.\n");
 			novid = 1;
-			option->verbosity = 9;
+			//option->verbosity = 9;
 			if(timer==1.0f) timer=30.0f;
 		}
 	/*	Arguments	*/
@@ -377,10 +378,10 @@ int main(int argc, char *argv[])
 			
 			if(bench) {
 				pprintf(PRI_ESSENTIAL,
-						"Progressed %f timeunits over %f seconds.\n",
+						"Progressed %Lf timeunits over %f seconds.\n",
 						t_stats[1]->progress, totaltime);
 				pprintf(PRI_ESSENTIAL,
-						"Average = %f timeunits per second.\n",
+						"Average = %Lf timeunits per second.\n",
 						t_stats[1]->progress/totaltime);
 				goto quit;
 			}
@@ -412,7 +413,7 @@ int main(int argc, char *argv[])
 		}
 		graph_view(&camera);
 		
-		graph_draw_scene(&object, fps);
+		graph_draw_scene(&object, fps, chosen);
 		
 		
 		SDL_GL_SwapWindow(window);

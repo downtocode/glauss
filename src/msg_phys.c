@@ -38,8 +38,7 @@ void pprintf(unsigned int priority, const char *format, ...)
 		va_start(args, format);
 		vfprintf(stderr, format, args);
 		va_end(args);
-	} else if(priority <= option->verbosity || priority == PRI_OK\
-											|| priority == PRI_WARN) {
+	} else if(priority <= option->verbosity || priority == PRI_OK || priority == PRI_WARN) {
 		if(priority == PRI_OK) printf("%s", okmsg);
 		if(priority == PRI_WARN) printf("%s", warnmsg);
 		va_start(args, format);

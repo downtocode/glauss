@@ -28,11 +28,6 @@
 #include "graph_fonts.h"
 #include "options.h"
 
-#define GL_WHITE 0
-#define GL_RED 1
-#define GL_GREEN 2
-#define GL_BLUE 3
-
 static float aspect_ratio;
 static GLuint pointvbo, textvbo;
 static GLuint object_shader, text_shader;
@@ -190,7 +185,7 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 	return program;
 }
 
-void graph_draw_scene(data **object, float fps)
+void graph_draw_scene(data **object, float fps, unsigned int chosen)
 {
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	char osdtime[50], osdfps[30];
@@ -205,19 +200,19 @@ void graph_draw_scene(data **object, float fps)
 		else if(fps < 48) fpscolor = GL_BLUE;
 		else fpscolor = GL_GREEN;
 		sprintf(osdfps, "FPS = %3.2f", fps);
-		graph_display_text(osdfps, -0.95, 0.85, 1.0/option->width,
-						   1.0/option->height, fpscolor);
+		graph_display_text(osdfps, -0.95, 0.85, 1.0, fpscolor);
 		
 		/* Timestep display */
 		snprintf(osdtime, sizeof(osdtime), "Timestep = %0.4Lf",
 				 t_stats[1]->progress);
-		graph_display_text(osdtime, -0.95, 0.75, 1.0/option->width,
-						   1.0/option->height, GL_WHITE);
+		graph_display_text(osdtime, -0.95, 0.75, 1.0, GL_WHITE);
+		
+		/* Chosen object */
+		//if(chosen != 0) graph_display_object_info((*object)[chosen]);
 		
 		/* Simulation status */
 		if(!threadcontrol(PHYS_STATUS, NULL))
-			graph_display_text("Simulation stopped", -0.95, -0.95,
-							   1.0/option->width, 1.0/option->height, GL_RED);
+			graph_display_text("Simulation stopped", -0.95, -0.95, 1.0, GL_RED);
 		
 		/* BH tree stats */
 		if(t_stats[1]->bh_allocated != 0) {
@@ -227,16 +222,10 @@ void graph_draw_scene(data **object, float fps)
 			sprintf(bh_tree_cleaned,   "Cleaned = %i", t_stats[1]->bh_cleaned);
 			sprintf(bh_tree_size, "Total size = %0.3lf MiB",
 					(288*t_stats[1]->bh_allocated)/1048576.0);
-			graph_display_text("Octree:", -0.95, -0.70, 0.75/option->width,
-							   0.75/option->height, GL_WHITE);
-			graph_display_text(bh_tree_allocated, -0.95, -0.75,
-							   0.75/option->width, 0.75/option->height,
-							   GL_GREEN);
-			graph_display_text(bh_tree_cleaned, -0.95, -0.80,
-							   0.75/option->width, 0.75/option->height, GL_RED);
-			graph_display_text(bh_tree_size, -0.95, -0.85,
-							   0.75/option->width, 0.75/option->height,
-							   GL_WHITE);
+			graph_display_text("Octree:", -0.95, -0.70, 0.75, GL_WHITE);
+			graph_display_text(bh_tree_allocated, -0.95, -0.75, 0.75, GL_GREEN);
+			graph_display_text(bh_tree_cleaned, -0.95, -0.80, 0.75, GL_RED);
+			graph_display_text(bh_tree_size, -0.95, -0.85, 0.75, GL_WHITE);
 		}
 		
 		/* Thread time stats */
@@ -247,7 +236,7 @@ void graph_draw_scene(data **object, float fps)
 			sprintf(threadtime, "Thread %i = %ld.%ld", i, ts.tv_sec,
 					ts.tv_nsec / 1000000);
 			graph_display_text(threadtime, 0.73, 0.95-((float)i/14),
-							   0.75/option->width, 0.75/option->height,
+							   0.75,
 							   GL_WHITE);
 		}
 	}
@@ -295,5 +284,3 @@ void graph_init()
 	scl_matrix = glGetUniformLocation(object_shader, "scalingMat");
 	per_matrix = glGetUniformLocation(object_shader, "perspectiveMat");
 }
-
-

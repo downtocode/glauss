@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <tgmath.h>
 #include <pthread.h>
+#include <malloc.h>
 #include "options.h"
 #include "msg_phys.h"
 #include "physics.h"
@@ -27,14 +28,16 @@
 //Indent string when verbosely outputting octrees to stdout
 #define INDENT "  "
 
-//Maximum amount of octrees per thread
-#define OCTREE_MAX_ALLOCATED 750000
-
 //Thread local storage allocation stats
 static _Thread_local unsigned int allocated_cells;
 
 void** bhut_init(data** object, struct thread_statistics **stats)
 {
+	/* Use this size for glibc's fastbins. In theory any memory below this size
+	 * will not be consolidated together, allowing us to allocate and free
+	 * memory real fast. */
+	mallopt(M_MXFAST, sizeof(struct phys_barnes_hut_octree));
+	
 	struct thread_config_bhut **thread_config = calloc(option->avail_cores+1,
 											sizeof(struct thread_config_bhut*));
 	for(int k = 0; k < option->avail_cores + 1; k++) {
@@ -60,7 +63,7 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 
 static void bh_decimate_octree(struct phys_barnes_hut_octree *octree) {
 	for(short i=0; i < 8; i++) {
-		if(octree->cells[i] != NULL) {
+		if(octree->cells[i]) {
 			bh_decimate_octree(octree->cells[i]);
 			free(octree->cells[i]);
 			allocated_cells--;
@@ -71,17 +74,17 @@ static void bh_decimate_octree(struct phys_barnes_hut_octree *octree) {
 static bool bh_clean_octree(struct phys_barnes_hut_octree *octree)
 {
 	octree->cellsum = (data){{0}};
-	if(octree->data != NULL) {
-		/* Object was here, chances are cell will be used, do not free */
+	if(octree->data) {
+		/* Object was here, chances are cell will be used, do not free yet */
 		octree->data = NULL;
 		return 0;
 	} else {
 		/* No object, if end node we reduce its score and check if 0 */
 		if(octree->leaf) return !octree->score-- ? 1 : 0;
-		/* Not end node, see recursively check non-empty cells */
+		/* Not end node, recursively check non-empty cells */
 		short filled_cells = 8;
 		for(short i=0; i < 8; i++) {
-			if(octree->cells[i] != NULL) {
+			if(octree->cells[i]) {
 				if(bh_clean_octree(octree->cells[i])) {
 					/* Since cell is empty, free it */
 					free(octree->cells[i]);
@@ -120,15 +123,13 @@ static short bh_get_octant(data *object,
 
 static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 {
-	if(allocated_cells > OCTREE_MAX_ALLOCATED) {
+	if(allocated_cells > option->bh_max_cells) {
 		printf("Too many cells! Total allocated cells = %i\n", allocated_cells);
 		exit(0);
 	}
-	if(octree->cells[k] == NULL) {
+	if(!octree->cells[k]) {
 		octree->cells[k] = calloc(1, sizeof(struct phys_barnes_hut_octree));
-		for(int i=0; i < 8; i++) octree->cells[k]->cells[i] = NULL;
 		octree->cells[k]->depth = octree->depth+1;
-		octree->cells[k]->data = NULL;
 		octree->cells[k]->leaf = 1;
 		allocated_cells++;
 	}
@@ -150,10 +151,10 @@ static void bh_insert_object(data *object,
 	octree->cellsum.pos = (octree->cellsum.pos+object->pos)/2;
 	octree->cellsum.mass += object->mass;
 	octree->cellsum.charge += object->charge;
-	if(octree->data == NULL && octree->leaf) {
+	if(!octree->data && octree->leaf) {
 		//This cell has no object or subcells
 		octree->data = object;
-	} else if(octree->data != NULL && octree->leaf) {
+	} else if(octree->data && octree->leaf) {
 		//This cell has object but no subcells
 		short oct_current_obj = bh_get_octant(object, octree);
 		short oct_octree_obj = bh_get_octant(octree->data, octree);
@@ -173,14 +174,14 @@ static void bh_insert_object(data *object,
 
 void bh_print_octree(struct phys_barnes_hut_octree *octree)
 {
-	if(octree->data != NULL) {
+	if(octree->data) {
 		for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
 		pprintf(PRI_SPAM, "Object %i(pos = {%f, %f, %f}) is at cell level %i\n",
 				octree->data->id, octree->data->pos[0], octree->data->pos[1],
 				octree->data->pos[2], octree->depth);
 	} else {
 		for(int i=0; i < 8; i++) {
-			if(octree->cells[i] != NULL) {
+			if(octree->cells[i]) {
 				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
 				pprintf(PRI_SPAM, 
 						"Cell(pos = {%f, %f, %f},\
@@ -219,16 +220,14 @@ struct phys_barnes_hut_octree *bh_init_tree()
 {
 	struct phys_barnes_hut_octree *octree = calloc(1,
 		sizeof(struct phys_barnes_hut_octree));
-	octree->depth=0;
-	octree->data = NULL;
 	octree->leaf = 1;
-	octree->origin = (v4sd){0,0,0};
-	for(int i=0; i < 8; i++) octree->cells[i] = NULL;
 	return octree;
 }
 
 void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree)
 {
+	/* The cleanup function could delete the octree */
+	if(!octree) octree = bh_init_tree();
 	/* The distribution will change so we need to account for this. */
 	octree->halfdim = bh_max_displacement(object);
 	for(int i = 1; i < option->obj + 1; i++) {
@@ -238,14 +237,14 @@ void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree)
 
 static void bh_calculate_force(data* object, struct phys_barnes_hut_octree *octree)
 {
-	if(octree->leaf && octree->data == NULL) return;
+	if(octree->leaf && !octree->data) return;
 	if(octree->data == object) return;
 	v4sd vecnorm = object->pos - octree->origin;
 	double dist = sqrt(vecnorm[0]*vecnorm[0] +\
 					   vecnorm[1]*vecnorm[1] +\
 					   vecnorm[2]*vecnorm[2]);
 	vecnorm /= dist;
-	if(octree->data != NULL) {
+	if(octree->data) {
 		object->acc += -vecnorm*\
 						(option->gconst*octree->data->mass)/(dist*dist);
 	} else if((octree->halfdim/dist) < option->bh_ratio) {
@@ -253,7 +252,7 @@ static void bh_calculate_force(data* object, struct phys_barnes_hut_octree *octr
 						(option->gconst*octree->cellsum.mass)/(dist*dist);
 	} else {
 		for(int i=0; i < 8; i++) {
-			if(octree->cells[i] != NULL) {
+			if(octree->cells[i]) {
 				bh_calculate_force(object, octree->cells[i]);
 			}
 		}

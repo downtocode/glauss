@@ -44,17 +44,19 @@ static void conf_traverse_table(lua_State *L)
 			conf_traverse_table(L);
 		} else if(lua_isnumber(L, -1)) {
 			if(!strcmp("threads", lua_tostring(L, -2)))
-				option->avail_cores = (unsigned short int)lua_tonumber(L, -1);
+				option->avail_cores = lua_tonumber(L, -1);
 			if(!strcmp("dt", lua_tostring(L, -2)))
 				option->dt = lua_tonumber(L, -1);
 			if(!strcmp("bh_ratio", lua_tostring(L, -2)))
 				option->bh_ratio = lua_tonumber(L, -1);
 			if(!strcmp("bh_lifetime", lua_tostring(L, -2)))
 				option->bh_lifetime = lua_tonumber(L, -1);
+			if(!strcmp("bh_max_cells", lua_tostring(L, -2)))
+				option->bh_max_cells = lua_tonumber(L, -1);
 			if(!strcmp("width", lua_tostring(L, -2)))
-				option->width = (int)lua_tonumber(L, -1);
+				option->width = lua_tonumber(L, -1);
 			if(!strcmp("height", lua_tostring(L, -2)))
-				option->height = (int)lua_tonumber(L, -1);
+				option->height = lua_tonumber(L, -1);
 			if(!strcmp("elcharge", lua_tostring(L, -2)))
 				option->elcharge = lua_tonumber(L, -1);
 			if(!strcmp("gconst", lua_tostring(L, -2)))
@@ -62,7 +64,7 @@ static void conf_traverse_table(lua_State *L)
 			if(!strcmp("epsno", lua_tostring(L, -2)))
 				option->epsno = lua_tonumber(L, -1);
 			if(!strcmp("verbosity", lua_tostring(L, -2)))
-				option->verbosity = (unsigned short int)lua_tonumber(L, -1);
+				option->verbosity = lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("algorithm", lua_tostring(L, -2)))
 				option->algorithm = strdup(lua_tostring(L, -1));

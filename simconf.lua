@@ -6,7 +6,8 @@ settings = {
 		dt = 0.005,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
-		bh_lifetime = 24,
+		bh_lifetime = 1,
+		bh_max_cells = 1000000,
 	},
 	visual = {
 		width = 1024,
@@ -25,7 +26,7 @@ settings = {
 	},
 }
 
-maxobjects = 10000;
+maxobjects = 7500;
 
 --Add molecules or any additional objects here
 objects = {
