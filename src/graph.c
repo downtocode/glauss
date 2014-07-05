@@ -188,24 +188,28 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 void graph_draw_scene(data **object, float fps, unsigned int chosen)
 {
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	char osdtime[50], osdfps[30];
+	char osdtime[50], osdfps[30], osdobj[30];
 	int fpscolor;
 	
 	/*	Text/static drawing	*/
 	glUseProgram(text_shader);
 	glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-	{
-		/*	FPS	*/
+	{	
+		/* FPS */
 		if(fps < 25) fpscolor = GL_RED;
 		else if(fps < 48) fpscolor = GL_BLUE;
 		else fpscolor = GL_GREEN;
 		sprintf(osdfps, "FPS = %3.2f", fps);
 		graph_display_text(osdfps, -0.95, 0.85, 1.0, fpscolor);
 		
+		/* Objects */
+		snprintf(osdobj, sizeof(osdobj), "Objects = %u", option->obj+1);
+		graph_display_text(osdobj, -0.95, 0.75, 1.0, GL_WHITE);
+		
 		/* Timestep display */
 		snprintf(osdtime, sizeof(osdtime), "Timestep = %0.4Lf",
 				 t_stats[1]->progress);
-		graph_display_text(osdtime, -0.95, 0.75, 1.0, GL_WHITE);
+		graph_display_text(osdtime, -0.95, 0.65, 1.0, GL_WHITE);
 		
 		/* Chosen object */
 		//if(chosen != 0) graph_display_object_info((*object)[chosen]);

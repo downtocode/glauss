@@ -126,6 +126,13 @@ int initphys(data** object)
 	return 0;
 }
 
+bool phys_remove_obj(data *object, unsigned int index) {
+	object[index] = object[option->obj];
+	object = realloc(object, (option->obj--)*sizeof(data));
+	if(!object) return 1;
+	return 0;
+}
+
 int threadcontrol(int status, data** object)
 {
 	if(!option->avail_cores) return 0;

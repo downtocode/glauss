@@ -81,6 +81,7 @@ bool running, quit;
 
 /* External functions for control */
 int initphys(data** object);
+bool phys_remove_obj(data *object, unsigned int index);
 int threadcontrol(int status, data** object);
 
 #endif
