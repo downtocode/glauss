@@ -55,6 +55,7 @@ struct thread_statistics {
 	clockid_t clockid;
 	unsigned int bh_allocated;
 	unsigned int bh_cleaned;
+	size_t bh_heapsize;
 };
 
 /* Algorithm structure */

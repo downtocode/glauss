@@ -51,8 +51,8 @@ static void conf_traverse_table(lua_State *L)
 				option->bh_ratio = lua_tonumber(L, -1);
 			if(!strcmp("bh_lifetime", lua_tostring(L, -2)))
 				option->bh_lifetime = lua_tonumber(L, -1);
-			if(!strcmp("bh_max_cells", lua_tostring(L, -2)))
-				option->bh_max_cells = lua_tonumber(L, -1);
+			if(!strcmp("bh_heapsize_max", lua_tostring(L, -2)))
+				option->bh_heapsize_max = lua_tonumber(L, -1);
 			if(!strcmp("width", lua_tostring(L, -2)))
 				option->width = lua_tonumber(L, -1);
 			if(!strcmp("height", lua_tostring(L, -2)))

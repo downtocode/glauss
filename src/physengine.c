@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
 			.bh_ratio = 0.5, .bh_lifetime = 24,
-			.bh_max_cells = 1000000,
+			.bh_heapsize_max = 536870912,
 		};
 	/*	Default settings.	*/
 	
@@ -375,6 +375,19 @@ int main(int argc, char *argv[])
 			if(dumplevel) toxyz(option->obj, object, t_stats[1]->progress);
 			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n",
 					t_stats[1]->progress);
+			
+			if(t_stats[1]->bh_allocated != 0) {
+				size_t bh_total = 0;
+				for(short i = 1; i < option->avail_cores + 1; i++) {
+					bh_total += t_stats[i]->bh_heapsize;
+				}
+				if(bh_total > option->bh_heapsize_max) {
+					pprintf(PRI_ERR, "Too many allocated octrees.\n\
+					Increase limit or decrease objects/object distribution!\n");
+					printf("Total heapsize = %f MiB\n", bh_total/1048576.0);
+					goto quit;
+				}
+			}
 			
 			if(bench) {
 				pprintf(PRI_ESSENTIAL,

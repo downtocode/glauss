@@ -60,7 +60,7 @@ void *thread_nbody(void *thread_setts)
 	const bool noflj = option->noflj;
 	
 	while(!quit) {
-		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
+		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			if(thread->obj[i].ignore) continue;
 			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
 			(thread->obj[i].acc)*((option->dt*option->dt)/2);
@@ -68,9 +68,9 @@ void *thread_nbody(void *thread_setts)
 		
 		pthread_barrier_wait(&barrier);
 		
-		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
+		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			accprev = thread->obj[i].acc;
-			for(int j = 1; j < option->obj + 1; j++) {
+			for(unsigned int j = 1; j < option->obj + 1; j++) {
 				if(i==j) continue;
 				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
 				dist = sqrt(vecnorm[0]*vecnorm[0] +\

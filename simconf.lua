@@ -7,7 +7,8 @@ settings = {
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
 		bh_lifetime = 1,
-		bh_max_cells = 1000000,
+		--Units are BYTES! Only calculated once every timer update!
+		bh_heapsize_max = 536870912,
 	},
 	visual = {
 		width = 1024,

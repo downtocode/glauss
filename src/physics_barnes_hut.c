@@ -35,7 +35,7 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 {
 	/* Use this size for glibc's fastbins. In theory any memory below this size
 	 * will not be consolidated together, allowing us to allocate and free
-	 * memory real fast. */
+	 * memory real fast. Not portable. */
 	mallopt(M_MXFAST, sizeof(struct phys_barnes_hut_octree));
 	
 	struct thread_config_bhut **thread_config = calloc(option->avail_cores+1,
@@ -110,8 +110,7 @@ unsigned int bh_cleanup_octree(struct phys_barnes_hut_octree *octree)
 	return prev_allocated_cells - allocated_cells;
 }
 
-static short bh_get_octant(data *object,
-						   const struct phys_barnes_hut_octree *octree)
+static short bh_get_octant(data *object, struct phys_barnes_hut_octree *octree)
 {
 	short oct = 0;
 	if(object->pos[0] >= octree->origin[0]) oct |= 4;
@@ -123,17 +122,12 @@ static short bh_get_octant(data *object,
 
 static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 {
-	if(allocated_cells > option->bh_max_cells) {
-		printf("Too many cells! Total allocated cells = %i\n", allocated_cells);
-		exit(0);
-	}
 	if(!octree->cells[k]) {
 		octree->cells[k] = calloc(1, sizeof(struct phys_barnes_hut_octree));
 		octree->cells[k]->depth = octree->depth+1;
 		octree->cells[k]->leaf = 1;
 		allocated_cells++;
 	}
-	/* TODO: Make dependent on previous value */
 	octree->cells[k]->score = option->bh_lifetime;
 	octree->cells[k]->halfdim = octree->halfdim/2;
 	octree->cells[k]->origin = octree->origin + (octree->halfdim*\
@@ -144,8 +138,7 @@ static void bh_init_cell(struct phys_barnes_hut_octree *octree, short k)
 				});
 }
 
-static void bh_insert_object(data *object,
-							 struct phys_barnes_hut_octree *octree)
+static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree)
 {
 	//Update octree mass/center of mass.
 	octree->cellsum.pos = (octree->cellsum.pos+object->pos)/2;
@@ -265,31 +258,32 @@ void *thread_barnes_hut(void *thread_setts)
 	v4sd accprev;
 	
 	while(!quit) {
-		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
+		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			if(thread->obj[i].ignore) continue;
 			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
 				(thread->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
 		if(thread->id == 1) bh_build_octree(thread->obj, thread->root_octree);
+		thread->stats->bh_allocated = allocated_cells;
+		thread->stats->bh_heapsize = sizeof(struct phys_barnes_hut_octree)*allocated_cells;
 		
 		pthread_barrier_wait(&barrier);
 		
-		for(int i = thread->objs_low; i < thread->objs_high + 1; i++) {
+		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			accprev = thread->obj[i].acc;
 			bh_calculate_force(&thread->obj[i], thread->root_octree);
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
 		}
 		
 		thread->stats->progress += option->dt;
-		if(thread->id == 1) {
-			thread->stats->bh_allocated = allocated_cells;
+		
+		if(thread->id == 1)
 			thread->stats->bh_cleaned = bh_cleanup_octree(thread->root_octree);
-		}
 		
 		pthread_barrier_wait(&barrier);
 	}
 	if(thread->id == 1) bh_decimate_octree(thread->root_octree);
-	allocated_cells = 0;
+	thread->stats->bh_allocated = allocated_cells;
 	return 0;
 }

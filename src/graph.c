@@ -188,8 +188,9 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 void graph_draw_scene(data **object, float fps, unsigned int chosen)
 {
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	char osdtime[50], osdfps[30], osdobj[30];
-	int fpscolor;
+	char osdtext[50];
+	struct timespec ts;
+	short fpscolor;
 	
 	/*	Text/static drawing	*/
 	glUseProgram(text_shader);
@@ -199,17 +200,17 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 		if(fps < 25) fpscolor = GL_RED;
 		else if(fps < 48) fpscolor = GL_BLUE;
 		else fpscolor = GL_GREEN;
-		sprintf(osdfps, "FPS = %3.2f", fps);
-		graph_display_text(osdfps, -0.95, 0.85, 1.0, fpscolor);
+		snprintf(osdtext, sizeof(osdtext), "FPS = %3.2f", fps);
+		graph_display_text(osdtext, -0.95, 0.85, 1.0, fpscolor);
 		
 		/* Objects */
-		snprintf(osdobj, sizeof(osdobj), "Objects = %u", option->obj+1);
-		graph_display_text(osdobj, -0.95, 0.75, 1.0, GL_WHITE);
+		snprintf(osdtext, sizeof(osdtext), "Objects = %u", option->obj+1);
+		graph_display_text(osdtext, -0.95, 0.75, 1.0, GL_WHITE);
 		
 		/* Timestep display */
-		snprintf(osdtime, sizeof(osdtime), "Timestep = %0.4Lf",
+		snprintf(osdtext, sizeof(osdtext), "Timestep = %0.4Lf",
 				 t_stats[1]->progress);
-		graph_display_text(osdtime, -0.95, 0.65, 1.0, GL_WHITE);
+		graph_display_text(osdtext, -0.95, 0.65, 1.0, GL_WHITE);
 		
 		/* Chosen object */
 		//if(chosen != 0) graph_display_object_info((*object)[chosen]);
@@ -220,28 +221,34 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 		
 		/* BH tree stats */
 		if(t_stats[1]->bh_allocated != 0) {
-			char bh_tree_allocated[50], bh_tree_cleaned[50], bh_tree_size[50];
-			sprintf(bh_tree_allocated, "Allocated = %i",
-					t_stats[1]->bh_allocated);
-			sprintf(bh_tree_cleaned,   "Cleaned = %i", t_stats[1]->bh_cleaned);
-			sprintf(bh_tree_size, "Total size = %0.3lf MiB",
-					(288*t_stats[1]->bh_allocated)/1048576.0);
 			graph_display_text("Octree:", -0.95, -0.70, 0.75, GL_WHITE);
-			graph_display_text(bh_tree_allocated, -0.95, -0.75, 0.75, GL_GREEN);
-			graph_display_text(bh_tree_cleaned, -0.95, -0.80, 0.75, GL_RED);
-			graph_display_text(bh_tree_size, -0.95, -0.85, 0.75, GL_WHITE);
+			graph_display_text("Thread", -0.95, -0.75, 0.75, GL_WHITE);
+			graph_display_text("Allocated", -0.84, -0.75, 0.75, GL_GREEN);
+			graph_display_text("Cleaned", -0.70, -0.75, 0.75, GL_RED);
+			graph_display_text("Size(MiB)", -0.58, -0.75, 0.75, GL_WHITE);
+			
+			for(short i = 1; i < option->avail_cores + 1; i++) {
+				snprintf(osdtext, sizeof(osdtext), "%i", i);
+				graph_display_text(osdtext, -0.95, -0.75-((float)i/18), 0.75, GL_WHITE);
+				
+				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_allocated);
+				graph_display_text(osdtext, -0.84, -0.75-((float)i/18), 0.75, GL_GREEN);
+				
+				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_cleaned);
+				graph_display_text(osdtext, -0.70, -0.75-((float)i/18), 0.75, GL_RED);
+				
+				snprintf(osdtext, sizeof(osdtext), "%0.3lf",
+						t_stats[i]->bh_heapsize/1048576.0);
+				graph_display_text(osdtext, -0.58, -0.75-((float)i/18), 0.75, GL_WHITE);
+			}
 		}
 		
 		/* Thread time stats */
-		struct timespec ts;
-		char threadtime[50];
-			for(int i = 1; i < option->avail_cores + 1; i++) {
+			for(short i = 1; i < option->avail_cores + 1; i++) {
 			clock_gettime(t_stats[i]->clockid, &ts);
-			sprintf(threadtime, "Thread %i = %ld.%ld", i, ts.tv_sec,
-					ts.tv_nsec / 1000000);
-			graph_display_text(threadtime, 0.73, 0.95-((float)i/14),
-							   0.75,
-							   GL_WHITE);
+			snprintf(osdtext, sizeof(osdtext),
+					 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
+			graph_display_text(osdtext, 0.73, 0.95-((float)i/14), 0.75, GL_WHITE);
 		}
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -252,7 +259,7 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 	glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
 	{
 		/* Axis */
-		draw_obj_axis();
+		//draw_obj_axis();
 		
 		/* Objects(as points) */
 		draw_obj_points(*object);
@@ -280,7 +287,7 @@ void graph_init()
 	glActiveTexture(GL_TEXTURE0);
 	glGenBuffers(1, &pointvbo);
 	glGenBuffers(1, &textvbo);
-	glClearColor(0.12, 0.12, 0.12, 1);
+	glClearColor(0.0, 0.0, 0.0, 1);
 	pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
 	
 	trn_matrix = glGetUniformLocation(object_shader, "translMat");
