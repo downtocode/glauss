@@ -73,7 +73,7 @@ static void bh_decimate_octree(struct phys_barnes_hut_octree *octree) {
 
 static bool bh_clean_octree(struct phys_barnes_hut_octree *octree)
 {
-	octree->cellsum = (data){{0}};
+	octree->cellsum.mass = 0;
 	if(octree->data) {
 		/* Object was here, chances are cell will be used, do not free yet */
 		octree->data = NULL;
@@ -143,7 +143,6 @@ static void bh_insert_object(data *object, struct phys_barnes_hut_octree *octree
 	//Update octree mass/center of mass.
 	octree->cellsum.pos = (octree->cellsum.pos+object->pos)/2;
 	octree->cellsum.mass += object->mass;
-	octree->cellsum.charge += object->charge;
 	if(!octree->data && octree->leaf) {
 		//This cell has no object or subcells
 		octree->data = object;
@@ -196,13 +195,15 @@ void bh_print_octree(struct phys_barnes_hut_octree *octree)
 	}
 }
 
-double bh_max_displacement(data *object)
+double bh_max_displacement(data *object, struct phys_barnes_hut_octree *octree)
 {
 	double maxdist = 0.0;
+	v4sd dist;
 	for(int i = 1; i < option->obj + 1; i++) {
+		dist = object[i].pos - octree->origin;
 		for(int j = 0; j < 3; j++) {
-			if(object[i].pos[j] > maxdist) {
-				maxdist = object[i].pos[j];
+			if(dist[j] > maxdist) {
+				maxdist = dist[j];
 			}
 		}
 	}
@@ -222,7 +223,8 @@ void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree)
 	/* The cleanup function could delete the octree */
 	if(!octree) octree = bh_init_tree();
 	/* The distribution will change so we need to account for this. */
-	octree->halfdim = bh_max_displacement(object);
+	octree->origin = octree->cellsum.pos;
+	octree->halfdim = bh_max_displacement(object, octree);
 	for(int i = 1; i < option->obj + 1; i++) {
 		bh_insert_object(&object[i], octree);
 	}
@@ -278,8 +280,13 @@ void *thread_barnes_hut(void *thread_setts)
 		
 		thread->stats->progress += option->dt;
 		
-		if(thread->id == 1)
+		if(thread->id == 1) {
 			thread->stats->bh_cleaned = bh_cleanup_octree(thread->root_octree);
+			pprintf(PRI_ESSENTIAL, 
+					"Cell(pos = {%f, %f, %f}\n",  thread->root_octree->origin[0],
+		   thread->root_octree->origin[1], 
+		   thread->root_octree->origin[2]);
+		}
 		
 		pthread_barrier_wait(&barrier);
 	}

@@ -37,7 +37,7 @@ struct thread_config_bhut {
 void** bhut_init(data** object, struct thread_statistics **stats);
 unsigned int bh_cleanup_octree(struct phys_barnes_hut_octree *octree);
 void bh_print_octree(struct phys_barnes_hut_octree *octree);
-double bh_max_displacement(data *object);
+double bh_max_displacement(data *object, struct phys_barnes_hut_octree *octree);
 struct phys_barnes_hut_octree *bh_init_tree();
 void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree);
 void *thread_barnes_hut(void *thread_setts);
