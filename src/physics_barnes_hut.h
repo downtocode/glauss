@@ -29,7 +29,7 @@ struct phys_barnes_hut_octree {
 
 struct thread_config_bhut {
 	data* obj;
-	struct phys_barnes_hut_octree *octree, *root_octree;
+	struct phys_barnes_hut_octree *octree, *root_octree, *octrees[8];
 	unsigned int id, objs_low, objs_high;
 	struct thread_statistics *stats;
 };

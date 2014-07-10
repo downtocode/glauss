@@ -31,8 +31,31 @@
 //Thread local storage allocation stats
 static _Thread_local unsigned int allocated_cells;
 
+static void bh_dist_tree_threads(struct thread_config_bhut **thread_config, unsigned int threads, short depth) {
+	short distrb = 8/threads, remain = 8%threads, oct = 0;
+	if(distrb == 8) {
+		for(int n = 0; n < depth; n++) printf(INDENT);
+		printf("Thread will have entire octree\n");
+		return;
+	}
+	int rem = threads - 8;
+	if(rem > 0) threads = 8;
+	for(int k = 1; k < threads + 1; k++) {
+		for(int n = 0; n < depth; n++) printf(INDENT);
+		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
+		printf("Thr = %i has %i (", k, thread_conts);
+		for(int l = 0; l < thread_conts; l++) {
+			thread_config[k]->octrees[oct] = bh_init_tree();
+			printf("oct %i ", oct++);
+		}
+		printf(")\n");
+	}
+	if(rem > 0) bh_dist_tree_threads(thread_config, rem, ++depth);
+	return;
+}
+
 void** bhut_init(data** object, struct thread_statistics **stats)
-{
+{	
 	/* Use this size for glibc's fastbins. In theory any memory below this size
 	 * will not be consolidated together, allowing us to allocate and free
 	 * memory real fast. Not portable. */
@@ -43,12 +66,13 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 	for(int k = 0; k < option->avail_cores + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_bhut));
 	}
-	thread_config[1]->root_octree = bh_init_tree();
+	
+	struct phys_barnes_hut_octree *root_octree = bh_init_tree();
+	
 	int totcore = (int)((float)option->obj/option->avail_cores);
 	for(int k = 1; k < option->avail_cores + 1; k++) {
 		thread_config[k]->stats = stats[k];
-		thread_config[k]->root_octree = thread_config[1]->root_octree;
-		thread_config[k]->octree = bh_init_tree();
+		thread_config[k]->root_octree = root_octree;
 		thread_config[k]->obj = *object;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
@@ -58,6 +82,15 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
 	}
+	
+	bh_dist_tree_threads(thread_config, option->avail_cores, 0);
+	for(int k = 1; k < option->avail_cores + 1; k++) {
+		for(int j = 0; j < 8; j++) {
+			if(thread_config[k]->octrees[j] != NULL) printf("Thread %i has %i\n", k, j);
+		}
+	}
+	
+	
 	return (void**)thread_config;
 }
 
@@ -282,10 +315,6 @@ void *thread_barnes_hut(void *thread_setts)
 		
 		if(thread->id == 1) {
 			thread->stats->bh_cleaned = bh_cleanup_octree(thread->root_octree);
-			pprintf(PRI_ESSENTIAL, 
-					"Cell(pos = {%f, %f, %f}\n",  thread->root_octree->origin[0],
-		   thread->root_octree->origin[1], 
-		   thread->root_octree->origin[2]);
 		}
 		
 		pthread_barrier_wait(&barrier);

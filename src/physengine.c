@@ -242,9 +242,9 @@ int main(int argc, char *argv[])
 		}
 	/*	SDL2	*/
 	
-	gettimeofday (&t1 , NULL);
-	
 	threadcontrol(PHYS_START, &object);
+	
+	gettimeofday (&t1 , NULL);
 	
 	while( 1 ) {
 		while(SDL_PollEvent(&event)) {

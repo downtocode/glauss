@@ -15,31 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <stdio.h>
-#include <stdbool.h>
+#include "physics.h"
 
-struct option_struct* option;
+//Returning stats as pthread_create demands a non-null argument
+void** null_init(data** object, struct thread_statistics **stats) { return (void**)stats; }
 
-/* Options struct */
-/* "//--" marks internal, non-parser settable variables */
-
-struct option_struct {
-	/* Frontend */
-	unsigned short verbosity;
-	int width, height;
-	bool nogrv, noele, noflj, logenable;
-	char *fontname, *filename, *algorithm;
-	FILE *logfile; //--
-	
-	/* Physics */
-	float dt;
-	unsigned int obj; //--
-	unsigned short avail_cores;
-	double elcharge, gconst, epsno;
-	
-	/* Barnes-Hut algorithm specifics */
-	float bh_ratio;
-	bool bh_thread_offset;
-	unsigned short bh_lifetime;
-	size_t bh_heapsize_max;
-};
+void *thread_null(void *thread_setts) { return NULL; }

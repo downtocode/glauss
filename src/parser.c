@@ -70,6 +70,9 @@ static void conf_traverse_table(lua_State *L)
 				option->algorithm = strdup(lua_tostring(L, -1));
 			if(!strcmp("fontname", lua_tostring(L, -2)))
 				option->fontname = strdup(lua_tostring(L, -1));
+		} else if(lua_isboolean(L, -1)) {
+			if(!strcmp("bh_thread_offset", lua_tostring(L, -2)))
+				option->bh_thread_offset = lua_toboolean(L, -1);
 		}
 		lua_pop(L, 1);
 	}

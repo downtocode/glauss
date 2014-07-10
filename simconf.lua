@@ -9,6 +9,10 @@ settings = {
 		bh_lifetime = 1,
 		--Units are BYTES! Only calculated once every timer update!
 		bh_heapsize_max = 536870912,
+		--Thread octree distribution - if true will allocate them to external octrees first.
+		--Use in case the object distribution is on the outside of the center of mass
+		--and you have a lot of threads.
+		bh_thread_offset = true,
 	},
 	visual = {
 		width = 1024,

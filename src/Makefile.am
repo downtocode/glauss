@@ -12,5 +12,6 @@ physengine_SOURCES = physengine.c options.h config.h\
 			physics.h physics.c\
 			physics_aux.h physics_aux.c\
 			resources/elements.h\
+			physics_null.h physics_null.c\
 			physics_n_body.h physics_n_body.c\
 			physics_barnes_hut.h physics_barnes_hut.c
