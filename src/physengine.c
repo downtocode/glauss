@@ -222,6 +222,8 @@ int main(int argc, char *argv[])
 							   option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	
+	threadcontrol(PHYS_START, &object);
+	
 	/*	SDL2	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
@@ -241,8 +243,6 @@ int main(int argc, char *argv[])
 			graph_init();
 		}
 	/*	SDL2	*/
-	
-	threadcontrol(PHYS_START, &object);
 	
 	gettimeofday (&t1 , NULL);
 	

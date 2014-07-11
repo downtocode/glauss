@@ -10,8 +10,10 @@ AM_INIT_AUTOMAKE
 AC_PROG_CC([cc])
 AM_SILENT_RULES([yes])
 
-CFLAGS+=" -Wall -pedantic"
-CFLAGS+=" -std=gnu11 -march=native -g -O3"
+#Prevents autoconf from inserting the default flags
+CFLAGS=""
+CFLAGS+="-g -O2 -Wall -pedantic"
+CFLAGS+=" -std=gnu11 -march=native"
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [main], [LDFLAGS+=" -lm"],[

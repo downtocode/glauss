@@ -45,9 +45,9 @@ static struct sched_param parameters;
 struct thread_statistics **t_stats;
 
 const struct list_algorithms phys_algorithms[] = {
-	{"null",		thread_null,		null_init},
-	{"n-body",		thread_nbody,		nbody_init},
-	{"barnes-hut",	thread_barnes_hut,	bhut_init},
+	{ "null",         thread_null,         null_init  },
+	{ "n-body",       thread_nbody,        nbody_init },
+	{ "barnes-hut",   thread_barnes_hut,   bhut_init  },
 	{0}
 };
 

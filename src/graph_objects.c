@@ -99,7 +99,6 @@ void draw_obj_points(data* object)
 	glDrawArrays(GL_POINTS, 0, option->obj);
 	
 	glDisableVertexAttribArray(objattr_pos);
-	glUniform4fv(objattr_color, 1, gl_col_white);
 }
 
 static const char object_vs[] =

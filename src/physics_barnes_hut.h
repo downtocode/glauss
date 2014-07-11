@@ -18,14 +18,14 @@
 #ifndef PHYSENGINE_PHYS_BARNES_HUT
 #define PHYSENGINE_PHYS_BARNES_HUT
 
-struct phys_barnes_hut_octree {
+typedef struct phys_barnes_hut_octree {
 	unsigned short score, depth;
 	v4sd origin;
 	double halfdim;
 	bool leaf;
 	data *data, cellsum;
 	struct phys_barnes_hut_octree *cells[8];
-};
+} bh_octree;
 
 struct thread_config_bhut {
 	data* obj;
