@@ -145,9 +145,9 @@ void graph_display_text(const char *text, float x, float y, float s, short col)
 	if(col != 0) glUniform4fv(textattr_color, 1, textcolor);
 }
 
-void graph_display_object_info(data object)
+void graph_display_object_info(data *object)
 {
-	float boxsize = 0.13*(object.radius*15);
+	float boxsize = 0.13*(object->radius*15);
 	GLfloat objpoint[3] = {0,0,0};
 	
 	GLfloat chosenbox[4][2] = {
@@ -158,10 +158,10 @@ void graph_display_object_info(data object)
 	};
 	
 	char osdstr[20];
-	sprintf(osdstr, "Atom=%s", atom_prop[object.atomnumber].name);
+	sprintf(osdstr, "Atom=%s", atom_prop[object->atomnumber].name);
 	
-	graph_display_text(osdstr, objpoint[0] + object.radius,\
-					   objpoint[1] + object.radius, 1.0, GL_RED);
+	graph_display_text(osdstr, objpoint[0] + object->radius,\
+					   objpoint[1] + object->radius, 1.0, GL_RED);
 	
 	glEnableVertexAttribArray(textattr_coord);
 	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);

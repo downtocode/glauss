@@ -102,9 +102,9 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer,
 				if(parser_state->nullswitch) {
 					buffer->id = parser_state->i;
 					(*object)[parser_state->i] = *buffer;
-					pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n",
+					/*pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n",
 							parser_state->i, buffer->pos[0], buffer->pos[1],
-							buffer->pos[2]);
+							buffer->pos[2]);*/
 					parser_state->i++;
 				} else parser_state->nullswitch = 1;
 			}
@@ -238,11 +238,11 @@ const char* parse_file_to_str(const char* filename)
 	if(input == NULL) return NULL;
 	
 	if(fseek(input, 0, SEEK_END) == -1) return NULL;
-	long size = ftell(input);
+	size_t size = ftell(input);
 	if(size == -1) return NULL;
 	if(fseek(input, 0, SEEK_SET) == -1) return NULL;
 	
-	char *content = malloc((size_t)size +1);
+	char *content = malloc((size_t)size + 1);
 	if(content == NULL) return NULL;
 	
 	fread(content, 1, (size_t)size, input);

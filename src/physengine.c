@@ -373,8 +373,6 @@ int main(int argc, char *argv[])
 			fps = frames/totaltime;
 			
 			if(dumplevel) toxyz(option->obj, object, t_stats[1]->progress);
-			pprintf(PRI_VERYLOW, "Progressed %f timeunits.\n",
-					t_stats[1]->progress);
 			
 			if(t_stats[1]->bh_allocated != 0) {
 				size_t bh_total = 0;

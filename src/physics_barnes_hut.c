@@ -31,34 +31,51 @@
 //Thread local storage allocation stats
 static _Thread_local unsigned int allocated_cells;
 
-static void bh_dist_tree_threads(struct thread_config_bhut **thread_config, 
-								 bh_octree *root, unsigned int threads) {
-	if(threads == 1) {
-		printf("Thr has entire tree\n");
-		thread_config[1]->octree = root;
+struct thread_alloc_tree {
+	int assigned;
+	bool leaf;
+	bh_octree *mapped;
+	struct thread_config_bhut *thread, *assign[9];
+	struct thread_alloc_tree *subdiv[8];
+};
+
+static int thread_cmp_assigned(const void *a, const void *b)
+{
+	return (((struct thread_alloc_tree *)a)->assigned - ((struct thread_alloc_tree *)b)->assigned);
+}
+
+static void bh_add_thread(struct thread_alloc_tree *root, struct thread_config_bhut *thread)
+{
+	root->assign[root->assigned] = thread;
+	if(root->assigned == 1) {
+		root->assign[root->assigned]->octrees[0] = root->mapped;
 		return;
 	}
-	short distrb = 8/threads, remain = 8%threads, oct = 0;
-	for(int k = 1; k < threads + 1; k++) {
+	for(short i=0; i < 8; i++) {
+		if(!root->subdiv[i]) root->subdiv[i] = calloc(1, sizeof(struct thread_alloc_tree));
+		root->subdiv[i]->assigned = 0;
+	}
+	short distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
+	for(int k = 1; k < root->assigned + 1; k++) {
 		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
-		printf("Thr %i has %i ( ", k, thread_conts);
 		for(int l = 0; l < thread_conts; l++) {
-			thread_config[k]->octrees[oct] = root->cells[oct] = bh_init_tree();
-			printf("octang %i ", oct++);
+			root->assign[k]->octrees[oct] = root->subdiv[oct]->mapped;
+			root->subdiv[oct]->assign[++root->subdiv[oct]->assigned] = root->assign[k];
+			oct++;
 		}
-		printf(")\n");
 	}
 	return;
 }
 
-static void bh_master_dist(struct thread_config_bhut **thread_config, 
-						   bh_octree *root, unsigned int threads) {
-	float thread_divs = (float)threads/8;
-	for(int m = 0; m < thread_divs; m++) {
-		if(threads > 8) {
-			bh_dist_tree_threads(thread_config, root, 8);
-			threads -= 8;
-		} else bh_dist_tree_threads(thread_config, root, threads);
+static void bh_assign_thread(struct thread_alloc_tree *root, struct thread_config_bhut *thread)
+{
+	if(!thread || !root) return;
+	if(++root->assigned < 9) {
+		bh_add_thread(root, thread);
+	} else {
+		/* Will shuffle them but we don't care. */
+		qsort(root->subdiv, 8, sizeof(struct thread_alloc_tree *), thread_cmp_assigned);
+		bh_assign_thread(root->subdiv[0], thread);
 	}
 }
 
@@ -77,8 +94,11 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 	
 	bh_octree *root_octree = bh_init_tree();
 	
+	struct thread_alloc_tree *thread_tree = calloc(1, sizeof(struct thread_alloc_tree));
+	
 	int totcore = (int)((float)option->obj/option->avail_cores);
 	for(int k = 1; k < option->avail_cores + 1; k++) {
+		bh_assign_thread(thread_tree, NULL);
 		thread_config[k]->stats = stats[k];
 		thread_config[k]->root_octree = root_octree;
 		thread_config[k]->obj = *object;
@@ -90,13 +110,6 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
 	}
-	
-	bh_master_dist(thread_config, root_octree, option->avail_cores);
-	printf("\n\n\n");
-	bh_print_octree(root_octree);
-	
-	exit(0);
-	
 	
 	return (void**)thread_config;
 }
@@ -212,7 +225,7 @@ void bh_print_octree(bh_octree *octree)
 				octree->data->id, octree->data->pos[0], octree->data->pos[1],
 				octree->data->pos[2], octree->depth);
 	} else {
-		for(int i=0; i < 8; i++) {
+		for(short i=0; i < 8; i++) {
 			if(octree->cells[i]) {
 				for(int i = 0; i < octree->depth; i++) pprintf(PRI_SPAM, INDENT);
 				pprintf(PRI_SPAM, 

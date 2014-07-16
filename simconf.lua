@@ -3,7 +3,7 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 1,
-		dt = 0.005,
+		dt = 0.003,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
 		bh_lifetime = 1,
@@ -31,7 +31,7 @@ settings = {
 	},
 }
 
-maxobjects = 100;
+maxobjects = 10000;
 
 --Add molecules or any additional objects here
 objects = {
