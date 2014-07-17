@@ -76,9 +76,9 @@ thread_function phys_find_algorithm(const char *name);
 thread_configuration phys_find_config(const char *name);
 
 /* Thread controls */
-pthread_mutex_t movestop;
-pthread_barrier_t barrier;
-bool running, quit;
+extern pthread_mutex_t movestop;
+extern pthread_barrier_t barrier;
+extern bool running, quit;
 
 /* External functions for control */
 int initphys(data** object);

@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-struct option_struct* option;
+extern struct option_struct *option;
 
 /* Options struct */
 /* "//--" marks internal, non-parser settable variables */

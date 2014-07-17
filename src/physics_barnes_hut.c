@@ -20,41 +20,40 @@
 #include <tgmath.h>
 #include <pthread.h>
 #include <malloc.h>
+#include <limits.h>
 #include "options.h"
 #include "msg_phys.h"
 #include "physics.h"
 #include "physics_barnes_hut.h"
 
-//Indent string when verbosely outputting octrees to stdout
+/* Repeated indent string when printing octrees */
 #define INDENT "  "
 
-//Thread local storage allocation stats
+/* Thread local storage allocation stats */
 static _Thread_local unsigned int allocated_cells;
 
-struct thread_alloc_tree {
-	int assigned;
-	bool leaf;
-	bh_octree *mapped;
-	struct thread_config_bhut *thread, *assign[9];
-	struct thread_alloc_tree *subdiv[8];
-};
-
+/* Used in qsort to assign threads in octrees */
 static int thread_cmp_assigned(const void *a, const void *b)
 {
-	return (((struct thread_alloc_tree *)a)->assigned - ((struct thread_alloc_tree *)b)->assigned);
+	return ((*(bh_thread **)a)->assigned -\
+								(*(bh_thread **)b)->assigned);
 }
 
-static void bh_add_thread(struct thread_alloc_tree *root, struct thread_config_bhut *thread)
+/* Will distribute the threads in each assignment tree */
+static void bh_add_thread(bh_thread *root, 
+						  bh_octree *octree, struct thread_config_bhut *thread)
 {
-	root->assign[root->assigned] = thread;
-	if(root->assigned == 1) {
-		root->assign[root->assigned]->octrees[0] = root->mapped;
-		return;
-	}
 	for(short i=0; i < 8; i++) {
-		if(!root->subdiv[i]) root->subdiv[i] = calloc(1, sizeof(struct thread_alloc_tree));
+		if(!root->subdiv[i])
+			root->subdiv[i] = calloc(1, sizeof(bh_thread));
+		if(!octree->cells[i])
+			octree->cells[i] = bh_init_tree();
+		octree->cells[i]->depth = octree->depth + 1;
+		root->subdiv[i]->mapped = octree->cells[i];
+		root->subdiv[i]->parent = root;
 		root->subdiv[i]->assigned = 0;
 	}
+	root->assign[root->assigned] = thread;
 	short distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
 	for(int k = 1; k < root->assigned + 1; k++) {
 		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
@@ -67,16 +66,39 @@ static void bh_add_thread(struct thread_alloc_tree *root, struct thread_config_b
 	return;
 }
 
-static void bh_assign_thread(struct thread_alloc_tree *root, struct thread_config_bhut *thread)
+/* Recursive function to assign threads to octrees */
+static void bh_assign_thread(bh_thread *root,
+							 bh_octree *octree, struct thread_config_bhut *thread)
 {
 	if(!thread || !root) return;
-	if(++root->assigned < 9) {
-		bh_add_thread(root, thread);
+	/* Unique case where option->avail_cores == 0 */
+	else if(++root->assigned == 0) {
+		root->assign[0]->octrees[0] = octree;
+		return;
+	} else if(root->assigned < 9) {
+		bh_add_thread(root, octree, thread);
 	} else {
-		/* Will shuffle them but we don't care. */
-		qsort(root->subdiv, 8, sizeof(struct thread_alloc_tree *), thread_cmp_assigned);
-		bh_assign_thread(root->subdiv[0], thread);
+		if(!option->bh_thread_offset) {
+			/* Will shuffle them but we don't care, it's been mapped already. */
+			qsort(root->subdiv, 8, sizeof(bh_thread *),
+				  thread_cmp_assigned);
+		} else {
+			/* Will split the innermost cell and add threads there. */
+			qsort(root->subdiv, 8, sizeof(bh_thread *),
+				  thread_cmp_assigned);
+		}
+		/* Sort: lowest to highest so 0's always the least assigned one. */
+		bh_assign_thread(root->subdiv[0], root->subdiv[0]->mapped, thread);
 	}
+	return;
+}
+
+static void bh_decimate_assignment_tree(bh_thread *root)
+{
+	for(short i=0; i < 8; i++) {
+		if(!root->subdiv[i]) bh_decimate_assignment_tree(root->subdiv[i]);
+	}
+	free(root);
 }
 
 void** bhut_init(data** object, struct thread_statistics **stats)
@@ -92,15 +114,19 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 		thread_config[k] = calloc(1, sizeof(struct thread_config_bhut));
 	}
 	
+	/* Create the root octree */
 	bh_octree *root_octree = bh_init_tree();
 	
-	struct thread_alloc_tree *thread_tree = calloc(1, sizeof(struct thread_alloc_tree));
+	/* Create temporary assignment tree for threads */
+	bh_thread *thread_tree = calloc(1, sizeof(bh_thread));
 	
 	int totcore = (int)((float)option->obj/option->avail_cores);
 	for(int k = 1; k < option->avail_cores + 1; k++) {
-		bh_assign_thread(thread_tree, NULL);
-		thread_config[k]->stats = stats[k];
 		thread_config[k]->root_octree = root_octree;
+		/* Recursively insert the threads into assignment octree and map it to
+		 * the root octree */
+		bh_assign_thread(thread_tree, root_octree, thread_config[k]);
+		thread_config[k]->stats = stats[k];
 		thread_config[k]->obj = *object;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
@@ -111,17 +137,21 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 		}
 	}
 	
+	/* Free assignment octree since all's been done */
+	bh_decimate_assignment_tree(thread_tree);
+	
 	return (void**)thread_config;
 }
 
-static void bh_decimate_octree(bh_octree *octree) {
+static void bh_decimate_octree(bh_octree *octree)
+{
 	for(short i=0; i < 8; i++) {
 		if(octree->cells[i]) {
 			bh_decimate_octree(octree->cells[i]);
-			free(octree->cells[i]);
 			allocated_cells--;
 		}
 	}
+	free(octree);
 }
 
 static bool bh_clean_octree(bh_octree *octree)
@@ -250,6 +280,8 @@ void bh_print_octree(bh_octree *octree)
 
 double bh_max_displacement(data *object, bh_octree *octree)
 {
+	/* We only consider one dimension since the root octree cube with such
+	 * length will always contain the very furthest object. */
 	double maxdist = 0.0;
 	v4sd dist;
 	for(int i = 1; i < option->obj + 1; i++) {
@@ -265,8 +297,8 @@ double bh_max_displacement(data *object, bh_octree *octree)
 
 bh_octree *bh_init_tree()
 {
-	bh_octree *octree = calloc(1,
-		sizeof(struct phys_barnes_hut_octree));
+	bh_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
+	octree->score = USHRT_MAX;
 	octree->leaf = 1;
 	return octree;
 }

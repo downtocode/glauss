@@ -42,6 +42,10 @@ static pthread_attr_t thread_attribs;
 static pthread_mutexattr_t mattr;
 static struct sched_param parameters;
 
+pthread_mutex_t movestop;
+pthread_barrier_t barrier;
+bool running, quit;
+
 struct thread_statistics **t_stats;
 
 const struct list_algorithms phys_algorithms[] = {
@@ -116,6 +120,12 @@ int initphys(data** object)
 		pprintf(PRI_WARN,
 				"Thread detection unavailable, running with %i thread(s).\n",
 				failsafe_cores);
+	}
+	
+	if(option->avail_cores > option->obj) {
+		pprintf(PRI_WARN, "More threads than cores. Capping threads to %i\n",
+				option->obj+1);
+		option->avail_cores = option->obj+1;
 	}
 	
 	/* pthreads configuration */

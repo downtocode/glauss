@@ -18,6 +18,7 @@
 #ifndef PHYSENGINE_PHYS_BARNES_HUT
 #define PHYSENGINE_PHYS_BARNES_HUT
 
+/* Octree structure */
 typedef struct phys_barnes_hut_octree {
 	unsigned short score, depth;
 	v4sd origin;
@@ -27,6 +28,15 @@ typedef struct phys_barnes_hut_octree {
 	struct phys_barnes_hut_octree *cells[8];
 } bh_octree;
 
+/* Thread assignment tree structure */
+typedef struct thread_alloc_tree {
+	int assigned;
+	bool leaf;
+	bh_octree *mapped;
+	struct thread_config_bhut *thread, *assign[9];
+	struct thread_alloc_tree *parent, *subdiv[8];
+} bh_thread;
+
 struct thread_config_bhut {
 	data* obj;
 	struct phys_barnes_hut_octree *octree, *root_octree, *octrees[8];
@@ -35,11 +45,11 @@ struct thread_config_bhut {
 };
 
 void** bhut_init(data** object, struct thread_statistics **stats);
-unsigned int bh_cleanup_octree(struct phys_barnes_hut_octree *octree);
-void bh_print_octree(struct phys_barnes_hut_octree *octree);
-double bh_max_displacement(data *object, struct phys_barnes_hut_octree *octree);
-struct phys_barnes_hut_octree *bh_init_tree();
-void bh_build_octree(data* object, struct phys_barnes_hut_octree *octree);
+unsigned int bh_cleanup_octree(bh_octree *octree);
+void bh_print_octree(bh_octree *octree);
+double bh_max_displacement(data *object, bh_octree *octree);
+bh_octree *bh_init_tree();
+void bh_build_octree(data* object, bh_octree *octree);
 void *thread_barnes_hut(void *thread_setts);
 
 #endif

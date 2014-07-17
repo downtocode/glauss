@@ -1,4 +1,4 @@
---Physengine example config file. Syntax is standard Lua. Math libraries are included.
+--Physengine example config file. Syntax is standard Lua. Math libraries are included and initialized.
 settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
@@ -6,13 +6,13 @@ settings = {
 		dt = 0.003,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
-		bh_lifetime = 1,
+		bh_lifetime = 20,
 		--Units are BYTES! Only calculated once every timer update!
 		bh_heapsize_max = 536870912,
-		--Thread octree distribution - if true will allocate them to external octrees first.
-		--Use in case the object distribution is on the outside of the center of mass
-		--and you have a lot of threads.
-		bh_thread_offset = true,
+		--Normally, the thread assignment for BH will assign each thread in
+		--the least occupied octree. Set this to true to change the behaviour
+		--so that the cells closest to the root tree origin get assigned to threads.
+		bh_thread_offset = false,
 	},
 	visual = {
 		width = 1024,
@@ -31,7 +31,7 @@ settings = {
 	},
 }
 
-maxobjects = 10000;
+maxobjects = 3000;
 
 --Add molecules or any additional objects here
 objects = {

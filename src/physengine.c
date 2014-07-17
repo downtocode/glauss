@@ -52,6 +52,8 @@ static const char *ARGSTRING =
 "	-V	--version		Outputs the version of the program(+short git checksum).\n"
 "	-h	--help			What you're reading.\n";
 
+struct option_struct *option;
+
 int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
@@ -338,7 +340,7 @@ int main(int argc, char *argv[])
 						chosen = 0;
 					}
 					if(event.key.keysym.sym==SDLK_z) {
-						toxyz(option->obj, object, t_stats[1]->progress);
+						toxyz(object);
 					}
 					if(event.key.keysym.sym==SDLK_PERIOD) {
 						if(chosen < option->obj) chosen++;
@@ -372,7 +374,7 @@ int main(int argc, char *argv[])
 		if (totaltime >  timer) {
 			fps = frames/totaltime;
 			
-			if(dumplevel) toxyz(option->obj, object, t_stats[1]->progress);
+			if(dumplevel) toxyz(object);
 			
 			if(t_stats[1]->bh_allocated != 0) {
 				size_t bh_total = 0;
