@@ -29,12 +29,12 @@
 
 static const char text_vs[] =
 // Generated from text_vs.glsl
-#include "shaders/text_vs.h"
+#include "src/shaders/text_vs.h"
 ;
 
 static const char text_fs[] =
 // Generated from text_fs.glsl
-#include "shaders/text_fs.h"
+#include "src/shaders/text_fs.h"
 ;
 
 static FT_Library library;

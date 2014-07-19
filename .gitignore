@@ -1,41 +1,9 @@
-# Object files
-*.o
-*.ko
-
-# Libraries
-*.lib
-*.a
-
-# Shared objects
-*.so
-*.so.*
-*.dylib
-
-# Executables
-physengine
-*.exe
-*.out
-*.app
-
-# Junk files
 *.xyz
 *.log
-configure
-autom4te.cache
-*Makefile
-*Makefile.in
-missing
-compile
+.waf*
+.lock*
+waf
 .kateproject
 .kateproject.d
-config.status
 config.log
-aclocal.m4
-depcomp
-install-sh
-*stamp-h1
-*config.h
-*config.h.in~
-.deps
-.directory
-core.*
+build

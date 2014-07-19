@@ -33,7 +33,7 @@ struct lua_parser_state {
 
 static const char elements_internal[] =
 // Generated from elements.lua
-#include "resources/elements.h"
+#include "src/resources/elements.h"
 ;
 
 static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer,

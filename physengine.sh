@@ -1,2 +1,2 @@
 #!/bin/sh
-./src/physengine $@
+./build/physengine $@

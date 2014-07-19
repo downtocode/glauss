@@ -19,11 +19,13 @@ Dependencies:
 
 All are available on any up-to-date Linux distribution's package repositories. To compile and install, do the standard:
 
-`./autogen.sh`
+`./bootstrap.py`
 
-`./configure`
+`./waf configure`
 
-`make install`
+`./waf build`
+
+`./waf install`
 
 The program can be run in any directory as it has no dependence on any external files. For developer convenience, it's possible to avoid program installation. Just run `make` without the install part and then the ./physengine.sh shell script.
 
