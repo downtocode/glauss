@@ -37,6 +37,8 @@ int probefile(const char *molfile)
 		moltype = MOL_XYZ;
 	} else if(strstr(molfile, "pdb")!=NULL) {
 		moltype = MOL_PDB;
+	} else if(strstr(molfile, "obj")!=NULL) {
+		moltype = MOL_OBJ;
 	} else {
 		fprintf(stderr, "Error! Filetype of %s not recognized!\n", molfile);
 		exit(1);
@@ -55,6 +57,13 @@ int probefile(const char *molfile)
 		while(fgets (str, sizeof(str), inprep)!= NULL) {
 			if(strstr(str, "#") == NULL) {
 				if(strncmp(str, "ATOM", 4)==0) counter++;
+			}
+		}
+		return counter;
+	} else if(moltype == MOL_OBJ) {
+		while(fgets (str, sizeof(str), inprep)!= NULL) {
+			if(strstr(str, "#") == NULL) {
+				if(strncmp(str, "v ", 2)==0) counter++;
 			}
 		}
 		return counter;
@@ -78,6 +87,8 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 		fgets(str, sizeof(str), inpars);
 	} else if(strstr(molfile, "pdb")!=NULL) {
 		filetype = MOL_PDB;
+	} else if(strstr(molfile, "obj")!=NULL) {
+		filetype = MOL_OBJ;
 	} else {
 		fprintf(stderr, "Error! Filetype of %s not recognized!\n", molfile);
 		exit(1);
@@ -96,8 +107,15 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp,
 							atom, &pdboffset);
 				} else continue;
+			} else if(filetype == MOL_OBJ) {
+				if(strncmp(str, "v ", 2)==0) {
+					sscanf(str, "v  %f %f %f", &xpos, &ypos, &zpos);
+					xpos/=100;
+					ypos/=100;
+					zpos/=100;
+				} else continue;
 			}
-			object[*i].atomnumber = return_atom_num(atom);
+			//object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;
 			/* By specifications XYZ and PDB files default to float */
 			object[*i].pos[0] = (double)xpos + buffer->pos[0];
@@ -117,6 +135,7 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			} else {
+				object[*i].atomnumber = 0;
 				object[*i].charge = 0;
 				object[*i].ignore = 0;
 				object[*i].mass = 12.0;

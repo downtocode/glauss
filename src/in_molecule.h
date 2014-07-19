@@ -22,6 +22,7 @@
 
 #define MOL_XYZ 1
 #define MOL_PDB 2
+#define MOL_OBJ 3
 
 int probefile(const char *molfile);
 int readmolecule(data *object, data *buffer, const char *molfile, int *i);
