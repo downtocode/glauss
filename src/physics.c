@@ -49,11 +49,14 @@ bool running, quit;
 struct thread_statistics **t_stats;
 
 const struct list_algorithms phys_algorithms[] = {
+/* Format: name,      thread_function,     config function */
 	{ "null",         thread_null,         null_init  },
 	{ "n-body",       thread_nbody,        nbody_init },
 	{ "barnes-hut",   thread_barnes_hut,   bhut_init  },
 	{0}
 };
+/* Config function needs to return a double pointer, which then gets
+ * distributed amongst threads as arguments. */
 
 thread_function phys_find_algorithm(const char *name)
 {

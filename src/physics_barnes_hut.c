@@ -34,10 +34,7 @@ static _Thread_local unsigned int allocated_cells;
 
 /* Used in qsort to assign threads in octrees */
 static int thread_cmp_assigned(const void *a, const void *b)
-{
-	return ((*(bh_thread **)a)->assigned -\
-								(*(bh_thread **)b)->assigned);
-}
+{ return ((*(bh_thread **)a)->assigned - (*(bh_thread **)b)->assigned); }
 
 /* Will distribute the threads in each assignment tree */
 static void bh_add_thread(bh_thread *root, 
@@ -54,6 +51,14 @@ static void bh_add_thread(bh_thread *root,
 		root->subdiv[i]->assigned = 0;
 	}
 	root->assign[root->assigned] = thread;
+	/* Wipe other threads' previous octree assignments */
+	for(short v = 0; v < root->assigned + 1; v++) {
+		if(root->assign[v]) {
+			for(short d = 0; d < 8; d++) {
+				root->assign[v]->octrees[d] = NULL;
+			}
+		}
+	}
 	short distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
 	for(int k = 1; k < root->assigned + 1; k++) {
 		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
@@ -71,11 +76,7 @@ static void bh_assign_thread(bh_thread *root,
 							 bh_octree *octree, struct thread_config_bhut *thread)
 {
 	if(!thread || !root) return;
-	/* Unique case where option->avail_cores == 0 */
-	else if(++root->assigned == 0) {
-		root->assign[0]->octrees[0] = octree;
-		return;
-	} else if(root->assigned < 9) {
+	else if(++root->assigned < 9) {
 		bh_add_thread(root, octree, thread);
 	} else {
 		if(!option->bh_thread_offset) {
@@ -96,9 +97,22 @@ static void bh_assign_thread(bh_thread *root,
 static void bh_decimate_assignment_tree(bh_thread *root)
 {
 	for(short i=0; i < 8; i++) {
-		if(!root->subdiv[i]) bh_decimate_assignment_tree(root->subdiv[i]);
+		if(root->subdiv[i]) bh_decimate_assignment_tree(root->subdiv[i]);
 	}
 	free(root);
+}
+
+static void bh_print_thread_tree(struct thread_config_bhut **thread)
+{
+	for(unsigned int m=1; m < option->avail_cores + 1; m++) {
+		printf("Thread %i octree(depth): ", m);
+		for(short h=0; h < 8; h++) {
+			if(thread[m]->octrees[h]) {
+				printf("%i(%u) ", h, thread[m]->octrees[h]->depth);
+			}
+		}
+		printf("\n");
+	}
 }
 
 void** bhut_init(data** object, struct thread_statistics **stats)
@@ -136,7 +150,15 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
 	}
-	
+	/* Workaround when only a single thread is available.
+	 * Reason why we couldn't have this in the bh_assign_thread function:
+	 * this happens ONLY once in this very unique case. */
+	if(option->avail_cores == 1) {
+		for(short h=0; h < 8; h++) {
+			thread_config[1]->octrees[h] = NULL;
+		}
+		thread_config[1]->octrees[0] = root_octree;
+	} else bh_print_thread_tree(thread_config);
 	/* Free assignment octree since all's been done */
 	bh_decimate_assignment_tree(thread_tree);
 	
@@ -341,6 +363,9 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 
 void *thread_barnes_hut(void *thread_setts)
 {
+	/* We could define the function with such an argument that this wouldn't be
+	 * required however this would cause all compilers to complain about
+	 * how the struct containing all the algorithms has been incorrectly init'd. */
 	struct thread_config_bhut *thread = thread_setts;
 	v4sd accprev;
 	
