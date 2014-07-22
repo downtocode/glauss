@@ -8,7 +8,7 @@ top = '.'
 out = 'build'
 
 def try_git_version():
-	version = None
+	version = VERSION
 	try:
 		version = os.popen('git rev-parse --short=10 HEAD').read().strip()
 	except Exception as e:
@@ -46,15 +46,14 @@ def configure(ctx):
 	ctx.check(features='c cprogram', lib=['pthread'], cflags='-lm', uselib_store='PTHRD')
 	
 	git_version = try_git_version()
-	ctx.define('PACKAGE_STRING', APPNAME)
+	ctx.define('PACKAGE_STRING', APPNAME + ' ' + git_version)
 	ctx.write_config_header('config.h')
 	
 	if (ctx.options.lto):
 		ctx.env.CFLAGS += ['-flto']
 		ctx.env.LDFLAGS += ['-flto']
 	
-	print '\nCompiling: ', APPNAME, VERSION
-	print 'Git hash:  ', git_version
+	print '\nCompiling: ', APPNAME, git_version
 	print '	CFLAGS:  ', ctx.env.CFLAGS
 	
 def build(ctx):
