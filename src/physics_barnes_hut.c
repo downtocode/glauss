@@ -337,6 +337,17 @@ void bh_build_octree(data* object, bh_octree *octree)
 	}
 }
 
+/* Checks whether the object is in the target octree. Returns 1 when it is. */
+bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *head)
+{
+	if(!head)
+		return 0;
+	else if(head->depth == target->depth)
+		return head == target;
+	return bh_recurse_check_obj(object, target,
+								head->cells[bh_get_octant(object, head)]);
+}
+
 static void bh_calculate_force(data* object, bh_octree *octree)
 {
 	if(octree->leaf && !octree->data) return;
