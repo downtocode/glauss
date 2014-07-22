@@ -101,9 +101,9 @@ int initphys(data** object)
 	/* Set the amount of threads */
 	int online_cores = 0;
 	
-	#ifdef __linux__
-		online_cores = sysconf(_SC_NPROCESSORS_ONLN);
-	#endif
+#ifdef __linux__
+	online_cores = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
 	
 	if(option->avail_cores == 0 && online_cores != 0 ) {
 		option->avail_cores = online_cores;

@@ -120,7 +120,10 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 	/* Use this size for glibc's fastbins. In theory any memory below this size
 	 * will not be consolidated together, allowing us to allocate and free
 	 * memory real fast. Not portable. */
+	
+#ifdef __linux__
 	mallopt(M_MXFAST, sizeof(struct phys_barnes_hut_octree));
+#endif
 	
 	struct thread_config_bhut **thread_config = calloc(option->avail_cores+1,
 											sizeof(struct thread_config_bhut*));
@@ -344,6 +347,7 @@ bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *head)
 		return 0;
 	else if(head->depth == target->depth)
 		return head == target;
+	/* Cascade the return value */
 	return bh_recurse_check_obj(object, target,
 								head->cells[bh_get_octant(object, head)]);
 }
