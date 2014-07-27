@@ -46,7 +46,10 @@ def configure(ctx):
 	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
 	
 	git_version = try_git_version()
+	ctx.define('PACKAGE', APPNAME)
+	ctx.define('PACKAGE_VERSION', git_version)
 	ctx.define('PACKAGE_STRING', APPNAME + ' ' + git_version)
+	ctx.define('OPT_LTO', ctx.options.lto)
 	ctx.write_config_header('config.h')
 	
 	if (ctx.options.lto):
@@ -168,7 +171,6 @@ def build(ctx):
 		features  = ['c'],
 		includes='. .. ../../',
 	)
-	
 	ctx(name='main',
 		path=ctx.path,
 		use=['SDL', 'GL', 'MATH', 'PTHRD', 'LUA', 'FT', 'FC', 'in_molecule', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],

@@ -85,14 +85,10 @@ static void bh_assign_thread(bh_thread *root,
 	else if(++root->assigned < 9) {
 		bh_add_thread(root, octree, thread);
 	} else {
-		if(!option->bh_thread_offset) {
-			/* Will shuffle them but we don't care, it's been mapped already. */
-			qsort(root->subdiv, 8, sizeof(bh_thread *),
-				  thread_cmp_assigned);
-		} else {
-			/* Will split the innermost cell and add threads there. */
-			qsort(root->subdiv, 8, sizeof(bh_thread *),
-				  thread_cmp_assigned);
+		qsort(root->subdiv, 8, sizeof(bh_thread *), thread_cmp_assigned);
+		if(option->bh_thread_offset) {
+			/* If depth > 1, do a map: index 0's child 6 must be first,
+			 * since it's in the direction of the centre */
 		}
 		/* Sort: lowest to highest so 0's always the least assigned one. */
 		bh_assign_thread(root->subdiv[0], root->subdiv[0]->mapped, thread);
@@ -488,13 +484,10 @@ void *thread_barnes_hut(void *thread_setts)
 		
 		bh_atomic_update_root(maxdist, thread->root);
 		
-		for(short s=0; s < 8; s++) {
-			bh_cascade_position(thread->octrees[s], thread->root);
-		}
-		
 		pthread_barrier_wait(&barrier);
 		
 		for(short s=0; s < 8; s++) {
+			bh_cascade_position(thread->octrees[s], thread->root);
 			bh_build_octree(thread->obj, thread->octrees[s], thread->root);
 			/* Sync mass and center of mass with any higher trees */
 			bh_cascade_mass(thread->octrees[s], thread->root);
