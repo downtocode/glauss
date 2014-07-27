@@ -37,19 +37,22 @@ typedef struct thread_alloc_tree {
 	struct thread_alloc_tree *parent, *subdiv[8];
 } bh_thread;
 
+/* Thread configuration struct */
 struct thread_config_bhut {
 	data* obj;
-	struct phys_barnes_hut_octree *octree, *root_octree, *octrees[8];
+	struct phys_barnes_hut_octree *root, *octrees[8];
 	unsigned int id, objs_low, objs_high;
 	struct thread_statistics *stats;
 };
 
 void** bhut_init(data** object, struct thread_statistics **stats);
+void bhut_quit(void **threads);
 unsigned int bh_cleanup_octree(bh_octree *octree);
+void bh_decimate_octree(bh_octree *octree);
 void bh_print_octree(bh_octree *octree);
 double bh_max_displacement(data *object, bh_octree *octree);
 bh_octree *bh_init_tree();
-void bh_build_octree(data* object, bh_octree *octree);
+void bh_build_octree(data* object, bh_octree *octree, bh_octree *root);
 void *thread_barnes_hut(void *thread_setts);
 
 #endif

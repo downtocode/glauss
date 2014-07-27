@@ -28,6 +28,58 @@
 #include "graph_fonts.h"
 #include "options.h"
 
+/* UI POSITIONS */
+
+/* FPS counter */
+#define FPSx -0.95
+#define FPSy  0.85
+#define FPSs  1.0
+
+/* Object count */
+#define OBJx -0.95
+#define OBJy  0.75
+#define OBJs  1.0
+
+/* Time counter */
+#define TIMEx -0.95
+#define TIMEy  0.65
+#define TIMEs  1.0
+
+/* Simulation status */
+#define SIMx -0.95
+#define SIMy -0.95
+#define SIMs  1.0
+
+/* Octree status */
+#define OCTx -0.95
+#define OCTy -0.70
+#define OCTs  0.75
+
+/* Thread time counters */
+#define THRx  0.73
+#define THRy  0.95
+#define THRs  0.75
+
+/* Axis scale */
+#define AXISs 0.25
+
+/* Background color */
+#define BACKr 0.06
+#define BACKg 0.06
+#define BACKb 0.06
+#define BACKa 1.00
+
+/* UI POSITIONS */
+
+
+/* COLORS */
+const float white[]      = {1.0f, 1.0f, 1.0f, 1.0f};
+const float red[]        = {1.0f, 0.0f, 0.0f, 1.0f};
+const float green[]      = {0.0f, 1.0f, 0.0f, 1.0f};
+const float blue[]       = {0.0f, 0.0f, 1.0f, 1.0f};
+const float yellow[]     = {1.0f, 1.0f, 0.0f, 1.0f};
+/* COLORS */
+
 static float aspect_ratio;
 static GLuint pointvbo, textvbo;
 static GLuint object_shader, text_shader;
@@ -195,60 +247,60 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 	/*	Text/static drawing	*/
 	glUseProgram(text_shader);
 	glBindBuffer(GL_ARRAY_BUFFER, textvbo);
-	{	
+	{
 		/* FPS */
 		if(fps < 25) fpscolor = GL_RED;
 		else if(fps < 48) fpscolor = GL_BLUE;
 		else fpscolor = GL_GREEN;
 		snprintf(osdtext, sizeof(osdtext), "FPS = %3.2f", fps);
-		graph_display_text(osdtext, -0.95, 0.85, 1.0, fpscolor);
+		graph_display_text(osdtext, FPSx, FPSy, FPSs, fpscolor);
 		
 		/* Objects */
 		snprintf(osdtext, sizeof(osdtext), "Objects = %u", option->obj+1);
-		graph_display_text(osdtext, -0.95, 0.75, 1.0, GL_WHITE);
+		graph_display_text(osdtext, OBJx, OBJy, OBJs, GL_WHITE);
 		
 		/* Timestep display */
 		snprintf(osdtext, sizeof(osdtext), "Timestep = %0.4Lf",
 				 t_stats[1]->progress);
-		graph_display_text(osdtext, -0.95, 0.65, 1.0, GL_WHITE);
+		graph_display_text(osdtext, TIMEx, TIMEy, TIMEs, GL_WHITE);
 		
 		/* Chosen object */
 		//if(chosen != 0) graph_display_object_info((*object)[chosen]);
 		
 		/* Simulation status */
 		if(!threadcontrol(PHYS_STATUS, NULL))
-			graph_display_text("Simulation stopped", -0.95, -0.95, 1.0, GL_RED);
+			graph_display_text("Simulation stopped", SIMx, SIMy, SIMs, GL_RED);
 		
 		/* BH tree stats */
 		if(t_stats[1]->bh_allocated != 0) {
-			graph_display_text("Octree:", -0.95, -0.70, 0.75, GL_WHITE);
-			graph_display_text("Thread", -0.95, -0.75, 0.75, GL_WHITE);
-			graph_display_text("Allocated", -0.84, -0.75, 0.75, GL_GREEN);
-			graph_display_text("Cleaned", -0.70, -0.75, 0.75, GL_RED);
-			graph_display_text("Size(MiB)", -0.58, -0.75, 0.75, GL_WHITE);
+			graph_display_text("Octree stats:", OCTx, OCTy, OCTs, GL_WHITE);
+			graph_display_text("Thread", OCTx, OCTy-.05, OCTs, GL_WHITE);
+			graph_display_text("Allocated", OCTx+.11, OCTy-.05, OCTs, GL_GREEN);
+			graph_display_text("Cleaned", OCTx+.25, OCTy-.05, OCTs, GL_RED);
+			graph_display_text("Size(MiB)", OCTx+.37, OCTy-.05, OCTs, GL_YELLOW);
 			
-			for(short i = 1; i < option->avail_cores + 1; i++) {
+			for(short i = 1; i < option->threads + 1; i++) {
 				snprintf(osdtext, sizeof(osdtext), "%i", i);
-				graph_display_text(osdtext, -0.95, -0.75-((float)i/18), 0.75, GL_WHITE);
+				graph_display_text(osdtext, OCTx, OCTy-.05-((float)i/18), OCTs, GL_WHITE);
 				
 				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_allocated);
-				graph_display_text(osdtext, -0.84, -0.75-((float)i/18), 0.75, GL_GREEN);
+				graph_display_text(osdtext, OCTx+.11, OCTy-.05-((float)i/18), OCTs, GL_GREEN);
 				
 				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_cleaned);
-				graph_display_text(osdtext, -0.70, -0.75-((float)i/18), 0.75, GL_RED);
+				graph_display_text(osdtext, OCTx+.25, OCTy-.05-((float)i/18), OCTs, GL_RED);
 				
 				snprintf(osdtext, sizeof(osdtext), "%0.3lf",
 						t_stats[i]->bh_heapsize/1048576.0);
-				graph_display_text(osdtext, -0.58, -0.75-((float)i/18), 0.75, GL_WHITE);
+				graph_display_text(osdtext, OCTx+.37, OCTy-.05-((float)i/18), OCTs, GL_YELLOW);
 			}
 		}
 		
 		/* Thread time stats */
-			for(short i = 1; i < option->avail_cores + 1; i++) {
+			for(short i = 1; i < option->threads + 1; i++) {
 			clock_gettime(t_stats[i]->clockid, &ts);
 			snprintf(osdtext, sizeof(osdtext),
 					 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
-			graph_display_text(osdtext, 0.73, 0.95-((float)i/14), 0.75, GL_WHITE);
+			graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, GL_WHITE);
 		}
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -259,7 +311,7 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 	glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
 	{
 		/* Axis */
-		//draw_obj_axis();
+		draw_obj_axis(AXISs);
 		
 		/* Objects(as points) */
 		draw_obj_points(*object);
@@ -270,14 +322,14 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 
 void graph_init()
 {
-	mat = calloc(16, sizeof(GLfloat));
-	rotx = calloc(16, sizeof(GLfloat));
-	roty = calloc(16, sizeof(GLfloat));
-	rotz = calloc(16, sizeof(GLfloat));
-	rotation = calloc(16, sizeof(GLfloat));
-	scale = calloc(16, sizeof(GLfloat));
-	pers = calloc(16, sizeof(GLfloat));
-	transl = calloc(16, sizeof(GLfloat));
+	mat       = calloc(16, sizeof(GLfloat));
+	rotx      = calloc(16, sizeof(GLfloat));
+	roty      = calloc(16, sizeof(GLfloat));
+	rotz      = calloc(16, sizeof(GLfloat));
+	rotation  = calloc(16, sizeof(GLfloat));
+	scale     = calloc(16, sizeof(GLfloat));
+	pers      = calloc(16, sizeof(GLfloat));
+	transl    = calloc(16, sizeof(GLfloat));
 	
 	graph_resize_wind();
 	object_shader = graph_init_objects();
@@ -287,7 +339,7 @@ void graph_init()
 	glActiveTexture(GL_TEXTURE0);
 	glGenBuffers(1, &pointvbo);
 	glGenBuffers(1, &textvbo);
-	glClearColor(0.0, 0.0, 0.0, 1);
+	glClearColor(BACKr, BACKg, BACKb, BACKa);
 	pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
 	
 	trn_matrix = glGetUniformLocation(object_shader, "translMat");

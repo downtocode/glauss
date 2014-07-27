@@ -18,10 +18,19 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
-#define GL_WHITE 0
-#define GL_RED 1
-#define GL_GREEN 2
-#define GL_BLUE 3
+enum {
+	GL_WHITE,
+	GL_RED,
+	GL_GREEN,
+	GL_BLUE,
+	GL_YELLOW,
+};
+
+extern const float white[];
+extern const float red[];
+extern const float green[];
+extern const float blue[];
+extern const float yellow[];
 
 struct graph_cam_view {
 	float view_rotx, view_roty, view_rotz;

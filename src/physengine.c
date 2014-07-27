@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 		option = calloc(1, sizeof(*option));
 		*option = (struct option_struct){
 			.width = 1200, .height = 600,
-			.avail_cores = 0,
+			.threads = 0,
 			.dt = 0.008, .verbosity = 5,
 			.noflj = 1,
 			.gconst = 0, .epsno = 0, .elcharge = 0,
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 					option->logenable = 1;
 					break;
 				case 't':
-					sscanf(optarg, "%hu", &option->avail_cores);
+					sscanf(optarg, "%hu", &option->threads);
 					break;
 				case 'r':
 					sscanf(optarg, "%f", &timer);
@@ -331,8 +331,8 @@ int main(int argc, char *argv[])
 					}
 					if(event.key.keysym.sym==SDLK_SPACE) {
 						if(threadcontrol(PHYS_STATUS, &object))
-							threadcontrol(PHYS_PAUSE, &object);
-						else threadcontrol(PHYS_UNPAUSE, &object);
+							threadcontrol(PHYS_SHUTDOWN, &object);
+						else threadcontrol(PHYS_START, &object);
 					}
 					if(event.key.keysym.sym==SDLK_r) {
 						camera = (struct graph_cam_view)\
@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
 			
 			if(t_stats[1]->bh_allocated != 0) {
 				size_t bh_total = 0;
-				for(short i = 1; i < option->avail_cores + 1; i++) {
+				for(short i = 1; i < option->threads + 1; i++) {
 					bh_total += t_stats[i]->bh_heapsize;
 				}
 				if(bh_total > option->bh_heapsize_max) {

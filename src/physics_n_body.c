@@ -24,29 +24,40 @@
 #include "physics.h"
 #include "physics_n_body.h"
 
+/* Used to sync threads */
+static pthread_barrier_t barrier;
+
 void** nbody_init(data** object, struct thread_statistics **stats)
 {
-	struct thread_config_nbody **thread_config = calloc(option->avail_cores+1,
+	struct thread_config_nbody **thread_config = calloc(option->threads+1,
 		sizeof(struct thread_config_nbody*));
-	for(int k = 0; k < option->avail_cores + 1; k++) {
+	for(int k = 0; k < option->threads + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_nbody));
 	}
 	
-	int totcore = (int)((float)option->obj/option->avail_cores);
+	/* Init barrier */
+	pthread_barrier_init(&barrier, NULL, option->threads);
 	
-	for(int k = 1; k < option->avail_cores + 1; k++) {
+	int totcore = (int)((float)option->obj/option->threads);
+	
+	for(int k = 1; k < option->threads + 1; k++) {
 		thread_config[k]->stats = stats[k];
 		thread_config[k]->obj = *object;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
-		if(k == option->avail_cores) {
+		if(k == option->threads) {
 			/*	Takes care of rounding problems with odd numbers.	*/
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
 	}
 	
 	return (void**)thread_config;
+}
+
+void nbody_quit(void **threads)
+{
+	pthread_barrier_destroy(&barrier);
 }
 
 void *thread_nbody(void *thread_setts)

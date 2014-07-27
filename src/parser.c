@@ -44,7 +44,7 @@ static void conf_traverse_table(lua_State *L)
 			conf_traverse_table(L);
 		} else if(lua_isnumber(L, -1)) {
 			if(!strcmp("threads", lua_tostring(L, -2)))
-				option->avail_cores = lua_tonumber(L, -1);
+				option->threads = lua_tonumber(L, -1);
 			if(!strcmp("dt", lua_tostring(L, -2)))
 				option->dt = lua_tonumber(L, -1);
 			if(!strcmp("bh_ratio", lua_tostring(L, -2)))

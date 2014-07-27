@@ -28,34 +28,31 @@
 #include "physics_n_body.h"
 #include "physics_barnes_hut.h"
 
-/* Thread controls */
-pthread_mutex_t movestop;
-pthread_barrier_t barrier;
-bool running, quit;
-
 /*	Default threads to use when system != linux.	*/
 #define failsafe_cores 2
 
 /*	Indexing of cores = 1, 2, 3...	*/
 static pthread_t *threads;
 static pthread_attr_t thread_attribs;
-static pthread_mutexattr_t mattr;
 static struct sched_param parameters;
 
-pthread_mutex_t movestop;
-pthread_barrier_t barrier;
+/* Internal status */
 bool running, quit;
 
+/* Thread statistics */
 struct thread_statistics **t_stats;
 
+/* Only sent to quit function */
+void** thread_conf;
+
 const struct list_algorithms phys_algorithms[] = {
-/* Format: name,      thread_function,     config function */
-	{ "null",         thread_null,         null_init  },
-	{ "n-body",       thread_nbody,        nbody_init },
-	{ "barnes-hut",   thread_barnes_hut,   bhut_init  },
+/*    name,           thread f-n,          init f-n      deinit f-n      */
+	{ "null",         thread_null,         null_init,    null_quit    },
+	{ "n-body",       thread_nbody,        nbody_init,   nbody_quit   },
+	{ "barnes-hut",   thread_barnes_hut,   bhut_init,    bhut_quit    },
 	{0}
 };
-/* Config function needs to return a double pointer, which then gets
+/* Init function needs to return a double pointer, which then gets
  * distributed amongst threads as arguments. */
 
 thread_function phys_find_algorithm(const char *name)
@@ -72,6 +69,15 @@ thread_configuration phys_find_config(const char *name)
 	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
 		if(!strcmp(i->name, name))
 			return i->thread_configuration;
+	}
+	return NULL;
+}
+
+thread_destruction phys_find_quit(const char *name)
+{
+	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
+		if(!strcmp(i->name, name))
+			return i->thread_destruction;
 	}
 	return NULL;
 }
@@ -99,36 +105,41 @@ int initphys(data** object)
 	else return 1;
 	
 	/* Set the amount of threads */
-	int online_cores = 0;
+	unsigned short online_cores = 0;
 	
 #ifdef __linux__
 	online_cores = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 	
-	if(option->avail_cores == 0 && online_cores != 0 ) {
-		option->avail_cores = online_cores;
-		pprintf(PRI_OK, "Detected %i threads, will use all.\n", online_cores);
-	} else if( option->avail_cores != 0 && online_cores != 0\
-										 && online_cores > option->avail_cores )
-		pprintf(PRI_VERYHIGH, "Using %i out of %i threads.\n",
-				option->avail_cores, online_cores);
-	else if(option->avail_cores == 1)
-		pprintf(PRI_VERYHIGH, "Running program in a single thread.\n");
-	else if(option->avail_cores > 1)
-		pprintf(PRI_VERYHIGH, "Running program with %i threads.\n",
-				option->avail_cores);
-	else if(option->avail_cores == 0 ) {
-		/*	Poor OSX...	*/
-		option->avail_cores = failsafe_cores;
-		pprintf(PRI_WARN,
-				"Thread detection unavailable, running with %i thread(s).\n",
-				failsafe_cores);
+	if(!option->threads) {
+		if(online_cores) {
+			option->threads = online_cores;
+			pprintf(PRI_OK, "Detected %i threads, will use all.\n", online_cores);
+		} else {
+			option->threads = failsafe_cores;
+			pprintf(PRI_WARN,
+					"Core detection unavailable, running with %i thread(s).\n",
+					failsafe_cores);
+		}
+	} else {
+		if(online_cores) {
+			pprintf(PRI_VERYHIGH, "Running with %i thread(s), out of %i cores.\n",
+					option->threads, online_cores);
+		} else {
+			pprintf(PRI_VERYHIGH, "Runninh with %i threads.\n", option->threads);
+		}
 	}
 	
-	if(option->avail_cores > option->obj) {
-		pprintf(PRI_WARN, "More threads than cores. Capping threads to %i\n",
+	if(option->threads > option->obj) {
+		pprintf(PRI_WARN, "More threads than objects. Capping threads to %i\n",
 				option->obj+1);
-		option->avail_cores = option->obj+1;
+		option->threads = option->obj+1;
+	}
+	
+	/* Stats */
+	t_stats = calloc(option->threads+1, sizeof(struct thread_statistics*));
+	for(int k = 1; k < option->threads + 1; k++) {
+		t_stats[k] = calloc(1, sizeof(struct thread_statistics));
 	}
 	
 	/* pthreads configuration */
@@ -143,72 +154,50 @@ int initphys(data** object)
 
 bool phys_remove_obj(data *object, unsigned int index) {
 	object[index] = object[option->obj];
-	object = realloc(object, (option->obj--)*sizeof(data));
+	object = realloc(object, (--option->obj)*sizeof(data));
 	if(!object) return 1;
+	return 0;
+}
+
+bool phys_add_obj(data *objects, data *object) {
+	objects = realloc(objects, (++option->obj)*sizeof(data));
+	objects[option->obj] = *object;
+	if(!objects) return 1;
 	return 0;
 }
 
 int threadcontrol(int status, data** object)
 {
-	if(!option->avail_cores) return 0;
+	if(!option->threads) return 0;
 	switch(status) {
-		case PHYS_UNPAUSE:
-			return 0;
-			/*if(running) return 1;
-			running = 1;
-			pthread_mutex_unlock(&movestop);*/
-			break;
-		case PHYS_PAUSE:
-			return 0;
-			// Pausing temporarily disabled until a better way is found.
-			/*if(!running) return 1;
-			running = 0;
-			pthread_mutex_lock(&movestop);*/
-			break;
 		case PHYS_STATUS:
 			return running;
 			break;
 		case PHYS_START:
 			if(running) return 1;
 			running = 1;
-			threads = calloc(option->avail_cores+1, sizeof(pthread_t));
+			threads = calloc(option->threads+1, sizeof(pthread_t));
 			
-			pthread_barrier_init(&barrier, NULL, option->avail_cores);
-			//pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_PRIVATE);
-			pthread_mutex_init(&movestop, &mattr);
+			thread_conf = (phys_find_config(option->algorithm))(object, t_stats);
 			
-			struct thread_statistics **stats = calloc(option->avail_cores+1,
-									sizeof(struct thread_statistics*));
-			for(int k = 1; k < option->avail_cores + 1; k++) {
-				stats[k] = calloc(1, sizeof(struct thread_statistics));
-			}
-			
-			void** thread_conf = 
-						   (phys_find_config(option->algorithm))(object, stats);
-			
-			for(int k = 1; k < option->avail_cores + 1; k++) {
+			for(int k = 1; k < option->threads + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
 				pthread_create(&threads[k], &thread_attribs,
 							   phys_find_algorithm(option->algorithm),
 							   thread_conf[k]);
-				pthread_getcpuclockid(threads[k], &stats[k]->clockid);
+				pthread_getcpuclockid(threads[k], &t_stats[k]->clockid);
 				pprintf(PRI_OK, "\n");
 			}
-			t_stats = stats;
 			break;
 		case PHYS_SHUTDOWN:
 			if(!running) return 1;
-			threadcontrol(PHYS_UNPAUSE, NULL);
 			quit = 1;
-			for(int k = 1; k < option->avail_cores + 1; k++) {
+			for(int k = 1; k < option->threads + 1; k++) {
 				pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
 				pthread_join(threads[k], NULL);
 				pprintf(PRI_OK, "\n");
 			}
-			
-			pthread_barrier_destroy(&barrier);
-			pthread_mutex_destroy(&movestop);
-			
+			(phys_find_quit(option->algorithm))(thread_conf);
 			free(threads);
 			running = 0;
 			quit = 0;

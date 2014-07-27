@@ -19,7 +19,7 @@
 
 #include "physics.h"
 
-void draw_obj_axis();
+void draw_obj_axis(float scale);
 void draw_obj_sphere(data* object);
 void draw_obj_points(data* object);
 unsigned int createlinks(data* object, GLfloat (**links)[3]);

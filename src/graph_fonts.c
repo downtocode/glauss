@@ -43,11 +43,6 @@ static FT_GlyphSlot g;
 
 static GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
-static const GLfloat textcolor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-static const GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
-static const GLfloat green[] = {0.0f, 1.0f, 0.0f, 1.0f};
-static const GLfloat blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
-
 const char *graph_init_fontconfig()
 {
 	FcConfig *fc_config = FcInitLoadConfigAndFonts();
@@ -107,11 +102,12 @@ void graph_display_text(const char *text, float x, float y, float s, short col)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	if(col == 0) glUniform4fv(textattr_color, 1, textcolor);
-	if(col == 1) glUniform4fv(textattr_color, 1, red);
-	if(col == 2) glUniform4fv(textattr_color, 1, green);
-	if(col == 3) glUniform4fv(textattr_color, 1, blue);
-	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, textcolor);
+	if(col == GL_WHITE) glUniform4fv(textattr_color, 1, white);
+	if(col == GL_RED) glUniform4fv(textattr_color, 1, red);
+	if(col == GL_GREEN) glUniform4fv(textattr_color, 1, green);
+	if(col == GL_BLUE) glUniform4fv(textattr_color, 1, blue);
+	if(col == GL_YELLOW) glUniform4fv(textattr_color, 1, yellow);
+	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, white);
 	glEnableVertexAttribArray(textattr_coord);
 	glEnableVertexAttribArray(textattr_color);
 	for(const char *p = text; *p; p++) {
@@ -142,7 +138,7 @@ void graph_display_text(const char *text, float x, float y, float s, short col)
 	glDisableVertexAttribArray(textattr_coord);
 	glDisableVertexAttribArray(textattr_color);
 	glDisable(GL_BLEND);
-	if(col != 0) glUniform4fv(textattr_color, 1, textcolor);
+	if(col != 0) glUniform4fv(textattr_color, 1, white);
 }
 
 void graph_display_object_info(data *object)

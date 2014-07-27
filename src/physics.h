@@ -18,27 +18,26 @@
 #ifndef PHYSENGINE_PHYS
 #define PHYSENGINE_PHYS
 
-#define PHYS_PAUSE 0
-#define PHYS_UNPAUSE 1
-#define PHYS_STATUS 2
-#define PHYS_START 8
-#define PHYS_SHUTDOWN 9
+#if (__clang_major__ >= 3) &&  (__clang_minor__ >= 5)
+/* Use OpenCL's vectors when compiling with Clang
+ *  since it doesn't support scalar operations on vectors. */
+typedef double v4sd __attribute__((ext_vector_type(3)));
+#elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 9)
+typedef double v4sd __attribute__ ((vector_size (32)));
+#else /* Compiler version */
+#error You need to update your compilers. GCC 4.9 or Clang 3.5 required
+#endif
 
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
 
-#if (__clang_major__ >= 3) &&  (__clang_minor__ >= 5)
-/* Use OpenCL's vectors when compiling with Clang
- *  since it doesn't support scalar operations on vectors. */
-typedef double v4sd __attribute__((ext_vector_type(3)));
-/* Clang also defines __GNUC__ however it doesn't matter
- *  since the first condition has already been met in that case. */
-#elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 9)
-typedef double v4sd __attribute__ ((vector_size (32)));
-#else
-#error You need to update your compilers. GCC 4.9 or Clang 3.5 required
-#endif
+/* Status enum */
+enum {
+	PHYS_STATUS,
+	PHYS_START,
+	PHYS_SHUTDOWN,
+};
 
 /* Object structure */
 typedef struct {
@@ -51,8 +50,11 @@ typedef struct {
 
 /* Statistics structure */
 struct thread_statistics {
+	/* Shared */
 	long double progress;
 	clockid_t clockid;
+	
+	/* physics_barnes_hut */
 	unsigned int bh_allocated;
 	unsigned int bh_cleaned;
 	size_t bh_heapsize;
@@ -63,26 +65,31 @@ struct list_algorithms {
 	const char *name;
 	void* (*thread_location)(void *thread_setts);
 	void** (*thread_configuration)(data **, struct thread_statistics **);
+	void (*thread_destruction)(void **);
 };
 
-extern struct thread_statistics **t_stats;
-extern const struct list_algorithms phys_algorithms[];
-
-typedef void* (*thread_function)(void*);
+typedef void*  (*thread_function)(void*);
 typedef void** (*thread_configuration)(data **, struct thread_statistics **);
+typedef void   (*thread_destruction)(void **);
 
 /* These functions will return a function pointer */
-thread_function phys_find_algorithm(const char *name);
-thread_configuration phys_find_config(const char *name);
+thread_function        phys_find_algorithm(const char *name);
+thread_configuration   phys_find_config(const char *name);
+thread_destruction     phys_find_quit(const char *name);
 
-/* Thread controls */
-extern pthread_mutex_t movestop;
-extern pthread_barrier_t barrier;
-extern bool running, quit;
+/* Signals threads to quit */
+extern bool quit;
+
+/* Statistics directly from the threads */
+extern struct thread_statistics **t_stats;
+
+/* List of algorithms and their function pointers */
+extern const struct list_algorithms phys_algorithms[];
 
 /* External functions for control */
 int initphys(data** object);
 bool phys_remove_obj(data *object, unsigned int index);
+bool phys_add_obj(data *objects, data *object);
 int threadcontrol(int status, data** object);
 
 #endif

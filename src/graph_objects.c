@@ -24,17 +24,16 @@
 #include "graph_objects.h"
 
 static GLint objattr_pos, objattr_color;
-static const GLfloat gl_col_white[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
-void draw_obj_axis()
+void draw_obj_axis(float scale)
 {
 	GLfloat axis[6][3] = {
-		{0,0,0},
-		{1,0,0},
-		{0,0,0},
-		{0,1,0},
-		{0,0,0},
-		{0,0,1},
+		{0    ,0    ,0    },
+		{scale,0    ,0    },
+		{0    ,0    ,0    },
+		{0    ,scale,0    },
+		{0    ,0    ,0    },
+		{0    ,0    ,scale},
 	};
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -76,14 +75,14 @@ void draw_obj_sphere(data* object)
 	
 	glDisableVertexAttribArray(objattr_pos);
 	glDisableVertexAttribArray(objattr_color);
-	glUniform4fv(objattr_color, 1, gl_col_white);
+	glUniform4fv(objattr_color, 1, white);
 }
 
 void draw_obj_points(data* object)
 {
 	float points[option->obj][3];
 	
-	glUniform4fv(objattr_color, 1, gl_col_white);
+	glUniform4fv(objattr_color, 1, white);
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(objattr_pos);

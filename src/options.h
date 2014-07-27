@@ -34,7 +34,7 @@ struct option_struct {
 	/* Physics */
 	float dt;
 	unsigned int obj; //--
-	unsigned short avail_cores;
+	unsigned short threads;
 	double elcharge, gconst, epsno;
 	
 	/* Barnes-Hut algorithm specifics */

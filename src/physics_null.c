@@ -18,6 +18,17 @@
 #include "physics.h"
 
 //Returning stats as pthread_create demands a non-null argument
-void** null_init(data** object, struct thread_statistics **stats) { return (void**)stats; }
+void** null_init(data** object, struct thread_statistics **stats)
+{
+	return (void**)stats;
+}
 
-void *thread_null(void *thread_setts) { return NULL; }
+void null_quit(void **threads)
+{
+	return;
+}
+
+void *thread_null(void *thread_setts)
+{
+	return NULL;
+}
