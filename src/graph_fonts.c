@@ -96,18 +96,14 @@ void graph_stop_freetype()
 	FT_Done_FreeType(library);
 }
 
-void graph_display_text(const char *text, float x, float y, float s, short col)
+void graph_display_text(const char *text, float x, float y, float s, const GLfloat *col)
 {
 	float sx = s/option->width, sy = s/option->height;
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	if(col == GL_WHITE) glUniform4fv(textattr_color, 1, white);
-	if(col == GL_RED) glUniform4fv(textattr_color, 1, red);
-	if(col == GL_GREEN) glUniform4fv(textattr_color, 1, green);
-	if(col == GL_BLUE) glUniform4fv(textattr_color, 1, blue);
-	if(col == GL_YELLOW) glUniform4fv(textattr_color, 1, yellow);
-	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, white);
+	glUniform4fv(textattr_color, 1, col);
+	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, col);
 	glEnableVertexAttribArray(textattr_coord);
 	glEnableVertexAttribArray(textattr_color);
 	for(const char *p = text; *p; p++) {
@@ -138,7 +134,7 @@ void graph_display_text(const char *text, float x, float y, float s, short col)
 	glDisableVertexAttribArray(textattr_coord);
 	glDisableVertexAttribArray(textattr_color);
 	glDisable(GL_BLEND);
-	if(col != 0) glUniform4fv(textattr_color, 1, white);
+	glUniform4fv(textattr_color, 1, col);
 }
 
 void graph_display_object_info(data *object)
@@ -157,7 +153,7 @@ void graph_display_object_info(data *object)
 	sprintf(osdstr, "Atom=%s", atom_prop[object->atomnumber].name);
 	
 	graph_display_text(osdstr, objpoint[0] + object->radius,\
-					   objpoint[1] + object->radius, 1.0, GL_RED);
+					   objpoint[1] + object->radius, 1.0, NULL);
 	
 	glEnableVertexAttribArray(textattr_coord);
 	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);

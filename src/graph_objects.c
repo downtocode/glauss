@@ -45,6 +45,7 @@ void draw_obj_axis(float scale)
 
 void draw_obj_sphere(data* object)
 {
+	const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 	/* Decrease dj to get better spheres. */
 	float dj = 0.5, pi=acos(-1);
 	int pointcount = 0;
@@ -80,6 +81,7 @@ void draw_obj_sphere(data* object)
 
 void draw_obj_points(data* object)
 {
+	const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 	float points[option->obj][3];
 	
 	glUniform4fv(objattr_color, 1, white);

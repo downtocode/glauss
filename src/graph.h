@@ -36,13 +36,6 @@ enum {
 	GL_YELLOW,
 };
 
-/* Color array */
-extern const float white[];
-extern const float red[];
-extern const float green[];
-extern const float blue[];
-extern const float yellow[];
-
 void graph_init();
 void graph_view(struct graph_cam_view *camera);
 float graph_resize_wind();

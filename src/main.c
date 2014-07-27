@@ -428,7 +428,6 @@ int main(int argc, char *argv[])
 		
 		graph_draw_scene(&object, fps, chosen);
 		
-		
 		SDL_GL_SwapWindow(window);
 	}
 	
