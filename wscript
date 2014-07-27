@@ -43,7 +43,7 @@ def configure(ctx):
 	ctx.check_cfg(package='freetype2', args='--cflags --libs', uselib_store='FT')
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')
 	ctx.check_cfg(package='lua5.2', args='--cflags --libs', uselib_store='LUA')
-	ctx.check(features='c cprogram', lib=['pthread'], cflags='-lm', uselib_store='PTHRD')
+	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
 	
 	git_version = try_git_version()
 	ctx.define('PACKAGE_STRING', APPNAME + ' ' + git_version)
@@ -169,11 +169,11 @@ def build(ctx):
 		includes='. .. ../../',
 	)
 	
-	ctx(name='physengine',
+	ctx(name='main',
 		path=ctx.path,
 		use=['SDL', 'GL', 'MATH', 'PTHRD', 'LUA', 'FT', 'FC', 'in_molecule', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
-		source='src/physengine.c',
+		source='src/main.c',
 		features  = ['c', 'cprogram'],
 		includes='. .. ../../',
 	)
