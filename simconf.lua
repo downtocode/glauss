@@ -6,6 +6,7 @@ settings = {
 		dt = 0.003,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
+		--Lifetime of a cell before it's freed.
 		bh_lifetime = 20,
 		--Units are size_t! PER THREAD!
 		bh_heapsize_max = 536870912,

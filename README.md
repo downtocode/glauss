@@ -11,13 +11,14 @@ Compiling
 ---------
 Dependencies:
 
- * gcc (4.8.2 or newer)  or clang (3.5 or newer)
+ * gcc (4.9 or newer)  or clang (3.5 or newer)
  * OpenGL ES 2.0 development libraries (Debian: libgles2-mesa-dev; Fedora: mesa-libGLES)
- * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2) 
+ * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2)
+ * Fontconfig development library(Debian: libfontconfig1-dev)
  * SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)
  * Lua 5.2 (Debian: liblua5.2-dev)
 
-All are available on any up-to-date Linux distribution's package repositories. To compile and install, do the standard:
+All are available on any up-to-date Linux distribution's package repositories. To compile and install:
 
 `./bootstrap.py`
 
@@ -27,7 +28,7 @@ All are available on any up-to-date Linux distribution's package repositories. T
 
 `./waf install`
 
-The program can be run in any directory as it has no dependence on any external files. For developer convenience, it's possible to avoid program installation. Just run `make` without the install part and then the ./physengine.sh shell script.
+The program can be run in any directory as it has no dependence on any external files. For developer convenience, it's possible to avoid program installation. Just build and run the shell script without installing.
 
 Running
 -------
@@ -78,7 +79,7 @@ simconf.lua
 -----------
 This file determines the system to simulate. It's a Lua script, so make sure to follow the syntax. All Lua libraries(including math) are included and initialized, feel free to use them. Error handling is done by Lua interpreter.
 
-Currently, n-body and Barnes-Hut simulations have been implemented, which you can select using the "algorithm" variable in the configuration file or via the appropriate arguments. The Barnes-Hut algorithm has special settings: bh_ratio shall adjust the precision level while OCTREE_INIT_SCORE(compile time) sets the timeout for empty cells. The speed of the algorithm is dependent on the standard C library providing memory allocation.
+Currently, n-body and Barnes-Hut simulations have been implemented, which you can select using the "algorithm" variable in the configuration file or via the appropriate arguments. The Barnes-Hut algorithm has special settings: bh_ratio shall adjust the precision level(and speed), bh_lifetime will set the lifetime of a cell before it's freed(in #timesteps), bh_tree_limit sets the maximum assigned threads an octree may contain(use to spread threads further) and finally bh_heapsize_max sets a hard limit on the maximum memory size of a thread's octrees in bytes.
 
 Physengine reads the settings table first, reads the global objects table and then calls the spawn_objects function, which returns its own local objects table along with a counter how many objects exist in it. Usually the global table contains any molecule files(in pdb or xyz formats) and any standalone objects. The function spawn_objects is for having your own distribution of objects.
 
