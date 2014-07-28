@@ -214,8 +214,8 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &status_vert);
 	glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &status_frag);
 	if(!status_vert || !status_frag) {
-		if(!status_vert) pprintf(PRI_ERR, "VS %s did not compile.\n");
-		if(!status_frag) pprintf(PRI_ERR, "FS %s did not compile.\n");
+		if(!status_vert) pprintf(PRI_ERR, "[GL] VS did not compile.\n");
+		if(!status_frag) pprintf(PRI_ERR, "[GL] FS did not compile.\n");
 		exit(1);
 	}
 	
@@ -228,7 +228,7 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 		char log[1000];
 		GLsizei len;
 		glGetProgramInfoLog(program, 1000, &len, log);
-		pprintf(PRI_ERR, "Linking:\n%s\n", log);
+		pprintf(PRI_ERR, "[GL] Linking:\n%s\n", log);
 		exit(1);
 	}
 	
@@ -340,7 +340,7 @@ void graph_init()
 	glGenBuffers(1, &pointvbo);
 	glGenBuffers(1, &textvbo);
 	glClearColor(BACKr, BACKg, BACKb, BACKa);
-	pprintf(4, "OpenGL Version %s\n", glGetString(GL_VERSION));
+	pprintf(PRI_VERYLOW, "[GL] OpenGL Version %s\n", glGetString(GL_VERSION));
 	
 	trn_matrix = glGetUniformLocation(object_shader, "translMat");
 	rot_matrix = glGetUniformLocation(object_shader, "rotationMat");

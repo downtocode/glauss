@@ -82,14 +82,10 @@ static void bh_assign_thread(bh_thread *root,
 							 bh_octree *octree, struct thread_config_bhut *thread)
 {
 	if(!thread || !root) return;
-	else if(++root->assigned < 9) {
+	else if(++root->assigned < option->bh_tree_limit + 1) {
 		bh_add_thread(root, octree, thread);
 	} else {
 		qsort(root->subdiv, 8, sizeof(bh_thread *), thread_cmp_assigned);
-		if(option->bh_thread_offset) {
-			/* If depth > 1, do a map: index 0's child 6 must be first,
-			 * since it's in the direction of the centre */
-		}
 		/* Sort: lowest to highest so 0's always the least assigned one. */
 		bh_assign_thread(root->subdiv[0], root->subdiv[0]->mapped, thread);
 	}
@@ -107,7 +103,7 @@ static void bh_decimate_assignment_tree(bh_thread *root)
 static void bh_print_thread_tree(struct thread_config_bhut **thread)
 {
 	for(unsigned int m=1; m < option->threads + 1; m++) {
-		printf("Thread %i octree(depth): ", m);
+		printf("Thread %i has octree(depth): ", m);
 		for(short h=0; h < 8; h++) {
 			if(thread[m]->octrees[h]) {
 				printf("%i(%u) ", h, thread[m]->octrees[h]->depth);
@@ -136,12 +132,11 @@ static void bh_init_threaded_tree(bh_octree *root)
 }
 
 void** bhut_init(data** object, struct thread_statistics **stats)
-{	
+{
+#ifdef __linux__
 	/* Use this size for glibc's fastbins. In theory any memory below this size
 	 * will not be consolidated together, allowing us to allocate and free
 	 * memory real fast. Not portable. */
-	
-#ifdef __linux__
 	mallopt(M_MXFAST, sizeof(struct phys_barnes_hut_octree));
 #endif
 	
@@ -149,6 +144,12 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 											sizeof(struct thread_config_bhut*));
 	for(int k = 0; k < option->threads + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_bhut));
+	}
+	
+	/* Check if options are within limits */
+	if(option->bh_tree_limit  < 1 || option->bh_tree_limit > 8) {
+		pprintf(PRI_ERR, "[BH] Option bh_tree_limit must be within [1,8]!");
+		exit(1);
 	}
 	
 	/* Init mutex */
@@ -264,10 +265,13 @@ static short bh_get_octant(v4sd *pos, bh_octree *octree)
 	return oct;
 }
 
-
 static void bh_init_cell(bh_octree *octree, short k)
 {
-	if(allocated_cells > 1000000) exit(0);
+	if(allocated_cells*sizeof(bh_octree) > option->bh_heapsize_max) {
+		pprintf(PRI_ERR, "Reached maximum octree heapsize of %lu bytes!\n",
+				option->bh_heapsize_max);
+		exit(1);
+	}
 	if(!octree->cells[k]) {
 		octree->cells[k] = calloc(1, sizeof(struct phys_barnes_hut_octree));
 		octree->cells[k]->depth = octree->depth+1;

@@ -26,7 +26,7 @@
 #include "physics.h"
 #include "parser.h"
 #include "options.h"
-#include "in_molecule.h"
+#include "in_file.h"
 #include "msg_phys.h"
 
 struct lua_parser_state {
@@ -53,6 +53,8 @@ static void conf_traverse_table(lua_State *L)
 				option->bh_lifetime = lua_tonumber(L, -1);
 			if(!strcmp("bh_heapsize_max", lua_tostring(L, -2)))
 				option->bh_heapsize_max = lua_tonumber(L, -1);
+			if(!strcmp("bh_tree_limit", lua_tostring(L, -2)))
+				option->bh_tree_limit = lua_tonumber(L, -1);
 			if(!strcmp("width", lua_tostring(L, -2)))
 				option->width = lua_tonumber(L, -1);
 			if(!strcmp("height", lua_tostring(L, -2)))
@@ -71,8 +73,7 @@ static void conf_traverse_table(lua_State *L)
 			if(!strcmp("fontname", lua_tostring(L, -2)))
 				option->fontname = strdup(lua_tostring(L, -1));
 		} else if(lua_isboolean(L, -1)) {
-			if(!strcmp("bh_thread_offset", lua_tostring(L, -2)))
-				option->bh_thread_offset = lua_toboolean(L, -1);
+			/*No boolean settings yet */
 		}
 		lua_pop(L, 1);
 	}
@@ -87,7 +88,7 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer,
 			if(parser_state->molset) {
 				if(!access(parser_state->molfile, R_OK)) {
 					pprintf(PRI_OK, "File %s found!\n", parser_state->molfile);
-					readmolecule(*object, buffer,
+					in_read_file(*object, buffer,
 								 parser_state->molfile, &parser_state->i);
 					memset(parser_state->molfile, 0,
 						   sizeof(parser_state->molfile));
@@ -143,7 +144,7 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer,
 	}
 }
 
-/* We have to know the exact amount of objects we need memory for so we scan */
+/* We have to know the exact amount of objects we need memory for so we scan. */
 static void molfiles_traverse_table(lua_State *L)
 {
 	lua_pushnil(L);
@@ -155,7 +156,7 @@ static void molfiles_traverse_table(lua_State *L)
 				if(!access(lua_tostring(L, -1), R_OK)) {
 					pprintf(PRI_OK, "File %s found!\n", lua_tostring(L, -1));
 					/* A molecule is a single object which we get rid of. */
-					option->obj += probefile(lua_tostring(L, -1)) - 1;
+					option->obj += in_probe_file(lua_tostring(L, -1)) - 1;
 				} else {
 					pprintf(PRI_ERR, "File %s not found!\n",
 							lua_tostring(L, -1));

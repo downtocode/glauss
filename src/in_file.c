@@ -19,28 +19,28 @@
 #include <string.h>
 #include <stdlib.h>
 #include <tgmath.h>
-#include "in_molecule.h"
+#include "in_file.h"
 #include "options.h"
 #include "msg_phys.h"
 #include "physics_aux.h"
 
-int probefile(const char *molfile)
+int in_probe_file(const char *filename)
 {
 	char str[500];
 	int counter = 0;
-	FILE *inprep = fopen(molfile, "r");
+	FILE *inprep = fopen(filename, "r");
 	
-	int moltype = 0;
+	int filetype = 0;
 	
 	/* Put format specific quirks here. */
-	if(strstr(molfile, "xyz")!=NULL) {
-		moltype = MOL_XYZ;
-	} else if(strstr(molfile, "pdb")!=NULL) {
-		moltype = MOL_PDB;
-	} else if(strstr(molfile, "obj")!=NULL) {
-		moltype = MOL_OBJ;
+	if(strstr(filename, "xyz")!=NULL) {
+		filetype = MOL_XYZ;
+	} else if(strstr(filename, "pdb")!=NULL) {
+		filetype = MOL_PDB;
+	} else if(strstr(filename, "obj")!=NULL) {
+		filetype = MOL_OBJ;
 	} else {
-		fprintf(stderr, "Error! Filetype of %s not recognized!\n", molfile);
+		fprintf(stderr, "[IN] Filetype of %s not recognized!\n", filename);
 		exit(1);
 	}
 	
@@ -48,19 +48,19 @@ int probefile(const char *molfile)
 	 * XYZ files have total number of atoms in their first line.
 	 * PDB files contain an incrementing index, but I'd like to avoid sscanf.
 	 */
-	if(moltype == MOL_XYZ) {
+	if(filetype == MOL_XYZ) {
 		fgets(str, sizeof(str), inprep);
 		fclose(inprep);
 		sscanf(str, "%i", &counter);
 		return counter;
-	} else if(moltype == MOL_PDB) {
+	} else if(filetype == MOL_PDB) {
 		while(fgets (str, sizeof(str), inprep)!= NULL) {
 			if(strstr(str, "#") == NULL) {
 				if(strncmp(str, "ATOM", 4)==0) counter++;
 			}
 		}
 		return counter;
-	} else if(moltype == MOL_OBJ) {
+	} else if(filetype == MOL_OBJ) {
 		while(fgets (str, sizeof(str), inprep)!= NULL) {
 			if(strstr(str, "#") == NULL) {
 				if(strncmp(str, "v ", 2)==0) counter++;
@@ -71,26 +71,26 @@ int probefile(const char *molfile)
 	return 0;
 }
 
-int readmolecule(data *object, data *buffer, const char *molfile, int *i)
+int in_read_file(data *object, data *buffer, const char *filename, int *i)
 {
 	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;
 	int filetype, pdbatomindex, pdbresidueseq;
 	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
-	FILE *inpars = fopen(molfile, "r");
+	FILE *inpars = fopen(filename, "r");
 	
 	/* Put format specific quirks here. */
-	if(strstr(molfile, "xyz")!=NULL) {
+	if(strstr(filename, "xyz")!=NULL) {
 		filetype = MOL_XYZ;
 		/* Skip first two lines of XYZ files. */
 		fgets(str, sizeof(str), inpars);
 		fgets(str, sizeof(str), inpars);
-	} else if(strstr(molfile, "pdb")!=NULL) {
+	} else if(strstr(filename, "pdb")!=NULL) {
 		filetype = MOL_PDB;
-	} else if(strstr(molfile, "obj")!=NULL) {
+	} else if(strstr(filename, "obj")!=NULL) {
 		filetype = MOL_OBJ;
 	} else {
-		fprintf(stderr, "Error! Filetype of %s not recognized!\n", molfile);
+		fprintf(stderr, "Error! Filetype of %s not recognized!\n", filename);
 		exit(1);
 	}
 	
@@ -142,7 +142,7 @@ int readmolecule(data *object, data *buffer, const char *molfile, int *i)
 				object[*i].radius = 0.1;
 			}
 			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", 
-					molfile, *i, 
+					filename, *i, 
 					object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);
 			*i = *i + 1;
 		}

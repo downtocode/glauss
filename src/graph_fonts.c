@@ -82,7 +82,6 @@ const char *graph_init_fontconfig()
 	FcResult fc_result;
 	/* Incantation for our omnipotence to recognize our request */
 	FcDefaultSubstitute(fc_pattern);
-	/* "Oh, dear FONTCONFIG..." */
 	FcConfigSubstitute(fc_config, fc_pattern, FcMatchPattern);
 	/* "We ask you, oh you in the sky, for your attention..." */
 	FcPattern *fc_font_chosen = FcFontMatch(fc_config, fc_pattern, &fc_result);
@@ -90,7 +89,7 @@ const char *graph_init_fontconfig()
 	/* SHOW US YOUR POWER, INVOKE ANCIENT KNOWLEDGE, GIVE US THE LOCATION! */
 	FcPatternGet(fc_font_chosen, "file", 0, &fc_value);
 	/* Fontgod has given us a sacred filename, hail FONTCONFIG! */
-	pprintf(PRI_VERYLOW, "Fontname = %s\n", (char *)fc_value.u.s);
+	pprintf(PRI_VERYLOW, "[FC] Fontname received = %s\n", (char *)fc_value.u.s);
 	return (const char *)fc_value.u.s;
 }
 
@@ -113,7 +112,7 @@ unsigned int graph_init_freetype(const char *fontname)
 		exit(1);
 	}
 	if(FT_New_Face(library, fontname, 0, &face)) {
-		pprintf(PRI_ERR, "Could not open font.\n");
+		pprintf(PRI_ERR, "Freetype could not open font.\n");
 		exit(1);
 	}
 	FT_Set_Pixel_Sizes(face, 0, 34);
@@ -156,6 +155,10 @@ unsigned int graph_init_freetype(const char *fontname)
 		ft_chr[i].tx = (float)x/atlas_w;
 		x += g->bitmap.width;
 	}
+	
+	pprintf(PRI_VERYLOW, "[FT] Created a %i by %i atlas (%3.3lf KiB)\n",
+		   atlas_w, atlas_h, atlas_w*atlas_h/1024.0);
+	
 	return text_program;
 }
 

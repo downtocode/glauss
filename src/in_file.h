@@ -24,7 +24,7 @@
 #define MOL_PDB 2
 #define MOL_OBJ 3
 
-int probefile(const char *molfile);
-int readmolecule(data *object, data *buffer, const char *molfile, int *i);
+int in_probe_file(const char *filename);
+int in_read_file(data *object, data *buffer, const char *filename, int *i);
 
 #endif

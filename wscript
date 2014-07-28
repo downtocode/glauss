@@ -131,11 +131,11 @@ def build(ctx):
 		features  = ['c'],
 		includes='. .. ../../',
 	)
-	ctx(name='in_molecule',
+	ctx(name='in_file',
 		path=ctx.path,
 		uselib='MATH',
-		target='in_molecule',
-		source='src/in_molecule.c',
+		target='in_file',
+		source='src/in_file.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -173,7 +173,7 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'LUA', 'FT', 'FC', 'in_molecule', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='src/main.c',
 		features  = ['c', 'cprogram'],

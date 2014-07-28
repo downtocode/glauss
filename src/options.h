@@ -39,7 +39,7 @@ struct option_struct {
 	
 	/* Barnes-Hut algorithm specifics */
 	float bh_ratio;
-	bool bh_thread_offset;
+	unsigned short bh_tree_limit;
 	unsigned short bh_lifetime;
 	size_t bh_heapsize_max;
 };

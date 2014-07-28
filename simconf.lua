@@ -7,12 +7,10 @@ settings = {
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
 		bh_lifetime = 20,
-		--Units are BYTES! Only calculated once every timer update!
+		--Units are size_t! PER THREAD!
 		bh_heapsize_max = 536870912,
-		--Normally, the thread assignment for BH will assign each thread in
-		--the least occupied octree. Set this to true to change the behaviour
-		--so that the cells closest to the root tree origin get assigned to threads.
-		bh_thread_offset = false,
+		--Maximum threads per octree. Reduce this to spread threads more.
+		bh_tree_limit = 8, --Range is [1,8(default)]
 	},
 	visual = {
 		width = 1024,
@@ -46,10 +44,9 @@ objects = {
 -- 	}
 }
 
---Spawn objects here. Arrays for position and velocity are not supported. Stick to normal variables.
 function spawn_objects(varfromC)
 	math.randomseed( os.time() )
-	for i = 1, maxobjects, 1 do
+	for i = #objects, maxobjects, 1 do
 		objects[i] = {
 			posx = math.sin(i)*(i/maxobjects),
 			posy = (math.random()-0.5)/10,
