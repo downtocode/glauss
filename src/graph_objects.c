@@ -25,6 +25,9 @@
 
 static GLint objattr_pos, objattr_color;
 
+/* Drawing points defaults to color = black, so we need white */
+static const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
+
 void draw_obj_axis(float scale)
 {
 	GLfloat axis[6][3] = {
@@ -81,7 +84,6 @@ void draw_obj_sphere(data* object)
 
 void draw_obj_points(data* object)
 {
-	const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 	float points[option->obj][3];
 	
 	glUniform4fv(objattr_color, 1, white);

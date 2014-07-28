@@ -41,25 +41,73 @@ static FT_Library library;
 static FT_Face face;
 static FT_GlyphSlot g;
 
-static GLint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
+static GLuint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
+static int atlas_w;
+static int atlas_h;
+
+/* Generic white if NULL pointer to color */
+static const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
+
+/* Freetype - offsets for every char */
+static struct character_info {
+	float ax;
+	float ay;
+	float bw;
+	float bh;
+	float bl;
+	float bt;
+	float tx;
+} ft_chr[128];
+
+/* Freetype - coords */
+typedef struct ft_p {
+	GLfloat x;
+	GLfloat y;
+	GLfloat s;
+	GLfloat t;
+} point;
+
+/* Ask the fontgod for a generic, standard issue "Arial" font */
 const char *graph_init_fontconfig()
 {
+	/* Offer fontgod sacrificial pointers to hold his highness */
 	FcConfig *fc_config = FcInitLoadConfigAndFonts();
 	FcPattern *fc_pattern = FcPatternCreate();
+	/* Ask the deity for an Arial-type gift of typography */
 	FcPatternAddString(fc_pattern, FC_FULLNAME, (const FcChar8 *)"Arial");
+	/* Ask fontgod not to blind our eyes for our insolence */
 	FcPatternAddBool(fc_pattern, FC_ANTIALIAS, 1);
+	/* Summon a fontdemon which shall transmit the gift of our god */
 	FcResult fc_result;
+	/* Incantation for our omnipotence to recognize our request */
 	FcDefaultSubstitute(fc_pattern);
+	/* "Oh, dear FONTCONFIG..." */
 	FcConfigSubstitute(fc_config, fc_pattern, FcMatchPattern);
+	/* "We ask you, oh you in the sky, for your attention..." */
 	FcPattern *fc_font_chosen = FcFontMatch(fc_config, fc_pattern, &fc_result);
 	FcValue fc_value;
+	/* SHOW US YOUR POWER, INVOKE ANCIENT KNOWLEDGE, GIVE US THE LOCATION! */
 	FcPatternGet(fc_font_chosen, "file", 0, &fc_value);
+	/* Fontgod has given us a sacred filename, hail FONTCONFIG! */
+	pprintf(PRI_VERYLOW, "Fontname = %s\n", (char *)fc_value.u.s);
 	return (const char *)fc_value.u.s;
 }
 
 unsigned int graph_init_freetype(const char *fontname)
 {
+	/* Initialize OpenGL */
+	GLuint text_program = graph_compile_shader(text_vs, text_fs);
+	glBindAttribLocation(text_program, textattr_coord, "coord");
+	glBindAttribLocation(text_program, textattr_texcoord, "textcolor");
+	glBindAttribLocation(text_program, textattr_tex, "tex");
+	glBindAttribLocation(text_program, textattr_color, "color");
+	textattr_tex = glGetUniformLocation(text_program, "tex");
+	textattr_color = glGetUniformLocation(text_program, "textcolor");
+	glUniform1i(textattr_tex, 0);
+	
+	
+	/* Init Freetype and generate texture atlas */
 	if(FT_Init_FreeType(&library)) {
 		pprintf(PRI_ERR, "Could not init freetype library.\n");
 		exit(1);
@@ -71,22 +119,43 @@ unsigned int graph_init_freetype(const char *fontname)
 	FT_Set_Pixel_Sizes(face, 0, 34);
 	g = face->glyph;
 	
-	GLuint text_program = graph_compile_shader(text_vs, text_fs);
+	/* Load glyphs and get maximum height and width */
+	for(int i = 32; i < 128; i++) {
+		if(FT_Load_Char(face, i, FT_LOAD_RENDER)) {
+			fprintf(stderr, "Loading character %c failed!\n", i);
+			continue;
+		}
+		atlas_w += g->bitmap.width + 1;
+		if(g->bitmap.rows > atlas_h) atlas_h = g->bitmap.rows;
+	}
 	
-	glBindAttribLocation(text_program, textattr_coord, "coord");
-	glBindAttribLocation(text_program, textattr_texcoord, "textcolor");
-	glBindAttribLocation(text_program, textattr_tex, "tex");
-	glBindAttribLocation(text_program, textattr_color, "color");
-	textattr_tex = glGetUniformLocation(text_program, "tex");
-	textattr_color = glGetUniformLocation(text_program, "textcolor");
-	
-	/*	OpenGL adjustments needed to properly display text */
-	glUniform1i(textattr_tex, 0);
+	/* Create a seperate texture to hold altas, fill it with NULL */
+	GLuint font_tex;
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &font_tex);
+	glBindTexture(GL_TEXTURE_2D, font_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, atlas_w, atlas_h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	
+	/* Fill texture and save locations(offsets) for every char */
+	int x = 0;
+	for(short i = 32; i < 128; i++) {
+		if(FT_Load_Char(face, i, FT_LOAD_RENDER)) continue;
+		glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, g->bitmap.width, g->bitmap.rows,
+						GL_ALPHA, GL_UNSIGNED_BYTE, g->bitmap.buffer);
+		ft_chr[i].ax = g->advance.x >> 6;
+		ft_chr[i].ay = g->advance.y >> 6;
+		ft_chr[i].bw = g->bitmap.width;
+		ft_chr[i].bh = g->bitmap.rows;
+		ft_chr[i].bl = g->bitmap_left;
+		ft_chr[i].bt = g->bitmap_top;
+		ft_chr[i].tx = (float)x/atlas_w;
+		x += g->bitmap.width;
+	}
 	return text_program;
 }
 
@@ -98,7 +167,10 @@ void graph_stop_freetype()
 
 void graph_display_text(const char *text, float x, float y, float s, const GLfloat *col)
 {
+	if(!col) col = white;
 	float sx = s/option->width, sy = s/option->height;
+	point coords[6*strlen(text)];
+	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
@@ -106,35 +178,41 @@ void graph_display_text(const char *text, float x, float y, float s, const GLflo
 	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, col);
 	glEnableVertexAttribArray(textattr_coord);
 	glEnableVertexAttribArray(textattr_color);
-	for(const char *p = text; *p; p++) {
-		if(FT_Load_Char(face, *p, FT_LOAD_RENDER)) continue;
+	
+	/* Count glyphs */
+	unsigned int n = 0;
+	/* Convert to short to prevent compiler from complaining "INDEX IS CHAR!" */
+	short d = 0;
+	
+	for(const char *p = text; *p; p++) { 
+		d = (short)*p;
+		float x2 =  x + ft_chr[d].bl * sx;
+		float y2 = -y - ft_chr[d].bt * sy;
+		float w = ft_chr[d].bw * sx;
+		float h = ft_chr[d].bh * sy;
 		
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, g->bitmap.width,
-					 g->bitmap.rows, 0, GL_ALPHA,GL_UNSIGNED_BYTE,
-					 g->bitmap.buffer);
+		/* Advance */
+		x += ft_chr[d].ax * sx;
+		y += ft_chr[d].ay * sy;
 		
-		float x2 = x + g->bitmap_left * sx;
-		float y2 = -y - g->bitmap_top * sy;
-		float w = g->bitmap.width * sx;
-		float h = g->bitmap.rows * sy;
+		/* Skip glyphs that have no pixels */
+		if(!w || !h) continue;
 		
-		GLfloat box[4][4] = {
-			{x2,     -y2    , 0, 0},
-			{x2 + w, -y2    , 1, 0},
-			{x2,     -y2 - h, 0, 1},
-			{x2 + w, -y2 - h, 1, 1},
-		};
-		
-		glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		
-		x += (g->advance.x >> 6) * sx;
-		y += (g->advance.y >> 6) * sy;
+		/* Setup coords */
+		coords[n++] = (point){x2, -y2, ft_chr[d].tx, 0};
+		coords[n++] = (point){x2 + w, -y2, ft_chr[d].tx + ft_chr[d].bw/atlas_w, 0};
+		coords[n++] = (point){x2, -y2 - h, ft_chr[d].tx, ft_chr[d].bh/atlas_h};
+		coords[n++] = (point){x2 + w, -y2, ft_chr[d].tx + ft_chr[d].bw/atlas_w, 0};
+		coords[n++] = (point){x2, -y2 - h, ft_chr[d].tx, ft_chr[d].bh/atlas_h};
+		coords[n++] = (point){x2 + w, -y2 - h, ft_chr[d].tx + ft_chr[d].bw/atlas_w, ft_chr[d].bh/atlas_h};
 	}
+	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_STATIC_DRAW);
+	glDrawArrays(GL_TRIANGLES, 0, n);
+	
 	glDisableVertexAttribArray(textattr_coord);
 	glDisableVertexAttribArray(textattr_color);
 	glDisable(GL_BLEND);
-	glUniform4fv(textattr_color, 1, col);
 }
 
 void graph_display_object_info(data *object)
