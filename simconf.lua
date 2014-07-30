@@ -9,7 +9,7 @@ settings = {
 		--Lifetime of a cell before it's freed.
 		bh_lifetime = 20,
 		--Units are size_t! PER THREAD!
-		bh_heapsize_max = 536870912,
+		bh_heapsize_max = 136870912,
 		--Maximum threads per octree. Reduce this to spread threads more.
 		bh_tree_limit = 8, --Range is [1,8(default)]
 	},

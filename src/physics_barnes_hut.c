@@ -49,8 +49,16 @@ static void bh_add_thread(bh_thread *root,
 	for(short i=0; i < 8; i++) {
 		if(!root->subdiv[i])
 			root->subdiv[i] = calloc(1, sizeof(bh_thread));
-		if(!octree->cells[i])
+		if(!octree->cells[i]) {
 			octree->cells[i] = bh_init_tree();
+			octree->cells[i]->halfdim = octree->halfdim/2;
+			octree->cells[i]->origin = octree->origin + (octree->halfdim*\
+			(v4sd){
+				(i&4 ? .5f : -.5f),
+				(i&2 ? .5f : -.5f),
+				(i&1 ? .5f : -.5f)
+			});
+		}
 		octree->cells[i]->depth = octree->depth + 1;
 		root->subdiv[i]->mapped = octree->cells[i];
 		root->subdiv[i]->parent = root;
@@ -113,24 +121,6 @@ static void bh_print_thread_tree(struct thread_config_bhut **thread)
 	}
 }
 
-/* Will assign arbitrary values to start the octree positioning function. */
-static void bh_init_threaded_tree(bh_octree *root)
-{
-	if(root->depth == 0) root->halfdim = 1.0;
-	for(short h=0; h < 8; h++) {
-		if(root->cells[h]) {
-			root->cells[h]->halfdim = root->halfdim/2;
-			root->cells[h]->origin = root->origin + (root->halfdim*\
-			(v4sd){
-				(h&4 ? .5f : -.5f),
-				(h&2 ? .5f : -.5f),
-				(h&1 ? .5f : -.5f)
-			});
-			bh_init_threaded_tree(root->cells[h]);
-		}
-	}
-}
-
 void** bhut_init(data** object, struct thread_statistics **stats)
 {
 #ifdef __linux__
@@ -160,6 +150,8 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 	
 	/* Create the root octree */
 	bh_octree *root_octree = bh_init_tree();
+	bh_update_center_of_mass(*object, root_octree);
+	root_octree->halfdim = bh_max_displacement(*object, root_octree);
 	
 	/* Create temporary assignment tree for threads */
 	bh_thread *thread_tree = calloc(1, sizeof(bh_thread));
@@ -191,10 +183,6 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 	} else bh_print_thread_tree(thread_config);
 	/* Free assignment octree since all's been done */
 	bh_decimate_assignment_tree(thread_tree);
-	
-	/* Init the dimensions of all octrees with bogus(but accurate) values to
-	 * get things going. */
-	bh_init_threaded_tree(root_octree);
 	
 	return (void**)thread_config;
 }
@@ -366,6 +354,16 @@ double bh_max_displacement(data *object, bh_octree *octree)
 	return maxdist;
 }
 
+/* Will update the origin and center of mass of the root cell */
+void bh_update_center_of_mass(data *object, bh_octree *octree)
+{
+	v4sd center = (v4sd){0,0,0};
+	for(int i = 1; i < option->obj + 1; i++) {
+		center = (center + object[i].pos)/2;
+	}
+	octree->origin = octree->cellsum.pos = center;
+}
+
 /* Will init a sub-root octree as root. We have to do the sync ourselves too. */
 bh_octree *bh_init_tree()
 {
@@ -495,8 +493,13 @@ void *thread_barnes_hut(void *thread_setts)
 		
 		pthread_barrier_wait(&barrier);
 		
-		for(short s=0; s < 8; s++) {
+		for(short s=0; s < 8; s++)
 			bh_cascade_position(thread->octrees[s], thread->root);
+		
+		pthread_barrier_wait(&barrier);
+		
+		
+		for(short s=0; s < 8; s++) {
 			bh_build_octree(thread->obj, thread->octrees[s], thread->root);
 			/* Sync mass and center of mass with any higher trees */
 			bh_cascade_mass(thread->octrees[s], thread->root);
@@ -518,6 +521,8 @@ void *thread_barnes_hut(void *thread_setts)
 		thread->stats->bh_cleaned    =  sum_cleaned;
 		thread->stats->bh_heapsize   =  sizeof(bh_octree)*allocated_cells;
 		thread->stats->progress     +=  option->dt;
+		
+		//exit(0);
 	}
 	return 0;
 }
