@@ -216,9 +216,14 @@ void bh_decimate_octree(bh_octree *octree)
 	free(octree);
 }
 
-static bool bh_clean_octree(bh_octree *octree)
+static bool bh_clean_octree(bh_octree *octree, bh_octree *root)
 {
 	octree->cellsum.mass = 0;
+	if(root->depth < octree->depth) {
+		pthread_mutex_lock(&root_lock);
+		root->cellsum.mass = 0;
+		pthread_mutex_unlock(&root_lock);
+	}
 	if(octree->data) {
 		/* Object was here, chances are cell will be used, do not free yet */
 		octree->data = NULL;
@@ -230,7 +235,7 @@ static bool bh_clean_octree(bh_octree *octree)
 		short filled_cells = 8;
 		for(short i=0; i < 8; i++) {
 			if(octree->cells[i]) {
-				if(bh_clean_octree(octree->cells[i])) {
+				if(bh_clean_octree(octree->cells[i], octree)) {
 					/* Since cell is empty, free it */
 					free(octree->cells[i]);
 					octree->cells[i] = NULL;
@@ -248,11 +253,11 @@ static bool bh_clean_octree(bh_octree *octree)
 	}
 }
 
-unsigned int bh_cleanup_octree(bh_octree *octree)
+unsigned int bh_cleanup_octree(bh_octree *octree, bh_octree *root)
 {
-	if(!octree) return 0;
+	if(!octree || !root) return 0;
 	unsigned int prev_allocated_cells = allocated_cells;
-	bh_clean_octree(octree);
+	bh_clean_octree(octree, root);
 	return prev_allocated_cells - allocated_cells;
 }
 
@@ -508,7 +513,7 @@ void *thread_barnes_hut(void *thread_setts)
 		/* Can be done anytime, we don't care if objects move. */
 		unsigned int sum_cleaned = 0;
 		for(short s=0; s < 8; s++)
-			sum_cleaned += bh_cleanup_octree(thread->octrees[s]);
+			sum_cleaned += bh_cleanup_octree(thread->octrees[s], thread->root);
 		thread->stats->bh_allocated  =  allocated_cells;
 		thread->stats->bh_cleaned    =  sum_cleaned;
 		thread->stats->bh_heapsize   =  sizeof(bh_octree)*allocated_cells;

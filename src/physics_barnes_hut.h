@@ -47,7 +47,7 @@ struct thread_config_bhut {
 
 void** bhut_init(data** object, struct thread_statistics **stats);
 void bhut_quit(void **threads);
-unsigned int bh_cleanup_octree(bh_octree *octree);
+unsigned int bh_cleanup_octree(bh_octree *octree, bh_octree *root);
 void bh_decimate_octree(bh_octree *octree);
 void bh_print_octree(bh_octree *octree);
 double bh_max_displacement(data *object, bh_octree *octree);
