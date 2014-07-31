@@ -390,11 +390,13 @@ bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
 /* Sets the origins and dimensions of any thread octrees and in between root. */
 static void bh_cascade_position(bh_octree *target, bh_octree *root)
 {
-	if(root == target) return;
 	if(!root || !target) return;
+	if(root->depth == target->depth) return;
+	
 	pthread_mutex_lock(&root_lock);
 	
 	short oct = bh_get_octant(&target->origin, root);
+	
 	root->cells[oct]->halfdim = root->halfdim/2;
 	root->cells[oct]->origin = root->origin + (root->halfdim*\
 		(v4sd){
@@ -404,12 +406,15 @@ static void bh_cascade_position(bh_octree *target, bh_octree *root)
 		});
 	
 	pthread_mutex_unlock(&root_lock);
-	//bh_cascade_position(target, root->cells[oct]);
+	
+	if(root->cells[oct] == target) return;
+	else bh_cascade_position(target, root->cells[oct]);
 }
 
 /* Will sync the centre of mass and origin of all related octrees root-target */
 static void bh_cascade_mass(bh_octree *target, bh_octree *root)
 {
+	/* DOES NOT UPDATE TARGET! */
 	if(root == target) return;
 	if(!root || !target) return;
 	pthread_mutex_lock(&root_lock);
@@ -479,25 +484,12 @@ void *thread_barnes_hut(void *thread_setts)
 	while(!quit) {
 		double maxdist = 0.0;
 		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
-			/* Required to determine max octree size. */
-			dist = thread->obj[i].pos - thread->root->origin;
-			for(int j = 0; j < 3; j++) {
-				if(dist[j] > maxdist) maxdist = dist[j];
-			}
 			if(thread->obj[i].ignore) continue;
 			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
 				(thread->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
-		bh_atomic_update_root(maxdist, thread->root);
-		
 		pthread_barrier_wait(&barrier);
-		
-		for(short s=0; s < 8; s++)
-			bh_cascade_position(thread->octrees[s], thread->root);
-		
-		pthread_barrier_wait(&barrier);
-		
 		
 		for(short s=0; s < 8; s++) {
 			bh_build_octree(thread->obj, thread->octrees[s], thread->root);
@@ -509,20 +501,28 @@ void *thread_barnes_hut(void *thread_setts)
 			accprev = thread->obj[i].acc;
 			bh_calculate_force(&thread->obj[i], thread->root);
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
+			/* Get updated maximum for root. */
+			dist = thread->obj[i].pos - thread->root->origin;
+			for(int j = 0; j < 3; j++) if(dist[j] > maxdist) maxdist = dist[j];
 		}
 		
-		pthread_barrier_wait(&barrier);
-		
-		/* Can be done anytime, we don't care if objects move. */
+		/* Insert updated halfdim into root */
+		bh_atomic_update_root(maxdist, thread->root);
+		/* Update the positions of octrees and their halfdims + cleanup */
 		unsigned int sum_cleaned = 0;
-		for(short s=0; s < 8; s++)
+		for(short s=0; s < 8; s++) {
+			bh_cascade_position(thread->octrees[s], thread->root);
 			sum_cleaned += bh_cleanup_octree(thread->octrees[s], thread->root);
+		}
+		
+		/* Update statistics */
 		thread->stats->bh_allocated  =  allocated_cells;
 		thread->stats->bh_cleaned    =  sum_cleaned;
 		thread->stats->bh_heapsize   =  sizeof(bh_octree)*allocated_cells;
 		thread->stats->progress     +=  option->dt;
 		
-		//exit(0);
+		/* Wait before we move objects */
+		pthread_barrier_wait(&barrier);
 	}
 	return 0;
 }
