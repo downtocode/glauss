@@ -55,8 +55,9 @@ struct thread_statistics {
 	clockid_t clockid;
 	
 	/* physics_barnes_hut */
-	unsigned int bh_allocated;
-	unsigned int bh_cleaned;
+	unsigned int bh_total_alloc;
+	unsigned int bh_new_alloc;
+	unsigned int bh_new_cleaned;
 	size_t bh_heapsize;
 };
 

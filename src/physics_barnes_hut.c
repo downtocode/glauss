@@ -241,15 +241,33 @@ static bool bh_clean_octree(bh_octree *octree, bh_octree *root)
 	}
 }
 
+static void bh_hard_clean(bh_octree *octree)
+{
+	octree->cellsum.mass = 0;
+	allocated_cells = 0;
+	if(octree->data) {
+		octree->data = NULL;
+	} else {
+		for(short i=0; i < 8; i++) {
+			if(octree->cells[i]) {
+				bh_hard_clean(octree->cells[i]);
+				free(octree->cells[i]);
+			}
+		}
+		octree->leaf = 1;
+	}
+}
+
 unsigned int bh_cleanup_octree(bh_octree *octree, bh_octree *root)
 {
 	if(!octree || !root) return 0;
 	unsigned int prev_allocated_cells = allocated_cells;
 	bh_clean_octree(octree, root);
+	//bh_hard_clean(octree);
 	return prev_allocated_cells - allocated_cells;
 }
 
-static short bh_get_octant(v4sd *pos, bh_octree *octree)
+short bh_get_octant(v4sd *pos, bh_octree *octree)
 {
 	short oct = 0;
 	if((*pos)[0] >= octree->origin[0]) oct |= 4;
@@ -369,7 +387,7 @@ bh_octree *bh_init_tree()
 {
 	bh_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
 	octree->score = USHRT_MAX;
-	octree->leaf = 0;
+	octree->leaf = 1;
 	return octree;
 }
 
@@ -442,14 +460,16 @@ static void bh_atomic_update_root(double dimension, bh_octree *root)
 }
 
 /* Checks whether an object belongs to a specific octree and returns 1 if so. */
-void bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
+unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 {
-	if(!octree) return;
+	unsigned int prev_allocated_cells = allocated_cells;
+	if(!octree | !root | !object) return 0;
 	for(int i = 1; i < option->obj + 1; i++) {
 		if(bh_recurse_check_obj(&object[i], octree, root)) {
 			bh_insert_object(&object[i], octree);
 		}
 	}
+	return allocated_cells - prev_allocated_cells;
 }
 
 static void bh_calculate_force(data* object, bh_octree *octree)
@@ -482,6 +502,7 @@ void *thread_barnes_hut(void *thread_setts)
 	v4sd accprev, dist;
 	
 	while(!quit) {
+		unsigned int new_alloc = 0, new_cleaned = 0;
 		double maxdist = 0.0;
 		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			if(thread->obj[i].ignore) continue;
@@ -492,10 +513,12 @@ void *thread_barnes_hut(void *thread_setts)
 		pthread_barrier_wait(&barrier);
 		
 		for(short s=0; s < 8; s++) {
-			bh_build_octree(thread->obj, thread->octrees[s], thread->root);
+			new_alloc += bh_build_octree(thread->obj, thread->octrees[s], thread->root);
 			/* Sync mass and center of mass with any higher trees */
 			bh_cascade_mass(thread->octrees[s], thread->root);
 		}
+		
+		pthread_barrier_wait(&barrier);
 		
 		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			accprev = thread->obj[i].acc;
@@ -506,20 +529,24 @@ void *thread_barnes_hut(void *thread_setts)
 			for(int j = 0; j < 3; j++) if(dist[j] > maxdist) maxdist = dist[j];
 		}
 		
+		pthread_barrier_wait(&barrier);
+		
 		/* Insert updated halfdim into root */
 		bh_atomic_update_root(maxdist, thread->root);
 		/* Update the positions of octrees and their halfdims + cleanup */
-		unsigned int sum_cleaned = 0;
 		for(short s=0; s < 8; s++) {
+			new_cleaned += bh_cleanup_octree(thread->octrees[s], thread->root);
 			bh_cascade_position(thread->octrees[s], thread->root);
-			sum_cleaned += bh_cleanup_octree(thread->octrees[s], thread->root);
 		}
 		
+		pthread_barrier_wait(&barrier);
+		
 		/* Update statistics */
-		thread->stats->bh_allocated  =  allocated_cells;
-		thread->stats->bh_cleaned    =  sum_cleaned;
-		thread->stats->bh_heapsize   =  sizeof(bh_octree)*allocated_cells;
-		thread->stats->progress     +=  option->dt;
+		thread->stats->bh_total_alloc  =  allocated_cells;
+		thread->stats->bh_new_alloc    =  new_alloc;
+		thread->stats->bh_new_cleaned  =  new_cleaned;
+		thread->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
+		thread->stats->progress       +=  option->dt;
 		
 		/* Wait before we move objects */
 		pthread_barrier_wait(&barrier);

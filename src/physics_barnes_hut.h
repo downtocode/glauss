@@ -45,17 +45,30 @@ struct thread_config_bhut {
 	struct thread_statistics *stats;
 };
 
-void** bhut_init(data** object, struct thread_statistics **stats);
-void bhut_quit(void **threads);
+/* Returns flux of octrees */
+unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root);
 unsigned int bh_cleanup_octree(bh_octree *octree, bh_octree *root);
+
+/* Completely removes octree */
 void bh_decimate_octree(bh_octree *octree);
+
+/* Prints any cells and objects still inside octree */
 void bh_print_octree(bh_octree *octree);
 
+/* Used during init only to get a valid octree data */
 double bh_max_displacement(data *object, bh_octree *octree);
 void bh_update_center_of_mass(data *object, bh_octree *octree);
 
+/* Init a tree(a start of an octree) */
 bh_octree *bh_init_tree();
-void bh_build_octree(data* object, bh_octree *octree, bh_octree *root);
+/* Get octant an object is in(mostly used for direction) */
+short bh_get_octant(v4sd *pos, bh_octree *octree);
+/* Checks if object is within a specific octree */
+bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root);
+
+/* Start - Thread - Stop */
+void** bhut_init(data** object, struct thread_statistics **stats);
 void *thread_barnes_hut(void *thread_setts);
+void bhut_quit(void **threads);
 
 #endif

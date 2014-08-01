@@ -52,7 +52,7 @@
 
 /* Octree status */
 #define OCTx -0.95
-#define OCTy -0.70
+#define OCTy -0.64
 #define OCTs  0.75
 
 /* Thread time counters */
@@ -73,11 +73,12 @@
 
 
 /* COLORS */
-const GLfloat COL_WHITE[]   =  {1.0f, 1.0f, 1.0f, 1.0f};
-const GLfloat COL_RED[]     =  {1.0f, 0.0f, 0.0f, 1.0f};
-const GLfloat COL_GREEN[]   =  {0.0f, 1.0f, 0.0f, 1.0f};
-const GLfloat COL_BLUE[]    =  {0.0f, 0.0f, 1.0f, 1.0f};
-const GLfloat COL_YELLOW[]  =  {1.0f, 1.0f, 0.0f, 1.0f};
+const GLfloat COL_WHITE[]   =  {  1.0f,   1.0f,   1.0f,   1.0f  };
+const GLfloat COL_RED[]     =  {  1.0f,   0.0f,   0.0f,   1.0f  };
+const GLfloat COL_GREEN[]   =  {  0.0f,   1.0f,   0.0f,   1.0f  };
+const GLfloat COL_BLUE[]    =  {  0.0f,   0.0f,   1.0f,   1.0f  };
+const GLfloat COL_YELLOW[]  =  {  1.0f,   1.0f,   0.0f,   1.0f  };
+const GLfloat COL_ORANGE[]  =  { 0.82f,  0.41f,  0.11f,   1.0f  };
 /* COLORS */
 
 static GLfloat aspect_ratio;
@@ -272,26 +273,30 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 			graph_display_text("Simulation stopped", SIMx, SIMy, SIMs, COL_RED);
 		
 		/* BH tree stats */
-		if(t_stats[1]->bh_allocated != 0) {
+		if(t_stats[1]->bh_total_alloc != 0) {
 			graph_display_text("Octree stats:", OCTx, OCTy, OCTs, COL_WHITE);
 			graph_display_text("Thread", OCTx, OCTy-.05, OCTs, COL_WHITE);
-			graph_display_text("Allocated", OCTx+.11, OCTy-.05, OCTs, COL_GREEN);
-			graph_display_text("Cleaned", OCTx+.25, OCTy-.05, OCTs, COL_RED);
-			graph_display_text("Size(MiB)", OCTx+.37, OCTy-.05, OCTs, COL_YELLOW);
+			graph_display_text("Total", OCTx+.12, OCTy-.05, OCTs, COL_ORANGE);
+			graph_display_text("+", OCTx+.25, OCTy-.05, OCTs, COL_GREEN);
+			graph_display_text("-", OCTx+.33, OCTy-.05, OCTs, COL_RED);
+			graph_display_text("Size(MiB)", OCTx+.41, OCTy-.05, OCTs, COL_YELLOW);
 			
 			for(short i = 1; i < option->threads + 1; i++) {
 				snprintf(osdtext, sizeof(osdtext), "%i", i);
 				graph_display_text(osdtext, OCTx, OCTy-((float)i/18)-.05, OCTs, COL_WHITE);
 				
-				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_allocated);
-				graph_display_text(osdtext, OCTx+.11, OCTy-((float)i/18)-.05, OCTs, COL_GREEN);
+				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_total_alloc);
+				graph_display_text(osdtext, OCTx+.12, OCTy-((float)i/18)-.05, OCTs, COL_ORANGE);
 				
-				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_cleaned);
-				graph_display_text(osdtext, OCTx+.25, OCTy-((float)i/18)-.05, OCTs, COL_RED);
+				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_new_alloc);
+				graph_display_text(osdtext, OCTx+.25, OCTy-((float)i/18)-.05, OCTs, COL_GREEN);
+				
+				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_new_cleaned);
+				graph_display_text(osdtext, OCTx+.33, OCTy-((float)i/18)-.05, OCTs, COL_RED);
 				
 				snprintf(osdtext, sizeof(osdtext), "%0.3lf",
 						t_stats[i]->bh_heapsize/1048576.0);
-				graph_display_text(osdtext, OCTx+.37, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
+				graph_display_text(osdtext, OCTx+.41, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
 			}
 		}
 		

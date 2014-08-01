@@ -56,7 +56,7 @@ function spawn_objects(varfromC)
 			vely = 0.1,
 			velz = 0.04,
 			charge = 100,
-			mass = i*1000,
+			mass = i*10000,
 			radius = 0.2,
 			atom = math.random(1,10),
 			ignore = false,
