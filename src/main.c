@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
-		*option = (struct option_struct){
+		*option = (struct option_struct) {
 			.width = 1200, .height = 600,
 			.threads = 0,
 			.dt = 0.008, .verbosity = 5,

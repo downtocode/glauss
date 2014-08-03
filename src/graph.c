@@ -278,8 +278,8 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 			graph_display_text("Thread", OCTx, OCTy-.05, OCTs, COL_WHITE);
 			graph_display_text("Total", OCTx+.12, OCTy-.05, OCTs, COL_ORANGE);
 			graph_display_text("+", OCTx+.25, OCTy-.05, OCTs, COL_GREEN);
-			graph_display_text("-", OCTx+.33, OCTy-.05, OCTs, COL_RED);
-			graph_display_text("Size(MiB)", OCTx+.41, OCTy-.05, OCTs, COL_YELLOW);
+			graph_display_text("-", OCTx+.37, OCTy-.05, OCTs, COL_RED);
+			graph_display_text("Size(MiB)", OCTx+.49, OCTy-.05, OCTs, COL_YELLOW);
 			
 			for(short i = 1; i < option->threads + 1; i++) {
 				snprintf(osdtext, sizeof(osdtext), "%i", i);
@@ -292,11 +292,11 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 				graph_display_text(osdtext, OCTx+.25, OCTy-((float)i/18)-.05, OCTs, COL_GREEN);
 				
 				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_new_cleaned);
-				graph_display_text(osdtext, OCTx+.33, OCTy-((float)i/18)-.05, OCTs, COL_RED);
+				graph_display_text(osdtext, OCTx+.37, OCTy-((float)i/18)-.05, OCTs, COL_RED);
 				
 				snprintf(osdtext, sizeof(osdtext), "%0.3lf",
 						t_stats[i]->bh_heapsize/1048576.0);
-				graph_display_text(osdtext, OCTx+.41, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
+				graph_display_text(osdtext, OCTx+.49, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
 			}
 		}
 		

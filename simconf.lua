@@ -3,13 +3,13 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 1,
-		dt = 0.003,
+		dt = 0.001,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.50,
 		--Lifetime of a cell before it's freed.
-		bh_lifetime = 20,
-		--Units are size_t! PER THREAD!
-		bh_heapsize_max = 136870912,
+		bh_lifetime = 1,
+		--Units are size_t(bytes)! PER THREAD!
+		bh_heapsize_max = 536870912,
 		--Maximum threads per octree. Reduce this to spread threads more.
 		bh_tree_limit = 8, --Range is [1,8(default)]
 	},
@@ -30,7 +30,7 @@ settings = {
 	},
 }
 
-maxobjects = 10000;
+maxobjects = 100000;
 
 --Add molecules or any additional objects here
 objects = {

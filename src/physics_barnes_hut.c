@@ -272,9 +272,10 @@ static void bh_init_cell(bh_octree *octree, short k)
 		octree->cells[k] = calloc(1, sizeof(struct phys_barnes_hut_octree));
 		octree->cells[k]->depth = octree->depth+1;
 		octree->cells[k]->leaf = 1;
+		octree->cells[k]->score = option->bh_lifetime;
 		allocated_cells++;
 	}
-	octree->cells[k]->score = option->bh_lifetime;
+	octree->cells[k]->score++;
 	octree->cells[k]->halfdim = octree->halfdim/2;
 	octree->cells[k]->origin = octree->origin + (octree->halfdim*\
 				(v4sd){
