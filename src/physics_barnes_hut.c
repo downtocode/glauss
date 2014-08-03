@@ -111,7 +111,7 @@ static void bh_decimate_assignment_tree(bh_thread *root)
 static void bh_print_thread_tree(struct thread_config_bhut **thread)
 {
 	for(unsigned int m=1; m < option->threads + 1; m++) {
-		printf("Thread %i has octree(depth): ", m);
+		printf("   %02i   | ", m);
 		for(short h=0; h < 8; h++) {
 			if(thread[m]->octrees[h]) {
 				printf("%i(%u) ", h, thread[m]->octrees[h]->depth);
@@ -180,7 +180,10 @@ void** bhut_init(data** object, struct thread_statistics **stats)
 			thread_config[1]->octrees[h] = NULL;
 		}
 		thread_config[1]->octrees[0] = root_octree;
-	} else bh_print_thread_tree(thread_config);
+	} else {
+		pprintf(PRI_HIGH, " Thread | Assignments: oct(lvl)\n");
+		bh_print_thread_tree(thread_config);
+	}
 	/* Free assignment octree since all's been done */
 	bh_decimate_assignment_tree(thread_tree);
 	

@@ -96,7 +96,7 @@ int initphys(data** object)
 	}
 	
 	/* Allocate memory for all the objects */
-	*object = calloc(option->obj+1,sizeof(data));
+	*object = calloc(option->obj+2,sizeof(data));
 	
 	if(*object != NULL)
 		pprintf(PRI_OK,

@@ -30,7 +30,7 @@ settings = {
 	},
 }
 
-maxobjects = 3000;
+maxobjects = 10000;
 
 --Add molecules or any additional objects here
 objects = {
