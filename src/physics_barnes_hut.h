@@ -59,7 +59,7 @@ void bh_print_octree(bh_octree *octree);
 double bh_max_displacement(data *object, bh_octree *octree);
 void bh_update_center_of_mass(data *object, bh_octree *octree);
 
-/* Init a tree(a start of an octree) */
+/* Init a tree(start of one - NOT A SUBCELL) */
 bh_octree *bh_init_tree();
 /* Get octant an object is in(mostly used for direction) */
 short bh_get_octant(v4sd *pos, bh_octree *octree);

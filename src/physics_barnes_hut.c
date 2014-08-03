@@ -241,29 +241,11 @@ static bool bh_clean_octree(bh_octree *octree, bh_octree *root)
 	}
 }
 
-static void bh_hard_clean(bh_octree *octree)
-{
-	octree->cellsum.mass = 0;
-	allocated_cells = 0;
-	if(octree->data) {
-		octree->data = NULL;
-	} else {
-		for(short i=0; i < 8; i++) {
-			if(octree->cells[i]) {
-				bh_hard_clean(octree->cells[i]);
-				free(octree->cells[i]);
-			}
-		}
-		octree->leaf = 1;
-	}
-}
-
 unsigned int bh_cleanup_octree(bh_octree *octree, bh_octree *root)
 {
 	if(!octree || !root) return 0;
 	unsigned int prev_allocated_cells = allocated_cells;
 	bh_clean_octree(octree, root);
-	//bh_hard_clean(octree);
 	return prev_allocated_cells - allocated_cells;
 }
 
@@ -387,7 +369,7 @@ bh_octree *bh_init_tree()
 {
 	bh_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
 	octree->score = USHRT_MAX;
-	octree->leaf = 1;
+	octree->leaf = 0;
 	return octree;
 }
 
@@ -450,8 +432,10 @@ static void bh_atomic_update_root(double dimension, bh_octree *root)
 	if(!root) return;
 	pthread_mutex_lock(&root_lock);
 	
-	if(root->depth == 0)
-		root->origin = root->cellsum.pos;
+	if(root->depth == 0) {
+		v4sd diff = root->cellsum.pos - root->origin;
+		root->origin += diff/10;
+	}
 	
 	if(dimension > root->halfdim)
 		root->halfdim = dimension;
@@ -488,7 +472,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 		object->acc += -vecnorm*\
 						(option->gconst*octree->cellsum.mass)/(dist*dist);
 	} else {
-		for(int i=0; i < 8; i++) {
+		for(short i=0; i < 8; i++) {
 			if(octree->cells[i]) {
 				bh_calculate_force(object, octree->cells[i]);
 			}
@@ -539,17 +523,12 @@ void *thread_barnes_hut(void *thread_setts)
 			bh_cascade_position(thread->octrees[s], thread->root);
 		}
 		
-		pthread_barrier_wait(&barrier);
-		
 		/* Update statistics */
 		thread->stats->bh_total_alloc  =  allocated_cells;
 		thread->stats->bh_new_alloc    =  new_alloc;
 		thread->stats->bh_new_cleaned  =  new_cleaned;
 		thread->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
 		thread->stats->progress       +=  option->dt;
-		
-		/* Wait before we move objects */
-		pthread_barrier_wait(&barrier);
 	}
 	return 0;
 }
