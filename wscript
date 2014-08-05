@@ -155,7 +155,7 @@ def build(ctx):
 	)
 	ctx(name='graph',
 		path=ctx.path,
-		uselib='GL',
+		uselib='GL, PNG',
 		target='graph',
 		source='src/graph.c',
 		features  = ['c'],
@@ -179,7 +179,7 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='src/main.c',
 		features  = ['c', 'cprogram'],

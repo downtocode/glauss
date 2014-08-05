@@ -22,8 +22,6 @@
 void draw_obj_axis(float scale);
 void draw_obj_sphere(data* object);
 void draw_obj_points(data* object);
-unsigned int createlinks(data* object, GLfloat (**links)[3]);
-void draw_obj_links(GLfloat (**links)[3], unsigned int linkcount);
 GLuint graph_init_objects();
 
 #endif

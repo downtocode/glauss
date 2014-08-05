@@ -42,18 +42,18 @@ bool running, quit;
 /* Thread statistics */
 struct thread_statistics **t_stats;
 
-/* Only sent to quit function */
-void** thread_conf;
+/* Only sent to deinit function */
+void **thread_conf;
 
 const struct list_algorithms phys_algorithms[] = {
-/*    name,           thread f-n,          init f-n      deinit f-n      */
-	{ "null",         thread_null,         null_init,    null_quit    },
-	{ "n-body",       thread_nbody,        nbody_init,   nbody_quit   },
-	{ "barnes-hut",   thread_barnes_hut,   bhut_init,    bhut_quit    },
+	/* name,         init f-n     thread f-n     deinit f-n   */
+	{ "null",        null_init,   thread_null,   null_quit,   },
+	{ "n-body",      nbody_init,  thread_nbody,  nbody_quit,  },
+	{ "barnes-hut",  bhut_init,   thread_bhut,   bhut_quit,   },
 	{0}
 };
 /* Init function needs to return a double pointer, which then gets
- * distributed amongst threads as arguments. */
+ * distributed amongst threads as arguments and sent to deinit f-n */
 
 thread_function phys_find_algorithm(const char *name)
 {
@@ -102,7 +102,7 @@ int initphys(data** object)
 		pprintf(PRI_OK,
 				"Allocated %lu bytes(%u objects) to object array at %p.\n", \
 				(option->obj+1)*sizeof(data), option->obj+1, *object);
-	else return 1;
+	else return 3; //Impossible, should never ever happen.
 	
 	/* Set the amount of threads */
 	unsigned short online_cores = 0;
@@ -180,23 +180,25 @@ int threadcontrol(int status, data** object)
 			
 			thread_conf = (phys_find_config(option->algorithm))(object, t_stats);
 			
+			pprintf(PRI_ESSENTIAL, "Starting threads...");
 			for(int k = 1; k < option->threads + 1; k++) {
-				pprintf(PRI_ESSENTIAL, "Starting thread %i...", k);
 				pthread_create(&threads[k], &thread_attribs,
 							   phys_find_algorithm(option->algorithm),
 							   thread_conf[k]);
 				pthread_getcpuclockid(threads[k], &t_stats[k]->clockid);
-				pprintf(PRI_OK, "\n");
+				pprintf(PRI_ESSENTIAL, "%i...", k);
 			}
+			pprintf(PRI_OK, "\n");
 			break;
 		case PHYS_SHUTDOWN:
 			if(!running) return 1;
 			quit = 1;
+			pprintf(PRI_ESSENTIAL, "Stopping threads...");
 			for(int k = 1; k < option->threads + 1; k++) {
-				pprintf(PRI_ESSENTIAL, "Shutting down thread %i...", k);
 				pthread_join(threads[k], NULL);
-				pprintf(PRI_OK, "\n");
+				pprintf(PRI_ESSENTIAL, "%i...", k);
 			}
+			pprintf(PRI_OK, "\n");
 			(phys_find_quit(option->algorithm))(thread_conf);
 			free(threads);
 			running = 0;

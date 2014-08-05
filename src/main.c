@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 		float deltatime = 0.0, totaltime = 0.0f, fps = 0.0;
 		unsigned int frames = 0, chosen = 0, currentnum;
 		char currentsel[100] = "Select object:";
-		bool flicked = 0, translate = 0, drawobj = 0, drawlinks = 0;
+		bool flicked = 0, translate = 0, fullscreen = 0;
 		bool start_selection = 0;
 		int novid = 0, dumplevel = 0, vsync = 1, bench = 0;
 		float timer = 1.0f;
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 		if(option->filename == NULL) {
 			pprintf(PRI_ERR,
 					"No file specified! Use -f (filename) to specify one.\n");
-			exit(1);
+			exit(2);
 		}
 		
 		if(bench) {
@@ -208,14 +208,14 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 		data* object;
 		
-		if(!init_elements(NULL)) pprintf(PRI_OK,
-							  "Successfully read ./resources/elements.conf!\n");
-		else return 1;
+		if(init_elements(NULL)) {
+			pprintf(PRI_OK, "Failed to init elements db!\n");
+		}
 		
 		if(parse_lua_simconf_objects(option->filename, &object)) {
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
 					option->filename);
-			return 0;
+			return 2;
 		}
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj+1);
@@ -228,6 +228,7 @@ int main(int argc, char *argv[])
 	/*	SDL2	*/
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
+		SDL_GLContext context = NULL;
 		if(!novid) {
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
@@ -238,7 +239,7 @@ int main(int argc, char *argv[])
 				SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width,
 				option->height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|\
 				SDL_WINDOW_ALLOW_HIGHDPI);
-			SDL_GL_CreateContext(window);
+			context = SDL_GL_CreateContext(window);
 			SDL_GL_SetSwapInterval(vsync);
 			/* We deal with any and all graphical vizualization here */
 			graph_init();
@@ -254,8 +255,7 @@ int main(int argc, char *argv[])
 			switch(event.type) {
 				case SDL_WINDOWEVENT:
 					if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
-						SDL_GetWindowSize(window, &option->width,
-										  &option->height);
+						SDL_GL_GetDrawableSize(window, &option->width, &option->height);
 						graph_resize_wind();
 					}
 					break;
@@ -349,13 +349,20 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_COMMA) {
 						if(chosen > 0) chosen--;
 					}
-					if(event.key.keysym.sym==SDLK_1) {
-						if(drawobj) drawobj = 0;
-						else drawobj = 1;
+					if(event.key.keysym.sym==SDLK_f) {
+						if(fullscreen) {
+							SDL_SetWindowFullscreen(window, 0);
+							fullscreen = 0;
+						} else {
+							/* Because real fullscreen sucks */
+							SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+							fullscreen = 1;
+						}
+						SDL_GL_GetDrawableSize(window, &option->width, &option->height);
+						graph_resize_wind();
 					}
-					if(event.key.keysym.sym==SDLK_2) {
-						if(drawlinks) drawlinks = 0;
-						else drawlinks = 1;
+					if(event.key.keysym.sym==SDLK_s) {
+						graph_sshot(0, 0, option->width, option->height);
 					}
 					break;
 				case SDL_QUIT:
@@ -422,6 +429,7 @@ int main(int argc, char *argv[])
 	quit:
 		printf("Quitting...\n");
 		if(!novid) {
+			SDL_GL_DeleteContext(context);
 			SDL_DestroyWindow(window);
 			SDL_Quit();
 		}

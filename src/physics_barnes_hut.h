@@ -39,7 +39,7 @@ typedef struct thread_alloc_tree {
 
 /* Thread configuration struct */
 struct thread_config_bhut {
-	data* obj;
+	data *obj;
 	struct phys_barnes_hut_octree *root, *octrees[8];
 	unsigned int id, objs_low, objs_high;
 	struct thread_statistics *stats;
@@ -52,7 +52,7 @@ unsigned int bh_cleanup_octree(bh_octree *octree, bh_octree *root);
 /* Completely removes octree */
 void bh_decimate_octree(bh_octree *octree);
 
-/* Prints any cells and objects still inside octree */
+/* Prints any cells and objects inside octree */
 void bh_print_octree(bh_octree *octree);
 
 /* Used during init only to get a valid octree data */
@@ -67,8 +67,8 @@ short bh_get_octant(v4sd *pos, bh_octree *octree);
 bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root);
 
 /* Start - Thread - Stop */
-void** bhut_init(data** object, struct thread_statistics **stats);
-void *thread_barnes_hut(void *thread_setts);
+void **bhut_init(data** object, struct thread_statistics **stats);
+void *thread_bhut(void *thread_setts);
 void bhut_quit(void **threads);
 
 #endif

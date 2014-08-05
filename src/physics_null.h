@@ -18,7 +18,7 @@
 #ifndef PHYSENGINE_PHYS_NULL
 #define PHYSENGINE_PHYS_NULL
 
-void** null_init(data** object, struct thread_statistics **stats);
+void **null_init(data** object, struct thread_statistics **stats);
 void null_quit(void **threads);
 void *thread_null(void *thread_setts);
 

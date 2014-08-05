@@ -25,7 +25,7 @@ typedef double v4sd __attribute__((ext_vector_type(3)));
 #elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 9)
 typedef double v4sd __attribute__ ((vector_size (32)));
 #else /* Compiler version */
-#error You need to update your compilers. GCC 4.9 or Clang 3.5 required
+#error You need to update your compilers. GCC 4.9 or Clang 3.5 required.
 #endif
 
 #include <pthread.h>
@@ -50,7 +50,7 @@ typedef struct {
 
 /* Statistics structure */
 struct thread_statistics {
-	/* Shared */
+	/* Shared across all algorithms */
 	long double progress;
 	clockid_t clockid;
 	
@@ -64,13 +64,13 @@ struct thread_statistics {
 /* Algorithm structure */
 struct list_algorithms {
 	const char *name;
-	void* (*thread_location)(void *thread_setts);
-	void** (*thread_configuration)(data **, struct thread_statistics **);
+	void **(*thread_configuration)(data **, struct thread_statistics **);
+	void *(*thread_location)(void *thread_setts);
 	void (*thread_destruction)(void **);
 };
 
-typedef void*  (*thread_function)(void*);
-typedef void** (*thread_configuration)(data **, struct thread_statistics **);
+typedef void  *(*thread_function)(void*);
+typedef void **(*thread_configuration)(data **, struct thread_statistics **);
 typedef void   (*thread_destruction)(void **);
 
 /* These functions will return a function pointer */

@@ -17,7 +17,7 @@
  */
 #include "physics.h"
 
-void** null_init(data** object, struct thread_statistics **stats)
+void **null_init(data** object, struct thread_statistics **stats)
 {
 	/* Returning stats as pthread_create demands a non-null argument */
 	return (void**)stats;

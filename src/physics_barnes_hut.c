@@ -121,7 +121,7 @@ static void bh_print_thread_tree(struct thread_config_bhut **thread)
 	}
 }
 
-void** bhut_init(data** object, struct thread_statistics **stats)
+void **bhut_init(data** object, struct thread_statistics **stats)
 {
 #ifdef __linux__
 	/* Use this size for glibc's fastbins. In theory any memory below this size
@@ -266,7 +266,7 @@ static void bh_init_cell(bh_octree *octree, short k)
 	if(allocated_cells*sizeof(bh_octree) > option->bh_heapsize_max) {
 		pprintf(PRI_ERR, "Reached maximum octree heapsize of %lu bytes!\n",
 				option->bh_heapsize_max);
-		exit(1);
+		exit(3);
 	}
 	if(!octree->cells[k]) {
 		octree->cells[k] = calloc(1, sizeof(struct phys_barnes_hut_octree));
@@ -395,6 +395,7 @@ bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
 static void bh_cascade_position(bh_octree *target, bh_octree *root)
 {
 	if(!root || !target) return;
+	if(root->depth == 0) root->halfdim = 0;
 	if(root->depth == target->depth) return;
 	
 	pthread_mutex_lock(&root_lock);
@@ -438,11 +439,12 @@ static void bh_atomic_update_root(double dimension, bh_octree *root)
 	
 	if(root->depth == 0) {
 		v4sd diff = root->cellsum.pos - root->origin;
-		root->origin += diff/10;
+		root->origin += diff;
 	}
 	
-	if(dimension > root->halfdim)
+	if(dimension > root->halfdim) {
 		root->halfdim = dimension;
+	}
 	
 	pthread_mutex_unlock(&root_lock);
 }
@@ -484,7 +486,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 	}
 }
 
-void *thread_barnes_hut(void *thread_setts)
+void *thread_bhut(void *thread_setts)
 {
 	struct thread_config_bhut *thread = thread_setts;
 	v4sd accprev, dist;
@@ -521,6 +523,8 @@ void *thread_barnes_hut(void *thread_setts)
 		
 		/* Insert updated halfdim into root */
 		bh_atomic_update_root(maxdist, thread->root);
+		
+		pthread_barrier_wait(&barrier);
 		/* Update the positions of octrees and their halfdims + cleanup */
 		for(short s=0; s < 8; s++) {
 			new_cleaned += bh_cleanup_octree(thread->octrees[s], thread->root);

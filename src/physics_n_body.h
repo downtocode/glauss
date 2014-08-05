@@ -27,7 +27,7 @@ struct thread_config_nbody {
 	struct thread_statistics *stats;
 };
 
-void** nbody_init(data** object, struct thread_statistics **stats);
+void **nbody_init(data** object, struct thread_statistics **stats);
 void nbody_quit(void **threads);
 void *thread_nbody(void *thread_setts);
 

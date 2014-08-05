@@ -5,9 +5,9 @@ settings = {
 		threads = 1,
 		dt = 0.001,
 		algorithm = "barnes-hut",
-		bh_ratio = 0.50,
+		bh_ratio = 0.70,
 		--Lifetime of a cell before it's freed.
-		bh_lifetime = 1,
+		bh_lifetime = 16,
 		--Units are size_t(bytes)! PER THREAD!
 		bh_heapsize_max = 536870912,
 		--Maximum threads per octree. Reduce this to spread threads more.
@@ -30,12 +30,12 @@ settings = {
 	},
 }
 
-maxobjects = 100000;
+maxobjects = 3000;
 
 --Add molecules or any additional objects here
 objects = {
 -- 	{
--- 		molfile = "./resources/molecules/1UAO.pdb",
+-- 		import = "./resources/molecules/1UAO.pdb",
 -- 		posx = 0,
 -- 		posy = 0,
 -- 		posz = 0,
@@ -49,9 +49,9 @@ function spawn_objects(varfromC)
 	math.randomseed( os.time() )
 	for i = #objects, maxobjects, 1 do
 		objects[i] = {
-			posx = math.sin(i)*(i/maxobjects),
+			posx = math.sin(i)*(i/maxobjects)*2,
 			posy = (math.random()-0.5)/10,
-			posz = math.cos(i)*(i/maxobjects),
+			posz = math.cos(i)*(i/maxobjects)*2,
 			velx = 0,
 			vely = 0,
 			velz = 0,

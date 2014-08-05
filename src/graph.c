@@ -20,6 +20,7 @@
 #include <string.h>
 #include <tgmath.h>
 #include <GLES2/gl2.h>
+#include <png.h>
 #include "physics.h"
 #include "msg_phys.h"
 #include "parser.h"
@@ -46,7 +47,7 @@
 #define TIMEs  1.0
 
 /* Simulation status */
-#define SIMx -0.95
+#define SIMx 0.65
 #define SIMy -0.95
 #define SIMs  1.0
 
@@ -71,6 +72,9 @@
 
 /* UI POSITIONS */
 
+/* Screenshot filename template */
+#define SSHOT_FILENAME "sshot.rgb"
+/* Screenshot filename template */
 
 /* COLORS */
 const GLfloat COL_WHITE[]   =  {  1.0f,   1.0f,   1.0f,   1.0f  };
@@ -268,9 +272,22 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 		/* Chosen object */
 		//if(chosen != 0) graph_display_object_info((*object)[chosen]);
 		
-		/* Simulation status */
-		if(!threadcontrol(PHYS_STATUS, NULL))
+		if(threadcontrol(PHYS_STATUS, NULL)) {
+			/* Only displayed if running */
+			
+			/* Thread time stats */
+			for(short i = 1; i < option->threads + 1; i++) {
+				clock_gettime(t_stats[i]->clockid, &ts);
+				snprintf(osdtext, sizeof(osdtext),
+						 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
+				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
+			}
+		} else {
+			/* Only displayed if not running */
+			
+			/* Simulation status */
 			graph_display_text("Simulation stopped", SIMx, SIMy, SIMs, COL_RED);
+		}
 		
 		/* BH tree stats */
 		if(t_stats[1]->bh_total_alloc != 0) {
@@ -298,14 +315,6 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 						t_stats[i]->bh_heapsize/1048576.0);
 				graph_display_text(osdtext, OCTx+.49, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
 			}
-		}
-		
-		/* Thread time stats */
-		for(short i = 1; i < option->threads + 1; i++) {
-			clock_gettime(t_stats[i]->clockid, &ts);
-			snprintf(osdtext, sizeof(osdtext),
-					 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
-			graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
 		}
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -351,4 +360,25 @@ void graph_init()
 	rot_matrix = glGetUniformLocation(object_shader, "rotationMat");
 	scl_matrix = glGetUniformLocation(object_shader, "scalingMat");
 	per_matrix = glGetUniformLocation(object_shader, "perspectiveMat");
+}
+
+int graph_sshot(int x, int y, int w, int h)
+{
+	/* Open file */
+	char filename[32];
+	snprintf(filename, sizeof(filename), SSHOT_FILENAME);
+	FILE *fshot = fopen(filename, "w");
+	if(!fshot) return 2;
+	
+	/* Get pixels */
+	unsigned char *pixels = malloc(sizeof(unsigned char)*w*h*4);
+	glReadPixels(x,y,w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	
+	fwrite(pixels, sizeof(GLubyte), sizeof(unsigned char)*w*h*4, fshot);
+
+	fclose(fshot);
+	
+	free(pixels);
+	
+	return 0;
 }

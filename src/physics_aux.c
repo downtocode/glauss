@@ -84,9 +84,9 @@ int init_elements(const char *filepath)
 			pprintf(PRI_ERR, "Opening Lua file %s failed! Using internal DB.\n",
 					filepath);
 	} else {
-		if(luaL_loadstring (L, elements_internal)) {
+		if(luaL_loadstring(L, elements_internal)) {
 			pprintf(PRI_ERR, "Failed to open internal DB.\n");
-			return 1;
+			return 2;
 		}
 	}
 	/* Execute script */

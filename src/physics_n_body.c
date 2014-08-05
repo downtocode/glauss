@@ -27,7 +27,7 @@
 /* Used to sync threads */
 static pthread_barrier_t barrier;
 
-void** nbody_init(data** object, struct thread_statistics **stats)
+void **nbody_init(data** object, struct thread_statistics **stats)
 {
 	struct thread_config_nbody **thread_config = calloc(option->threads+1,
 		sizeof(struct thread_config_nbody*));

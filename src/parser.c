@@ -79,7 +79,7 @@ static void conf_traverse_table(lua_State *L)
 	}
 }
 
-static void obj_traverse_table(lua_State *L, data** object, data *buffer,
+static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 							   struct lua_parser_state *parser_state)
 {
 	lua_pushnil(L);
@@ -132,7 +132,7 @@ static void obj_traverse_table(lua_State *L, data** object, data *buffer,
 			if(!strcmp("atom", lua_tostring(L, -2)))
 				buffer->atomnumber = (unsigned short int)lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
-			if(!strcmp("molfile", lua_tostring(L, -2))) {
+			if(!strcmp("import", lua_tostring(L, -2))) {
 				strcpy(parser_state->molfile, lua_tostring(L, -1));
 				parser_state->molset = 1;
 			}
@@ -152,7 +152,7 @@ static void molfiles_traverse_table(lua_State *L)
 		if(lua_istable(L, -1)) {
 			molfiles_traverse_table(L);
 		} else if(lua_isstring(L, -1)) {
-			if(!strcmp("molfile", lua_tostring(L, -2))) {
+			if(!strcmp("import", lua_tostring(L, -2))) {
 				if(!access(lua_tostring(L, -1), R_OK)) {
 					pprintf(PRI_OK, "File %s found!\n", lua_tostring(L, -1));
 					/* A molecule is a single object which we get rid of. */
@@ -175,7 +175,7 @@ int parse_lua_simconf_options(char *filename)
 	/* Load file */
 	if(luaL_loadfile(L, filename)) {
 		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
-		return 1;
+		return 2;
 	}
 	/* Execute script */
 	lua_pcall(L, 0, 0, 0);
@@ -197,14 +197,14 @@ int parse_lua_simconf_options(char *filename)
 	return 0;
 }
 
-int parse_lua_simconf_objects(char *filename, data** object)
+int parse_lua_simconf_objects(char *filename, data **object)
 {
 	lua_State *L = luaL_newstate();
 	luaL_openlibs(L);
 	/* Load file */
 	if(luaL_loadfile(L, filename)) {
 		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
-		return 1;
+		return 2;
 	}
 	
 	lua_pcall(L, 0, 0, 0);
@@ -233,7 +233,7 @@ int parse_lua_simconf_objects(char *filename, data** object)
 	return 0;
 }
 
-const char* parse_file_to_str(const char* filename)
+const char *parse_file_to_str(const char* filename)
 {
 	FILE* input = fopen(filename, "r");
 	if(input == NULL) return NULL;
