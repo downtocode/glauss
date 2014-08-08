@@ -30,7 +30,7 @@ settings = {
 	},
 }
 
-maxobjects = 3000;
+maxobjects = 10000;
 
 --Add molecules or any additional objects here
 objects = {
@@ -49,9 +49,9 @@ function spawn_objects(varfromC)
 	math.randomseed( os.time() )
 	for i = #objects, maxobjects, 1 do
 		objects[i] = {
-			posx = math.sin(i)*(i/maxobjects)*2,
+			posx = math.sin(i)*(i/maxobjects),
 			posy = (math.random()-0.5)/10,
-			posz = math.cos(i)*(i/maxobjects)*2,
+			posz = math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,
 			velz = 0,

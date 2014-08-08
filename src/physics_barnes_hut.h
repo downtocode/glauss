@@ -47,7 +47,7 @@ struct thread_config_bhut {
 
 /* Returns flux of octrees */
 unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root);
-unsigned int bh_cleanup_octree(bh_octree *octree, bh_octree *root);
+unsigned int bh_cleanup_octree(bh_octree *octree);
 
 /* Completely removes octree */
 void bh_decimate_octree(bh_octree *octree);
@@ -56,8 +56,8 @@ void bh_decimate_octree(bh_octree *octree);
 void bh_print_octree(bh_octree *octree);
 
 /* Used during init only to get a valid octree data */
-double bh_max_displacement(data *object, bh_octree *octree);
-void bh_update_center_of_mass(data *object, bh_octree *octree);
+double bh_init_max_displacement(data *object, bh_octree *octree);
+void bh_init_center_of_mass(data *object, bh_octree *octree);
 
 /* Init a tree(start of one - NOT A SUBCELL) */
 bh_octree *bh_init_tree();
