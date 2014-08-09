@@ -63,7 +63,7 @@ void nbody_quit(void **threads)
 void *thread_nbody(void *thread_setts)
 {
 	struct thread_config_nbody *thread = thread_setts;
-	v4sd vecnorm, accprev;
+	vec3 vecnorm, accprev;
 	double dist;
 	const double pi = acos(-1);
 	const double gconst = option->gconst, epsno = option->epsno;

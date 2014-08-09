@@ -372,7 +372,7 @@ int graph_sshot(int x, int y, int w, int h)
 	
 	/* Get pixels */
 	unsigned char *pixels = malloc(sizeof(unsigned char)*w*h*4);
-	glReadPixels(x,y,w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	
 	fwrite(pixels, sizeof(GLubyte), sizeof(unsigned char)*w*h*4, fshot);
 

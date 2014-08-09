@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 		struct timeval t1, t2;
 		struct numbers_selection numbers;
 		struct graph_cam_view camera = { 32.0, 315.0, 0, 0, 0, 0, 0.1 };
-		camera.scalefactor = 0.1;
+		camera.scalefactor = 0.005;
 		numbers.final_digit = 0;
 		float deltatime = 0.0, totaltime = 0.0, fps = 0.0;
 		unsigned int frames = 0, chosen = 0, currentnum;

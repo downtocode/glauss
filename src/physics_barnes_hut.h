@@ -21,8 +21,8 @@
 /* Octree structure */
 typedef struct phys_barnes_hut_octree {
 	unsigned short score, depth;
-	v4sd origin;
-	double halfdim;
+	vec3 origin;
+	long double halfdim;
 	bool leaf;
 	data *data, cellsum;
 	struct phys_barnes_hut_octree *cells[8];
@@ -54,6 +54,8 @@ void bh_decimate_octree(bh_octree *octree);
 
 /* Prints any cells and objects inside octree */
 void bh_print_octree(bh_octree *octree);
+/* Prints octrees and their dimensions */
+void bh_depth_print(bh_octree *octree);
 
 /* Used during init only to get a valid octree data */
 double bh_init_max_displacement(data *object, bh_octree *octree);
@@ -62,7 +64,7 @@ void bh_init_center_of_mass(data *object, bh_octree *octree);
 /* Init a tree(start of one - NOT A SUBCELL) */
 bh_octree *bh_init_tree();
 /* Get octant an object is in(mostly used for direction) */
-short bh_get_octant(v4sd *pos, bh_octree *octree);
+short bh_get_octant(vec3 *pos, bh_octree *octree);
 /* Checks if object is within a specific octree */
 bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root);
 

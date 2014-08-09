@@ -21,11 +21,11 @@
 #if (__clang_major__ >= 3) &&  (__clang_minor__ >= 5)
 /* Use OpenCL's vectors when compiling with Clang
  *  since it doesn't support scalar operations on vectors. */
-typedef double v4sd __attribute__((ext_vector_type(3)));
+typedef double vec3 __attribute__((ext_vector_type(3)));
 #elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 9)
-typedef double v4sd __attribute__ ((vector_size (32)));
+typedef double vec3 __attribute__ ((vector_size (32)));
 #else /* Compiler version */
-#error You need to update your compilers. GCC 4.9 or Clang 3.5 required.
+#error You need to update your compilers. At least GCC 4.9 or Clang 3.5 required.
 #endif
 
 #include <pthread.h>
@@ -41,7 +41,7 @@ enum {
 
 /* Object structure */
 typedef struct {
-	v4sd pos, vel, acc;
+	vec3 pos, vel, acc;
 	double mass, charge;
 	float radius;
 	unsigned short int atomnumber, id;

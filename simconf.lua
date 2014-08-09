@@ -13,7 +13,7 @@ settings = {
 		--Maximum threads per octree. Reduce this to spread threads more.
 		bh_tree_limit = 8, --Range is [1,8(default)]
 		--If only a single thread is available, assign the entire root to it.
-		bh_single_assign = false,
+		bh_single_assign = true,
 	},
 	visual = {
 		width = 1024,
@@ -32,7 +32,7 @@ settings = {
 	},
 }
 
-maxobjects = 4000;
+maxobjects = 64000;
 
 --Add molecules or any additional objects here
 objects = {
@@ -51,9 +51,9 @@ function spawn_objects(varfromC)
 	math.randomseed( os.time() )
 	for i = #objects, maxobjects, 1 do
 		objects[i] = {
-			posx = math.sin(i)*(i/maxobjects),
-			posy = (math.random()-0.5)/10,
-			posz = math.cos(i)*(i/maxobjects),
+			posx = 50*math.sin(i)*(i/maxobjects),
+			posy = 50*(math.random()-0.5)/10,
+			posz = 50*math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,
 			velz = 0,
