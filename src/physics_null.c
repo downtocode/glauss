@@ -30,5 +30,5 @@ void null_quit(void **threads)
 
 void *thread_null(void *thread_setts)
 {
-	return NULL;
+	return 0;
 }

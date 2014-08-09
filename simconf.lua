@@ -5,13 +5,15 @@ settings = {
 		threads = 1,
 		dt = 0.001,
 		algorithm = "barnes-hut",
-		bh_ratio = 0.70,
+		bh_ratio = 0.49,
 		--Lifetime of a cell before it's freed.
 		bh_lifetime = 16,
 		--Units are size_t(bytes)! PER THREAD!
-		bh_heapsize_max = 536870912,
+		bh_heapsize_max = 336870912,
 		--Maximum threads per octree. Reduce this to spread threads more.
 		bh_tree_limit = 8, --Range is [1,8(default)]
+		--If only a single thread is available, assign the entire root to it.
+		bh_single_assign = false,
 	},
 	visual = {
 		width = 1024,
@@ -30,7 +32,7 @@ settings = {
 	},
 }
 
-maxobjects = 10000;
+maxobjects = 4000;
 
 --Add molecules or any additional objects here
 objects = {

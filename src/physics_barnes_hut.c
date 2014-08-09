@@ -175,7 +175,7 @@ void **bhut_init(data** object, struct thread_statistics **stats)
 	/* Workaround when only a single thread is available.
 	 * Reason why we couldn't have this in the bh_assign_thread function:
 	 * this happens ONLY once in this very unique case. */
-	if(option->threads == 1) {
+	if(option->threads == 1 && option->bh_single_assign) {
 		for(short h=0; h < 8; h++) {
 			thread_config[1]->octrees[h] = NULL;
 		}
@@ -287,6 +287,8 @@ short bh_get_octant(v4sd *pos, bh_octree *octree)
 	return oct;
 }
 
+unsigned int maxlevel;
+
 /* Inits a cell, in case it isn't, updates score and position */
 static void bh_init_cell(bh_octree *octree, short k)
 {
@@ -303,6 +305,11 @@ static void bh_init_cell(bh_octree *octree, short k)
 		allocated_cells++;
 	}
 	octree->cells[k]->score++;
+	if(octree->depth > maxlevel) {
+		maxlevel = octree->depth;
+		printf("Oct dep = %i, half = %lf\n", octree->depth, octree->halfdim);
+		if(maxlevel > 30) exit(0);
+	}
 	octree->cells[k]->halfdim = octree->halfdim/2;
 	octree->cells[k]->origin = octree->origin + (octree->halfdim*\
 				(v4sd){
@@ -355,7 +362,7 @@ void bh_print_octree(bh_octree *octree)
 						"Cell(pos = {%f, %f, %f},\
 						mass(center) = {%f, %f, %f},\
 						mass = %lf) contents:\n", octree->cells[i]->origin[0],
-						octree->cells[i]->origin[1], 
+						octree->cells[i]->origin[1],
 						octree->cells[i]->origin[2],
 						octree->cells[i]->cellsum.pos[0],
 						octree->cells[i]->cellsum.pos[1],
@@ -368,6 +375,15 @@ void bh_print_octree(bh_octree *octree)
 						octree->origin[1], octree->origin[2]);
 			}
 		}
+	}
+}
+
+void bh_depth_print(bh_octree *octree)
+{
+	if(!octree) return;
+	printf("Oct depth = %i, halfdim = %lf\n", octree->depth, octree->halfdim);
+	for(short i=0; i < 8; i++) {
+		if(octree->cells[i]) bh_depth_print(octree->cells[i]);
 	}
 }
 
@@ -435,12 +451,12 @@ unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 /* Will sync the centre of mass and origin of all related octrees root-target */
 static void bh_cascade_mass(bh_octree *target, bh_octree *root)
 {
-	/* DOES NOT UPDATE TARGET! */
+	/* Will not update target */
 	if(!root || !target) return;
 	if(root == target) return;
 	pthread_mutex_lock(&root_lock);
-	root->cellsum.pos = (root->cellsum.pos+target->cellsum.pos)/2;
-	root->cellsum.mass += target->cellsum.mass;
+		root->cellsum.pos = (root->cellsum.pos+target->cellsum.pos)/2;
+		root->cellsum.mass += target->cellsum.mass;
 	pthread_mutex_unlock(&root_lock);
 	bh_cascade_mass(target, root->cells[bh_get_octant(&target->origin, root)]);
 }
@@ -450,18 +466,18 @@ static void bh_atomic_update_root(double dimension, bh_octree *root)
 {
 	if(!root) return;
 	pthread_mutex_lock(&root_lock);
-	root->cellsum.mass = 0;
-	root->origin = root->cellsum.pos/5;
-	if(dimension > root->halfdim) root->halfdim = dimension;
+		root->cellsum.mass = 0;
+		root->origin = root->cellsum.pos;
+		if(dimension > root->halfdim) root->halfdim = dimension;
 	pthread_mutex_unlock(&root_lock);
 }
 
 /* Sets the origins and dimensions of any thread octrees and in between root. */
 static void bh_cascade_position(bh_octree *target, bh_octree *root)
 {
+	/* Will update the target as well */
 	if(!root || !target) return;
 	if(!target->depth) return;
-	/* Will update the target as well */
 	
 	short oct = bh_get_octant(&target->origin, root);
 	if(!root->cells[oct]) return;
@@ -478,7 +494,7 @@ static void bh_cascade_position(bh_octree *target, bh_octree *root)
 	pthread_mutex_unlock(&root_lock);
 	
 	if(root->cells[oct]->depth >= target->depth) return;
-	else bh_cascade_position(target, root->cells[oct]);
+	//else bh_cascade_position(target, root->cells[oct]);
 }
 
 void *thread_bhut(void *thread_setts)
@@ -500,6 +516,7 @@ void *thread_bhut(void *thread_setts)
 		
 		/* Build octree */
 		for(short s=0; s < 8; s++) {
+			//printf("T(%i) D(%i) H(%lf)\n", thread->id, thread->octrees[s]->depth, thread->octrees[s]->halfdim);
 			new_alloc += bh_build_octree(thread->obj, thread->octrees[s], thread->root);
 			/* Sync mass and center of mass with any higher trees */
 			bh_cascade_mass(thread->octrees[s], thread->root);
@@ -527,6 +544,8 @@ void *thread_bhut(void *thread_setts)
 			new_cleaned += bh_cleanup_octree(thread->octrees[s]);
 			bh_cascade_position(thread->octrees[s], thread->root);
 		}
+		
+		maxlevel = 0;
 		
 		/* Update statistics */
 		thread->stats->bh_total_alloc  =  allocated_cells;

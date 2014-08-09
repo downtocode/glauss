@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
 			.bh_ratio = 0.5, .bh_lifetime = 24,
 			.bh_tree_limit = 8,
 			.bh_heapsize_max = 536870912,
+			.bh_single_assign = true,
 		};
 	/*	Default settings.	*/
 	
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 		struct graph_cam_view camera = { 32.0, 315.0, 0, 0, 0, 0, 0.1 };
 		camera.scalefactor = 0.1;
 		numbers.final_digit = 0;
-		float deltatime = 0.0, totaltime = 0.0f, fps = 0.0;
+		float deltatime = 0.0, totaltime = 0.0, fps = 0.0;
 		unsigned int frames = 0, chosen = 0, currentnum;
 		char currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, fullscreen = 0;
@@ -106,7 +107,7 @@ int main(int argc, char *argv[])
 				{"version",		no_argument,			0, 'V'},
 				{"file",		required_argument,		0, 'f'},
 				{"help",		no_argument,			0, 'h'},
-				{NULL,			0,						0, 0}
+				{0}
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;

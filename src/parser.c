@@ -32,8 +32,8 @@
 struct lua_parser_state {
 	int i;
 	bool nullswitch;
-	bool molset;
-	char molfile[100];
+	bool fileset;
+	char filename[100];
 };
 
 static void conf_traverse_table(lua_State *L)
@@ -73,7 +73,8 @@ static void conf_traverse_table(lua_State *L)
 			if(!strcmp("fontname", lua_tostring(L, -2)))
 				option->fontname = strdup(lua_tostring(L, -1));
 		} else if(lua_isboolean(L, -1)) {
-			/*No boolean settings yet */
+			if(!strcmp("bh_single_assign", lua_tostring(L, -2)))
+				option->bh_single_assign = lua_toboolean(L, -1);
 		}
 		lua_pop(L, 1);
 	}
@@ -85,17 +86,17 @@ static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
 		if(lua_istable(L, -1)) {
-			if(parser_state->molset) {
-				if(!access(parser_state->molfile, R_OK)) {
-					pprintf(PRI_OK, "File %s found!\n", parser_state->molfile);
+			if(parser_state->fileset) {
+				if(!access(parser_state->filename, R_OK)) {
+					pprintf(PRI_OK, "File %s found!\n", parser_state->filename);
 					in_read_file(*object, buffer,
-								 parser_state->molfile, &parser_state->i);
-					memset(parser_state->molfile, 0,
-						   sizeof(parser_state->molfile));
-					parser_state->molset = 0;
+								 parser_state->filename, &parser_state->i);
+					memset(parser_state->filename, 0,
+						   sizeof(parser_state->filename));
+					parser_state->fileset = 0;
 				} else {
 					pprintf(PRI_ERR, "File %s not found!\n",
-							parser_state->molfile);
+							parser_state->filename);
 					exit(1);
 				}
 			} else {
@@ -133,8 +134,8 @@ static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 				buffer->atomnumber = (unsigned short int)lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("import", lua_tostring(L, -2))) {
-				strcpy(parser_state->molfile, lua_tostring(L, -1));
-				parser_state->molset = 1;
+				strcpy(parser_state->filename, lua_tostring(L, -1));
+				parser_state->fileset = 1;
 			}
 		} else if(lua_isboolean(L, -1)) {
 			if(!strcmp("ignore", lua_tostring(L, -2)))

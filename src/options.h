@@ -18,12 +18,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-extern struct option_struct *option;
-
 /* Options struct */
 /* "//--" marks internal, non-parser settable variables */
 
-struct option_struct {
+extern struct option_struct {
 	/* Frontend */
 	unsigned short verbosity;
 	int width, height;
@@ -42,4 +40,5 @@ struct option_struct {
 	unsigned short bh_tree_limit;
 	unsigned short bh_lifetime;
 	size_t bh_heapsize_max;
-};
+	bool bh_single_assign;
+} *option;
