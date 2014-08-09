@@ -18,14 +18,12 @@
 #ifndef PHYSENGINE_ELARR
 #define PHYSENGINE_ELARR
 
-struct atomic_cont {
+extern struct atomic_cont {
 	const char *name;
 	double mass;
 	double charge;
 	float color[4];
-};
-
-struct atomic_cont *atom_prop;
+} *atom_prop;
 
 #define NUM_ANOTHER 1
 #define NUM_GIVEME  2

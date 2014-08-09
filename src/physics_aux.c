@@ -25,6 +25,8 @@
 #include "physics_aux.h"
 #include "msg_phys.h"
 
+struct atomic_cont *atom_prop;
+
 struct lua_parser_state {
 	int i, buffer_cont;
 	bool nullswitch;
