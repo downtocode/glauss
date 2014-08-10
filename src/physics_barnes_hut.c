@@ -494,7 +494,7 @@ void *thread_bhut(void *thread_setts)
 	struct thread_config_bhut *thread = thread_setts;
 	vec3 accprev, dist;
 	
-	while(!quit) {
+	while(1) {
 		unsigned int new_alloc = 0, new_cleaned = 0;
 		double maxdist = 0.0;
 		/* Move objects */
@@ -542,6 +542,9 @@ void *thread_bhut(void *thread_setts)
 		thread->stats->bh_new_cleaned  =  new_cleaned;
 		thread->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
 		thread->stats->progress       +=  option->dt;
+		
+		/* Quit if requested */
+		pthread_testcancel();
 	}
 	return 0;
 }

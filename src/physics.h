@@ -78,9 +78,6 @@ thread_function        phys_find_algorithm(const char *name);
 thread_configuration   phys_find_config(const char *name);
 thread_destruction     phys_find_quit(const char *name);
 
-/* Signals threads to quit */
-extern bool quit;
-
 /* Statistics directly from the threads */
 extern struct thread_statistics **t_stats;
 

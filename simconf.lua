@@ -32,7 +32,7 @@ settings = {
 	},
 }
 
-maxobjects = 64000;
+maxobjects = 6400;
 
 --Add molecules or any additional objects here
 objects = {

@@ -37,7 +37,7 @@ static pthread_attr_t thread_attribs;
 static struct sched_param parameters;
 
 /* Internal status */
-bool running, quit;
+bool running;
 
 /* Thread statistics */
 struct thread_statistics **t_stats;
@@ -192,17 +192,19 @@ int threadcontrol(int status, data** object)
 			break;
 		case PHYS_SHUTDOWN:
 			if(!running) return 1;
-			quit = 1;
+			void *res;
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
 			for(int k = 1; k < option->threads + 1; k++) {
-				pthread_join(threads[k], NULL);
+				pthread_cancel(threads[k]);
+			}
+			for(int k = 1; k < option->threads + 1; k++) {
+				pthread_join(threads[k], &res);
 				pprintf(PRI_ESSENTIAL, "%i...", k);
 			}
 			pprintf(PRI_OK, "\n");
 			(phys_find_quit(option->algorithm))(thread_conf);
 			free(threads);
 			running = 0;
-			quit = 0;
 			break;
 	}
 	return 0;

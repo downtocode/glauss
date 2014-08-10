@@ -70,7 +70,7 @@ void *thread_nbody(void *thread_setts)
 	const bool nogrv = option->nogrv, noele = option->noele;
 	const bool noflj = option->noflj;
 	
-	while(!quit) {
+	while(1) {
 		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
 			if(thread->obj[i].ignore) continue;
 			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
@@ -105,6 +105,9 @@ void *thread_nbody(void *thread_setts)
 		}
 		thread->stats->progress += option->dt;
 		pthread_barrier_wait(&barrier);
+		
+		/* Quit if requested */
+		pthread_testcancel();
 	}
 	return 0;
 }
