@@ -24,7 +24,13 @@
 #define MOL_PDB 2
 #define MOL_OBJ 3
 
+typedef struct {
+	data *inf;
+	char filename[100];
+	double scale;
+} in_file;
+
 int in_probe_file(const char *filename);
-int in_read_file(data *object, data *buffer, const char *filename, int *i);
+int in_read_file(data *object, int *i, in_file file);
 
 #endif

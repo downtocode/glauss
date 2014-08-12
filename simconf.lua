@@ -32,14 +32,16 @@ settings = {
 	},
 }
 
-maxobjects = 6400;
+maxobjects = 240
+scale = 10
 
 --Add molecules or any additional objects here
 objects = {
 -- 	{
--- 		import = "./resources/molecules/1UAO.pdb",
+-- 		import = "./models/missile.obj",
+-- 		scale = 0.3,
 -- 		posx = 0,
--- 		posy = 0,
+-- 		posy = -8,
 -- 		posz = 0,
 -- 		velz = 0,
 -- 		vely = 0,
@@ -47,18 +49,18 @@ objects = {
 -- 	}
 }
 
-function spawn_objects(varfromC)
+function spawn_objects(var_C)
 	math.randomseed( os.time() )
-	for i = #objects, maxobjects, 1 do
+	for i = #objects+1, maxobjects, 1 do
 		objects[i] = {
-			posx = 50*math.sin(i)*(i/maxobjects),
-			posy = 50*(math.random()-0.5)/10,
-			posz = 50*math.cos(i)*(i/maxobjects),
+			posx = scale*math.sin(i)*(i/maxobjects),
+			posy = scale*(math.random()-0.5)/10,
+			posz = scale*math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,
 			velz = 0,
 			charge = 100,
-			mass = 10000*i,
+			mass = 1000000*i,
 			radius = 0.2,
 			atom = math.random(1,10),
 			ignore = false,

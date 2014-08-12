@@ -33,8 +33,10 @@ struct lua_parser_state {
 	int i;
 	bool nullswitch;
 	bool fileset;
-	char filename[100];
+	in_file file;
 };
+
+lua_State *L;
 
 static void conf_traverse_table(lua_State *L)
 {
@@ -87,16 +89,16 @@ static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 	while(lua_next(L, -2) != 0) {
 		if(lua_istable(L, -1)) {
 			if(parser_state->fileset) {
-				if(!access(parser_state->filename, R_OK)) {
-					pprintf(PRI_OK, "File %s found!\n", parser_state->filename);
-					in_read_file(*object, buffer,
-								 parser_state->filename, &parser_state->i);
-					memset(parser_state->filename, 0,
-						   sizeof(parser_state->filename));
+				if(!access(parser_state->file.filename, R_OK)) {
+					pprintf(PRI_OK, "File %s found!\n", parser_state->file.filename);
+					parser_state->file.inf = buffer;
+					in_read_file(*object, &parser_state->i, parser_state->file);
+					memset(&parser_state->file, 0,
+						   sizeof(in_file));
 					parser_state->fileset = 0;
 				} else {
 					pprintf(PRI_ERR, "File %s not found!\n",
-							parser_state->filename);
+							parser_state->file.filename);
 					exit(1);
 				}
 			} else {
@@ -132,9 +134,11 @@ static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 				buffer->radius = lua_tonumber(L, -1);
 			if(!strcmp("atom", lua_tostring(L, -2)))
 				buffer->atomnumber = (unsigned short int)lua_tonumber(L, -1);
+			if(!strcmp("scale", lua_tostring(L, -2)))
+				parser_state->file.scale = lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("import", lua_tostring(L, -2))) {
-				strcpy(parser_state->filename, lua_tostring(L, -1));
+				strcpy(parser_state->file.filename, lua_tostring(L, -1));
 				parser_state->fileset = 1;
 			}
 		} else if(lua_isboolean(L, -1)) {
@@ -169,9 +173,9 @@ static void molfiles_traverse_table(lua_State *L)
 	}
 }
 
-int parse_lua_simconf_options(char *filename)
+int parse_lua_open(char *filename)
 {
-	lua_State *L = luaL_newstate();
+	L = luaL_newstate();
 	luaL_openlibs(L);
 	/* Load file */
 	if(luaL_loadfile(L, filename)) {
@@ -180,6 +184,17 @@ int parse_lua_simconf_options(char *filename)
 	}
 	/* Execute script */
 	lua_pcall(L, 0, 0, 0);
+	return 0;
+}
+
+int parse_lua_close()
+{
+	lua_close(L);
+	return 0;
+}
+
+int parse_lua_simconf_options()
+{
 	/* Read settings table */
 	lua_getglobal(L, "settings");
 	conf_traverse_table(L);
@@ -194,26 +209,15 @@ int parse_lua_simconf_options(char *filename)
 	} else {
 		option->nogrv = 0;
 	}
-	lua_close(L);
 	return 0;
 }
 
-int parse_lua_simconf_objects(char *filename, data **object)
+int parse_lua_simconf_objects(data **object)
 {
-	lua_State *L = luaL_newstate();
-	luaL_openlibs(L);
-	/* Load file */
-	if(luaL_loadfile(L, filename)) {
-		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
-		return 2;
-	}
-	
-	lua_pcall(L, 0, 0, 0);
-	
 	/* Read returned table of objects */
 	lua_getglobal(L, "spawn_objects");
 	/* Can send arguments here, currently unused. */
-	lua_pushnumber(L, option->obj);
+	lua_pushnumber(L, 0);
 	/* The second returned value is the total number of objects */
 	lua_call(L, 1, 2);
 	/* Lua arrays are indexed from 1. Luckily, our object array is also
@@ -226,11 +230,10 @@ int parse_lua_simconf_objects(char *filename, data **object)
 	initphys(object);
 	/* Finally read the objects */
 	data buffer;
-	struct lua_parser_state parser_state = { 1, 0, 0, {'\n'} };
+	struct lua_parser_state parser_state = { 1, 0, 0, {0} };
 	
 	obj_traverse_table(L, object, &buffer, &parser_state);
 	
-	lua_close(L);
 	return 0;
 }
 

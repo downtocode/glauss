@@ -160,12 +160,12 @@ int main(int argc, char *argv[])
 					break;
 				case 'f':
 					option->filename = strdup(optarg);
-					if(parse_lua_simconf_options(option->filename)) {
+					if(parse_lua_open(option->filename)) {
 						pprintf(PRI_ERR,
 								"Could not parse configuration from %s!\n",
 								option->filename);
 						return 0;
-					}
+					} else parse_lua_simconf_options();
 					break;
 				case 'h':
 					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING,
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 			pprintf(PRI_OK, "Failed to init elements db!\n");
 		}
 		
-		if(parse_lua_simconf_objects(option->filename, &object)) {
+		if(parse_lua_simconf_objects(&object)) {
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
 					option->filename);
 			return 2;

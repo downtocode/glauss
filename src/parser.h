@@ -19,9 +19,9 @@
 #define PHYSENGINE_PARS
 
 #include "physics.h"
-
-int parse_lua_simconf_options(char *filename);
-int parse_lua_simconf_objects(char *filename, data **object);
+int parse_lua_open(char *filename);
+int parse_lua_simconf_options();
+int parse_lua_simconf_objects(data **object);
 const char *parse_file_to_str(const char *filename);
 
 #endif

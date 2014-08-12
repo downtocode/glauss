@@ -71,26 +71,26 @@ int in_probe_file(const char *filename)
 	return 0;
 }
 
-int in_read_file(data *object, data *buffer, const char *filename, int *i)
+int in_read_file(data *object, int *i, in_file file)
 {
 	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;
 	int filetype, pdbatomindex, pdbresidueseq;
 	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
-	FILE *inpars = fopen(filename, "r");
+	FILE *inpars = fopen(file.filename, "r");
 	
 	/* Put format specific quirks here. */
-	if(strstr(filename, "xyz")!=NULL) {
+	if(strstr(file.filename, "xyz")!=NULL) {
 		filetype = MOL_XYZ;
 		/* Skip first two lines of XYZ files. */
 		fgets(str, sizeof(str), inpars);
 		fgets(str, sizeof(str), inpars);
-	} else if(strstr(filename, "pdb")!=NULL) {
+	} else if(strstr(file.filename, "pdb")!=NULL) {
 		filetype = MOL_PDB;
-	} else if(strstr(filename, "obj")!=NULL) {
+	} else if(strstr(file.filename, "obj")!=NULL) {
 		filetype = MOL_OBJ;
 	} else {
-		fprintf(stderr, "Error! Filetype of %s not recognized!\n", filename);
+		fprintf(stderr, "Error! Filetype of %s not recognized!\n", file.filename);
 		exit(1);
 	}
 	
@@ -118,12 +118,12 @@ int in_read_file(data *object, data *buffer, const char *filename, int *i)
 			//object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;
 			/* By specifications XYZ and PDB files default to float */
-			object[*i].pos[0] = (double)xpos + buffer->pos[0];
-			object[*i].pos[1] = (double)ypos + buffer->pos[1];
-			object[*i].pos[2] = (double)zpos + buffer->pos[2];
-			object[*i].vel[0] = buffer->vel[0];
-			object[*i].vel[1] = buffer->vel[1];
-			object[*i].vel[2] = buffer->vel[2];
+			object[*i].pos[0] = file.scale*xpos + file.inf->pos[0];
+			object[*i].pos[1] = file.scale*ypos + file.inf->pos[1];
+			object[*i].pos[2] = file.scale*zpos + file.inf->pos[2];
+			object[*i].vel[0] = file.inf->vel[0];
+			object[*i].vel[1] = file.inf->vel[1];
+			object[*i].vel[2] = file.inf->vel[2];
 			if(object[*i].atomnumber == 1) {
 				object[*i].charge = 2200*option->elcharge;
 				object[*i].ignore = 0;
@@ -142,7 +142,7 @@ int in_read_file(data *object, data *buffer, const char *filename, int *i)
 				object[*i].radius = 0.1;
 			}
 			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", 
-					filename, *i, 
+					file.filename, *i, 
 					object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);
 			*i = *i + 1;
 		}
