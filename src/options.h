@@ -26,7 +26,7 @@ extern struct option_struct {
 	unsigned short verbosity;
 	int width, height;
 	bool nogrv, noele, noflj, logenable;
-	char *fontname, *filename, *algorithm;
+	char *fontname, *filename, *algorithm, *sshot_temp;
 	FILE *logfile; //--
 	
 	/* Physics */

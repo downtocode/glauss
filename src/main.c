@@ -65,10 +65,14 @@ int main(int argc, char *argv[])
 			.noflj = 1,
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
+			
 			.bh_ratio = 0.5, .bh_lifetime = 24,
 			.bh_tree_limit = 8,
 			.bh_heapsize_max = 536870912,
 			.bh_single_assign = true,
+			
+			.algorithm = strdup("barnes-hut"),
+			.sshot_temp = strdup("sshot_%3.3Lf.png"),
 		};
 	/*	Default settings.	*/
 	
@@ -363,7 +367,7 @@ int main(int argc, char *argv[])
 						graph_resize_wind();
 					}
 					if(event.key.keysym.sym==SDLK_s) {
-						graph_sshot(0, 0, option->width, option->height);
+						graph_sshot(t_stats[1]->progress);
 					}
 					break;
 				case SDL_QUIT:

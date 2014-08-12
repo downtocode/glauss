@@ -72,10 +72,6 @@
 
 /* UI POSITIONS */
 
-/* Screenshot filename template */
-#define SSHOT_FILENAME "sshot.rgb"
-/* Screenshot filename template */
-
 /* COLORS */
 const GLfloat COL_WHITE[]   =  {  1.0f,   1.0f,   1.0f,   1.0f  };
 const GLfloat COL_RED[]     =  {  1.0f,   0.0f,   0.0f,   1.0f  };
@@ -362,23 +358,57 @@ void graph_init()
 	per_matrix = glGetUniformLocation(object_shader, "perspectiveMat");
 }
 
-int graph_sshot(int x, int y, int w, int h)
+int graph_sshot(long double arg)
 {
 	/* Open file */
 	char filename[32];
-	snprintf(filename, sizeof(filename), SSHOT_FILENAME);
+	int w = option->width, h = option->height;
+	
+	/* Open file */
+	snprintf(filename, sizeof(filename), option->sshot_temp, arg);
 	FILE *fshot = fopen(filename, "w");
 	if(!fshot) return 2;
 	
 	/* Get pixels */
 	unsigned char *pixels = malloc(sizeof(unsigned char)*w*h*4);
-	glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	
-	fwrite(pixels, sizeof(GLubyte), sizeof(unsigned char)*w*h*4, fshot);
-
+	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if(!png) return 1;
+	
+	png_infop info = png_create_info_struct(png);
+	if(!info) {
+		png_destroy_write_struct(&png, &info);
+		return 1;
+	}
+	
+	png_init_io(png, fshot);
+	png_set_IHDR(png, info, w, h, 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+				 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+	png_colorp palette = png_malloc(png, PNG_MAX_PALETTE_LENGTH * sizeof(png_color));
+	if(!palette) {
+		fclose(fshot);
+		png_destroy_write_struct(&png, &info);
+		return 1;
+	}
+	
+	png_set_PLTE(png, info, palette, PNG_MAX_PALETTE_LENGTH);
+	png_write_info(png, info);
+	png_set_packing(png);
+	
+	png_bytepp rows = png_malloc(png, h*sizeof(png_bytep));
+	for(int r = 0; r < h; r++) rows[r] = (pixels + (h - r)*w*4);
+	
+	png_write_image(png, rows);
+	png_write_end(png, info);
+	
+	png_free(png, palette);
+	png_destroy_write_struct(&png, &info);
+	
 	fclose(fshot);
-	
 	free(pixels);
+	
+	pprintf(PRI_MEDIUM, "Wrote screenshot %s\n", filename);
 	
 	return 0;
 }
