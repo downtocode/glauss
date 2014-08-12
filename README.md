@@ -48,8 +48,8 @@ Button | Action
 **Enter**    | Press once to init object selection, input number and press again to select.
 **r**        | Reset view and deseclect object.
 **z**        | Dump entire system to an XYZ file.
-**1**      | Draw objects as points/spheres.
-**2**      | Enable/disable link drawing.
+**s**        | Create a screenshot.
+**f**        | Enter fullscreen mode.
 **Spacebar** | Pause/unpause.
 **Esc**      | Safely[*] quit the program. If running inside a terminal you can use Ctrl+C too.
 
