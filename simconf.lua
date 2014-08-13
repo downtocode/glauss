@@ -18,6 +18,10 @@ settings = {
 	visual = {
 		width = 1024,
 		height = 600,
+		screenshot_template = "sshot_%3.3Lf.png",
+		fontname = "Liberation Sans",
+		fontsize = 38,
+		verbosity = 8,
 	},
 	constants = {
 		--elcharge = 1.602176565*10^-2,
@@ -27,25 +31,19 @@ settings = {
 		--gconst = 0,
 		epsno = 0,
 	},
-	misc = {
-		verbosity = 6,
-	},
 }
 
 maxobjects = 240
-scale = 10
+scale_obj = 10
 
 --Add molecules or any additional objects here
 objects = {
 -- 	{
--- 		import = "./models/missile.obj",
--- 		scale = 0.3,
--- 		posx = 0,
--- 		posy = -8,
--- 		posz = 0,
--- 		velz = 0,
--- 		vely = 0,
--- 		velz = 0,
+-- 		import = "./UH60/uh60.obj",
+-- 		scale = 90,
+-- 		posx = 0, rotx = 0, velx = 0,
+-- 		posy = 0, roty = 0, vely = 0,
+-- 		posz = 0, rotz = 0, velz = 0,
 -- 	}
 }
 
@@ -53,9 +51,9 @@ function spawn_objects(var_C)
 	math.randomseed( os.time() )
 	for i = #objects+1, maxobjects, 1 do
 		objects[i] = {
-			posx = scale*math.sin(i)*(i/maxobjects),
-			posy = scale*(math.random()-0.5)/10,
-			posz = scale*math.cos(i)*(i/maxobjects),
+			posx = scale_obj*math.sin(i)*(i/maxobjects),
+			posy = scale_obj*(math.random()-0.5)/10,
+			posz = scale_obj*math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,
 			velz = 0,

@@ -69,11 +69,15 @@ static void conf_traverse_table(lua_State *L)
 				option->epsno = lua_tonumber(L, -1);
 			if(!strcmp("verbosity", lua_tostring(L, -2)))
 				option->verbosity = lua_tonumber(L, -1);
+			if(!strcmp("fontsize", lua_tostring(L, -2)))
+				option->fontsize = lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("algorithm", lua_tostring(L, -2)))
 				option->algorithm = strdup(lua_tostring(L, -1));
 			if(!strcmp("fontname", lua_tostring(L, -2)))
 				option->fontname = strdup(lua_tostring(L, -1));
+			if(!strcmp("screenshot_template", lua_tostring(L, -2)))
+				option->sshot_temp = strdup(lua_tostring(L, -1));
 		} else if(lua_isboolean(L, -1)) {
 			if(!strcmp("bh_single_assign", lua_tostring(L, -2)))
 				option->bh_single_assign = lua_toboolean(L, -1);
@@ -136,6 +140,12 @@ static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 				buffer->atomnumber = (unsigned short int)lua_tonumber(L, -1);
 			if(!strcmp("scale", lua_tostring(L, -2)))
 				parser_state->file.scale = lua_tonumber(L, -1);
+			if(!strcmp("rotx", lua_tostring(L, -2)))
+				parser_state->file.rot[0] = lua_tonumber(L, -1);
+			if(!strcmp("roty", lua_tostring(L, -2)))
+				parser_state->file.rot[1] = lua_tonumber(L, -1);
+			if(!strcmp("rotz", lua_tostring(L, -2)))
+				parser_state->file.rot[2] = lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("import", lua_tostring(L, -2))) {
 				strcpy(parser_state->file.filename, lua_tostring(L, -1));

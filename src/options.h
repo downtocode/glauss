@@ -24,8 +24,8 @@
 extern struct option_struct {
 	/* Frontend */
 	unsigned short verbosity;
-	int width, height;
-	bool nogrv, noele, noflj, logenable;
+	int width, height, fontsize;
+	bool nogrv, noele, logenable;
 	char *fontname, *filename, *algorithm, *sshot_temp;
 	FILE *logfile; //--
 	

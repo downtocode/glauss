@@ -75,7 +75,7 @@ const char *graph_init_fontconfig()
 	FcConfig *fc_config = FcInitLoadConfigAndFonts();
 	FcPattern *fc_pattern = FcPatternCreate();
 	/* Ask the deity for an Arial-type gift of typography */
-	FcPatternAddString(fc_pattern, FC_FULLNAME, (const FcChar8 *)"Arial");
+	FcPatternAddString(fc_pattern, FC_FAMILY, (const FcChar8 *)option->fontname);
 	/* Ask fontgod not to blind our eyes for our insolence */
 	FcPatternAddBool(fc_pattern, FC_ANTIALIAS, 1);
 	/* Summon a fontdemon which shall transmit the gift of our god */
@@ -115,7 +115,7 @@ unsigned int graph_init_freetype(const char *fontname)
 		pprintf(PRI_ERR, "Freetype could not open font.\n");
 		exit(1);
 	}
-	FT_Set_Pixel_Sizes(face, 0, 34);
+	FT_Set_Pixel_Sizes(face, 0, option->fontsize);
 	g = face->glyph;
 	
 	/* Load glyphs and get maximum height and width */

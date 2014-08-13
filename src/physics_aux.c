@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <tgmath.h>
 #include <lua5.2/lua.h>
 #include <lua5.2/lauxlib.h>
 #include <lua5.2/lualib.h>
@@ -137,4 +138,31 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int 
 		return 0;
 	}
 	return 0;
+}
+
+/* We have to implement those here too as graphics may not be compiled */
+vec3 rotate_vec(vec3 vec, vec3 rot)
+{
+	vec3 res = vec;
+	if(rot[0]) {
+		double c = cos(rot[0]);
+		double s = sin(rot[0]);
+		res[1] = c*vec[1] - s*vec[2];
+		res[2] = s*vec[1] + c*vec[2];
+	}
+	if(rot[1]) {
+		vec3 tmp = res;
+		double c = cos(rot[1]);
+		double s = sin(rot[1]);
+		res[0] = c*tmp[0] + s*tmp[2];
+		res[2] = c*tmp[2] - s*tmp[0];
+	}
+	if(rot[2]) {
+		vec3 tmp = res;
+		double c = cos(rot[2]);
+		double s = sin(rot[2]);
+		res[0] = c*tmp[0] - s*tmp[1];
+		res[1] = s*tmp[0] + c*tmp[1];
+	}
+	return res;
 }

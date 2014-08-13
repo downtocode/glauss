@@ -52,12 +52,10 @@ static void bh_add_thread(bh_thread *root,
 		if(!octree->cells[i]) {
 			octree->cells[i] = bh_init_tree();
 			octree->cells[i]->halfdim = octree->halfdim/2;
-			octree->cells[i]->origin = octree->origin + (octree->halfdim*\
-			(vec3){
-				(i&4 ? .5f : -.5f),
-				(i&2 ? .5f : -.5f),
-				(i&1 ? .5f : -.5f)
-			});
+			octree->cells[i]->origin = octree->origin +\
+				((vec3){ (i&4 ? .5f : -.5f),
+						 (i&2 ? .5f : -.5f),
+						 (i&1 ? .5f : -.5f) })*(double)octree->halfdim;
 		}
 		octree->cells[i]->depth = octree->depth + 1;
 		root->subdiv[i]->mapped = octree->cells[i];
@@ -127,7 +125,7 @@ void **bhut_init(data** object, struct thread_statistics **stats)
 	/* Use this size for glibc's fastbins. In theory any memory below this size
 	 * will not be consolidated together, allowing us to allocate and free
 	 * memory real fast. Not portable. */
-	mallopt(M_MXFAST, sizeof(struct phys_barnes_hut_octree));
+	mallopt(M_MXFAST, sizeof(bh_octree));
 #endif
 	
 	struct thread_config_bhut **thread_config = calloc(option->threads+1,
@@ -296,7 +294,7 @@ static void bh_init_cell(bh_octree *octree, short k)
 		exit(3);
 	}
 	if(!octree->cells[k]) {
-		octree->cells[k] = calloc(1, sizeof(struct phys_barnes_hut_octree));
+		octree->cells[k] = calloc(1, sizeof(bh_octree));
 		octree->cells[k]->depth = octree->depth+1;
 		octree->cells[k]->leaf = 1;
 		octree->cells[k]->score = option->bh_lifetime;
@@ -304,12 +302,10 @@ static void bh_init_cell(bh_octree *octree, short k)
 	}
 	octree->cells[k]->score++;
 	octree->cells[k]->halfdim = octree->halfdim/2;
-	octree->cells[k]->origin = octree->origin + (octree->halfdim*\
-				(vec3){
-						(k&4 ? .5f : -.5f),
-						(k&2 ? .5f : -.5f),
-						(k&1 ? .5f : -.5f)
-				});
+	octree->cells[k]->origin = octree->origin +\
+		((vec3){ (k&4 ? .5f : -.5f),
+				 (k&2 ? .5f : -.5f),
+				 (k&1 ? .5f : -.5f) })*(double)octree->halfdim;
 }
 
 /* Recursive function to insert object into an octree */
@@ -383,7 +379,7 @@ void bh_depth_print(bh_octree *octree)
 /* Will init a sub-root octree as root. We have to do the sync ourselves too. */
 bh_octree *bh_init_tree()
 {
-	bh_octree *octree = calloc(1, sizeof(struct phys_barnes_hut_octree));
+	bh_octree *octree = calloc(1, sizeof(bh_octree));
 	octree->score = USHRT_MAX;
 	octree->leaf = 0;
 	return octree;
@@ -477,12 +473,10 @@ static void bh_cascade_position(bh_octree *target, bh_octree *root)
 	pthread_mutex_lock(&root_lock);
 		root->cellsum.mass = 0;
 		root->cells[oct]->halfdim = root->halfdim/2;
-		root->cells[oct]->origin = root->origin + (root->halfdim*\
-			(vec3){
-				(oct&4 ? .5f : -.5f),
-				(oct&2 ? .5f : -.5f),
-				(oct&1 ? .5f : -.5f)
-			});
+		root->cells[oct]->origin = root->origin +\
+			((vec3){ (oct&4 ? .5f : -.5f),
+					 (oct&2 ? .5f : -.5f),
+					 (oct&1 ? .5f : -.5f) })*(double)root->halfdim;
 	pthread_mutex_unlock(&root_lock);
 	
 	if(root->cells[oct]->depth >= target->depth) return;

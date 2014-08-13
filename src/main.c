@@ -41,7 +41,6 @@
 static const char *ARGSTRING =
 "Usage: physengine -f (file) (arguments)\n"
 "		--novid			Disable video output.\n"
-"		--nosync		Disable waiting for vblank.\n"
 "		--bench			Benchmark mode(30 seconds, threads=1, novid\n"
 "		--dump			Dump an xyz file of the system every second.\n"
 "	-a	--algorithm (string)	Select an algorithm to use. To list all: \"help\".\n"
@@ -59,20 +58,24 @@ int main(int argc, char *argv[])
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
 		*option = (struct option_struct) {
+			/* Visuals */
 			.width = 1200, .height = 600,
+			.fontsize = 38,
+			.sshot_temp = strdup("sshot_%3.3Lf.png"),
+			.fontname = strdup("Sans"),
+			
+			/* Physics */
 			.threads = 0,
 			.dt = 0.008, .verbosity = 5,
-			.noflj = 1,
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
+			.algorithm = strdup("n-body"),
 			
+			/* Physics: Barnes-Hut */
 			.bh_ratio = 0.5, .bh_lifetime = 24,
 			.bh_tree_limit = 8,
 			.bh_heapsize_max = 536870912,
 			.bh_single_assign = true,
-			
-			.algorithm = strdup("barnes-hut"),
-			.sshot_temp = strdup("sshot_%3.3Lf.png"),
 		};
 	/*	Default settings.	*/
 	
@@ -89,7 +92,7 @@ int main(int argc, char *argv[])
 		char currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, fullscreen = 0;
 		bool start_selection = 0;
-		int novid = 0, dumplevel = 0, vsync = 1, bench = 0;
+		int novid = 0, dumplevel = 0, bench = 0;
 		float timer = 1.0f;
 	/*	Main function vars	*/
 	
@@ -100,7 +103,6 @@ int main(int argc, char *argv[])
 			struct option long_options[] =
 			{
 				{"novid",		no_argument,			&novid, 1},
-				{"nosync",		no_argument,			&vsync, 0},
 				{"bench",		no_argument,			&bench, 1},
 				{"dump",		no_argument,			&dumplevel, 1},
 				{"log",			required_argument,		0, 'l'},
@@ -245,7 +247,6 @@ int main(int argc, char *argv[])
 				option->height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|\
 				SDL_WINDOW_ALLOW_HIGHDPI);
 			context = SDL_GL_CreateContext(window);
-			SDL_GL_SetSwapInterval(vsync);
 			/* We deal with any and all graphical vizualization here */
 			graph_init();
 		}
@@ -438,8 +439,7 @@ int main(int argc, char *argv[])
 			SDL_DestroyWindow(window);
 			SDL_Quit();
 		}
-		if(threadcontrol(PHYS_STATUS, &object))
-			threadcontrol(PHYS_SHUTDOWN, &object);
+		threadcontrol(PHYS_SHUTDOWN, &object);
 		if(option->logenable)
 			fclose(option->logfile);
 		free(option);

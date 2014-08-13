@@ -26,6 +26,7 @@
 
 typedef struct {
 	data *inf;
+	vec3 rot;
 	char filename[100];
 	double scale;
 } in_file;

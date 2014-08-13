@@ -73,7 +73,7 @@ int in_probe_file(const char *filename)
 
 int in_read_file(data *object, int *i, in_file file)
 {
-	char str[500], atom[2], pdbtype[10], pdbatomname[10], pdbresidue[10];
+	char str[500] = {0}, atom[2] = {0}, pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;
 	int filetype, pdbatomindex, pdbresidueseq;
 	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
@@ -118,12 +118,9 @@ int in_read_file(data *object, int *i, in_file file)
 			//object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;
 			/* By specifications XYZ and PDB files default to float */
-			object[*i].pos[0] = file.scale*xpos + file.inf->pos[0];
-			object[*i].pos[1] = file.scale*ypos + file.inf->pos[1];
-			object[*i].pos[2] = file.scale*zpos + file.inf->pos[2];
-			object[*i].vel[0] = file.inf->vel[0];
-			object[*i].vel[1] = file.inf->vel[1];
-			object[*i].vel[2] = file.inf->vel[2];
+			vec3 new_p = rotate_vec((vec3){xpos, ypos, zpos}, file.rot);
+			object[*i].pos = file.scale*new_p + file.inf->pos;
+			object[*i].vel = file.inf->vel;
 			if(object[*i].atomnumber == 1) {
 				object[*i].charge = 2200*option->elcharge;
 				object[*i].ignore = 0;

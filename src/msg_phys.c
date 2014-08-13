@@ -21,7 +21,6 @@
 #include "options.h"
 
 /* pprintf - a priority printing function. */
-
 void pprintf(unsigned int priority, const char *format, ...)
 {	
 	const char *okmsg = "[\033[032m Ok! \033[0m] ";

@@ -18,6 +18,8 @@
 #ifndef PHYSENGINE_ELARR
 #define PHYSENGINE_ELARR
 
+#include "physics.h"
+
 extern struct atomic_cont {
 	const char *name;
 	double mass;
@@ -37,5 +39,6 @@ struct numbers_selection {
 int init_elements(const char *filepath);
 unsigned short int return_atom_num(const char *name);
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status);
+vec3 rotate_vec(vec3 vec, vec3 rot);
 
 #endif

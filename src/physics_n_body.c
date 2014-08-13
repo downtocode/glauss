@@ -68,7 +68,6 @@ void *thread_nbody(void *thread_setts)
 	const double pi = acos(-1);
 	const double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele;
-	const bool noflj = option->noflj;
 	
 	while(1) {
 		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
@@ -96,10 +95,6 @@ void *thread_nbody(void *thread_setts)
 					thread->obj[i].acc += -vecnorm*\
 								((thread->obj[i].charge*thread->obj[j].charge)/\
 									(4*pi*epsno*dist*dist*thread->obj[i].mass));
-				if(!noflj)
-					thread->obj[i].acc += vecnorm*\
-								(4*epsilon*(12*(pow(sigma, 12)/pow(dist, 13)) -\
-						   6*(pow(sigma, 6)/pow(dist, 7)))/thread->obj[i].mass);
 			}
 			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
 		}
