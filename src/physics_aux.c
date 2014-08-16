@@ -109,6 +109,7 @@ int init_elements(const char *filepath)
 
 unsigned short int return_atom_num(const char *name)
 {
+	if(name[0] == '\0') return 0;
 	for(int i=1; i<121; i++) {
 		if(strcmp(name, atom_prop[i].name) == 0) {
 			return i;

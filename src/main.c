@@ -42,7 +42,6 @@ static const char *ARGSTRING =
 "Usage: physengine -f (file) (arguments)\n"
 "		--novid			Disable video output.\n"
 "		--bench			Benchmark mode(30 seconds, threads=1, novid\n"
-"		--dump			Dump an xyz file of the system every second.\n"
 "	-a	--algorithm (string)	Select an algorithm to use. To list all: \"help\".\n"
 "	-l	--log (file)		Log everything to a file.\n"
 "	-t	--threads (int)		Use this amount of threads.\n"
@@ -76,6 +75,9 @@ int main(int argc, char *argv[])
 			.bh_tree_limit = 8,
 			.bh_heapsize_max = 536870912,
 			.bh_single_assign = true,
+			
+			/* Physics - misc */
+			.dump_xyz = 0, .dump_sshot = 0,
 		};
 	/*	Default settings.	*/
 	
@@ -92,7 +94,7 @@ int main(int argc, char *argv[])
 		char currentsel[100] = "Select object:";
 		bool flicked = 0, translate = 0, fullscreen = 0;
 		bool start_selection = 0;
-		int novid = 0, dumplevel = 0, bench = 0;
+		int novid = 0, bench = 0;
 		float timer = 1.0f;
 	/*	Main function vars	*/
 	
@@ -104,7 +106,6 @@ int main(int argc, char *argv[])
 			{
 				{"novid",		no_argument,			&novid, 1},
 				{"bench",		no_argument,			&bench, 1},
-				{"dump",		no_argument,			&dumplevel, 1},
 				{"log",			required_argument,		0, 'l'},
 				{"algorithm",	required_argument,		0, 'a'},
 				{"threads",		required_argument,		0, 't'},
@@ -207,10 +208,6 @@ int main(int argc, char *argv[])
 			if(timer==1.0f) timer=30.0f;
 		}
 	/*	Arguments	*/
-	
-	/*	Error handling.	*/
-	if(dumplevel) printf("Outputting XYZ file every %f seconds.\n", timer);
-	/*	Error handling.	*/
 	
 	/*	Physics.	*/
 		data* object;
@@ -337,9 +334,7 @@ int main(int argc, char *argv[])
 						printf("dt = %f\n", option->dt);
 					}
 					if(event.key.keysym.sym==SDLK_SPACE) {
-						if(threadcontrol(PHYS_STATUS, &object))
-							threadcontrol(PHYS_SHUTDOWN, &object);
-						else threadcontrol(PHYS_START, &object);
+						threadcontrol(PHYS_PAUSESTART, &object);
 					}
 					if(event.key.keysym.sym==SDLK_r) {
 						camera = (struct graph_cam_view)\
@@ -387,8 +382,6 @@ int main(int argc, char *argv[])
 		}
 		if (totaltime >  timer) {
 			fps = frames/totaltime;
-			
-			if(dumplevel) toxyz(object);
 			
 			if(bench) {
 				pprintf(PRI_ESSENTIAL,

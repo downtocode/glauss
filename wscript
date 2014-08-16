@@ -114,6 +114,13 @@ def build(ctx):
 		features  = ['c'],
 		includes='. .. ../../',
 	)
+	ctx(name='physics_ctrl',
+		path=ctx.path,
+		target='physics_ctrl',
+		source='src/physics_ctrl.c',
+		features  = ['c'],
+		includes='. .. ../../',
+	)
 	ctx(name='physics_null',
 		path=ctx.path,
 		target='physics_null',
@@ -179,7 +186,7 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='src/main.c',
 		features  = ['c', 'cprogram'],

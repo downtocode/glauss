@@ -43,6 +43,7 @@ struct thread_config_bhut {
 	struct phys_barnes_hut_octree *root, *octrees[8];
 	unsigned int id, objs_low, objs_high;
 	struct thread_statistics *stats;
+	pthread_barrier_t *ctrl;
 };
 
 /* Returns flux of octrees */
@@ -69,7 +70,7 @@ short bh_get_octant(vec3 *pos, bh_octree *octree);
 bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root);
 
 /* Start - Thread - Stop */
-void **bhut_init(data** object, struct thread_statistics **stats);
+void **bhut_init(struct glob_thread_config *cfg);
 void *thread_bhut(void *thread_setts);
 void bhut_quit(void **threads);
 

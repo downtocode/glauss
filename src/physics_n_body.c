@@ -27,7 +27,7 @@
 /* Used to sync threads */
 static pthread_barrier_t barrier;
 
-void **nbody_init(data** object, struct thread_statistics **stats)
+void **nbody_init(struct glob_thread_config *cfg)
 {
 	struct thread_config_nbody **thread_config = calloc(option->threads+1,
 		sizeof(struct thread_config_nbody*));
@@ -41,8 +41,9 @@ void **nbody_init(data** object, struct thread_statistics **stats)
 	int totcore = (int)((float)option->obj/option->threads);
 	
 	for(int k = 1; k < option->threads + 1; k++) {
-		thread_config[k]->stats = stats[k];
-		thread_config[k]->obj = *object;
+		thread_config[k]->stats = cfg->stats[k];
+		thread_config[k]->obj = cfg->obj;
+		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
@@ -62,7 +63,7 @@ void nbody_quit(void **threads)
 
 void *thread_nbody(void *thread_setts)
 {
-	struct thread_config_nbody *thread = thread_setts;
+	struct thread_config_nbody *t = thread_setts;
 	vec3 vecnorm, accprev;
 	double dist;
 	const double pi = acos(-1);
@@ -70,36 +71,35 @@ void *thread_nbody(void *thread_setts)
 	const bool nogrv = option->nogrv, noele = option->noele;
 	
 	while(1) {
-		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
-			if(thread->obj[i].ignore) continue;
-			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
-			(thread->obj[i].acc)*((option->dt*option->dt)/2);
+		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
+			if(t->obj[i].ignore) continue;
+			t->obj[i].pos += (t->obj[i].vel*option->dt) +\
+			(t->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
 		pthread_barrier_wait(&barrier);
 		
-		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
-			accprev = thread->obj[i].acc;
+		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
+			accprev = t->obj[i].acc;
 			for(unsigned int j = 1; j < option->obj + 1; j++) {
 				if(i==j) continue;
-				vecnorm = thread->obj[j].pos - thread->obj[i].pos;
+				vecnorm = t->obj[j].pos - t->obj[i].pos;
 				dist = sqrt(vecnorm[0]*vecnorm[0] +\
 							vecnorm[1]*vecnorm[1] +\
 							vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
 				
 				if(!nogrv)
-					thread->obj[i].acc += vecnorm*\
-									   (gconst*thread->obj[j].mass)/(dist*dist);
+					t->obj[i].acc += vecnorm*\
+									   (gconst*t->obj[j].mass)/(dist*dist);
 				if(!noele)
-					thread->obj[i].acc += -vecnorm*\
-								((thread->obj[i].charge*thread->obj[j].charge)/\
-									(4*pi*epsno*dist*dist*thread->obj[i].mass));
+					t->obj[i].acc += -vecnorm*\
+								((t->obj[i].charge*t->obj[j].charge)/\
+									(4*pi*epsno*dist*dist*t->obj[i].mass));
 			}
-			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
+			t->obj[i].vel += (t->obj[i].acc + accprev)*((option->dt)/2);
 		}
-		thread->stats->progress += option->dt;
-		pthread_barrier_wait(&barrier);
+		pthread_barrier_wait(t->ctrl);
 		
 		/* Quit if requested */
 		pthread_testcancel();

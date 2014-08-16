@@ -71,6 +71,10 @@ static void conf_traverse_table(lua_State *L)
 				option->verbosity = lua_tonumber(L, -1);
 			if(!strcmp("fontsize", lua_tostring(L, -2)))
 				option->fontsize = lua_tonumber(L, -1);
+			if(!strcmp("dump_xyz", lua_tostring(L, -2)))
+				option->dump_xyz = lua_tonumber(L, -1);
+			if(!strcmp("dump_sshot", lua_tostring(L, -2)))
+				option->dump_sshot = lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("algorithm", lua_tostring(L, -2)))
 				option->algorithm = strdup(lua_tostring(L, -1));

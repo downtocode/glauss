@@ -21,9 +21,12 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
+#include "graph.h"
 #include "physics.h"
 #include "options.h"
 #include "msg_phys.h"
+#include "out_xyz.h"
+#include "physics_ctrl.h"
 #include "physics_null.h"
 #include "physics_n_body.h"
 #include "physics_barnes_hut.h"
@@ -36,11 +39,9 @@ static pthread_t *threads;
 static pthread_attr_t thread_attribs;
 static struct sched_param parameters;
 
-/* Internal status */
-bool running;
-
-/* Thread statistics */
+/* Thread statistics and primary struct */
 struct thread_statistics **t_stats;
+struct glob_thread_config *cfg;
 
 /* Only sent to deinit function */
 void **thread_conf;
@@ -171,16 +172,25 @@ int threadcontrol(int status, data** object)
 	if(!option->threads) return 0;
 	switch(status) {
 		case PHYS_STATUS:
-			return running;
+			return option->status;
+			break;
+		case PHYS_PAUSESTART:
+			option->paused = !option->paused;
 			break;
 		case PHYS_START:
-			if(running) return 1;
-			running = 1;
+			if(option->status) return 1;
+			option->status = 1;
+			
 			threads = calloc(option->threads+1, sizeof(pthread_t));
 			
-			thread_conf = (phys_find_config(option->algorithm))(object, t_stats);
+			cfg = calloc(1, sizeof(struct glob_thread_config));
+			cfg->stats = t_stats;
+			cfg->obj = *object;
+			
+			thread_conf = (phys_find_config(option->algorithm))(ctrl_init(cfg));
 			
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
+			pthread_create(&threads[0], &thread_attribs, thread_ctrl, cfg);
 			for(int k = 1; k < option->threads + 1; k++) {
 				pthread_create(&threads[k], &thread_attribs,
 							   phys_find_algorithm(option->algorithm),
@@ -191,20 +201,29 @@ int threadcontrol(int status, data** object)
 			pprintf(PRI_OK, "\n");
 			break;
 		case PHYS_SHUTDOWN:
-			if(!running) return 1;
+			if(!option->status) return 1;
+			if(option->paused) {
+				option->paused = false;
+				sleep(1);
+			}
 			void *res;
+			
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
-			for(int k = 1; k < option->threads + 1; k++) {
+			for(int k = 0; k < option->threads + 1; k++) {
 				pthread_cancel(threads[k]);
 			}
 			for(int k = 1; k < option->threads + 1; k++) {
 				pthread_join(threads[k], &res);
 				pprintf(PRI_ESSENTIAL, "%i...", k);
 			}
+			pthread_join(threads[0], &res);
 			pprintf(PRI_OK, "\n");
+			
 			(phys_find_quit(option->algorithm))(thread_conf);
+			
+			free(cfg);
 			free(threads);
-			running = 0;
+			option->status = 0;
 			break;
 	}
 	return 0;

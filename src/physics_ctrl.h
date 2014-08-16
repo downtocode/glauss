@@ -15,35 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <stdio.h>
-#include <stdbool.h>
+#ifndef PHYSENGINE_PHYS_CTRL
+#define PHYSENGINE_PHYS_CTRL
 
-/* Options struct */
-/* "//--" denotes internal, non-parser settable variables */
+#include "physics.h"
 
-extern struct option_struct {
-	/* Frontend */
-	unsigned short verbosity;
-	int width, height, fontsize;
-	bool nogrv, noele, logenable;
-	char *fontname, *filename, *algorithm, *sshot_temp;
-	FILE *logfile; //--
-	
-	/* Physics */
-	bool status, paused; //--
-	float dt;
-	unsigned int obj; //--
-	unsigned short threads;
-	double elcharge, gconst, epsno;
-	
-	/* Barnes-Hut algorithm specifics */
-	float bh_ratio;
-	unsigned short bh_tree_limit;
-	unsigned short bh_lifetime;
-	size_t bh_heapsize_max;
-	bool bh_single_assign;
-	
-	/* Physics - misc */
-	unsigned int dump_xyz, dump_sshot;
-	bool write_sshot_now; //--
-} *option;
+struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg);
+void ctrl_quit(struct glob_thread_config *cfg);
+void *thread_ctrl(void *thread_setts);
+
+#endif

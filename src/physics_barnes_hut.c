@@ -119,7 +119,7 @@ static void bh_print_thread_tree(struct thread_config_bhut **thread)
 	}
 }
 
-void **bhut_init(data** object, struct thread_statistics **stats)
+void **bhut_init(struct glob_thread_config *cfg)
 {
 #ifdef __linux__
 	/* Use this size for glibc's fastbins. In theory any memory below this size
@@ -148,8 +148,8 @@ void **bhut_init(data** object, struct thread_statistics **stats)
 	
 	/* Create the root octree */
 	bh_octree *root_octree = bh_init_tree();
-	bh_init_center_of_mass(*object, root_octree);
-	root_octree->halfdim = bh_init_max_displacement(*object, root_octree);
+	bh_init_center_of_mass(cfg->obj, root_octree);
+	root_octree->halfdim = bh_init_max_displacement(cfg->obj, root_octree);
 	
 	/* Create temporary assignment tree for threads */
 	bh_thread *thread_tree = calloc(1, sizeof(bh_thread));
@@ -160,8 +160,9 @@ void **bhut_init(data** object, struct thread_statistics **stats)
 		/* Recursively insert the threads into assignment octree and map it to
 		 * the root octree */
 		bh_assign_thread(thread_tree, root_octree, thread_config[k]);
-		thread_config[k]->stats = stats[k];
-		thread_config[k]->obj = *object;
+		thread_config[k]->stats = cfg->stats[k];
+		thread_config[k]->obj = cfg->obj;
+		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
@@ -388,27 +389,22 @@ bh_octree *bh_init_tree()
 /* Check whether the object is in the target octree. Returns 1 in case it is. */
 bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
 {
-	if(!root)
-		return 0;
-	else if(root->depth == target->depth)
+	if(root->depth >= target->depth)
 		return root == target;
-	else if(root->depth > target->depth)
-		return 0;
 	/* Cascade the return value */
-	return bh_recurse_check_obj(object, target,
+	else return bh_recurse_check_obj(object, target,
 								root->cells[bh_get_octant(&object->pos, root)]);
 }
 
 /* Recursive function, basis of the BH algorithm */
 static void bh_calculate_force(data* object, bh_octree *octree)
 {
-	if(octree->leaf && !octree->data) return;
-	if(octree->data == object) return;
 	vec3 vecnorm = object->pos - octree->origin;
 	double dist = sqrt(vecnorm[0]*vecnorm[0] +\
 					   vecnorm[1]*vecnorm[1] + vecnorm[2]*vecnorm[2]);
 	vecnorm /= dist;
 	if(octree->data) {
+		if(octree->data == object) return;
 		object->acc += -vecnorm*\
 		(option->gconst*octree->data->mass)/(dist*dist);
 	} else if((octree->halfdim/dist) < option->bh_ratio) {
@@ -485,57 +481,57 @@ static void bh_cascade_position(bh_octree *target, bh_octree *root)
 
 void *thread_bhut(void *thread_setts)
 {
-	struct thread_config_bhut *thread = thread_setts;
+	struct thread_config_bhut *t = thread_setts;
 	vec3 accprev, dist;
 	
 	while(1) {
 		unsigned int new_alloc = 0, new_cleaned = 0;
 		double maxdist = 0.0;
 		/* Move objects */
-		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
-			if(thread->obj[i].ignore) continue;
-			thread->obj[i].pos += (thread->obj[i].vel*option->dt) +\
-				(thread->obj[i].acc)*((option->dt*option->dt)/2);
+		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
+			if(t->obj[i].ignore) continue;
+			t->obj[i].pos += (t->obj[i].vel*option->dt) +\
+				(t->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
 		pthread_barrier_wait(&barrier);
 		
 		/* Build octree */
 		for(short s=0; s < 8; s++) {
-			new_alloc += bh_build_octree(thread->obj, thread->octrees[s], thread->root);
+			new_alloc += bh_build_octree(t->obj, t->octrees[s], t->root);
 			/* Sync mass and center of mass with any higher trees */
-			bh_cascade_mass(thread->octrees[s], thread->root);
+			bh_cascade_mass(t->octrees[s], t->root);
 		}
 		
 		pthread_barrier_wait(&barrier);
 		
 		/* Calculate force */
-		for(unsigned int i = thread->objs_low; i < thread->objs_high + 1; i++) {
-			accprev = thread->obj[i].acc;
-			bh_calculate_force(&thread->obj[i], thread->root);
-			thread->obj[i].vel += (thread->obj[i].acc + accprev)*((option->dt)/2);
+		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
+			accprev = t->obj[i].acc;
+			bh_calculate_force(&t->obj[i], t->root);
+			t->obj[i].vel += (t->obj[i].acc + accprev)*((option->dt)/2);
 			/* Get updated maximum for root. */
-			dist = thread->obj[i].pos - thread->root->origin;
+			dist = t->obj[i].pos - t->root->origin;
 			for(int j = 0; j < 3; j++) if(dist[j] > maxdist) maxdist = dist[j];
 		}
 		
-		pthread_barrier_wait(&barrier);
+		/* Wakeup control thread */
+		pthread_barrier_wait(t->ctrl);
 		
 		/* Insert updated halfdim into root */
-		bh_atomic_update_root(maxdist, thread->root);
+		bh_atomic_update_root(maxdist, t->root);
 		
 		/* Update the positions of octrees and their halfdims + cleanup */
 		for(short s=0; s < 8; s++) {
-			new_cleaned += bh_cleanup_octree(thread->octrees[s]);
-			bh_cascade_position(thread->octrees[s], thread->root);
+			new_cleaned += bh_cleanup_octree(t->octrees[s]);
+			bh_cascade_position(t->octrees[s], t->root);
 		}
 		
 		/* Update statistics */
-		thread->stats->bh_total_alloc  =  allocated_cells;
-		thread->stats->bh_new_alloc    =  new_alloc;
-		thread->stats->bh_new_cleaned  =  new_cleaned;
-		thread->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
-		thread->stats->progress       +=  option->dt;
+		t->stats->bh_total_alloc  =  allocated_cells;
+		t->stats->bh_new_alloc    =  new_alloc;
+		t->stats->bh_new_cleaned  =  new_cleaned;
+		t->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
 		
 		/* Quit if requested */
 		pthread_testcancel();

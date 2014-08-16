@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_ELARR
-#define PHYSENGINE_ELARR
+#ifndef PHYSENGINE_AUX
+#define PHYSENGINE_AUX
 
 #include "physics.h"
 

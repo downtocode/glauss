@@ -18,16 +18,14 @@
 #ifndef PHYSENGINE_PHYS_N_BODY
 #define PHYSENGINE_PHYS_N_BODY
 
-#define sigma 0.5
-#define epsilon 0.0001
-
 struct thread_config_nbody {
 	data* obj;
 	unsigned int id, objs_low, objs_high;
 	struct thread_statistics *stats;
+	pthread_barrier_t *ctrl;
 };
 
-void **nbody_init(data** object, struct thread_statistics **stats);
+void **nbody_init(struct glob_thread_config *cfg);
 void nbody_quit(void **threads);
 void *thread_nbody(void *thread_setts);
 

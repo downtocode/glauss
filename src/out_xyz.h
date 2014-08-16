@@ -18,6 +18,8 @@
 #ifndef PHYSENGINE_OUTPUT
 #define PHYSENGINE_OUTPUT
 
+#include "physics.h"
+
 int toxyz(data *object);
 
 #endif

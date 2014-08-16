@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include "config.h"
 #include "options.h"
 #include "physics.h"
@@ -33,6 +34,8 @@ int toxyz(data *object)
 	char filetodump[120];
 	snprintf(filetodump, sizeof(filetodump),
 			 "%s_%0.2Lf.%s", FILENAME, t_stats[1]->progress, EXT);
+	/* Check if file exist */
+	if(!access(filetodump, R_OK)) return 1;
 	FILE *out = fopen(filetodump, "w");
 	pprintf(PRI_ESSENTIAL, "Created %s\n", filetodump);
 	fprintf(out, "%u\n", option->obj + 1);

@@ -35,6 +35,7 @@ typedef double vec3 __attribute__ ((vector_size (32)));
 /* Status enum */
 enum {
 	PHYS_STATUS,
+	PHYS_PAUSESTART,
 	PHYS_START,
 	PHYS_SHUTDOWN,
 };
@@ -61,16 +62,23 @@ struct thread_statistics {
 	size_t bh_heapsize;
 };
 
+/* Struct sent to threads' init functions */
+struct glob_thread_config {
+	data *obj;
+	struct thread_statistics **stats;
+	pthread_barrier_t *ctrl;
+};
+
 /* Algorithm structure */
 struct list_algorithms {
 	const char *name;
-	void **(*thread_configuration)(data **, struct thread_statistics **);
+	void **(*thread_configuration)(struct glob_thread_config *cfg);
 	void *(*thread_location)(void *thread_setts);
 	void (*thread_destruction)(void **);
 };
 
 typedef void  *(*thread_function)(void*);
-typedef void **(*thread_configuration)(data **, struct thread_statistics **);
+typedef void **(*thread_configuration)(struct glob_thread_config *cfg);
 typedef void   (*thread_destruction)(void **);
 
 /* These functions will return a function pointer */

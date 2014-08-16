@@ -268,8 +268,12 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 		/* Chosen object */
 		//if(chosen != 0) graph_display_object_info((*object)[chosen]);
 		
-		if(threadcontrol(PHYS_STATUS, NULL)) {
+		if(option->status) {
 			/* Only displayed if running */
+			
+			if(option->paused) {
+				graph_display_text("Simulation paused", SIMx, SIMy, SIMs, COL_YELLOW);
+			}
 			
 			/* Thread time stats */
 			for(short i = 1; i < option->threads + 1; i++) {
@@ -327,6 +331,13 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 		draw_obj_points(*object);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	/* Take screenshot if signaled by physics ctrl thread */
+	if(option->write_sshot_now) {
+		graph_sshot(t_stats[1]->progress);
+		option->write_sshot_now = false;
+	}
+	
 	/*	Dynamic drawing	*/
 }
 
@@ -366,6 +377,8 @@ int graph_sshot(long double arg)
 	
 	/* Open file */
 	snprintf(filename, sizeof(filename), option->sshot_temp, arg);
+	if(!access(filename, R_OK)) return 2;
+	
 	FILE *fshot = fopen(filename, "w");
 	if(!fshot) return 2;
 	
@@ -385,7 +398,7 @@ int graph_sshot(long double arg)
 	png_init_io(png, fshot);
 	png_set_IHDR(png, info, w, h, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
 				 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-	png_colorp palette = png_malloc(png, PNG_MAX_PALETTE_LENGTH * sizeof(png_color));
+	png_colorp palette = png_malloc(png, PNG_MAX_PALETTE_LENGTH*sizeof(png_color));
 	if(!palette) {
 		fclose(fshot);
 		png_destroy_write_struct(&png, &info);
@@ -402,6 +415,7 @@ int graph_sshot(long double arg)
 	png_write_image(png, rows);
 	png_write_end(png, info);
 	
+	png_free(png, rows);
 	png_free(png, palette);
 	png_destroy_write_struct(&png, &info);
 	

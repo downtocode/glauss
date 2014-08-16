@@ -17,10 +17,10 @@
  */
 #include "physics.h"
 
-void **null_init(data** object, struct thread_statistics **stats)
+void **null_init(struct glob_thread_config *cfg)
 {
 	/* Returning stats as pthread_create demands a non-null argument */
-	return (void**)stats;
+	return (void**)cfg;
 }
 
 void null_quit(void **threads)

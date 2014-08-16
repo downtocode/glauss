@@ -115,26 +115,22 @@ int in_read_file(data *object, int *i, in_file file)
 					zpos/=100;
 				} else continue;
 			}
-			//object[*i].atomnumber = return_atom_num(atom);
+			object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;
 			/* By specifications XYZ and PDB files default to float */
 			vec3 new_p = rotate_vec((vec3){xpos, ypos, zpos}, file.rot);
 			object[*i].pos = file.scale*new_p + file.inf->pos;
 			object[*i].vel = file.inf->vel;
+			object[*i].ignore = file.inf->ignore;
+			object[*i].charge = file.inf->charge*option->elcharge;
 			if(object[*i].atomnumber == 1) {
-				object[*i].charge = 2200*option->elcharge;
-				object[*i].ignore = 0;
 				object[*i].mass = 1.0;
 				object[*i].radius = 0.05;
 			} else if(object[*i].atomnumber == 6) {
-				object[*i].charge = -200*option->elcharge;
-				object[*i].ignore = 0;
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			} else {
 				object[*i].atomnumber = 0;
-				object[*i].charge = 0;
-				object[*i].ignore = 0;
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			}

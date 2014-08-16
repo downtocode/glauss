@@ -22,6 +22,8 @@ settings = {
 		fontname = "Liberation Sans",
 		fontsize = 38,
 		verbosity = 8,
+		dump_sshot = 0, --Auto screenshot dump frequency
+		dump_xyz = 0, --Auto xyz dump frequency
 	},
 	constants = {
 		--elcharge = 1.602176565*10^-2,
@@ -33,13 +35,13 @@ settings = {
 	},
 }
 
-maxobjects = 240
+maxobjects = 24000
 scale_obj = 10
 
 --Add molecules or any additional objects here
 objects = {
 -- 	{
--- 		import = "./UH60/uh60.obj",
+-- 		import = "../missile.obj",
 -- 		scale = 90,
 -- 		posx = 0, rotx = 0, velx = 0,
 -- 		posy = 0, roty = 0, vely = 0,
