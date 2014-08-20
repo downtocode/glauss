@@ -221,6 +221,7 @@ int threadcontrol(int status, data** object)
 			
 			(phys_find_quit(option->algorithm))(thread_conf);
 			
+			ctrl_quit(cfg);
 			free(cfg);
 			free(threads);
 			option->status = 0;

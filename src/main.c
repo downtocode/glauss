@@ -344,6 +344,9 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_z) {
 						toxyz(object);
 					}
+					if(event.key.keysym.sym==SDLK_q) {
+						goto quit;
+					}
 					if(event.key.keysym.sym==SDLK_PERIOD) {
 						if(chosen < option->obj) chosen++;
 					}
