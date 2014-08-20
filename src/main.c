@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 		}
 	/*	SDL2	*/
 	
-	threadcontrol(PHYS_START, &object);
+	//threadcontrol(PHYS_START, &object);
 	
 	gettimeofday (&t1 , NULL);
 	
@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
 						printf("dt = %f\n", option->dt);
 					}
 					if(event.key.keysym.sym==SDLK_SPACE) {
-						threadcontrol(PHYS_PAUSESTART, &object);
+						threadcontrol(PHYS_PAUSESTART, NULL);
 					}
 					if(event.key.keysym.sym==SDLK_r) {
 						camera = (struct graph_cam_view)\
@@ -346,6 +346,25 @@ int main(int argc, char *argv[])
 					}
 					if(event.key.keysym.sym==SDLK_q) {
 						goto quit;
+					}
+					if(event.key.keysym.sym==SDLK_MINUS && !option->status) {
+						/* Shuffle algorithms */
+						int num;
+						/* Get number of algorithm */
+						for(num = 0; phys_algorithms[num].name; num++) {
+							if(!strcmp(option->algorithm, phys_algorithms[num].name))
+								break;
+						}
+						/* Select next algorithm */
+						num++;
+						/* Check if we come up empty as last */
+						if(!phys_algorithms[num].name) num = 0;
+						printf("Next algo is %s\n", phys_algorithms[num].name);
+						option->algorithm = strdup(phys_algorithms[num].name);
+					}
+					if(event.key.keysym.sym==SDLK_BACKSPACE) {
+						if(option->status) threadcontrol(PHYS_SHUTDOWN, NULL);
+						else threadcontrol(PHYS_START, &object);
 					}
 					if(event.key.keysym.sym==SDLK_PERIOD) {
 						if(chosen < option->obj) chosen++;

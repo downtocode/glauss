@@ -290,7 +290,7 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 		}
 		
 		/* BH tree stats */
-		if(t_stats[1]->bh_total_alloc != 0) {
+		if(option->stats_bh) {
 			graph_display_text("Octree stats:", OCTx, OCTy, OCTs, COL_WHITE);
 			graph_display_text("Thread", OCTx, OCTy-.05, OCTs, COL_WHITE);
 			graph_display_text("Total", OCTx+.12, OCTy-.05, OCTs, COL_ORANGE);

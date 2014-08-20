@@ -58,7 +58,13 @@ void **nbody_init(struct glob_thread_config *cfg)
 
 void nbody_quit(void **threads)
 {
+	struct thread_config_nbody **t = (struct thread_config_nbody **)threads;
+	for(int k = 0; k < option->threads + 1; k++) {
+		free(t[k]);
+	}
+	free(t);
 	pthread_barrier_destroy(&barrier);
+	return;
 }
 
 void *thread_nbody(void *thread_setts)

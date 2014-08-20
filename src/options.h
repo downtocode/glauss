@@ -45,5 +45,5 @@ extern struct option_struct {
 	
 	/* Physics - misc */
 	unsigned int dump_xyz, dump_sshot;
-	bool write_sshot_now; //--
+	bool write_sshot_now, stats_bh; //--
 } *option;

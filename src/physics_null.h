@@ -18,6 +18,10 @@
 #ifndef PHYSENGINE_PHYS_NULL
 #define PHYSENGINE_PHYS_NULL
 
+struct thread_config_null {
+	pthread_barrier_t *ctrl;
+};
+
 void **null_init(struct glob_thread_config *cfg);
 void null_quit(void **threads);
 void *thread_null(void *thread_setts);

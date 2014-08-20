@@ -127,7 +127,6 @@ void **bhut_init(struct glob_thread_config *cfg)
 	 * memory real fast. Not portable. */
 	mallopt(M_MXFAST, sizeof(bh_octree));
 #endif
-	
 	struct thread_config_bhut **thread_config = calloc(option->threads+1,
 											sizeof(struct thread_config_bhut*));
 	for(int k = 0; k < option->threads + 1; k++) {
@@ -135,8 +134,8 @@ void **bhut_init(struct glob_thread_config *cfg)
 	}
 	
 	/* Check if options are within limits */
-	if(option->bh_tree_limit  < 1 || option->bh_tree_limit > 8) {
-		pprintf(PRI_ERR, "[BH] Option bh_tree_limit must be within [1,8]!");
+	if(option->bh_tree_limit  < 2 || option->bh_tree_limit > 8) {
+		pprintf(PRI_ERR, "[BH] Option bh_tree_limit must be within [2,8]!");
 		exit(1);
 	}
 	
@@ -186,6 +185,9 @@ void **bhut_init(struct glob_thread_config *cfg)
 	/* Free assignment octree since all's been done */
 	bh_decimate_assignment_tree(thread_tree);
 	
+	/* Display BH specific stats */
+	option->stats_bh = true;
+	
 	return (void**)thread_config;
 }
 
@@ -193,7 +195,14 @@ void **bhut_init(struct glob_thread_config *cfg)
 void bhut_quit(void **threads) {
 	bh_decimate_octree(((struct thread_config_bhut **)threads)[1]->root);
 	pthread_mutex_destroy(&root_lock);
+	struct thread_config_bhut **t = (struct thread_config_bhut **)threads;
+	for(int k = 0; k < option->threads + 1; k++) {
+		free(t[k]);
+	}
+	free(t);
+	option->stats_bh = false;
 	pthread_barrier_destroy(&barrier);
+	return;
 }
 
 /* INIT ONLY: Returns furthest object's furthest position from an octree. */
@@ -389,6 +398,7 @@ bh_octree *bh_init_tree()
 /* Check whether the object is in the target octree. Returns 1 in case it is. */
 bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
 {
+	if(!root) return 0;
 	if(root->depth >= target->depth)
 		return root == target;
 	/* Cascade the return value */
@@ -423,7 +433,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 {
 	unsigned int prev_allocated_cells = allocated_cells;
-	if(!octree | !root | !object) return 0;
+	if(!octree || !root || !object) return 0;
 	for(int i = 1; i < option->obj + 1; i++) {
 		if(bh_recurse_check_obj(&object[i], octree, root)) {
 			bh_insert_object(&object[i], octree);
@@ -437,7 +447,7 @@ static void bh_cascade_mass(bh_octree *target, bh_octree *root)
 {
 	/* Will not update target */
 	if(!root || !target) return;
-	if(root == target) return;
+	if(target->depth >= root->depth) return;
 	pthread_mutex_lock(&root_lock);
 		root->cellsum.pos = (root->cellsum.pos+target->cellsum.pos)/2;
 		root->cellsum.mass += target->cellsum.mass;

@@ -48,6 +48,8 @@ void *thread_ctrl(void *thread_setts)
 			sleep(1);
 		}
 		
+		pthread_testcancel();
+		
 		/* Unblock and hope the other threads follow */
 		pthread_barrier_wait(t->ctrl);
 		
