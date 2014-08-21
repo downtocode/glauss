@@ -60,7 +60,9 @@ int main(int argc, char *argv[])
 			/* Visuals */
 			.width = 1200, .height = 600,
 			.fontsize = 38,
+			/* Yes, we free those in the parser */
 			.sshot_temp = strdup("sshot_%3.3Lf.png"),
+			.xyz_temp = strdup("system_%0.2Lf.xyz"),
 			.fontname = strdup("Sans"),
 			
 			/* Physics */
@@ -68,12 +70,12 @@ int main(int argc, char *argv[])
 			.dt = 0.008, .verbosity = 5,
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
-			.algorithm = strdup("n-body"),
+			.algorithm = strdup("barnes-hut"),
 			
 			/* Physics: Barnes-Hut */
 			.bh_ratio = 0.5, .bh_lifetime = 24,
 			.bh_tree_limit = 8,
-			.bh_heapsize_max = 536870912,
+			.bh_heapsize_max = 336870912,
 			.bh_single_assign = true,
 			
 			/* Physics - misc */
@@ -82,9 +84,8 @@ int main(int argc, char *argv[])
 	/*	Default settings.	*/
 	
 	/*	Main function vars	*/
-		SDL_Event event;
 		int mousex, mousey, initmousex, initmousey;
-		struct timeval t1, t2;
+		struct timeval t1 = {0}, t2 = {0};
 		struct numbers_selection numbers;
 		struct graph_cam_view camera = { 32.0, 315.0, 0, 0, 0, 0, 0.1 };
 		camera.scalefactor = 0.005;
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
 		bool flicked = 0, translate = 0, fullscreen = 0;
 		bool start_selection = 0;
 		int novid = 0, bench = 0;
-		float timer = 1.0f;
+		float timer = 1;
 	/*	Main function vars	*/
 	
 	/*	Arguments	*/
@@ -204,8 +205,8 @@ int main(int argc, char *argv[])
 		if(bench) {
 			pprintf(PRI_WARN, "Benchmark mode active.\n");
 			novid = 1;
-			//option->verbosity = 9;
-			if(timer==1.0f) timer=30.0f;
+			option->verbosity = 8;
+			if(timer==1.0f) timer = 30.0f;
 		}
 	/*	Arguments	*/
 	
@@ -220,7 +221,7 @@ int main(int argc, char *argv[])
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
 					option->filename);
 			return 2;
-		}
+		} else parse_lua_close();
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj+1);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
@@ -230,6 +231,7 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 	
 	/*	SDL2	*/
+		SDL_Event event;
 		SDL_Init(SDL_INIT_VIDEO);
 		SDL_Window* window = NULL;
 		SDL_GLContext context = NULL;
@@ -249,7 +251,7 @@ int main(int argc, char *argv[])
 		}
 	/*	SDL2	*/
 	
-	//threadcontrol(PHYS_START, &object);
+	threadcontrol(PHYS_START, &object);
 	
 	gettimeofday (&t1 , NULL);
 	
@@ -347,7 +349,11 @@ int main(int argc, char *argv[])
 					if(event.key.keysym.sym==SDLK_q) {
 						goto quit;
 					}
-					if(event.key.keysym.sym==SDLK_MINUS && !option->status) {
+					if(event.key.keysym.sym==SDLK_MINUS) {
+						if(option->status) {
+							pprintf(PRI_WARN, "Physics needs to be stopped before changing modes.\n");
+							break;
+						}
 						/* Shuffle algorithms */
 						int num;
 						/* Get number of algorithm */
@@ -355,11 +361,11 @@ int main(int argc, char *argv[])
 							if(!strcmp(option->algorithm, phys_algorithms[num].name))
 								break;
 						}
-						/* Select next algorithm */
-						num++;
-						/* Check if we come up empty as last */
-						if(!phys_algorithms[num].name) num = 0;
-						printf("Next algo is %s\n", phys_algorithms[num].name);
+						/* Select next and check if we're on the last */
+						if(!phys_algorithms[++num].name) num = 0;
+						pprintf(PRI_HIGH, "Changing algorithm to \"%s\".\n",
+								phys_algorithms[num].name);
+						free(option->algorithm);
 						option->algorithm = strdup(phys_algorithms[num].name);
 					}
 					if(event.key.keysym.sym==SDLK_BACKSPACE) {
@@ -394,15 +400,14 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		{
-			gettimeofday(&t2, NULL);
-			deltatime = (float)(t2.tv_sec - t1.tv_sec +\
-										(t2.tv_usec - t1.tv_usec) * 1e-6);
-			t1 = t2;
-			totaltime += deltatime;
-			frames++;
-		}
-		if (totaltime >  timer) {
+		/* Update timer */
+		gettimeofday(&t2, NULL);
+		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
+		t1 = t2;
+		totaltime += deltatime;
+		frames++;
+		
+		if(totaltime >  timer) {
 			fps = frames/totaltime;
 			
 			if(bench) {

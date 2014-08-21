@@ -32,9 +32,6 @@
 /* Thread local storage allocation stats */
 static _Thread_local unsigned int allocated_cells;
 
-/* Used to sync threads */
-static pthread_barrier_t barrier;
-
 /* Will be replaced with atomics as soon as Clang supports stdatomic.h */
 static pthread_mutex_t root_lock;
 
@@ -46,22 +43,22 @@ static int thread_cmp_assigned(const void *a, const void *b)
 static void bh_add_thread(bh_thread *root, 
 						  bh_octree *octree, struct thread_config_bhut *thread)
 {
+	/* Not the easiest code to understand without comments. */
 	for(short i=0; i < 8; i++) {
 		if(!root->subdiv[i])
 			root->subdiv[i] = calloc(1, sizeof(bh_thread));
 		if(!octree->cells[i]) {
 			octree->cells[i] = bh_init_tree();
 			octree->cells[i]->halfdim = octree->halfdim/2;
-			octree->cells[i]->origin = octree->origin +\
-				((vec3){ (i&4 ? .5f : -.5f),
-						 (i&2 ? .5f : -.5f),
-						 (i&1 ? .5f : -.5f) })*(double)octree->halfdim;
+			octree->cells[i]->origin = octree->origin + (double)octree->halfdim*0.5*\
+				(vec3){ (i&4 ? 1 : -1), (i&2 ? 1 : -1), (i&1 ? 1 : -1) };
 		}
 		octree->cells[i]->depth = octree->depth + 1;
 		root->subdiv[i]->mapped = octree->cells[i];
 		root->subdiv[i]->parent = root;
 		root->subdiv[i]->assigned = 0;
 	}
+	/* Assign the thread to the root octree */
 	root->assign[root->assigned] = thread;
 	/* Wipe other threads' previous octree assignments */
 	for(short v = 0; v < root->assigned + 1; v++) {
@@ -71,11 +68,15 @@ static void bh_add_thread(bh_thread *root,
 			}
 		}
 	}
+	/* Split the octree and assign the threads */
 	short distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
 	for(int k = 1; k < root->assigned + 1; k++) {
+		/* Calculate the threads' share. Add the calculated remain to the first ones. */
 		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
 		for(int l = 0; l < thread_conts; l++) {
+			/* Map the octrees to the real BH octree */
 			root->assign[k]->octrees[oct] = root->subdiv[oct]->mapped;
+			/* Assign the threads within the octree from the root. */
 			root->subdiv[oct]->assign[++root->subdiv[oct]->assigned] = root->assign[k];
 			oct++;
 		}
@@ -91,9 +92,20 @@ static void bh_assign_thread(bh_thread *root,
 	else if(++root->assigned < option->bh_tree_limit + 1) {
 		bh_add_thread(root, octree, thread);
 	} else {
-		qsort(root->subdiv, 8, sizeof(bh_thread *), thread_cmp_assigned);
-		/* Sort: lowest to highest so 0's always the least assigned one. */
-		bh_assign_thread(root->subdiv[0], root->subdiv[0]->mapped, thread);
+		/* Create backup to prevent qsort from scrambling them.
+		 * Otherwise we'd have to recursively update their origins. Not fun. */
+		struct thread_alloc_tree *keep[8];
+		for(short i=0; i < 8; i++) keep[i] = root->subdiv[i];
+		
+		/* Sort: lowest to highest, [0]'s always the least assigned one. */
+		qsort(keep, 8, sizeof(bh_thread *), thread_cmp_assigned);
+		
+		/* Find the lowest occupied subcell's original octree subcell */
+		short int i;
+		for(i=0; i < 8; i++) if(root->subdiv[i] == keep[0]) break;
+		
+		/* Insert the thread into it */
+		bh_assign_thread(root->subdiv[i], root->subdiv[i]->mapped, thread);
 	}
 	return;
 }
@@ -127,13 +139,14 @@ void **bhut_init(struct glob_thread_config *cfg)
 	 * memory real fast. Not portable. */
 	mallopt(M_MXFAST, sizeof(bh_octree));
 #endif
+	
 	struct thread_config_bhut **thread_config = calloc(option->threads+1,
 											sizeof(struct thread_config_bhut*));
 	for(int k = 0; k < option->threads + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_bhut));
 	}
 	
-	/* Check if options are within limits */
+	/* Check if options are within their limits */
 	if(option->bh_tree_limit  < 2 || option->bh_tree_limit > 8) {
 		pprintf(PRI_ERR, "[BH] Option bh_tree_limit must be within [2,8]!");
 		exit(1);
@@ -143,7 +156,8 @@ void **bhut_init(struct glob_thread_config *cfg)
 	pthread_mutex_init(&root_lock, NULL);
 	
 	/* Init barrier */
-	pthread_barrier_init(&barrier, NULL, option->threads);
+	pthread_barrier_t *barrier = calloc(1, sizeof(pthread_barrier_t));
+	pthread_barrier_init(barrier, NULL, option->threads);
 	
 	/* Create the root octree */
 	bh_octree *root_octree = bh_init_tree();
@@ -162,6 +176,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 		thread_config[k]->stats = cfg->stats[k];
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->ctrl = cfg->ctrl;
+		thread_config[k]->barrier = barrier;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
@@ -172,7 +187,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 	}
 	/* Workaround when only a single thread is available.
 	 * Reason why we couldn't have this in the bh_assign_thread function:
-	 * this happens ONLY once in this very unique case. */
+	 * this happens ONLY once in this extremely unique corner case. */
 	if(option->threads == 1 && option->bh_single_assign) {
 		for(short h=0; h < 8; h++) {
 			thread_config[1]->octrees[h] = NULL;
@@ -182,10 +197,11 @@ void **bhut_init(struct glob_thread_config *cfg)
 		pprintf(PRI_HIGH, " Thread | Assignments: oct(lvl)\n");
 		bh_print_thread_tree(thread_config);
 	}
-	/* Free assignment octree since all's been done */
+	
+	/* Free assignment octree since all's been done with */
 	bh_decimate_assignment_tree(thread_tree);
 	
-	/* Display BH specific stats */
+	/* Turn on BH specific stats */
 	option->stats_bh = true;
 	
 	return (void**)thread_config;
@@ -193,15 +209,22 @@ void **bhut_init(struct glob_thread_config *cfg)
 
 /* Deinit function */
 void bhut_quit(void **threads) {
-	bh_decimate_octree(((struct thread_config_bhut **)threads)[1]->root);
-	pthread_mutex_destroy(&root_lock);
 	struct thread_config_bhut **t = (struct thread_config_bhut **)threads;
+	/* Root mutex */
+	pthread_mutex_destroy(&root_lock);
+	
+	/* Barrier */
+	pthread_barrier_destroy(t[1]->barrier);
+	free(t[1]->barrier);
+	
+	/* Main octree */
+	bh_decimate_octree(t[1]->root);
+	
 	for(int k = 0; k < option->threads + 1; k++) {
 		free(t[k]);
 	}
 	free(t);
 	option->stats_bh = false;
-	pthread_barrier_destroy(&barrier);
 	return;
 }
 
@@ -310,12 +333,11 @@ static void bh_init_cell(bh_octree *octree, short k)
 		octree->cells[k]->score = option->bh_lifetime;
 		allocated_cells++;
 	}
+	/* Scoring system: object is in therefore increase score */
 	octree->cells[k]->score++;
 	octree->cells[k]->halfdim = octree->halfdim/2;
-	octree->cells[k]->origin = octree->origin +\
-		((vec3){ (k&4 ? .5f : -.5f),
-				 (k&2 ? .5f : -.5f),
-				 (k&1 ? .5f : -.5f) })*(double)octree->halfdim;
+	octree->cells[k]->origin = octree->origin + (double)octree->halfdim*0.5*\
+		(vec3){ (k&4 ? 1 : -1), (k&2 ? 1 : -1), (k&1 ? 1 : -1) };
 }
 
 /* Recursive function to insert object into an octree */
@@ -377,6 +399,7 @@ void bh_print_octree(bh_octree *octree)
 	}
 }
 
+/* Just a debug tool */
 void bh_depth_print(bh_octree *octree)
 {
 	if(!octree) return;
@@ -479,10 +502,8 @@ static void bh_cascade_position(bh_octree *target, bh_octree *root)
 	pthread_mutex_lock(&root_lock);
 		root->cellsum.mass = 0;
 		root->cells[oct]->halfdim = root->halfdim/2;
-		root->cells[oct]->origin = root->origin +\
-			((vec3){ (oct&4 ? .5f : -.5f),
-					 (oct&2 ? .5f : -.5f),
-					 (oct&1 ? .5f : -.5f) })*(double)root->halfdim;
+		root->cells[oct]->origin = root->origin + (double)root->halfdim*0.5*\
+			(vec3){ (oct&4 ? 1 : -1), (oct&2 ? 1 : -1), (oct&1 ? 1 : -1) };
 	pthread_mutex_unlock(&root_lock);
 	
 	if(root->cells[oct]->depth >= target->depth) return;
@@ -504,7 +525,7 @@ void *thread_bhut(void *thread_setts)
 				(t->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
-		pthread_barrier_wait(&barrier);
+		pthread_barrier_wait(t->barrier);
 		
 		/* Build octree */
 		for(short s=0; s < 8; s++) {
@@ -513,19 +534,19 @@ void *thread_bhut(void *thread_setts)
 			bh_cascade_mass(t->octrees[s], t->root);
 		}
 		
-		pthread_barrier_wait(&barrier);
+		pthread_barrier_wait(t->barrier);
 		
 		/* Calculate force */
 		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;
 			bh_calculate_force(&t->obj[i], t->root);
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((option->dt)/2);
-			/* Get updated maximum for root. */
+			/* Get updated maximum for root while we're at it. */
 			dist = t->obj[i].pos - t->root->origin;
 			for(int j = 0; j < 3; j++) if(dist[j] > maxdist) maxdist = dist[j];
 		}
 		
-		/* Wakeup control thread */
+		/* Sync & wakeup control thread */
 		pthread_barrier_wait(t->ctrl);
 		
 		/* Insert updated halfdim into root */

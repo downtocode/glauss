@@ -24,9 +24,6 @@
 #include "physics.h"
 #include "physics_n_body.h"
 
-/* Used to sync threads */
-static pthread_barrier_t barrier;
-
 void **nbody_init(struct glob_thread_config *cfg)
 {
 	struct thread_config_nbody **thread_config = calloc(option->threads+1,
@@ -36,7 +33,8 @@ void **nbody_init(struct glob_thread_config *cfg)
 	}
 	
 	/* Init barrier */
-	pthread_barrier_init(&barrier, NULL, option->threads);
+	pthread_barrier_t *barrier = calloc(1, sizeof(pthread_barrier_t));
+	pthread_barrier_init(barrier, NULL, option->threads);
 	
 	int totcore = (int)((float)option->obj/option->threads);
 	
@@ -44,6 +42,7 @@ void **nbody_init(struct glob_thread_config *cfg)
 		thread_config[k]->stats = cfg->stats[k];
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->ctrl = cfg->ctrl;
+		thread_config[k]->barrier = barrier;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
@@ -59,11 +58,12 @@ void **nbody_init(struct glob_thread_config *cfg)
 void nbody_quit(void **threads)
 {
 	struct thread_config_nbody **t = (struct thread_config_nbody **)threads;
+	pthread_barrier_destroy(t[1]->barrier);
+	free(t[1]->barrier);
 	for(int k = 0; k < option->threads + 1; k++) {
 		free(t[k]);
 	}
 	free(t);
-	pthread_barrier_destroy(&barrier);
 	return;
 }
 
@@ -83,7 +83,7 @@ void *thread_nbody(void *thread_setts)
 			(t->obj[i].acc)*((option->dt*option->dt)/2);
 		}
 		
-		pthread_barrier_wait(&barrier);
+		pthread_barrier_wait(t->barrier);
 		
 		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;

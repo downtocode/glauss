@@ -34,6 +34,7 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 void ctrl_quit(struct glob_thread_config *cfg)
 {
 	pthread_barrier_destroy(cfg->ctrl);
+	free(cfg->ctrl);
 	return;
 }
 
@@ -43,7 +44,7 @@ void *thread_ctrl(void *thread_setts)
 	unsigned int xyz_counter = 0, sshot_counter = 0;
 	
 	while(1) {
-		/* Pause all threads if signalled */
+		/* Pause all threads by not unlocking t->ctrl */
 		while(option->paused) {
 			sleep(1);
 		}
@@ -58,7 +59,7 @@ void *thread_ctrl(void *thread_setts)
 			t->stats[th]->progress += option->dt;
 		}
 		
-		/* Dump XYZ file */
+		/* Dump XYZ file, will not increment timer if !option->dump_xyz */
 		if(option->dump_xyz && ++xyz_counter > option->dump_xyz) {
 			toxyz(t->obj);
 			xyz_counter = 0;

@@ -27,9 +27,11 @@ extern struct atomic_cont {
 	float color[4];
 } *atom_prop;
 
-#define NUM_ANOTHER 1
-#define NUM_GIVEME  2
-#define NUM_REMOVE  3
+enum {
+	NUM_ANOTHER,
+	NUM_GIVEME,
+	NUM_REMOVE,
+};
 
 struct numbers_selection {
 	int digits[20];

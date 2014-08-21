@@ -11,7 +11,7 @@ settings = {
 		--Units are size_t(bytes)! PER THREAD!
 		bh_heapsize_max = 336870912,
 		--Maximum threads per octree. Reduce this to spread threads more.
-		bh_tree_limit = 2, --Range is [2,8(default)]
+		bh_tree_limit = 8, --Range is [2,8(default)]
 		--If only a single thread is available, assign the entire root to it.
 		bh_single_assign = true,
 	},
@@ -19,6 +19,7 @@ settings = {
 		width = 1024,
 		height = 600,
 		screenshot_template = "sshot_%3.3Lf.png",
+		file_template = "system_%0.2Lf.xyz",
 		fontname = "Liberation Sans",
 		fontsize = 38,
 		verbosity = 8,
@@ -35,8 +36,7 @@ settings = {
 	},
 }
 
-maxobjects = 24000
-scale_obj = 10
+maxobjects = 2400
 
 --Add molecules or any additional objects here
 objects = {
@@ -52,10 +52,11 @@ objects = {
 
 function spawn_objects(var_C)
 	math.randomseed( os.time() )
+	scale_obj = 45
 	for i = #objects+1, maxobjects, 1 do
 		objects[i] = {
 			posx = scale_obj*math.sin(i)*(i/maxobjects),
-			posy = scale_obj*(math.random()-0.5),
+			posy = scale_obj*(math.random()-0.5)/10,
 			posz = scale_obj*math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,

@@ -36,7 +36,7 @@ struct lua_parser_state {
 	in_file file;
 };
 
-lua_State *L;
+static lua_State *L;
 
 static void conf_traverse_table(lua_State *L)
 {
@@ -76,12 +76,23 @@ static void conf_traverse_table(lua_State *L)
 			if(!strcmp("dump_sshot", lua_tostring(L, -2)))
 				option->dump_sshot = lua_tonumber(L, -1);
 		} else if(lua_isstring(L, -1)) {
-			if(!strcmp("algorithm", lua_tostring(L, -2)))
+			/* The defaults have been assigned using strdup too, so free them */
+			if(!strcmp("algorithm", lua_tostring(L, -2))) {
+				free(option->algorithm);
 				option->algorithm = strdup(lua_tostring(L, -1));
-			if(!strcmp("fontname", lua_tostring(L, -2)))
+			}
+			if(!strcmp("fontname", lua_tostring(L, -2))) {
+				free(option->fontname);
 				option->fontname = strdup(lua_tostring(L, -1));
-			if(!strcmp("screenshot_template", lua_tostring(L, -2)))
+			}
+			if(!strcmp("screenshot_template", lua_tostring(L, -2))) {
+				free(option->sshot_temp);
 				option->sshot_temp = strdup(lua_tostring(L, -1));
+			}
+			if(!strcmp("file_template", lua_tostring(L, -2))) {
+				free(option->xyz_temp);
+				option->xyz_temp = strdup(lua_tostring(L, -1));
+			}
 		} else if(lua_isboolean(L, -1)) {
 			if(!strcmp("bh_single_assign", lua_tostring(L, -2)))
 				option->bh_single_assign = lua_toboolean(L, -1);

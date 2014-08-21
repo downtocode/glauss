@@ -74,13 +74,13 @@ const char *graph_init_fontconfig()
 	/* Offer fontgod sacrificial pointers to hold his highness */
 	FcConfig *fc_config = FcInitLoadConfigAndFonts();
 	FcPattern *fc_pattern = FcPatternCreate();
-	/* Ask the deity for an Arial-type gift of typography */
+	/* Ask the deity for a user-specified gift of typography */
 	FcPatternAddString(fc_pattern, FC_FAMILY, (const FcChar8 *)option->fontname);
 	/* Ask fontgod not to blind our eyes for our insolence */
 	FcPatternAddBool(fc_pattern, FC_ANTIALIAS, 1);
-	/* Summon a fontdemon which shall transmit the gift of our god */
+	/* Summon a fontdemon which shall transmit the gifts of our god */
 	FcResult fc_result;
-	/* Incantation for our omnipotence to recognize our request */
+	/* Incantation for our omnipotence to recognize our request: */
 	FcDefaultSubstitute(fc_pattern);
 	FcConfigSubstitute(fc_config, fc_pattern, FcMatchPattern);
 	/* "We ask you, oh you in the sky, for your attention..." */
@@ -89,7 +89,7 @@ const char *graph_init_fontconfig()
 	/* SHOW US YOUR POWER, INVOKE ANCIENT KNOWLEDGE, GIVE US THE LOCATION! */
 	FcPatternGet(fc_font_chosen, "file", 0, &fc_value);
 	/* Fontgod has given us a sacred filename, hail FONTCONFIG! */
-	pprintf(PRI_VERYLOW, "[FC] Fontname received = %s\n", (char *)fc_value.u.s);
+	pprintf(PRI_VERYLOW, "[FC] Font path received = %s\n", (char *)fc_value.u.s);
 	return (const char *)fc_value.u.s;
 }
 
@@ -104,7 +104,6 @@ unsigned int graph_init_freetype(const char *fontname)
 	textattr_tex = glGetUniformLocation(text_program, "tex");
 	textattr_color = glGetUniformLocation(text_program, "textcolor");
 	glUniform1i(textattr_tex, 0);
-	
 	
 	/* Init Freetype and generate texture atlas */
 	if(FT_Init_FreeType(&library)) {

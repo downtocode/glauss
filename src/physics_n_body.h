@@ -22,7 +22,7 @@ struct thread_config_nbody {
 	data* obj;
 	unsigned int id, objs_low, objs_high;
 	struct thread_statistics *stats;
-	pthread_barrier_t *ctrl;
+	pthread_barrier_t *ctrl, *barrier;
 };
 
 void **nbody_init(struct glob_thread_config *cfg);

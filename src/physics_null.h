@@ -19,7 +19,10 @@
 #define PHYSENGINE_PHYS_NULL
 
 struct thread_config_null {
+	unsigned int id;
+	volatile long long int *shr;
 	pthread_barrier_t *ctrl;
+	pthread_mutex_t *mute;
 };
 
 void **null_init(struct glob_thread_config *cfg);
