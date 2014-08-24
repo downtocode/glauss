@@ -46,6 +46,16 @@
 #define TIMEy  0.65
 #define TIMEs  1.0
 
+/* dt display */
+#define DTx -0.95
+#define DTy  0.55
+#define DTs  1.0
+
+/* Algorithm display */
+#define ALGx  -0.95
+#define ALGy  0.45
+#define ALGs  1.0
+
 /* Simulation status */
 #define SIMx 0.65
 #define SIMy -0.95
@@ -69,6 +79,9 @@
 #define BACKg 0.06
 #define BACKb 0.06
 #define BACKa 1.00
+
+/* OSD Buffer size */
+#define OSD_BUFFER 25
 
 /* UI POSITIONS */
 
@@ -241,7 +254,7 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 void graph_draw_scene(data **object, float fps, unsigned int chosen)
 {
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	char osdtext[50];
+	char osdtext[OSD_BUFFER];
 	struct timespec ts;
 	const GLfloat *fpscolor;
 	
@@ -250,20 +263,25 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 	glBindBuffer(GL_ARRAY_BUFFER, textvbo);
 	{
 		/* FPS */
-		if(fps < 25) fpscolor = COL_RED;
-		else if(fps < 48) fpscolor = COL_BLUE;
-		else fpscolor = COL_GREEN;
-		snprintf(osdtext, sizeof(osdtext), "FPS = %3.2f", fps);
+		fpscolor = (fps < 25) ? COL_RED : (fps < 48) ? COL_BLUE : COL_GREEN;
+		snprintf(osdtext, OSD_BUFFER, "FPS = %3.2f", fps);
 		graph_display_text(osdtext, FPSx, FPSy, FPSs, fpscolor);
 		
 		/* Objects */
-		snprintf(osdtext, sizeof(osdtext), "Objects = %u", option->obj+1);
+		snprintf(osdtext, OSD_BUFFER, "Objects = %u", option->obj+1);
 		graph_display_text(osdtext, OBJx, OBJy, OBJs, COL_WHITE);
 		
 		/* Timestep display */
-		snprintf(osdtext, sizeof(osdtext), "Timestep = %0.4Lf",
-				 t_stats[1]->progress);
+		snprintf(osdtext, OSD_BUFFER, "Timestep = %0.4Lf", t_stats[1]->progress);
+		graph_display_text(osdtext, DTx, DTy, DTs, COL_WHITE);
+		
+		/* Time constant */
+		snprintf(osdtext, OSD_BUFFER, "dt = %f", option->dt);
 		graph_display_text(osdtext, TIMEx, TIMEy, TIMEs, COL_WHITE);
+		
+		/* Algorithm display */
+		snprintf(osdtext, OSD_BUFFER, "Algorithm = %s", option->algorithm);
+		graph_display_text(osdtext, ALGx, ALGy, ALGs, COL_WHITE);
 		
 		/* Chosen object */
 		//if(chosen != 0) graph_display_object_info((*object)[chosen]);
@@ -278,7 +296,7 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 			/* Thread time stats */
 			for(short i = 1; i < option->threads + 1; i++) {
 				clock_gettime(t_stats[i]->clockid, &ts);
-				snprintf(osdtext, sizeof(osdtext),
+				snprintf(osdtext, OSD_BUFFER,
 						 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
 			}
@@ -299,19 +317,19 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 			graph_display_text("Size(MiB)", OCTx+.49, OCTy-.05, OCTs, COL_YELLOW);
 			
 			for(short i = 1; i < option->threads + 1; i++) {
-				snprintf(osdtext, sizeof(osdtext), "%i", i);
+				snprintf(osdtext, OSD_BUFFER, "%i", i);
 				graph_display_text(osdtext, OCTx, OCTy-((float)i/18)-.05, OCTs, COL_WHITE);
 				
-				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_total_alloc);
+				snprintf(osdtext, OSD_BUFFER, "%i", t_stats[i]->bh_total_alloc);
 				graph_display_text(osdtext, OCTx+.12, OCTy-((float)i/18)-.05, OCTs, COL_ORANGE);
 				
-				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_new_alloc);
+				snprintf(osdtext, OSD_BUFFER, "%i", t_stats[i]->bh_new_alloc);
 				graph_display_text(osdtext, OCTx+.25, OCTy-((float)i/18)-.05, OCTs, COL_GREEN);
 				
-				snprintf(osdtext, sizeof(osdtext), "%i", t_stats[i]->bh_new_cleaned);
+				snprintf(osdtext, OSD_BUFFER, "%i", t_stats[i]->bh_new_cleaned);
 				graph_display_text(osdtext, OCTx+.37, OCTy-((float)i/18)-.05, OCTs, COL_RED);
 				
-				snprintf(osdtext, sizeof(osdtext), "%0.3lf",
+				snprintf(osdtext, OSD_BUFFER, "%0.3lf",
 						t_stats[i]->bh_heapsize/1048576.0);
 				graph_display_text(osdtext, OCTx+.49, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
 			}
@@ -367,6 +385,18 @@ void graph_init()
 	rot_matrix = glGetUniformLocation(object_shader, "rotationMat");
 	scl_matrix = glGetUniformLocation(object_shader, "scalingMat");
 	per_matrix = glGetUniformLocation(object_shader, "perspectiveMat");
+}
+
+void graph_quit()
+{
+	free(mat);
+	free(rotx);
+	free(roty);
+	free(rotz);
+	free(rotation);
+	free(scale);
+	free(pers);
+	free(transl);
 }
 
 int graph_sshot(long double arg)

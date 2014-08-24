@@ -43,7 +43,7 @@ extern struct option_struct {
 	size_t bh_heapsize_max;
 	bool bh_single_assign;
 	
-	/* Physics - misc */
+	/* Physics - ctrl */
 	unsigned int dump_xyz, dump_sshot;
 	bool write_sshot_now, stats_bh; //--
 } *option;

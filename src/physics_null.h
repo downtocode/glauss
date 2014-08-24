@@ -19,8 +19,9 @@
 #define PHYSENGINE_PHYS_NULL
 
 struct thread_config_null {
-	unsigned int id;
-	volatile long long int *shr;
+	data *obj;
+	double *dists, *maxdist;
+	unsigned int id, objs_low, objs_high;
 	pthread_barrier_t *ctrl;
 	pthread_mutex_t *mute;
 };

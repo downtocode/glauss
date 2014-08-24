@@ -37,6 +37,7 @@ enum {
 };
 
 void graph_init();
+void graph_quit();
 void graph_view(struct graph_cam_view *camera);
 float graph_resize_wind();
 unsigned int graph_compile_shader(const char *src_vert_shader,

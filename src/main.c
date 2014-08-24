@@ -60,9 +60,6 @@ int main(int argc, char *argv[])
 			/* Visuals */
 			.width = 1200, .height = 600,
 			.fontsize = 38,
-			/* Yes, we free those in the parser */
-			.sshot_temp = strdup("sshot_%3.3Lf.png"),
-			.xyz_temp = strdup("system_%0.2Lf.xyz"),
 			.fontname = strdup("Sans"),
 			
 			/* Physics */
@@ -78,8 +75,11 @@ int main(int argc, char *argv[])
 			.bh_heapsize_max = 336870912,
 			.bh_single_assign = true,
 			
-			/* Physics - misc */
-			.dump_xyz = 0, .dump_sshot = 0,
+			/* Physics - ctrl */
+			.dump_xyz = 0,
+			.xyz_temp = strdup("system_%0.2Lf.xyz"),
+			.dump_sshot = 0,
+			.sshot_temp = strdup("sshot_%3.3Lf.png"),
 		};
 	/*	Default settings.	*/
 	
@@ -194,6 +194,12 @@ int main(int argc, char *argv[])
 				printf("%s ", argv[optind++]);
 			printf("\n");
 			exit(1);
+		}
+		
+		if(!strcmp("none", option->algorithm)) {
+			pprintf(PRI_WARN, "Physics algorithm set to none! Nothing will be simulated.\n");
+		} else {
+			pprintf(PRI_ESSENTIAL, "Algorithm set to %s\n", option->algorithm);
 		}
 		
 		if(option->filename == NULL) {
@@ -458,6 +464,7 @@ int main(int argc, char *argv[])
 			SDL_GL_DeleteContext(context);
 			SDL_DestroyWindow(window);
 			SDL_Quit();
+			graph_quit();
 		}
 		threadcontrol(PHYS_SHUTDOWN, &object);
 		if(option->logenable)

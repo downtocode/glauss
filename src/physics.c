@@ -48,6 +48,7 @@ void **thread_conf;
 
 const struct list_algorithms phys_algorithms[] = {
 	/* name,         init f-n     thread f-n     deinit f-n   */
+	{ "none",        NULL,        thread_null,   NULL,        },
 	{ "null",        null_init,   thread_null,   null_quit,   },
 	{ "n-body",      nbody_init,  thread_nbody,  nbody_quit,  },
 	{ "barnes-hut",  bhut_init,   thread_bhut,   bhut_quit,   },
@@ -179,26 +180,28 @@ int threadcontrol(int status, data** object)
 			break;
 		case PHYS_START:
 			if(option->status) return 1;
-			option->status = 1;
+			thread_configuration conf_fn = phys_find_config(option->algorithm);
+			thread_function algo_fn = phys_find_algorithm(option->algorithm);
+			if(!conf_fn || !algo_fn) return 1;
 			
 			threads = calloc(option->threads+1, sizeof(pthread_t));
 			
+			/* Create configuration */
 			cfg = calloc(1, sizeof(struct glob_thread_config));
 			cfg->stats = t_stats;
 			cfg->obj = *object;
-			
-			thread_conf = (phys_find_config(option->algorithm))(ctrl_init(cfg));
+			thread_conf = conf_fn(ctrl_init(cfg));
 			
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
 			pthread_create(&threads[0], &thread_attribs, thread_ctrl, cfg);
 			for(int k = 1; k < option->threads + 1; k++) {
-				pthread_create(&threads[k], &thread_attribs,
-							   phys_find_algorithm(option->algorithm),
-							   thread_conf[k]);
+				pthread_create(&threads[k], &thread_attribs, algo_fn, thread_conf[k]);
 				pthread_getcpuclockid(threads[k], &t_stats[k]->clockid);
 				pprintf(PRI_ESSENTIAL, "%i...", k);
 			}
 			pprintf(PRI_OK, "\n");
+			/* We're running now */
+			option->status = 1;
 			break;
 		case PHYS_SHUTDOWN:
 			if(!option->status) return 1;
