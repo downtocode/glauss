@@ -118,6 +118,12 @@ unsigned short int return_atom_num(const char *name)
 	return 0;
 }
 
+const char *return_atom_str(unsigned int num)
+{
+	if(num > 120) return NULL;
+	else return atom_prop[num].name;
+}
+
 /* Function to input numbers in an array and later extract a single number out.
  * Used in selecting objects. */
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status)

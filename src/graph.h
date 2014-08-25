@@ -42,7 +42,7 @@ void graph_view(struct graph_cam_view *camera);
 float graph_resize_wind();
 unsigned int graph_compile_shader(const char *src_vert_shader,
 								  const char *src_frag_shader);
-void graph_draw_scene(data **object, float fps, unsigned int chosen);
+void graph_draw_scene(data **object, float fps, unsigned int chosen, const char *selstr);
 int graph_sshot(long double arg);
 
 #endif

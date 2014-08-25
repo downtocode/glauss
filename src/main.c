@@ -453,7 +453,7 @@ int main(int argc, char *argv[])
 		}
 		graph_view(&camera);
 		
-		graph_draw_scene(&object, fps, chosen);
+		graph_draw_scene(&object, fps, chosen, start_selection ? (const char *)currentsel : NULL);
 		
 		SDL_GL_SwapWindow(window);
 	}

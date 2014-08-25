@@ -217,27 +217,11 @@ void graph_display_text(const char *text, float x, float y, float s, const GLflo
 	glDisable(GL_BLEND);
 }
 
-void graph_display_object_info(data *object)
+void graph_display_object_info(data *object, unsigned int num)
 {
-	float boxsize = 0.13*(object->radius*15);
-	GLfloat objpoint[3] = {0,0,0};
-	
-	GLfloat chosenbox[4][2] = {
-		{objpoint[0] - boxsize, objpoint[1] - boxsize},
-		{objpoint[0] - boxsize, chosenbox[1][1] = objpoint[1] + boxsize},
-		{objpoint[0] + boxsize, objpoint[1] + boxsize},
-		{objpoint[0] + boxsize, chosenbox[3][1] = objpoint[1] - boxsize},
-	};
-	
-	char osdstr[20];
-	sprintf(osdstr, "Atom=%s", atom_prop[object->atomnumber].name);
-	
-	graph_display_text(osdstr, objpoint[0] + object->radius,\
-					   objpoint[1] + object->radius, 1.0, NULL);
-	
-	glEnableVertexAttribArray(textattr_coord);
-	glVertexAttribPointer(textattr_coord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(chosenbox), chosenbox, GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_LINE_LOOP, 0, 4);
-	glDisableVertexAttribArray(textattr_coord);
+	char osdstr[30];
+	snprintf(osdstr, sizeof(osdstr), "Object=%i", num);
+	graph_display_text(osdstr, 0.76, -0.87, 1.0, NULL);
+	snprintf(osdstr, sizeof(osdstr), "Atom=%s", return_atom_str(object[num].atomnumber));
+	graph_display_text(osdstr, 0.76, -0.95, 1.0, NULL);
 }

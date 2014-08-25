@@ -66,6 +66,11 @@
 #define OCTy -0.64
 #define OCTs  0.75
 
+/* Object selection */
+#define OSLx  0.70
+#define OSLy -0.76
+#define OSLs  1.00
+
 /* Thread time counters */
 #define THRx  0.73
 #define THRy  0.95
@@ -251,7 +256,7 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 	return program;
 }
 
-void graph_draw_scene(data **object, float fps, unsigned int chosen)
+void graph_draw_scene(data **object, float fps, unsigned int chosen, const char *selstr)
 {
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	char osdtext[OSD_BUFFER];
@@ -283,8 +288,13 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen)
 		snprintf(osdtext, OSD_BUFFER, "Algorithm = %s", option->algorithm);
 		graph_display_text(osdtext, ALGx, ALGy, ALGs, COL_WHITE);
 		
+		/* Object selection */
+		if(selstr)
+			graph_display_text(selstr, OSLx, OSLy, OSLs, COL_WHITE);
+		
 		/* Chosen object */
-		//if(chosen != 0) graph_display_object_info((*object)[chosen]);
+		if(chosen)
+			graph_display_object_info(*object, chosen);
 		
 		if(option->status) {
 			/* Only displayed if running */

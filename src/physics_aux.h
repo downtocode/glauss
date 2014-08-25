@@ -40,6 +40,7 @@ struct numbers_selection {
 
 int init_elements(const char *filepath);
 unsigned short int return_atom_num(const char *name);
+const char *return_atom_str(unsigned int num);
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status);
 vec3 rotate_vec(vec3 vec, vec3 rot);
 
