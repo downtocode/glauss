@@ -478,7 +478,7 @@ static void bh_cascade_mass(bh_octree *target, bh_octree *root)
 	bh_cascade_mass(target, root->cells[bh_get_octant(&target->origin, root)]);
 }
 
-/* Basically threaded bh_max_displacement, will set the root to the furthest. */
+/* Sets the root's position and dimensions, resets mass */
 static void bh_atomic_update_root(double dimension, bh_octree *root)
 {
 	if(!root) return;

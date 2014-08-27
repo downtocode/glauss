@@ -168,6 +168,14 @@ def build(ctx):
 		features  = ['c'],
 		includes='. .. ../../',
 	)
+	ctx(name='graph_sdl',
+		path=ctx.path,
+		uselib='GL, PNG, SDL',
+		target='graph_sdl',
+		source='src/graph_sdl.c',
+		features  = ['c'],
+		includes='. .. ../../',
+	)
 	ctx(name='graph_objects',
 		path=ctx.path,
 		uselib='GL',
@@ -186,7 +194,7 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_sdl', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='src/main.c',
 		features  = ['c', 'cprogram'],
