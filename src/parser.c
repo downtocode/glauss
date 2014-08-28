@@ -112,7 +112,7 @@ static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 				if(!access(parser_state->file.filename, R_OK)) {
 					pprintf(PRI_OK, "File %s found!\n", parser_state->file.filename);
 					parser_state->file.inf = buffer;
-					in_read_file(*object, &parser_state->i, parser_state->file);
+					in_read_file(*object, &parser_state->i, &parser_state->file);
 					memset(&parser_state->file, 0,
 						   sizeof(in_file));
 					parser_state->fileset = 0;
@@ -126,9 +126,6 @@ static void obj_traverse_table(lua_State *L, data **object, data *buffer,
 				if(parser_state->nullswitch) {
 					buffer->id = parser_state->i;
 					(*object)[parser_state->i] = *buffer;
-					/*pprintf(PRI_SPAM, "Object %i here = {%lf, %lf, %lf}\n",
-							parser_state->i, buffer->pos[0], buffer->pos[1],
-							buffer->pos[2]);*/
 					parser_state->i++;
 				} else parser_state->nullswitch = 1;
 			}

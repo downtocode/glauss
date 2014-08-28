@@ -214,6 +214,10 @@ int main(int argc, char *argv[])
 			fputs("An error occurred while setting a signal handler.\n", stderr);
 			return EXIT_FAILURE;
 		}
+		if(signal(SIGUSR1, on_usr1_signal) == SIG_ERR) {
+			fputs("An error occurred while setting a signal handler.\n", stderr);
+			return EXIT_FAILURE;
+		}
 	/* Signal handling */
 	
 	/*	Physics.	*/

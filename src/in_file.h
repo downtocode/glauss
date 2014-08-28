@@ -32,6 +32,6 @@ typedef struct {
 } in_file;
 
 int in_probe_file(const char *filename);
-int in_read_file(data *object, int *i, in_file file);
+int in_read_file(data *object, int *i, in_file *file);
 
 #endif

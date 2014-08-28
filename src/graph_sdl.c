@@ -31,6 +31,9 @@
 #include "graph.h"
 #include "graph_sdl.h"
 
+#define FREE_QUEUE_MAX 20
+static void *to_be_freed[FREE_QUEUE_MAX] = {NULL};
+
 graph_window *main_win = NULL;
 static bool sdl_initd = NULL;
 
@@ -262,9 +265,6 @@ void graph_sdl_deinit(graph_window *win) {
 	free(win);
 }
 
-#define FREE_QUEUE_MAX 20
-static void *to_be_freed[FREE_QUEUE_MAX] = {NULL};
-
 int add_to_free_queue(void *p)
 {
 	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
@@ -285,6 +285,23 @@ int remove_from_free_queue(void *p)
 		}
 	}
 	return 1;
+}
+
+/* Report stats on command line */
+void on_usr1_signal(int signo)
+{
+	printf("\n");
+	if(!signo) printf("USR1 signal received, current stats:\n");
+	printf("Progress = %Lf\n", t_stats[1]->progress);
+	if(option->stats_bh) {
+		printf("BH Tree stats:\n Thread |  Total   New  Cleaned    Size\n");
+		for(int i = 1; i < option->threads + 1; i++) {
+			printf("   %02i   |  ", i);
+			printf("%u    %u    %u       %lu\n", t_stats[i]->bh_total_alloc,
+				   t_stats[i]->bh_new_alloc, t_stats[i]->bh_new_cleaned,
+				   t_stats[i]->bh_heapsize);
+		}
+	}
 }
 
 /* Function given to signal handler */

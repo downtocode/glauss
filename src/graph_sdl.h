@@ -54,6 +54,7 @@ void graph_sdl_deinit(graph_window *win);
 /* I don't trust SDL2's signal handling */
 int add_to_free_queue(void *p);
 int remove_from_free_queue(void *p);
+void on_usr1_signal(int signo);
 void on_quit_signal(int signo);
 
 #endif

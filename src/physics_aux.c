@@ -171,14 +171,14 @@ void phys_shuffle_algorithms()
 }
 
 /* We have to implement those here too as graphics may not be compiled */
-vec3 rotate_vec(vec3 vec, vec3 rot)
+void rotate_vec(vec3 *vec, vec3 *rot1)
 {
-	vec3 res = vec;
+	vec3 res = *vec, rot = *rot1;
 	if(rot[0]) {
 		double c = cos(rot[0]);
 		double s = sin(rot[0]);
-		res[1] = c*vec[1] - s*vec[2];
-		res[2] = s*vec[1] + c*vec[2];
+		res[1] = c*(*vec)[1] - s*(*vec)[2];
+		res[2] = s*(*vec)[1] + c*(*vec)[2];
 	}
 	if(rot[1]) {
 		vec3 tmp = res;
@@ -194,5 +194,5 @@ vec3 rotate_vec(vec3 vec, vec3 rot)
 		res[0] = c*tmp[0] - s*tmp[1];
 		res[1] = s*tmp[0] + c*tmp[1];
 	}
-	return res;
+	*vec = res;
 }

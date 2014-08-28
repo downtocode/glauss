@@ -71,58 +71,56 @@ int in_probe_file(const char *filename)
 	return 0;
 }
 
-int in_read_file(data *object, int *i, in_file file)
+int in_read_file(data *object, int *i, in_file *file)
 {
 	char str[500] = {0}, atom[2] = {0}, pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;
 	int filetype, pdbatomindex, pdbresidueseq;
-	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
-	FILE *inpars = fopen(file.filename, "r");
+	float pdboccupy, pdbtemp, pdboffset;
+	vec3 pos;
+	FILE *inpars = fopen(file->filename, "r");
 	
 	/* Put format specific quirks here. */
-	if(strstr(file.filename, "xyz")!=NULL) {
+	if(strstr(file->filename, "xyz")!=NULL) {
 		filetype = MOL_XYZ;
 		/* Skip first two lines of XYZ files. */
 		fgets(str, sizeof(str), inpars);
 		fgets(str, sizeof(str), inpars);
-	} else if(strstr(file.filename, "pdb")!=NULL) {
+	} else if(strstr(file->filename, "pdb")!=NULL) {
 		filetype = MOL_PDB;
-	} else if(strstr(file.filename, "obj")!=NULL) {
+	} else if(strstr(file->filename, "obj")!=NULL) {
 		filetype = MOL_OBJ;
 	} else {
-		fprintf(stderr, "Error! Filetype of %s not recognized!\n", file.filename);
+		fprintf(stderr, "Error! Filetype of %s not recognized!\n", file->filename);
 		exit(1);
 	}
 	
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
 		if(strstr(str, "#") == NULL) {
 			if(filetype == MOL_XYZ) {
-				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos,
-					   &zpos);
+				sscanf(str, " %s  %lf         %lf         %lf", atom, &pos[0], &pos[1],
+					   &pos[2]);
 			} else if(filetype == MOL_PDB) {
 				if(strncmp(str, "ATOM", 4)==0) {
-					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",\
+					sscanf(str, "%s %i %s %s %c %i %lf %lf %lf %f %f %s %f",\
 							pdbtype, &pdbatomindex, pdbatomname, pdbresidue,
 							&pdbreschain, &pdbresidueseq,\
-							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp,
+							&pos[0], &pos[1], &pos[2], &pdboccupy, &pdbtemp,
 							atom, &pdboffset);
 				} else continue;
 			} else if(filetype == MOL_OBJ) {
 				if(strncmp(str, "v ", 2)==0) {
-					sscanf(str, "v  %f %f %f", &xpos, &ypos, &zpos);
-					xpos/=100;
-					ypos/=100;
-					zpos/=100;
+					sscanf(str, "v  %lf %lf %lf", &pos[0], &pos[1], &pos[2]);
+					pos/=100;
 				} else continue;
 			}
 			object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;
-			/* By specifications XYZ and PDB files default to float */
-			vec3 new_p = rotate_vec((vec3){xpos, ypos, zpos}, file.rot);
-			object[*i].pos = file.scale*new_p + file.inf->pos;
-			object[*i].vel = file.inf->vel;
-			object[*i].ignore = file.inf->ignore;
-			object[*i].charge = file.inf->charge*option->elcharge;
+			rotate_vec(&pos, &file->rot);
+			object[*i].pos = file->scale*pos + file->inf->pos;
+			object[*i].vel = file->inf->vel;
+			object[*i].ignore = file->inf->ignore;
+			object[*i].charge = file->inf->charge*option->elcharge;
 			if(object[*i].atomnumber == 1) {
 				object[*i].mass = 1.0;
 				object[*i].radius = 0.05;
@@ -135,7 +133,7 @@ int in_read_file(data *object, int *i, in_file file)
 				object[*i].radius = 0.1;
 			}
 			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", 
-					file.filename, *i, 
+					file->filename, *i, 
 					object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);
 			*i = *i + 1;
 		}
