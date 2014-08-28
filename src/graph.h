@@ -19,13 +19,7 @@
 #define PHYSENGINE_GRAPH
 
 #include "physics.h"
-
-/* Camera info sent from main */
-struct graph_cam_view {
-	float view_rotx, view_roty, view_rotz;
-	float tr_x, tr_y, tr_z;
-	float scalefactor;
-};
+#include "graph_sdl.h"
 
 /* Identifiers for colors */
 enum {
@@ -42,7 +36,7 @@ void graph_view(struct graph_cam_view *camera);
 float graph_resize_wind();
 unsigned int graph_compile_shader(const char *src_vert_shader,
 								  const char *src_frag_shader);
-void graph_draw_scene(data **object, float fps, unsigned int chosen, const char *selstr);
+void graph_draw_scene(graph_window *win);
 int graph_sshot(long double arg);
 
 #endif

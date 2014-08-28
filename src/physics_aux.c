@@ -25,6 +25,7 @@
 #include <lua5.2/lualib.h>
 #include "physics_aux.h"
 #include "msg_phys.h"
+#include "options.h"
 
 struct atomic_cont *atom_prop;
 
@@ -145,6 +146,28 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int 
 		return 0;
 	}
 	return 0;
+}
+
+/* Change algorithms */
+void phys_shuffle_algorithms()
+{
+	if(option->status) {
+		pprintf(PRI_WARN, "Physics needs to be stopped before changing modes.\n");
+		return;
+	}
+	/* Shuffle algorithms */
+	int num;
+	/* Get number of algorithm */
+	for(num = 0; phys_algorithms[num].name; num++) {
+		if(!strcmp(option->algorithm, phys_algorithms[num].name))
+			break;
+	}
+	/* Select next and check if we're on the last */
+	if(!phys_algorithms[++num].name) num = 0;
+	pprintf(PRI_HIGH, "Changing algorithm to \"%s\".\n",
+			phys_algorithms[num].name);
+	free(option->algorithm);
+	option->algorithm = strdup(phys_algorithms[num].name);
 }
 
 /* We have to implement those here too as graphics may not be compiled */

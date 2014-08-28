@@ -22,11 +22,9 @@
 #include <string.h>
 #include <tgmath.h>
 #include <getopt.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
-
-/*	Dependencies	*/
-#include <SDL2/SDL.h>
 
 /*	Functions	*/
 #include "config.h"
@@ -57,6 +55,7 @@ int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
+		add_to_free_queue(option);
 		*option = (struct option_struct) {
 			/* Visuals */
 			.width = 1200, .height = 600,
@@ -85,17 +84,9 @@ int main(int argc, char *argv[])
 	/*	Default settings.	*/
 	
 	/*	Main function vars	*/
-		int mousex, mousey, initmousex, initmousey;
 		struct timeval t1 = {0}, t2 = {0};
-		struct numbers_selection numbers;
-		struct graph_cam_view camera = { 32.0, 315.0, 0, 0, 0, 0, 0.1 };
-		camera.scalefactor = 0.005;
-		numbers.final_digit = 0;
-		float deltatime = 0.0, totaltime = 0.0, fps = 0.0;
-		unsigned int frames = 0, chosen = 0, currentnum;
-		char currentsel[100] = "Select object:";
-		bool flicked = 0, translate = 0, fullscreen = 0;
-		bool start_selection = 0;
+		float deltatime = 0.0, totaltime = 0.0;
+		unsigned int frames = 0;
 		int novid = 0, bench = 0;
 		float timer = 1;
 	/*	Main function vars	*/
@@ -189,6 +180,7 @@ int main(int argc, char *argv[])
 					abort();
 			}
 		}
+		
 		if(optind < argc) {
 			pprintf(PRI_ERR, "Arguments not recognized: ");
 			while(optind < argc)
@@ -217,11 +209,20 @@ int main(int argc, char *argv[])
 		}
 	/*	Arguments	*/
 	
+	/* Signal handling */
+		if(signal(SIGINT, on_quit_signal) == SIG_ERR) {
+			fputs("An error occurred while setting a signal handler.\n", stderr);
+			return EXIT_FAILURE;
+		}
+	/* Signal handling */
+	
 	/*	Physics.	*/
 		data* object;
 		
 		if(init_elements(NULL)) {
 			pprintf(PRI_OK, "Failed to init elements db!\n");
+		} else {
+			add_to_free_queue(atom_prop);
 		}
 		
 		if(parse_lua_simconf_objects(&object)) {
@@ -230,6 +231,8 @@ int main(int argc, char *argv[])
 			return 2;
 		} else parse_lua_close();
 		
+		add_to_free_queue(object);
+		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj+1);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
 		pprintf(PRI_ESSENTIAL,
@@ -237,163 +240,22 @@ int main(int argc, char *argv[])
 							   option->elcharge, option->gconst, option->epsno);
 	/*	Physics.	*/
 	
-	/*	SDL2	*/
-		SDL_Init(SDL_INIT_VIDEO);
-		struct graph_window *win = graph_sdl_init(novid);
+	/*	Graphics	*/
+		graph_window *win = NULL;
 		if(!novid) {
-			/* We deal with any and all graphical vizualization here */
+			win = graph_sdl_init(object);
+			/* OpenGL */
 			graph_init();
 		}
-	/*	SDL2	*/
+	/*	Graphics	*/
 	
 	threadcontrol(PHYS_START, &object);
 	
 	gettimeofday (&t1 , NULL);
 	
-	while( 1 ) {
-		while(SDL_PollEvent(win->event)) {
-			switch(win->event->type) {
-				case SDL_WINDOWEVENT:
-					if(win->event->window.event == SDL_WINDOWEVENT_RESIZED) {
-						SDL_GL_GetDrawableSize(win->window, &option->width, &option->height);
-						graph_resize_wind();
-					}
-					break;
-				case SDL_MOUSEBUTTONDOWN:
-					if(win->event->button.button == SDL_BUTTON_LEFT) flicked = 1;
-					if(win->event->button.button == SDL_BUTTON_MIDDLE) {
-						chosen = 0;
-						translate = 1;
-					}
-					SDL_ShowCursor(0);
-					SDL_GetMouseState(&initmousex, &initmousey);
-					SDL_SetRelativeMouseMode(1);
-					SDL_GetRelativeMouseState(NULL, NULL);
-					break;
-				case SDL_MOUSEBUTTONUP:
-					if(win->event->button.button == SDL_BUTTON_LEFT) flicked = 0;
-					if(win->event->button.button == SDL_BUTTON_MIDDLE) translate = 0;
-					if(!translate && !flicked) {
-						SDL_SetRelativeMouseMode(0);
-						SDL_WarpMouseInWindow(win->window, initmousex, initmousey);
-						SDL_ShowCursor(1);
-					}
-					break;
-				case SDL_MOUSEWHEEL:
-					if(win->event->wheel.y == 1) camera.scalefactor *= 1.11;
-					if(win->event->wheel.y == -1) camera.scalefactor /= 1.11;
-					if(camera.scalefactor < 0.005) camera.scalefactor = 0.005;
-					break;
-				case SDL_KEYDOWN:
-					if(win->event->key.keysym.sym==SDLK_ESCAPE) {
-						goto quit;
-					}
-					if(start_selection) {
-						if(win->event->key.keysym.sym!=SDLK_RETURN &&\
-							numbers.final_digit < 19) {
-							if(win->event->key.keysym.sym==SDLK_BACKSPACE &&\
-								numbers.final_digit > 0) {
-								getnumber(&numbers, 0, NUM_REMOVE);
-								currentsel[strlen(currentsel)-1] = '\0';
-								break;
-							}
-							/*	sscanf will return 0 if nothing was done	*/
-							if(!sscanf(SDL_GetKeyName(win->event->key.keysym.sym),
-								"%u", &currentnum)) {
-								break;
-							} else {
-								strcat(currentsel,
-									   SDL_GetKeyName(win->event->key.keysym.sym));
-								getnumber(&numbers, currentnum, NUM_ANOTHER);
-							}
-							break;
-						} else {
-							strcpy(currentsel, "Select object:");
-							start_selection = 0;
-							chosen = getnumber(&numbers, 0, NUM_GIVEME);
-							if(chosen > option->obj)
-								chosen = 0;
-							else pprintf(PRI_HIGH, "Object %u selected.\n",
-										 chosen);
-							break;
-						}
-					}
-					if(win->event->key.keysym.sym==SDLK_RETURN) {
-						start_selection = 1;
-						break;
-					}
-					if(win->event->key.keysym.sym==SDLK_RIGHTBRACKET) {
-						option->dt *= 2;
-						printf("dt = %f\n", option->dt);
-					}
-					if(win->event->key.keysym.sym==SDLK_LEFTBRACKET) {
-						option->dt /= 2;
-						printf("dt = %f\n", option->dt);
-					}
-					if(win->event->key.keysym.sym==SDLK_SPACE) {
-						threadcontrol(PHYS_PAUSESTART, NULL);
-					}
-					if(win->event->key.keysym.sym==SDLK_r) {
-						camera = (struct graph_cam_view)\
-								 { 32.0, 315.0, 0, 0, 0, 0, 0.1 };
-						chosen = 0;
-					}
-					if(win->event->key.keysym.sym==SDLK_z) {
-						toxyz(object);
-					}
-					if(win->event->key.keysym.sym==SDLK_q) {
-						goto quit;
-					}
-					if(win->event->key.keysym.sym==SDLK_MINUS) {
-						if(option->status) {
-							pprintf(PRI_WARN, "Physics needs to be stopped before changing modes.\n");
-							break;
-						}
-						/* Shuffle algorithms */
-						int num;
-						/* Get number of algorithm */
-						for(num = 0; phys_algorithms[num].name; num++) {
-							if(!strcmp(option->algorithm, phys_algorithms[num].name))
-								break;
-						}
-						/* Select next and check if we're on the last */
-						if(!phys_algorithms[++num].name) num = 0;
-						pprintf(PRI_HIGH, "Changing algorithm to \"%s\".\n",
-								phys_algorithms[num].name);
-						free(option->algorithm);
-						option->algorithm = strdup(phys_algorithms[num].name);
-					}
-					if(win->event->key.keysym.sym==SDLK_BACKSPACE) {
-						if(option->status) threadcontrol(PHYS_SHUTDOWN, NULL);
-						else threadcontrol(PHYS_START, &object);
-					}
-					if(win->event->key.keysym.sym==SDLK_PERIOD) {
-						if(chosen < option->obj) chosen++;
-					}
-					if(win->event->key.keysym.sym==SDLK_COMMA) {
-						if(chosen > 0) chosen--;
-					}
-					if(win->event->key.keysym.sym==SDLK_f) {
-						if(fullscreen) {
-							SDL_SetWindowFullscreen(win->window, 0);
-							fullscreen = 0;
-						} else {
-							/* Because real fullscreen sucks */
-							SDL_SetWindowFullscreen(win->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-							fullscreen = 1;
-						}
-						SDL_GL_GetDrawableSize(win->window, &option->width, &option->height);
-						graph_resize_wind();
-					}
-					if(win->event->key.keysym.sym==SDLK_s) {
-						graph_sshot(t_stats[1]->progress);
-					}
-					break;
-				case SDL_QUIT:
-					goto quit;
-					break;
-			}
-		}
+	while(1) {
+		/* Get input from SDL */
+		graph_sdl_input_main(win);
 		
 		/* Update timer */
 		gettimeofday(&t2, NULL);
@@ -402,8 +264,10 @@ int main(int argc, char *argv[])
 		totaltime += deltatime;
 		frames++;
 		
+		/* Timer trigg'd events */
 		if(totaltime >  timer) {
-			fps = frames/totaltime;
+			if(!novid)
+				win->fps = frames/totaltime;
 			
 			if(bench) {
 				pprintf(PRI_ESSENTIAL,
@@ -412,52 +276,21 @@ int main(int argc, char *argv[])
 				pprintf(PRI_ESSENTIAL,
 						"Average = %Lf timeunits per second.\n",
 						t_stats[1]->progress/totaltime);
-				goto quit;
+				on_quit_signal(2);
 			}
 			totaltime = frames = 0;
 		}
 		
+		/* Prevents wasting CPU time by waking up once every 50 msec. */
 		if(novid) {
-			/* Prevents wasting CPU time by waking up once every 50 msec. */
+			/* TODO: Wakeup a bit before physics_ctrl thread wakes up */
 			SDL_Delay(50);
-			continue;
 		}
 		
-		if(flicked || translate) {
-			SDL_GetRelativeMouseState(&mousex, &mousey);
-			if(flicked) {
-				camera.view_roty += (float)mousex/4;
-				camera.view_rotx += (float)mousey/4;
-			}
-			if(translate) {
-				camera.tr_x += -(float)mousex/100;
-				camera.tr_y += (float)mousey/100;
-			}
-		}
+		/* Move camera if needed */
+		graph_sdl_move_cam(win);
 		
-		if(chosen != 0) {
-			camera.tr_x = object[chosen].pos[0];
-			camera.tr_y = object[chosen].pos[1];
-			camera.tr_z = object[chosen].pos[2];
-		}
-		graph_view(&camera);
-		
-		graph_draw_scene(&object, fps, chosen, start_selection ? (const char *)currentsel : NULL);
-		
-		SDL_GL_SwapWindow(win->window);
+		/* Draw scene */
+		graph_draw_scene(win);
 	}
-	
-	quit:
-		printf("Quitting...\n");
-		graph_sdl_deinit(win, novid);
-		if(!novid) {
-			graph_quit();
-		}
-		threadcontrol(PHYS_SHUTDOWN, &object);
-		if(option->logenable)
-			fclose(option->logfile);
-		free(option);
-		free(atom_prop);
-		free(object);
-		return 0;
 }

@@ -19,16 +19,41 @@
 #define PHYSENGINE_GRAPH_SDL
 
 /*	Dependencies	*/
-#include <SDL2/SDL.h>
 #include <stdbool.h>
+#include <SDL2/SDL.h>
+#include "physics_aux.h"
 
-struct graph_window {
+/* Camera info sent from graph_sdl */
+struct graph_cam_view {
+	float view_rotx, view_roty, view_rotz;
+	float tr_x, tr_y, tr_z;
+	float scalefactor;
+};
+
+typedef struct {
+	/* TODO: Align this mess */
 	SDL_Window *window;
 	SDL_GLContext context;
 	SDL_Event *event;
-};
+	bool flicked, translate, fullscreen, start_selection;
+	int mousex, mousey, initmousex, initmousey;
+	unsigned int chosen, currentnum;
+	struct graph_cam_view camera;
+	struct numbers_selection numbers;
+	char currentsel[100];
+	data *object;
+	float fps;
+} graph_window;
 
-struct graph_window *graph_sdl_init(bool no_win);
-void graph_sdl_deinit(struct graph_window *win, bool no_win);
+graph_window *graph_sdl_init(data *object);
+void graph_sdl_move_cam(graph_window *win);
+void graph_sdl_input_main(graph_window *win);
+void graph_sdl_swapwin(graph_window *win);
+void graph_sdl_deinit(graph_window *win);
+
+/* I don't trust SDL2's signal handling */
+int add_to_free_queue(void *p);
+int remove_from_free_queue(void *p);
+void on_quit_signal(int signo);
 
 #endif

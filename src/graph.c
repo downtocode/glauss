@@ -25,6 +25,7 @@
 #include "msg_phys.h"
 #include "parser.h"
 #include "graph.h"
+#include "graph_sdl.h"
 #include "graph_objects.h"
 #include "graph_fonts.h"
 #include "options.h"
@@ -103,7 +104,8 @@ static GLfloat aspect_ratio;
 static GLuint pointvbo, textvbo;
 static GLuint object_shader, text_shader;
 static GLint trn_matrix, rot_matrix, scl_matrix, per_matrix;
-static GLfloat *mat, *rotx, *roty, *rotz, *rotation, *scale, *transl, *pers;
+static GLfloat *mat = NULL, *rotx = NULL, *roty = NULL, *rotz = NULL;
+static GLfloat *rotation = NULL, *scale = NULL, *transl = NULL, *pers = NULL;
 
 static void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 {
@@ -256,8 +258,9 @@ unsigned int graph_compile_shader(const char *src_vert_shader,
 	return program;
 }
 
-void graph_draw_scene(data **object, float fps, unsigned int chosen, const char *selstr)
+void graph_draw_scene(graph_window *win)
 {
+	if(!win) return;
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	char osdtext[OSD_BUFFER];
 	struct timespec ts;
@@ -268,8 +271,8 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen, const char 
 	glBindBuffer(GL_ARRAY_BUFFER, textvbo);
 	{
 		/* FPS */
-		fpscolor = (fps < 25) ? COL_RED : (fps < 48) ? COL_BLUE : COL_GREEN;
-		snprintf(osdtext, OSD_BUFFER, "FPS = %3.2f", fps);
+		fpscolor = (win->fps < 25) ? COL_RED : (win->fps < 48) ? COL_BLUE : COL_GREEN;
+		snprintf(osdtext, OSD_BUFFER, "FPS = %3.2f", win->fps);
 		graph_display_text(osdtext, FPSx, FPSy, FPSs, fpscolor);
 		
 		/* Objects */
@@ -289,12 +292,12 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen, const char 
 		graph_display_text(osdtext, ALGx, ALGy, ALGs, COL_WHITE);
 		
 		/* Object selection */
-		if(selstr)
-			graph_display_text(selstr, OSLx, OSLy, OSLs, COL_WHITE);
+		if(win->start_selection)
+			graph_display_text(win->currentsel, OSLx, OSLy, OSLs, COL_WHITE);
 		
 		/* Chosen object */
-		if(chosen)
-			graph_display_object_info(*object, chosen);
+		if(win->chosen)
+			graph_display_object_info(win->object, win->chosen);
 		
 		if(option->status) {
 			/* Only displayed if running */
@@ -356,7 +359,7 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen, const char 
 		draw_obj_axis(AXISs);
 		
 		/* Objects(as points) */
-		draw_obj_points(*object);
+		draw_obj_points(win->object);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
@@ -365,8 +368,10 @@ void graph_draw_scene(data **object, float fps, unsigned int chosen, const char 
 		graph_sshot(t_stats[1]->progress);
 		option->write_sshot_now = false;
 	}
-	
 	/*	Dynamic drawing	*/
+	
+	/* Swap Front and Back buffers */
+	graph_sdl_swapwin(win);
 }
 
 void graph_init()
