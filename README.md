@@ -35,7 +35,7 @@ This program **absolutely requires** the newest stable GCC or Clang releases to 
 
 Controls and Usage
 ------------------
-Run the program with the --help flag and/or consult the [MANUAL][DOCS/physengine.rst].
+Run the program with the --help flag and/or consult the [manual](DOCS/physengine.rst#controls).
 
 Running
 -------
@@ -47,7 +47,7 @@ The filepath/name specified through the `-f` flag determines the system to simul
 
 Physengine reads the settings table first, reads the global objects table and then calls the spawn_objects function, which returns its own local objects table along with a counter how many objects exist in it. Usually the global table contains any molecule files(in pdb or xyz formats) and any standalone objects. The function spawn_objects is for having your own distribution of objects.
 
-For a list of all variables look in the [MANUAL][DOCS/physengine.rst].
+For a list of all variables look in the appropriate section of the [manual](DOCS/physengine.rst#configuration-files).
 
 Contacts
 --------
