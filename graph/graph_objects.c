@@ -106,12 +106,12 @@ void draw_obj_points(data* object)
 
 static const char object_vs[] =
 // Generated from object_vs.glsl
-#include "src/shaders/object_vs.h"
+#include "graph/shaders/object_vs.h"
 ;
 
 static const char object_fs[] =
 // Generated from object_fs.glsl
-#include "src/shaders/object_fs.h"
+#include "graph/shaders/object_fs.h"
 ;
 
 GLuint graph_init_objects()

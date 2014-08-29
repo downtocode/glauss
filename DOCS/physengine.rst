@@ -12,7 +12,7 @@ a physics simulations engine
 SYNOPSIS
 ========
 
-| **physengine** -f [file] [options]
+| **physengine** -f [file] [flags]
 
 DESCRIPTION
 ===========
@@ -24,7 +24,7 @@ to barnes-hut galactical simulations.
 CONTROLS
 ========
 
-The graphical output of the program can be controlled using the following list.
+The following list of controls has power when the program is run in graphical mode.
 
 *Keyboard Control*
 ------------------
@@ -60,7 +60,7 @@ BACKSPACE
     Shut the physics threads completely.
 
 MINUS
-    Change the physics algorithm(needs to be off prior).
+    Change the physics algorithm(threads need to be completely off).
 
 *Mouse controls*
 ----------------
@@ -73,6 +73,43 @@ SCROLL
 
 MMB
     Hold and drag to move camera.
+
+FLAGS
+=====
+The following flags can be used:
+
+``--novid`` - No argument
+    Will run the program without any video outputting enabled.
+
+``--bench`` - No argument
+    Will run the program in benchmark mode. Quits and reports stats after ``timer`` runs once.
+
+``--version``, ``-V`` - No argument
+    Will report version as well as compile time and date.
+
+``--help``, ``-h`` - No argument
+    Will report on flags and usage and try to convince the user to read this manual.
+
+``--file``, ``-f`` - *String*
+    Input file. See the section below for more information.
+
+``--timer``, ``-r`` - *Float*
+    Configures how often to update the frames per second and ``benchmark`` duration.
+
+``--algorithm``, ``-a`` - *String*
+    Sets the algorithm to use. Use "help" to list all available.
+
+``--threads``, ``-t`` - *Unsigned Integer*
+    Sets the amount of threads to use. "0" will try to autodetect and use that.
+
+``-log``, ``-l`` - *String*
+    Sets the log file to which to save all command line output at maximum ``verbosity``.
+
+``--verb``, ``-v`` - *Short Unsigned Integer*
+    Sets how much information to output to *STDOUT*.
+
+
+These flags will always override anything set inside the configuration input file.
 
 
 CONFIGURATION FILES

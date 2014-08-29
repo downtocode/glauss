@@ -31,12 +31,14 @@ def options(ctx):
 	ctx.load('compiler_c')
 	ctx.add_option('--enable-lto', dest='lto', default=False, action='store_true',
 				help='Enable link-time optimizations.')
+	ctx.add_option('--set-version', dest='ver', action='store', default='',
+				help='Sets package version.')
 	
 def configure(ctx):
 	ctx.load('compiler_c')
 	ctx.env.append_unique('CFLAGS', ['-g', '-O2', '-Wall', '-pedantic', '-std=gnu11', '-march=native'])
 	
-	#mandatory=False when we don't really need one
+	#Add mandatory=False when we don't really need it.
 	
 	ctx.check(features='c cprogram', lib=['m'], uselib_store='MATH')
 	ctx.check_cfg(package='sdl2', args='--cflags --libs', uselib_store='SDL')
@@ -47,10 +49,16 @@ def configure(ctx):
 	ctx.check_cfg(package='lua5.2', args='--cflags --libs', uselib_store='LUA')
 	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
 	
-	git_version = try_git_version()
+	if (ctx.options.ver):
+		package_ver = ctx.options.ver
+	else:
+		package_ver = try_git_version() + '-git'
+	
+	FULL_PACKAGE_NAME = APPNAME + ' ' + package_ver
+	
 	ctx.define('PACKAGE', APPNAME)
-	ctx.define('PACKAGE_VERSION', git_version)
-	ctx.define('PACKAGE_STRING', APPNAME + ' ' + git_version)
+	ctx.define('PACKAGE_VERSION', package_ver)
+	ctx.define('PACKAGE_STRING', FULL_PACKAGE_NAME)
 	ctx.define('OPT_LTO', ctx.options.lto)
 	ctx.write_config_header('config.h')
 	
@@ -58,7 +66,7 @@ def configure(ctx):
 		ctx.env.CFLAGS += ['-flto']
 		ctx.env.LDFLAGS += ['-flto']
 	
-	print '\nCompiling: ', APPNAME, git_version
+	print '\nCompiling: ', FULL_PACKAGE_NAME
 	print '	CFLAGS:  ', ctx.env.CFLAGS
 	
 def build(ctx):
@@ -71,19 +79,22 @@ def build(ctx):
 	#Generate included files.
 	ctx.file2string(
 		source = "resources/shaders/object_vs.glsl",
-		target = "src/shaders/object_vs.h")
+		target = "graph/shaders/object_vs.h")
 	ctx.file2string(
 		source = "resources/shaders/object_fs.glsl",
-		target = "src/shaders/object_fs.h")
+		target = "graph/shaders/object_fs.h")
 	ctx.file2string(
 		source = "resources/shaders/text_vs.glsl",
-		target = "src/shaders/text_vs.h")
+		target = "graph/shaders/text_vs.h")
 	ctx.file2string(
 		source = "resources/shaders/text_fs.glsl",
-		target = "src/shaders/text_fs.h")
+		target = "graph/shaders/text_fs.h")
 	ctx.file2string(
 		source = "resources/elements.lua",
-		target = "src/resources/elements.h")
+		target = "physics/resources/elements.h")
+	ctx.file2string(
+		source = "resources/helpstring.txt",
+		target = "main/resources/helpstring.h")
 	ctx(name='msg_phys',
 		path=ctx.path,
 		target='msg_phys',

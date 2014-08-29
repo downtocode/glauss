@@ -39,17 +39,10 @@
 #include "msg_phys.h"
 #include "physics/physics_aux.h"
 
-static const char *ARGSTRING =
-"Usage: physengine -f (file) (arguments)\n"
-"		--novid			Disable video output.\n"
-"		--bench			Benchmark mode(30 seconds, threads=1, novid\n"
-"	-a	--algorithm (string)	Select an algorithm to use. To list all: \"help\".\n"
-"	-l	--log (file)		Log everything to a file.\n"
-"	-t	--threads (int)		Use this amount of threads.\n"
-"	-r	--timer (int)		OSD update rate/benchmark duration.\n"
-"	-v	--verb (int)		STDOUT spam level.\n"
-"	-V	--version		Outputs the version of the program(+short git checksum).\n"
-"	-h	--help			What you're reading.\n";
+static const char ARGSTRING[] =
+// Generated from text_vs.glsl
+#include "main/resources/helpstring.h"
+;
 
 struct option_struct *option;
 
@@ -60,7 +53,7 @@ int main(int argc, char *argv[])
 		add_to_free_queue(option);
 		*option = (struct option_struct) {
 			/* Visuals */
-			.width = 1200, .height = 600,
+			.width = 1280, .height = 720,
 			.fontsize = 38,
 			.fontname = strdup("Sans"),
 			
