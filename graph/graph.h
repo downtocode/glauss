@@ -15,13 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifdef PHYSENGINE_GRAPH
+#ifndef PHYSENGINE_GRAPH
+#define PHYSENGINE_GRAPH
 
-#include "physics.h"
+#include "physics/physics.h"
+#include "graph_sdl.h"
 
-void draw_obj_axis(float scale);
-void draw_obj_sphere(data* object);
-void draw_obj_points(data* object);
-GLuint graph_init_objects();
+/* Identifiers for colors */
+enum {
+	GL_WHITE,
+	GL_RED,
+	GL_GREEN,
+	GL_BLUE,
+	GL_YELLOW,
+};
+
+void graph_init();
+void graph_quit();
+void graph_view(struct graph_cam_view *camera);
+float graph_resize_wind();
+unsigned int graph_compile_shader(const char *src_vert_shader,
+								  const char *src_frag_shader);
+void graph_draw_scene(graph_window *win);
+int graph_sshot(long double arg);
 
 #endif

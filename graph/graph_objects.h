@@ -15,15 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PARS
-#define PHYSENGINE_PARS
+#ifdef PHYSENGINE_GRAPH
 
-#include "physics.h"
+#include "physics/physics.h"
 
-int parse_lua_open(char *filename);
-int parse_lua_close();
-int parse_lua_simconf_options();
-int parse_lua_simconf_objects(data **object);
-const char *parse_file_to_str(const char *filename);
+void draw_obj_axis(float scale);
+void draw_obj_sphere(data* object);
+void draw_obj_points(data* object);
+GLuint graph_init_objects();
 
 #endif

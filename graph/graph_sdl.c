@@ -22,17 +22,15 @@
 #include <SDL2/SDL.h>
 #include <signal.h>
 
-#include "options.h"
+#include "main/options.h"
 #include "config.h"
-#include "msg_phys.h"
-#include "out_xyz.h"
-#include "physics.h"
-#include "physics_aux.h"
+#include "main/msg_phys.h"
+#include "main/out_xyz.h"
+#include "physics/physics.h"
+#include "physics/physics_aux.h"
 #include "graph.h"
 #include "graph_sdl.h"
-
-#define FREE_QUEUE_MAX 20
-static void *to_be_freed[FREE_QUEUE_MAX] = {NULL};
+#include "input/sighandle.h"
 
 graph_window *main_win = NULL;
 static bool sdl_initd = NULL;
@@ -41,6 +39,8 @@ graph_window *graph_sdl_init(data *object)
 {
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
+	add_to_free_queue(win->event);
+	add_to_free_queue(win);
 	if(!sdl_initd) {
 		SDL_Init(SDL_INIT_VIDEO);
 		sdl_initd = true;
@@ -263,62 +263,4 @@ void graph_sdl_deinit(graph_window *win) {
 		SDL_Quit();
 	free(win->event);
 	free(win);
-}
-
-int add_to_free_queue(void *p)
-{
-	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
-		if(!to_be_freed[i]) {
-			to_be_freed[i] = p;
-			return 0;
-		}
-	}
-	return 1;
-}
-
-int remove_from_free_queue(void *p)
-{
-	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
-		if(to_be_freed[i] == p) {
-			to_be_freed[i] = NULL;
-			return 0;
-		}
-	}
-	return 1;
-}
-
-/* Report stats on command line */
-void on_usr1_signal(int signo)
-{
-	printf("\n");
-	if(!signo) printf("USR1 signal received, current stats:\n");
-	printf("Progress = %Lf\n", t_stats[1]->progress);
-	if(option->stats_bh) {
-		printf("BH Tree stats:\n Thread |  Total   New  Cleaned    Size\n");
-		for(int i = 1; i < option->threads + 1; i++) {
-			printf("   %02i   |  ", i);
-			printf("%u    %u    %u       %lu\n", t_stats[i]->bh_total_alloc,
-				   t_stats[i]->bh_new_alloc, t_stats[i]->bh_new_cleaned,
-				   t_stats[i]->bh_heapsize);
-		}
-	}
-}
-
-/* Function given to signal handler */
-void on_quit_signal(int signo)
-{
-	printf("\nSignal to quit %i received!\n", signo);
-	threadcontrol(PHYS_SHUTDOWN, NULL);
-	if(option->logenable)
-		fclose(option->logfile);
-	if(main_win) {
-		/* SDL2 fucks up, so I'll free it and not give two shits */
-		free(main_win->event);
-		free(main_win);
-		graph_quit();
-	}
-	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
-		free(to_be_freed[i]);
-	}
-	exit(0);
 }

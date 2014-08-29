@@ -21,7 +21,7 @@
 /*	Dependencies	*/
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-#include "physics_aux.h"
+#include "physics/physics_aux.h"
 
 /* Camera info sent from graph_sdl */
 struct graph_cam_view {
@@ -50,11 +50,5 @@ void graph_sdl_move_cam(graph_window *win);
 void graph_sdl_input_main(graph_window *win);
 void graph_sdl_swapwin(graph_window *win);
 void graph_sdl_deinit(graph_window *win);
-
-/* I don't trust SDL2's signal handling */
-int add_to_free_queue(void *p);
-int remove_from_free_queue(void *p);
-void on_usr1_signal(int signo);
-void on_quit_signal(int signo);
 
 #endif

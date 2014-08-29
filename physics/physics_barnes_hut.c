@@ -21,8 +21,8 @@
 #include <pthread.h>
 #include <malloc.h>
 #include <limits.h>
-#include "options.h"
-#include "msg_phys.h"
+#include "main/options.h"
+#include "main/msg_phys.h"
 #include "physics.h"
 #include "physics_barnes_hut.h"
 

@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "options.h"
-#include "out_xyz.h"
+#include "main/options.h"
+#include "main/out_xyz.h"
 #include "physics.h"
 #include "physics_ctrl.h"
 

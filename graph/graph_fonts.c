@@ -19,13 +19,13 @@
 #include <fontconfig/fontconfig.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "msg_phys.h"
+#include "main/msg_phys.h"
 #include "graph.h"
 #include "graph_objects.h"
 #include "graph_fonts.h"
-#include "physics.h"
-#include "physics_aux.h"
-#include "options.h"
+#include "physics/physics.h"
+#include "physics/physics_aux.h"
+#include "main/options.h"
 
 static const char text_vs[] =
 // Generated from text_vs.glsl

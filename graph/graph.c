@@ -21,14 +21,14 @@
 #include <tgmath.h>
 #include <GLES2/gl2.h>
 #include <png.h>
-#include "physics.h"
-#include "msg_phys.h"
-#include "parser.h"
+#include "physics/physics.h"
+#include "main/msg_phys.h"
+#include "input/parser.h"
 #include "graph.h"
 #include "graph_sdl.h"
 #include "graph_objects.h"
 #include "graph_fonts.h"
-#include "options.h"
+#include "main/options.h"
 
 /* UI POSITIONS */
 

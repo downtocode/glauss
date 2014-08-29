@@ -21,11 +21,9 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
-#include "graph.h"
 #include "physics.h"
-#include "options.h"
-#include "msg_phys.h"
-#include "out_xyz.h"
+#include "main/options.h"
+#include "main/msg_phys.h"
 #include "physics_ctrl.h"
 #include "physics_null.h"
 #include "physics_n_body.h"

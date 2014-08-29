@@ -86,7 +86,7 @@ def build(ctx):
 	ctx(name='msg_phys',
 		path=ctx.path,
 		target='msg_phys',
-		source='src/msg_phys.c',
+		source='main/msg_phys.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -94,7 +94,14 @@ def build(ctx):
 		path=ctx.path,
 		uselib='LUA',
 		target='parser',
-		source='src/parser.c',
+		source='input/parser.c',
+		features  = ['c'],
+		includes='. .. ../../',
+	)
+	ctx(name='sighandle',
+		path=ctx.path,
+		target='sighandle',
+		source='input/sighandle.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -102,7 +109,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='MATH',
 		target='physics',
-		source='src/physics.c',
+		source='physics/physics.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -110,21 +117,21 @@ def build(ctx):
 		path=ctx.path,
 		uselib='LUA',
 		target='physics_aux',
-		source='src/physics_aux.c',
+		source='physics/physics_aux.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
 	ctx(name='physics_ctrl',
 		path=ctx.path,
 		target='physics_ctrl',
-		source='src/physics_ctrl.c',
+		source='physics/physics_ctrl.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
 	ctx(name='physics_null',
 		path=ctx.path,
 		target='physics_null',
-		source='src/physics_null.c',
+		source='physics/physics_null.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -132,7 +139,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='PTHRD',
 		target='physics_n_body',
-		source='src/physics_n_body.c',
+		source='physics/physics_n_body.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -140,7 +147,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='PTHRD',
 		target='physics_barnes_hut',
-		source='src/physics_barnes_hut.c',
+		source='physics/physics_barnes_hut.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -148,7 +155,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='MATH',
 		target='in_file',
-		source='src/in_file.c',
+		source='input/in_file.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -156,7 +163,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='MATH',
 		target='out_xyz',
-		source='src/out_xyz.c',
+		source='main/out_xyz.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -164,7 +171,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='GL, PNG',
 		target='graph',
-		source='src/graph.c',
+		source='graph/graph.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -172,7 +179,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='GL, PNG, SDL',
 		target='graph_sdl',
-		source='src/graph_sdl.c',
+		source='graph/graph_sdl.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -180,7 +187,7 @@ def build(ctx):
 		path=ctx.path,
 		uselib='GL',
 		target='graph_objects',
-		source='src/graph_objects.c',
+		source='graph/graph_objects.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -188,15 +195,15 @@ def build(ctx):
 		path=ctx.path,
 		uselib='GL, FT, FC',
 		target='graph_fonts',
-		source='src/graph_fonts.c',
+		source='graph/graph_fonts.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'graph', 'graph_sdl', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
-		source='src/main.c',
+		source='main/main.c',
 		features  = ['c', 'cprogram'],
 		includes='. .. ../../',
 	)

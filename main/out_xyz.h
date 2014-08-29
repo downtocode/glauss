@@ -15,23 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_INPUT
-#define PHYSENGINE_INPUT
+#ifndef PHYSENGINE_OUTPUT
+#define PHYSENGINE_OUTPUT
 
-#include "physics.h"
+#include "physics/physics.h"
 
-#define MOL_XYZ 1
-#define MOL_PDB 2
-#define MOL_OBJ 3
-
-typedef struct {
-	data *inf;
-	vec3 rot;
-	char filename[100];
-	double scale;
-} in_file;
-
-int in_probe_file(const char *filename);
-int in_read_file(data *object, int *i, in_file *file);
+int toxyz(data *object);
 
 #endif

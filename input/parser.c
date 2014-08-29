@@ -24,11 +24,11 @@
 #include <lua5.2/lua.h>
 #include <lua5.2/lauxlib.h>
 #include <lua5.2/lualib.h>
-#include "physics.h"
-#include "parser.h"
-#include "options.h"
-#include "in_file.h"
-#include "msg_phys.h"
+#include "physics/physics.h"
+#include "input/parser.h"
+#include "main/options.h"
+#include "input/in_file.h"
+#include "main/msg_phys.h"
 
 struct lua_parser_state {
 	int i;

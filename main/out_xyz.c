@@ -21,10 +21,10 @@
 #include <unistd.h>
 #include "config.h"
 #include "options.h"
-#include "physics.h"
+#include "physics/physics.h"
 #include "out_xyz.h"
 #include "msg_phys.h"
-#include "physics_aux.h"
+#include "physics/physics_aux.h"
 
 int toxyz(data *object)
 {

@@ -19,10 +19,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <tgmath.h>
-#include "in_file.h"
-#include "options.h"
-#include "msg_phys.h"
-#include "physics_aux.h"
+#include "input/in_file.h"
+#include "main/options.h"
+#include "main/msg_phys.h"
+#include "physics/physics_aux.h"
 
 int in_probe_file(const char *filename)
 {

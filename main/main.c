@@ -28,14 +28,15 @@
 
 /*	Functions	*/
 #include "config.h"
-#include "physics.h"
-#include "graph.h"
-#include "graph_sdl.h"
-#include "parser.h"
+#include "physics/physics.h"
+#include "graph/graph.h"
+#include "graph/graph_sdl.h"
+#include "input/sighandle.h"
+#include "input/parser.h"
 #include "out_xyz.h"
 #include "options.h"
 #include "msg_phys.h"
-#include "physics_aux.h"
+#include "physics/physics_aux.h"
 
 static const char *ARGSTRING =
 "Usage: physengine -f (file) (arguments)\n"

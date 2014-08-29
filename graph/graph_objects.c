@@ -17,10 +17,10 @@
  */
 #include <tgmath.h>
 #include <GLES2/gl2.h>
-#include "physics.h"
-#include "physics_aux.h"
-#include "graph.h"
-#include "options.h"
+#include "physics/physics.h"
+#include "physics/physics_aux.h"
+#include "graph/graph.h"
+#include "main/options.h"
 #include "graph_objects.h"
 
 static GLint objattr_pos, objattr_color;

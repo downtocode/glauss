@@ -24,8 +24,8 @@
 #include <lua5.2/lauxlib.h>
 #include <lua5.2/lualib.h>
 #include "physics_aux.h"
-#include "msg_phys.h"
-#include "options.h"
+#include "main/msg_phys.h"
+#include "main/options.h"
 
 struct atomic_cont *atom_prop;
 
