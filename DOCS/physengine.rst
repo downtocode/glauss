@@ -19,8 +19,7 @@ DESCRIPTION
 
 **physengine** is a physics simulations engine written in C, capable of being
 used in a variety of situations, from n-body simulations on planetary orbits
-to barnes-hut galactical simulations. Future versions would support DFT in the
-form of a Hartree-Fock algorithm.
+to barnes-hut galactical simulations.
 
 CONTROLS
 ========
@@ -45,14 +44,23 @@ R
 Z
     Save current system to an *XYZ* file.
 
-F11
+S
+    Create a *PNG* screenshot.
+
+F
     Switch between fullscreen and windowed mode.
 
 SPACEBAR
     Pause/unpause.
 
-ESC
+ESC or Q
     Quit program.
+
+BACKSPACE
+    Shut the physics threads completely.
+
+MINUS
+    Change the physics algorithm(needs to be off prior).
 
 *Mouse controls*
 ----------------
@@ -65,11 +73,6 @@ SCROLL
 
 MMB
     Hold and drag to move camera.
-
-USAGE
-=====
-
-TODO
 
 
 CONFIGURATION FILES
@@ -100,6 +103,20 @@ however most do not.
     Algorithm specific. Set limit on maximum octrees per thread.
 ``bh_tree_limit`` - *Short Unsigned Integer, 1 to 8*
     Algorithm specific. Sets limit on threads per octree. Increase to spread distribution.
+``bh_single_assign`` - *Boolean*
+    If only a single thread is used will still split the octree normally. Debugging.
+``screenshot_template`` - *String*
+    Template to use in screenshot file creation. Standard sprintf syntax.
+``file_template`` - *String*
+    Template to use in state file(XYZ) creation. Standard sprintf syntax.
+``fontname`` - *String*
+    Specify the font type to be used. Example: "Liberation Sans".
+``fontsize`` - *Unsigned Integer*
+    Fontsize adjustment.
+``dump_sshot`` - *Unsigned Integer*
+    Specify the frequency of screenshots taken. 1 - every step, 2 - every two steps.
+``dump_xyz`` - *Unsigned Integer*
+    Specify the frequency of state dumps created. 1 - every step, 2 - every two steps.
 ``width`` - *Integer*
     Set window width in pixels.
 ``height`` - *Integer*
@@ -160,6 +177,15 @@ Some libraries used in this program can be controlled using environmental variab
 
 For a more exaustive list consult the SDL2 library manual.
 
+SIGNAL HANDLING
+===============
+The following signal functions have been implemented:
+
+``SIGINT``
+    Will stop the threads, close all files, free all memory and quit.
+``SIGUSR1``
+    Will report the current status of the simulation.
+
 EXIT CODES
 ==========
 
@@ -175,6 +201,12 @@ EXAMPLES
 
 *Loading a standard simulation:*
     ``physengine -f simconf.lua``
+
+*Don't simulate anything, just display:*
+    ``physengine -f simconf.lua -a none``
+
+*Dummy load sim, will pretend to use n-body but won't actually move anything:*
+    ``physengine -f simconf.lua -a null``
 
 *Simulate using the n-body algorithm using 3 threads:*
     ``physengine -f simconf.lua -t 3 -a n-body``

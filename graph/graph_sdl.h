@@ -47,7 +47,6 @@ typedef struct {
 
 graph_window *graph_sdl_init(data *object);
 void graph_sdl_move_cam(graph_window *win);
-void graph_sdl_input_main(graph_window *win);
 void graph_sdl_swapwin(graph_window *win);
 void graph_sdl_deinit(graph_window *win);
 

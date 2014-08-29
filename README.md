@@ -38,25 +38,10 @@ This program **absolutely requires** the newest stable GCC or Clang releases to 
 
 Controls
 --------
-Button | Action
--------|-------
-**LMB**      | Drag to rotate camera.
-**MSCROLL**  | Control zoom.
-**MMB**      | Drag to translate camera, deselects object.
-**[ and ]**  | Increase/decrease time constant. Pause/unpause to put into effect.
-**,(<) and .(>)**  | Select previous/next object.
-**Enter**    | Press once to init object selection, input number and press again to select.
-**r**        | Reset view and deseclect object.
-**z**        | Dump entire system to an XYZ file.
-**s**        | Create a screenshot.
-**f**        | Enter fullscreen mode.
-**Spacebar** | Pause/unpause.
-**Esc**      | Safely[*] quit the program. If running inside a terminal you can use Ctrl+C too.
+Consult the manual(DOCS/physengine.rst).
 
-#####[*]By default the program will wait until the physics threads safely quit by finishing a timestep/cycle. This can take time if the system is large/complex.
-
-Usage:
-------
+Usage
+-----
 
 `physengine -f (file) (arguments)`
 
@@ -79,7 +64,7 @@ simconf.lua
 -----------
 This file determines the system to simulate. It's a Lua script, so make sure to follow the syntax. All Lua libraries(including math) are included and initialized, feel free to use them. Error handling is done by Lua interpreter.
 
-Currently, n-body and Barnes-Hut simulations have been implemented, which you can select using the "algorithm" variable in the configuration file or via the appropriate arguments. The Barnes-Hut algorithm has special settings: bh_ratio shall adjust the precision level(and speed), bh_lifetime will set the lifetime of a cell before it's freed(in #timesteps), bh_tree_limit sets the maximum assigned threads an octree may contain(use to spread threads further) and finally bh_heapsize_max sets a hard limit on the maximum memory size of a thread's octrees in bytes.
+For information on the accepted variables look in the manual page(DOCS/physengine.rst).
 
 Physengine reads the settings table first, reads the global objects table and then calls the spawn_objects function, which returns its own local objects table along with a counter how many objects exist in it. Usually the global table contains any molecule files(in pdb or xyz formats) and any standalone objects. The function spawn_objects is for having your own distribution of objects.
 

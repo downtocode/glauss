@@ -17,6 +17,7 @@
  */ 
 #include <signal.h>
 #include <stdio.h>
+#include "sighandle.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
 #include "physics/physics.h"

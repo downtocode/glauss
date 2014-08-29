@@ -32,6 +32,7 @@
 #include "graph/graph.h"
 #include "graph/graph_sdl.h"
 #include "input/sighandle.h"
+#include "input/graph_input.h"
 #include "input/parser.h"
 #include "out_xyz.h"
 #include "options.h"

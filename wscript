@@ -63,7 +63,7 @@ def configure(ctx):
 def build(ctx):
 	#Generate manual page
 	ctx(name='manpage',
-		source = 'DOCS/man/physengine.rst',
+		source = 'DOCS/physengine.rst',
 		target = 'physengine.1',
 		rule = 'rst2man ${SRC} ${TGT}',
 	)
@@ -102,6 +102,13 @@ def build(ctx):
 		path=ctx.path,
 		target='sighandle',
 		source='input/sighandle.c',
+		features  = ['c'],
+		includes='. .. ../../',
+	)
+	ctx(name='graph_input',
+		path=ctx.path,
+		target='graph_input',
+		source='input/graph_input.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -201,7 +208,7 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='main/main.c',
 		features  = ['c', 'cprogram'],
