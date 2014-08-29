@@ -36,6 +36,7 @@ def configure(ctx):
 	ctx.load('compiler_c')
 	ctx.env.append_unique('CFLAGS', ['-g', '-O2', '-Wall', '-pedantic', '-std=gnu11', '-march=native'])
 	
+	#mandatory=False when we don't really need one
 	
 	ctx.check(features='c cprogram', lib=['m'], uselib_store='MATH')
 	ctx.check_cfg(package='sdl2', args='--cflags --libs', uselib_store='SDL')

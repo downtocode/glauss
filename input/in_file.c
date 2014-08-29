@@ -76,7 +76,7 @@ int in_read_file(data *object, int *i, in_file *file)
 	char str[500] = {0}, atom[2] = {0}, pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;
 	int filetype, pdbatomindex, pdbresidueseq;
-	float pdboccupy, pdbtemp, pdboffset;
+	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
 	vec3 pos;
 	FILE *inpars = fopen(file->filename, "r");
 	
@@ -98,24 +98,25 @@ int in_read_file(data *object, int *i, in_file *file)
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
 		if(strstr(str, "#") == NULL) {
 			if(filetype == MOL_XYZ) {
-				sscanf(str, " %s  %lf         %lf         %lf", atom, &pos[0], &pos[1],
-					   &pos[2]);
+				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos,
+					   &zpos);
 			} else if(filetype == MOL_PDB) {
 				if(strncmp(str, "ATOM", 4)==0) {
-					sscanf(str, "%s %i %s %s %c %i %lf %lf %lf %f %f %s %f",\
+					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",\
 							pdbtype, &pdbatomindex, pdbatomname, pdbresidue,
 							&pdbreschain, &pdbresidueseq,\
-							&pos[0], &pos[1], &pos[2], &pdboccupy, &pdbtemp,
+							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp,
 							atom, &pdboffset);
 				} else continue;
 			} else if(filetype == MOL_OBJ) {
 				if(strncmp(str, "v ", 2)==0) {
-					sscanf(str, "v  %lf %lf %lf", &pos[0], &pos[1], &pos[2]);
+					sscanf(str, "v  %f %f %f", &xpos, &ypos, &zpos);
 					pos/=100;
 				} else continue;
 			}
 			object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;
+			pos = (vec3){xpos, ypos, zpos};
 			rotate_vec(&pos, &file->rot);
 			object[*i].pos = file->scale*pos + file->inf->pos;
 			object[*i].vel = file->inf->vel;
