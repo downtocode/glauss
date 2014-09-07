@@ -35,138 +35,143 @@ struct lua_parser_state {
 	bool nullswitch;
 	bool fileset;
 	in_file file;
+	data buffer, *object;
 };
 
 static lua_State *L;
 
-static void conf_traverse_table(lua_State *L)
+static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state)
 {
-	lua_pushnil(L);
-	while(lua_next(L, -2) != 0) {
-		if(lua_istable(L, -1)) {
-			conf_traverse_table(L);
-		} else if(lua_isnumber(L, -1)) {
-			if(!strcmp("threads", lua_tostring(L, -2)))
-				option->threads = lua_tonumber(L, -1);
-			if(!strcmp("dt", lua_tostring(L, -2)))
-				option->dt = lua_tonumber(L, -1);
-			if(!strcmp("bh_ratio", lua_tostring(L, -2)))
-				option->bh_ratio = lua_tonumber(L, -1);
-			if(!strcmp("bh_lifetime", lua_tostring(L, -2)))
-				option->bh_lifetime = lua_tonumber(L, -1);
-			if(!strcmp("bh_heapsize_max", lua_tostring(L, -2)))
-				option->bh_heapsize_max = lua_tonumber(L, -1);
-			if(!strcmp("bh_tree_limit", lua_tostring(L, -2)))
-				option->bh_tree_limit = lua_tonumber(L, -1);
-			if(!strcmp("width", lua_tostring(L, -2)))
-				option->width = lua_tonumber(L, -1);
-			if(!strcmp("height", lua_tostring(L, -2)))
-				option->height = lua_tonumber(L, -1);
-			if(!strcmp("elcharge", lua_tostring(L, -2)))
-				option->elcharge = lua_tonumber(L, -1);
-			if(!strcmp("gconst", lua_tostring(L, -2)))
-				option->gconst = lua_tonumber(L, -1);
-			if(!strcmp("epsno", lua_tostring(L, -2)))
-				option->epsno = lua_tonumber(L, -1);
-			if(!strcmp("verbosity", lua_tostring(L, -2)))
-				option->verbosity = lua_tonumber(L, -1);
-			if(!strcmp("fontsize", lua_tostring(L, -2)))
-				option->fontsize = lua_tonumber(L, -1);
-			if(!strcmp("dump_xyz", lua_tostring(L, -2)))
-				option->dump_xyz = lua_tonumber(L, -1);
-			if(!strcmp("dump_sshot", lua_tostring(L, -2)))
-				option->dump_sshot = lua_tonumber(L, -1);
-		} else if(lua_isstring(L, -1)) {
-			/* The defaults have been assigned using strdup too, so free them */
-			if(!strcmp("algorithm", lua_tostring(L, -2))) {
-				free(option->algorithm);
-				option->algorithm = strdup(lua_tostring(L, -1));
-			}
-			if(!strcmp("fontname", lua_tostring(L, -2))) {
-				free(option->fontname);
-				option->fontname = strdup(lua_tostring(L, -1));
-			}
-			if(!strcmp("screenshot_template", lua_tostring(L, -2))) {
-				free(option->sshot_temp);
-				option->sshot_temp = strdup(lua_tostring(L, -1));
-			}
-			if(!strcmp("file_template", lua_tostring(L, -2))) {
-				free(option->xyz_temp);
-				option->xyz_temp = strdup(lua_tostring(L, -1));
-			}
-		} else if(lua_isboolean(L, -1)) {
-			if(!strcmp("bh_single_assign", lua_tostring(L, -2)))
-				option->bh_single_assign = lua_toboolean(L, -1);
+	if(lua_istable(L, -1)) {
+		return 1;
+	} else if(lua_isnumber(L, -1)) {
+		if(!strcmp("threads", lua_tostring(L, -2)))
+			option->threads = lua_tonumber(L, -1);
+		if(!strcmp("dt", lua_tostring(L, -2)))
+			option->dt = lua_tonumber(L, -1);
+		if(!strcmp("bh_ratio", lua_tostring(L, -2)))
+			option->bh_ratio = lua_tonumber(L, -1);
+		if(!strcmp("bh_lifetime", lua_tostring(L, -2)))
+			option->bh_lifetime = lua_tonumber(L, -1);
+		if(!strcmp("bh_heapsize_max", lua_tostring(L, -2)))
+			option->bh_heapsize_max = lua_tonumber(L, -1);
+		if(!strcmp("bh_tree_limit", lua_tostring(L, -2)))
+			option->bh_tree_limit = lua_tonumber(L, -1);
+		if(!strcmp("width", lua_tostring(L, -2)))
+			option->width = lua_tonumber(L, -1);
+		if(!strcmp("height", lua_tostring(L, -2)))
+			option->height = lua_tonumber(L, -1);
+		if(!strcmp("elcharge", lua_tostring(L, -2)))
+			option->elcharge = lua_tonumber(L, -1);
+		if(!strcmp("gconst", lua_tostring(L, -2)))
+			option->gconst = lua_tonumber(L, -1);
+		if(!strcmp("epsno", lua_tostring(L, -2)))
+			option->epsno = lua_tonumber(L, -1);
+		if(!strcmp("verbosity", lua_tostring(L, -2)))
+			option->verbosity = lua_tonumber(L, -1);
+		if(!strcmp("fontsize", lua_tostring(L, -2)))
+			option->fontsize = lua_tonumber(L, -1);
+		if(!strcmp("dump_xyz", lua_tostring(L, -2)))
+			option->dump_xyz = lua_tonumber(L, -1);
+		if(!strcmp("dump_sshot", lua_tostring(L, -2)))
+			option->dump_sshot = lua_tonumber(L, -1);
+	} else if(lua_isstring(L, -1)) {
+		/* The defaults have been assigned using strdup too, so free them */
+		if(!strcmp("algorithm", lua_tostring(L, -2))) {
+			free(option->algorithm);
+			option->algorithm = strdup(lua_tostring(L, -1));
 		}
-		lua_pop(L, 1);
+		if(!strcmp("fontname", lua_tostring(L, -2))) {
+			free(option->fontname);
+			option->fontname = strdup(lua_tostring(L, -1));
+		}
+		if(!strcmp("screenshot_template", lua_tostring(L, -2))) {
+			free(option->sshot_temp);
+			option->sshot_temp = strdup(lua_tostring(L, -1));
+		}
+		if(!strcmp("file_template", lua_tostring(L, -2))) {
+			free(option->xyz_temp);
+			option->xyz_temp = strdup(lua_tostring(L, -1));
+		}
+	} else if(lua_isboolean(L, -1)) {
+		if(!strcmp("bh_single_assign", lua_tostring(L, -2)))
+			option->bh_single_assign = lua_toboolean(L, -1);
 	}
+	return 0;
 }
 
-static void obj_traverse_table(lua_State *L, data **object, data *buffer,
-							   struct lua_parser_state *parser_state)
+static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
+{
+	if(lua_istable(L, -1)) {
+		if(parser_state->fileset) {
+			if(!access(parser_state->file.filename, R_OK)) {
+				pprintf(PRI_OK, "File %s found!\n", parser_state->file.filename);
+				parser_state->file.inf = &parser_state->buffer;
+				in_read_file(parser_state->object, &parser_state->i, &parser_state->file);
+				memset(&parser_state->file, 0,
+					   sizeof(in_file));
+				parser_state->fileset = 0;
+			} else {
+				pprintf(PRI_ERR, "File %s not found!\n",
+						parser_state->file.filename);
+				exit(1);
+			}
+		} else {
+			/* It's just an object. */
+			if(parser_state->nullswitch) {
+				parser_state->buffer.id = parser_state->i;
+				(parser_state->object)[parser_state->i] = parser_state->buffer;
+				parser_state->i++;
+			} else parser_state->nullswitch = 1;
+		}
+		return 1;
+	} else if(lua_isnumber(L, -1)) {
+		if(!strcmp("posx", lua_tostring(L, -2)))
+			parser_state->buffer.pos[0] = lua_tonumber(L, -1);
+		if(!strcmp("posy", lua_tostring(L, -2)))
+			parser_state->buffer.pos[1] = lua_tonumber(L, -1);
+		if(!strcmp("posz", lua_tostring(L, -2)))
+			parser_state->buffer.pos[2] = lua_tonumber(L, -1);
+		if(!strcmp("velx", lua_tostring(L, -2)))
+			parser_state->buffer.vel[0] = lua_tonumber(L, -1);
+		if(!strcmp("vely", lua_tostring(L, -2)))
+			parser_state->buffer.vel[1] = lua_tonumber(L, -1);
+		if(!strcmp("velz", lua_tostring(L, -2)))
+			parser_state->buffer.vel[2] = lua_tonumber(L, -1);
+		if(!strcmp("charge", lua_tostring(L, -2)))
+			parser_state->buffer.charge = lua_tonumber(L, -1)*option->elcharge;
+		if(!strcmp("mass", lua_tostring(L, -2)))
+			parser_state->buffer.mass = lua_tonumber(L, -1);
+		if(!strcmp("radius", lua_tostring(L, -2)))
+			parser_state->buffer.radius = lua_tonumber(L, -1);
+		if(!strcmp("atom", lua_tostring(L, -2)))
+			parser_state->buffer.atomnumber = (unsigned short int)lua_tonumber(L, -1);
+		if(!strcmp("scale", lua_tostring(L, -2)))
+			parser_state->file.scale = lua_tonumber(L, -1);
+		if(!strcmp("rotx", lua_tostring(L, -2)))
+			parser_state->file.rot[0] = lua_tonumber(L, -1);
+		if(!strcmp("roty", lua_tostring(L, -2)))
+			parser_state->file.rot[1] = lua_tonumber(L, -1);
+		if(!strcmp("rotz", lua_tostring(L, -2)))
+			parser_state->file.rot[2] = lua_tonumber(L, -1);
+	} else if(lua_isstring(L, -1)) {
+		if(!strcmp("import", lua_tostring(L, -2))) {
+			strcpy(parser_state->file.filename, lua_tostring(L, -1));
+			parser_state->fileset = 1;
+		}
+	} else if(lua_isboolean(L, -1)) {
+		if(!strcmp("ignore", lua_tostring(L, -2)))
+			parser_state->buffer.ignore = lua_toboolean(L, -1);
+	}
+	return 0;
+}
+
+static void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)), struct lua_parser_state *parser_state)
 {
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
-		if(lua_istable(L, -1)) {
-			if(parser_state->fileset) {
-				if(!access(parser_state->file.filename, R_OK)) {
-					pprintf(PRI_OK, "File %s found!\n", parser_state->file.filename);
-					parser_state->file.inf = buffer;
-					in_read_file(*object, &parser_state->i, &parser_state->file);
-					memset(&parser_state->file, 0,
-						   sizeof(in_file));
-					parser_state->fileset = 0;
-				} else {
-					pprintf(PRI_ERR, "File %s not found!\n",
-							parser_state->file.filename);
-					exit(1);
-				}
-			} else {
-				/* It's just an object. */
-				if(parser_state->nullswitch) {
-					buffer->id = parser_state->i;
-					(*object)[parser_state->i] = *buffer;
-					parser_state->i++;
-				} else parser_state->nullswitch = 1;
-			}
-			obj_traverse_table(L, object, buffer, parser_state);
-		} else if(lua_isnumber(L, -1)) {
-			if(!strcmp("posx", lua_tostring(L, -2)))
-				buffer->pos[0] = lua_tonumber(L, -1);
-			if(!strcmp("posy", lua_tostring(L, -2)))
-				buffer->pos[1] = lua_tonumber(L, -1);
-			if(!strcmp("posz", lua_tostring(L, -2)))
-				buffer->pos[2] = lua_tonumber(L, -1);
-			if(!strcmp("velx", lua_tostring(L, -2)))
-				buffer->vel[0] = lua_tonumber(L, -1);
-			if(!strcmp("vely", lua_tostring(L, -2)))
-				buffer->vel[1] = lua_tonumber(L, -1);
-			if(!strcmp("velz", lua_tostring(L, -2)))
-				buffer->vel[2] = lua_tonumber(L, -1);
-			if(!strcmp("charge", lua_tostring(L, -2)))
-				buffer->charge = lua_tonumber(L, -1)*option->elcharge;
-			if(!strcmp("mass", lua_tostring(L, -2)))
-				buffer->mass = lua_tonumber(L, -1);
-			if(!strcmp("radius", lua_tostring(L, -2)))
-				buffer->radius = lua_tonumber(L, -1);
-			if(!strcmp("atom", lua_tostring(L, -2)))
-				buffer->atomnumber = (unsigned short int)lua_tonumber(L, -1);
-			if(!strcmp("scale", lua_tostring(L, -2)))
-				parser_state->file.scale = lua_tonumber(L, -1);
-			if(!strcmp("rotx", lua_tostring(L, -2)))
-				parser_state->file.rot[0] = lua_tonumber(L, -1);
-			if(!strcmp("roty", lua_tostring(L, -2)))
-				parser_state->file.rot[1] = lua_tonumber(L, -1);
-			if(!strcmp("rotz", lua_tostring(L, -2)))
-				parser_state->file.rot[2] = lua_tonumber(L, -1);
-		} else if(lua_isstring(L, -1)) {
-			if(!strcmp("import", lua_tostring(L, -2))) {
-				strcpy(parser_state->file.filename, lua_tostring(L, -1));
-				parser_state->fileset = 1;
-			}
-		} else if(lua_isboolean(L, -1)) {
-			if(!strcmp("ignore", lua_tostring(L, -2)))
-				buffer->ignore = lua_toboolean(L, -1);
+		if(rec_fn(L, parser_state)) {
+			conf_traverse_table(L, rec_fn, parser_state);
 		}
 		lua_pop(L, 1);
 	}
@@ -220,7 +225,7 @@ int parse_lua_simconf_options()
 {
 	/* Read settings table */
 	lua_getglobal(L, "settings");
-	conf_traverse_table(L);
+	conf_traverse_table(L, &conf_lua_parse_opts, NULL);
 	
 	if((option->epsno == 0.0) || (option->elcharge == 0.0)) {
 		option->noele = 1;
@@ -252,10 +257,17 @@ int parse_lua_simconf_objects(data **object)
 	molfiles_traverse_table(L);
 	initphys(object);
 	/* Finally read the objects */
-	data buffer;
-	struct lua_parser_state parser_state = { 1, 0, 0, {0} };
 	
-	obj_traverse_table(L, object, &buffer, &parser_state);
+	struct lua_parser_state *parser_state = &(struct lua_parser_state){ 
+		.i = 1,
+		.nullswitch = 0,
+		.fileset = 0,
+		.file = {0},
+		.buffer = {{0}},
+		.object = *object,
+	};
+	
+	conf_traverse_table(L, &conf_lua_parse_objs, parser_state);
 	
 	return 0;
 }
