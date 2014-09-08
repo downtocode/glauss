@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
 					option->filename);
 			return 2;
-		} else parse_lua_close();
+		}
 		
 		add_to_free_queue(object);
 		

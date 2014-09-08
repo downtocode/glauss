@@ -70,6 +70,7 @@ void on_quit_signal(int signo)
 {
 	printf("\nSignal to quit %i received!\n", signo);
 	threadcontrol(PHYS_SHUTDOWN, NULL);
+	parse_lua_close();
 	if(option->logenable)
 		fclose(option->logfile);
 	graph_quit();

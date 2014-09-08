@@ -166,7 +166,8 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 	return 0;
 }
 
-static void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)), struct lua_parser_state *parser_state)
+static void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)),
+								struct lua_parser_state *parser_state)
 {
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
