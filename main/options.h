@@ -41,7 +41,7 @@ extern struct option_struct {
 	unsigned short bh_tree_limit;
 	unsigned short bh_lifetime;
 	size_t bh_heapsize_max;
-	bool bh_single_assign;
+	bool bh_single_assign, bh_random_assign;
 	
 	/* Physics - ctrl */
 	unsigned int dump_xyz, dump_sshot;

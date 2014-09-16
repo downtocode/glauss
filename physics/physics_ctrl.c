@@ -17,6 +17,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <pthread.h>
 #include <unistd.h>
 #include "main/options.h"
@@ -44,9 +45,9 @@ void *thread_ctrl(void *thread_setts)
 	unsigned int xyz_counter = 0, sshot_counter = 0;
 	
 	while(1) {
-		/* Pause all threads by not unlocking t->ctrl */
+		/* Pause all threads by stalling unlocking t->ctrl */
 		while(option->paused) {
-			sleep(1);
+			usleep(100);
 		}
 		
 		pthread_testcancel();

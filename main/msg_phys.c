@@ -20,12 +20,13 @@
 #include "msg_phys.h"
 #include "options.h"
 
+static const char *okmsg = "[\033[032m Ok! \033[0m] ";
+static const char *warnmsg = "[\033[033m Warning! \033[0m] ";
+static const char *errmsg = "[\033[031m Error! \033[0m] ";
+
 /* pprintf - a priority printing function. */
 void pprintf(unsigned int priority, const char *format, ...)
 {	
-	const char *okmsg = "[\033[032m Ok! \033[0m] ";
-	const char *warnmsg = "[\033[033m Warning! \033[0m] ";
-	const char *errmsg = "[\033[031m Error! \033[0m] ";
 	va_list args;
 	if(option->logenable) {
 		va_start(args, format);

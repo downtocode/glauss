@@ -17,6 +17,7 @@
  */ 
 #include <signal.h>
 #include <stdio.h>
+#include "parser.h"
 #include "sighandle.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
@@ -69,7 +70,7 @@ void on_usr1_signal(int signo)
 void on_quit_signal(int signo)
 {
 	printf("\nSignal to quit %i received!\n", signo);
-	threadcontrol(PHYS_SHUTDOWN, NULL);
+	phys_ctrl(PHYS_SHUTDOWN, NULL);
 	parse_lua_close();
 	if(option->logenable)
 		fclose(option->logfile);

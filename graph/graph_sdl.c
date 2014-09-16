@@ -32,6 +32,12 @@
 #include "graph_sdl.h"
 #include "input/sighandle.h"
 
+#define MOUSE_ROT_SENS 0.4
+#define MOUSE_TR_SENS 0.001
+
+/* Default values(for use in graph_input) */
+const struct graph_cam_view def_cam = { 32.0, 315.0, 0, 0, 0, 0, 0.005 };
+
 graph_window *main_win = NULL;
 static bool sdl_initd = NULL;
 
@@ -48,9 +54,7 @@ graph_window *graph_sdl_init(data *object)
 	}
 	
 	/* Default options */
-	win->camera = (struct graph_cam_view){ 32.0, 315.0, 0, 0, 0, 0, 0.1 };
-	win->camera.scalefactor = 0.005;
-	win->numbers.final_digit = 0;
+	win->camera = def_cam;
 	win->object = object;
 	strcpy(win->currentsel, "Select object:");
 	
@@ -78,12 +82,12 @@ void graph_sdl_move_cam(graph_window *win)
 	if(win->flicked || win->translate) {
 		SDL_GetRelativeMouseState(&win->mousex, &win->mousey);
 		if(win->flicked) {
-			win->camera.view_roty += (float)win->mousex/4;
-			win->camera.view_rotx += (float)win->mousey/4;
+			win->camera.view_roty += (float)win->mousex*MOUSE_ROT_SENS;
+			win->camera.view_rotx += (float)win->mousey*MOUSE_ROT_SENS;
 		}
 		if(win->translate) {
-			win->camera.tr_x += -(float)win->mousex/100;
-			win->camera.tr_y += (float)win->mousey/100;
+			win->camera.tr_x += -(float)win->mousex*MOUSE_TR_SENS;
+			win->camera.tr_y += (float)win->mousey*MOUSE_TR_SENS;
 		}
 	}
 	if(win->chosen) {

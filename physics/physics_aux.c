@@ -83,7 +83,7 @@ int init_elements(const char *filepath)
 	luaL_openlibs(L);
 	
 	/* Load file */
-	if(filepath != NULL) {
+	if(filepath) {
 		if(luaL_loadfile(L, "./resources/elements.lua"))
 			pprintf(PRI_ERR, "Opening Lua file %s failed! Using internal DB.\n",
 					filepath);
@@ -110,7 +110,7 @@ int init_elements(const char *filepath)
 
 unsigned short int return_atom_num(const char *name)
 {
-	if(name[0] == '\0') return 0;
+	if(!name || name[0] == '\0') return 0;
 	for(int i=1; i<121; i++) {
 		if(strcmp(name, atom_prop[i].name) == 0) {
 			return i;

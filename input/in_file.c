@@ -95,6 +95,7 @@ int in_read_file(data *object, int *i, in_file *file)
 		exit(1);
 	}
 	
+	/* TODO: use something less primitive */
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
 		if(strstr(str, "#") == NULL) {
 			if(filetype == MOL_XYZ) {

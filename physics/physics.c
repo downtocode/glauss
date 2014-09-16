@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <tgmath.h>
 #include <unistd.h>
+#include <time.h>
 #include <pthread.h>
 #include <string.h>
 #include "physics.h"
@@ -82,7 +83,7 @@ thread_destruction phys_find_quit(const char *name)
 	return NULL;
 }
 
-int initphys(data** object)
+int phys_init(data** object)
 {
 	/* Check if physics algorithm is valid */
 	if(phys_find_algorithm(option->algorithm) == NULL) {
@@ -96,13 +97,17 @@ int initphys(data** object)
 	}
 	
 	/* Allocate memory for all the objects */
-	*object = calloc(option->obj+2,sizeof(data));
+	*object = calloc(option->obj, sizeof(data));
 	
-	if(*object != NULL)
-		pprintf(PRI_OK,
-				"Allocated %lu bytes(%u objects) to object array at %p.\n", \
-				(option->obj+1)*sizeof(data), option->obj+1, *object);
-	else return 3; //Impossible, should never ever happen.
+	if(*object) {
+		pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n",
+				option->obj*sizeof(data), option->obj, *object);
+	} else {
+		return 3; /* Impossible, should never ever happen. */
+	}
+	
+	/* Seed RNG even though it's only used when option->bh_random_assign */
+	srand(time(NULL));
 	
 	/* Set the amount of threads */
 	unsigned short online_cores = 0;
@@ -111,6 +116,7 @@ int initphys(data** object)
 	online_cores = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 	
+	/* Threads */
 	if(!option->threads) {
 		if(online_cores) {
 			option->threads = online_cores;
@@ -166,7 +172,7 @@ bool phys_add_obj(data *objects, data *object) {
 	return 0;
 }
 
-int threadcontrol(int status, data** object)
+int phys_ctrl(int status, data** object)
 {
 	if(!option->threads) return 0;
 	switch(status) {
@@ -207,9 +213,12 @@ int threadcontrol(int status, data** object)
 				option->paused = false;
 				sleep(1);
 			}
+			
+			/* Should always point to PTHREAD_CALCELLED */
 			void *res;
 			
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
+			/* Thread 0 is our control thread */
 			for(int k = 0; k < option->threads + 1; k++) {
 				pthread_cancel(threads[k]);
 			}

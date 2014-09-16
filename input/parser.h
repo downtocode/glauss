@@ -20,7 +20,8 @@
 
 #include "physics/physics.h"
 
-int parse_lua_open(char *filename);
+int parse_lua_open_file(const char *filename);
+int parse_lua_open_string(const char *script);
 int parse_lua_close();
 int parse_lua_simconf_options();
 int parse_lua_simconf_objects(data **object);

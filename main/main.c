@@ -40,7 +40,7 @@
 #include "physics/physics_aux.h"
 
 static const char ARGSTRING[] =
-// Generated from text_vs.glsl
+// Generated from helpstring.txt
 #include "main/resources/helpstring.h"
 ;
 
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
 		add_to_free_queue(option);
-		*option = (struct option_struct) {
+		*option = (struct option_struct){
 			/* Visuals */
 			.width = 1280, .height = 720,
 			.fontsize = 38,
@@ -62,13 +62,13 @@ int main(int argc, char *argv[])
 			.dt = 0.008, .verbosity = 5,
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
-			.algorithm = strdup("barnes-hut"),
+			.algorithm = strdup("none"),
 			
 			/* Physics: Barnes-Hut */
 			.bh_ratio = 0.5, .bh_lifetime = 24,
 			.bh_tree_limit = 8,
 			.bh_heapsize_max = 336870912,
-			.bh_single_assign = true,
+			.bh_single_assign = true, .bh_random_assign = true,
 			
 			/* Physics - ctrl */
 			.dump_xyz = 0,
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 					break;
 				case 'f':
 					option->filename = strdup(optarg);
-					if(parse_lua_open(option->filename)) {
+					if(parse_lua_open_file(option->filename)) {
 						pprintf(PRI_ERR,
 								"Could not parse configuration from %s!\n",
 								option->filename);
@@ -206,11 +206,11 @@ int main(int argc, char *argv[])
 	
 	/* Signal handling */
 		if(signal(SIGINT, on_quit_signal) == SIG_ERR) {
-			fputs("An error occurred while setting a signal handler.\n", stderr);
+			fputs("An error occurred while setting SIGINT signal handler.\n", stderr);
 			return EXIT_FAILURE;
 		}
 		if(signal(SIGUSR1, on_usr1_signal) == SIG_ERR) {
-			fputs("An error occurred while setting a signal handler.\n", stderr);
+			fputs("An error occurred while setting USR1 signal handler.\n", stderr);
 			return EXIT_FAILURE;
 		}
 	/* Signal handling */
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 		
 		add_to_free_queue(object);
 		
-		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj+1);
+		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
 		pprintf(PRI_ESSENTIAL,
 		"Constants: elcharge=%E C, gconst=%E m^3 kg^-1 s^-2, epsno=%E F m^-1\n", 
@@ -248,9 +248,9 @@ int main(int argc, char *argv[])
 		}
 	/*	Graphics	*/
 	
-	threadcontrol(PHYS_START, &object);
+	phys_ctrl(PHYS_START, &object);
 	
-	gettimeofday (&t1 , NULL);
+	gettimeofday(&t1 , NULL);
 	
 	while(1) {
 		/* Get input from SDL */
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
 			SDL_Delay(50);
 		}
 		
-		/* Move camera if needed */
+		/* Move camera */
 		graph_sdl_move_cam(win);
 		
 		/* Draw scene */

@@ -18,6 +18,8 @@
 #ifndef PHYSENGINE_AUX
 #define PHYSENGINE_AUX
 
+#define DIGITS_MAX 20
+
 #include "physics.h"
 
 extern struct atomic_cont {
@@ -34,7 +36,7 @@ enum {
 };
 
 struct numbers_selection {
-	int digits[20];
+	int digits[DIGITS_MAX];
 	unsigned short int final_digit;
 };
 

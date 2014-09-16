@@ -93,9 +93,9 @@ extern struct thread_statistics **t_stats;
 extern const struct list_algorithms phys_algorithms[];
 
 /* External functions for control */
-int initphys(data** object);
+int phys_init(data** object);
 bool phys_remove_obj(data *object, unsigned int index);
 bool phys_add_obj(data *objects, data *object);
-int threadcontrol(int status, data** object);
+int phys_ctrl(int status, data** object);
 
 #endif

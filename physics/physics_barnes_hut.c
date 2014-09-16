@@ -20,6 +20,7 @@
 #include <tgmath.h>
 #include <pthread.h>
 #include <malloc.h>
+#include <signal.h>
 #include <limits.h>
 #include "main/options.h"
 #include "main/msg_phys.h"
@@ -70,15 +71,33 @@ static void bh_add_thread(bh_thread *root,
 	}
 	/* Split the octree and assign the threads */
 	short distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
+	bool oct_assignments[8] = {false};
+	
 	for(int k = 1; k < root->assigned + 1; k++) {
 		/* Calculate the threads' share. Add the calculated remain to the first ones. */
 		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
+		
 		for(int l = 0; l < thread_conts; l++) {
-			/* Map the octrees to the real BH octree */
-			root->assign[k]->octrees[oct] = root->subdiv[oct]->mapped;
-			/* Assign the threads within the octree from the root. */
-			root->subdiv[oct]->assign[++root->subdiv[oct]->assigned] = root->assign[k];
-			oct++;
+			if(option->bh_random_assign) {
+				/* Map threads to random subtrees */
+				while(1) {
+					oct = (short unsigned int)(8*((float)rand()/RAND_MAX));
+					if(!oct_assignments[oct]) {
+						/* Map the octrees to the real BH octree */
+						root->assign[k]->octrees[oct] = root->subdiv[oct]->mapped;
+						/* Assign the threads within the octree from the root. */
+						root->subdiv[oct]->assign[++root->subdiv[oct]->assigned] = root->assign[k];
+						oct_assignments[oct] = true;
+						break;
+					}
+				}
+			} else {
+				/* Map the octrees sequentially to the subtrees */
+				root->assign[k]->octrees[oct] = root->subdiv[oct]->mapped;
+				/* Assign the threads within the octree from the root. */
+				root->subdiv[oct]->assign[++root->subdiv[oct]->assigned] = root->assign[k];
+				oct++;
+			}
 		}
 	}
 	return;
@@ -260,7 +279,6 @@ void bh_decimate_octree(bh_octree *octree)
 	for(short i=0; i < 8; i++) {
 		if(octree->cells[i]) {
 			bh_decimate_octree(octree->cells[i]);
-			allocated_cells--;
 		}
 	}
 	free(octree);
@@ -452,7 +470,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 	}
 }
 
-/* Checks whether an object belongs to a specific octree and returns 1 if so. */
+/* Build octrees with */
 unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 {
 	unsigned int prev_allocated_cells = allocated_cells;

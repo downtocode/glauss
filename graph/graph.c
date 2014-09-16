@@ -276,7 +276,7 @@ void graph_draw_scene(graph_window *win)
 		graph_display_text(osdtext, FPSx, FPSy, FPSs, fpscolor);
 		
 		/* Objects */
-		snprintf(osdtext, OSD_BUFFER, "Objects = %u", option->obj+1);
+		snprintf(osdtext, OSD_BUFFER, "Objects = %u", option->obj);
 		graph_display_text(osdtext, OBJx, OBJy, OBJs, COL_WHITE);
 		
 		/* Timestep display */

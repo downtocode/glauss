@@ -20,9 +20,11 @@
 
 #include "physics/physics.h"
 
-#define MOL_XYZ 1
-#define MOL_PDB 2
-#define MOL_OBJ 3
+enum {
+	MOL_XYZ,
+	MOL_PDB,
+	MOL_OBJ,
+};
 
 typedef struct {
 	data *inf;

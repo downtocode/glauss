@@ -14,6 +14,8 @@ settings = {
 		bh_tree_limit = 8, --Range is [2,8(default)]
 		--If only a single thread is available, assign the entire root to it.
 		bh_single_assign = true,
+		--Assign the octrees of the threads randomly.
+		bh_random_assign = true,
 	},
 	visual = {
 		width = 1024,
@@ -36,7 +38,7 @@ settings = {
 	},
 }
 
-maxobjects = 2400
+maxobjects = 12000
 
 --Add molecules or any additional objects here
 objects = {
@@ -53,11 +55,11 @@ objects = {
 function spawn_objects(var_C)
 	math.randomseed( os.time() )
 	scale_obj = 45
-	for i = #objects+1, maxobjects, 1 do
+	for i = #objects+1, maxobjects+1, 1 do
 		objects[i] = {
-			posx = scale_obj*math.sin(i)*(i/maxobjects),
-			posy = scale_obj*(math.random()-0.5)/10,
-			posz = scale_obj*math.cos(i)*(i/maxobjects),
+			posx = scale_obj*(math.random()-.5),
+			posy = scale_obj*(math.random()-.5),
+			posz = scale_obj*(math.random()-.5),
 			velx = 0,
 			vely = 0,
 			velz = 0,

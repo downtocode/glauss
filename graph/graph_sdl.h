@@ -45,6 +45,9 @@ typedef struct {
 	float fps;
 } graph_window;
 
+/* Default camera position and scale */
+extern const struct graph_cam_view def_cam;
+
 graph_window *graph_sdl_init(data *object);
 void graph_sdl_move_cam(graph_window *win);
 void graph_sdl_swapwin(graph_window *win);

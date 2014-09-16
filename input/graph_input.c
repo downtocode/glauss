@@ -26,9 +26,18 @@
 #include "main/options.h"
 #include "main/msg_phys.h"
 
+/* Time constant scaling */
+#define DT_SCALE 0.5
+
+/* MWheel scroll scale factor */
+#define ZOOM_SENS 1.11
+
+/* Maximum zoom out */
+#define MIN_SCALE 0.0005
+
 static void graph_sdl_scan_selection(graph_window *win)
 {
-	if(win->event->key.keysym.sym!=SDLK_RETURN && win->numbers.final_digit < 19) {
+	if(win->event->key.keysym.sym!=SDLK_RETURN && win->numbers.final_digit < DIGITS_MAX) {
 		if(win->event->key.keysym.sym==SDLK_BACKSPACE && win->numbers.final_digit > 0) {
 			getnumber(&win->numbers, 0, NUM_REMOVE);
 			win->currentsel[strlen(win->currentsel)-1] = '\0';
@@ -73,18 +82,17 @@ static void graph_release_mouse(graph_window *win)
 {
 	if(win->event->button.button == SDL_BUTTON_LEFT) win->flicked = 0;
 	if(win->event->button.button == SDL_BUTTON_MIDDLE) win->translate = 0;
-	if(!win->translate && !win->flicked) {
-		SDL_SetRelativeMouseMode(0);
-		SDL_WarpMouseInWindow(win->window, win->initmousex, win->initmousey);
-		SDL_ShowCursor(1);
-	}
+	SDL_SetRelativeMouseMode(0);
+	SDL_WarpMouseInWindow(win->window, win->initmousex, win->initmousey);
+	SDL_ShowCursor(1);
 }
 
 static void graph_adj_zoom_mwheel(graph_window *win)
 {
-	if(win->event->wheel.y == 1) win->camera.scalefactor *= 1.11;
-	if(win->event->wheel.y == -1) win->camera.scalefactor /= 1.11;
-	if(win->camera.scalefactor < 0.005) win->camera.scalefactor = 0.005;
+	if(win->event->wheel.y > 0) win->camera.scalefactor *= ZOOM_SENS;
+	if(win->event->wheel.y < 0) win->camera.scalefactor /= ZOOM_SENS;
+	/* Cap to specified max zoom */
+	if(win->camera.scalefactor < MIN_SCALE) win->camera.scalefactor = MIN_SCALE;
 }
 
 static void graph_scan_keypress(graph_window *win)
@@ -99,19 +107,16 @@ static void graph_scan_keypress(graph_window *win)
 		return;
 	}
 	if(win->event->key.keysym.sym==SDLK_RIGHTBRACKET) {
-		option->dt *= 2;
-		printf("dt = %f\n", option->dt);
+		option->dt /= DT_SCALE;
 	}
 	if(win->event->key.keysym.sym==SDLK_LEFTBRACKET) {
-		option->dt /= 2;
-		printf("dt = %f\n", option->dt);
+		option->dt *= DT_SCALE;
 	}
 	if(win->event->key.keysym.sym==SDLK_SPACE) {
-		threadcontrol(PHYS_PAUSESTART, NULL);
+		phys_ctrl(PHYS_PAUSESTART, NULL);
 	}
 	if(win->event->key.keysym.sym==SDLK_r) {
-		win->camera = (struct graph_cam_view)\
-		{ 32.0, 315.0, 0, 0, 0, 0, 0.1 };
+		win->camera = def_cam;
 		win->chosen = 0;
 	}
 	if(win->event->key.keysym.sym==SDLK_z) {
@@ -121,8 +126,8 @@ static void graph_scan_keypress(graph_window *win)
 		phys_shuffle_algorithms();
 	}
 	if(win->event->key.keysym.sym==SDLK_BACKSPACE) {
-		if(option->status) threadcontrol(PHYS_SHUTDOWN, NULL);
-		else threadcontrol(PHYS_START, &win->object);
+		if(option->status) phys_ctrl(PHYS_SHUTDOWN, NULL);
+		else phys_ctrl(PHYS_START, &win->object);
 	}
 	if(win->event->key.keysym.sym==SDLK_PERIOD) {
 		if(win->chosen < option->obj) win->chosen++;
@@ -147,6 +152,11 @@ static void graph_scan_keypress(graph_window *win)
 	}
 	if(win->event->key.keysym.sym==SDLK_ESCAPE) {
 		raise(SIGINT);
+	}
+	if(win->event->key.keysym.sym==SDLK_DELETE) {
+		if(win->chosen > 0 && !option->status) {
+			phys_remove_obj(win->object, win->chosen--);
+		}
 	}
 	if(win->event->key.keysym.sym==SDLK_q) {
 		raise(SIGINT);
