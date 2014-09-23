@@ -18,6 +18,16 @@
 #ifndef PHYSENGINE_PHYS_N_BODY
 #define PHYSENGINE_PHYS_N_BODY
 
+#define PHYS_NBODY {\
+		"n-body",\
+		PACKAGE_VERSION,\
+		"Standard n-body simulation",\
+		"Rostislav Pehlivanov",\
+		nbody_init,\
+		thread_nbody,\
+		nbody_quit,\
+	}
+
 struct thread_config_nbody {
 	data* obj;
 	unsigned int id, objs_low, objs_high;

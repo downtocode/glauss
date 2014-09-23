@@ -125,10 +125,7 @@ int main(int argc, char *argv[])
 					break;
 				case 'a':
 					if(strcmp(optarg, "help") == 0) {
-						printf("Implemented algorithms:\n");
-						for(int n = 0; phys_algorithms[n].name; n++) {
-							printf("    %s\n", phys_algorithms[n].name);
-						}
+						phys_list_algo();
 						exit(0);
 					}
 					strcpy(option->algorithm, optarg);
@@ -182,12 +179,6 @@ int main(int argc, char *argv[])
 				printf("%s ", argv[optind++]);
 			printf("\n");
 			exit(1);
-		}
-		
-		if(!strcmp("none", option->algorithm)) {
-			pprintf(PRI_WARN, "Physics algorithm set to none! Nothing will be simulated.\n");
-		} else {
-			pprintf(PRI_ESSENTIAL, "Algorithm set to %s\n", option->algorithm);
 		}
 		
 		if(option->filename == NULL) {

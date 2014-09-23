@@ -20,6 +20,7 @@
 
 #include "physics.h"
 
+/* Schedule thread. Handles any scheduled events(XYZ dumps, screenshots) */
 struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg);
 void ctrl_quit(struct glob_thread_config *cfg);
 void *thread_ctrl(void *thread_setts);

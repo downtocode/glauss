@@ -18,6 +18,16 @@
 #ifndef PHYSENGINE_PHYS_BARNES_HUT
 #define PHYSENGINE_PHYS_BARNES_HUT
 
+#define PHYS_BHUT {\
+		"barnes-hut",\
+		PACKAGE_VERSION,\
+		"Barnes-Hut simulation",\
+		"Rostislav Pehlivanov",\
+		bhut_init,\
+		thread_bhut,\
+		bhut_quit,\
+	}
+
 /* Octree structure */
 typedef struct phys_barnes_hut_octree {
 	unsigned short score, depth;

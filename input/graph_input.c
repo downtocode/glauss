@@ -153,11 +153,6 @@ static void graph_scan_keypress(graph_window *win)
 	if(win->event->key.keysym.sym==SDLK_ESCAPE) {
 		raise(SIGINT);
 	}
-	if(win->event->key.keysym.sym==SDLK_DELETE) {
-		if(win->chosen > 0 && !option->status) {
-			phys_remove_obj(win->object, win->chosen--);
-		}
-	}
 	if(win->event->key.keysym.sym==SDLK_q) {
 		raise(SIGINT);
 	}

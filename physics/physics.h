@@ -71,7 +71,7 @@ struct glob_thread_config {
 
 /* Algorithm structure */
 struct list_algorithms {
-	const char *name;
+	const char *name, *version, *desc, *author;
 	void **(*thread_configuration)(struct glob_thread_config *cfg);
 	void *(*thread_location)(void *thread_setts);
 	void (*thread_destruction)(void **);
@@ -92,10 +92,11 @@ extern struct thread_statistics **t_stats;
 /* List of algorithms and their function pointers */
 extern const struct list_algorithms phys_algorithms[];
 
+/* Function to print all avail algorithms */
+void phys_list_algo();
+
 /* External functions for control */
 int phys_init(data** object);
-bool phys_remove_obj(data *object, unsigned int index);
-bool phys_add_obj(data *objects, data *object);
 int phys_ctrl(int status, data** object);
 
 #endif

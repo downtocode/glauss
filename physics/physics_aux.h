@@ -40,11 +40,19 @@ struct numbers_selection {
 	unsigned short int final_digit;
 };
 
+/* Elements system. Submit a NULL filepath to use compiled internal DB */
 int init_elements(const char *filepath);
 unsigned short int return_atom_num(const char *name);
 const char *return_atom_str(unsigned int num);
+
+/* Shuffle through all algorithms available and change option->algorithm */
 void phys_shuffle_algorithms();
+
+/* Function to turn individual numbers into a single number. See graph_input
+ * for example of how to use */
 int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status);
+
+/* Rotate vector by angles specified in rot1 */
 void rotate_vec(vec3 *vec, vec3 *rot1);
 
 #endif

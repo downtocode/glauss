@@ -22,6 +22,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include "config.h"
 #include "physics.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
@@ -29,6 +30,17 @@
 #include "physics_null.h"
 #include "physics_n_body.h"
 #include "physics_barnes_hut.h"
+
+/* "none" algorithm description */
+#define PHYS_NONE {\
+		"none",\
+		PACKAGE_VERSION,\
+		NULL,\
+		NULL,\
+		NULL,\
+		thread_null,\
+		NULL,\
+	}
 
 /*	Default threads to use when system != linux.	*/
 #define failsafe_cores 2
@@ -45,14 +57,15 @@ struct glob_thread_config *cfg;
 /* Only sent to deinit function */
 void **thread_conf;
 
+/* Populate structure with names and function pointers */
 const struct list_algorithms phys_algorithms[] = {
-	/* name,         init f-n     thread f-n     deinit f-n   */
-	{ "none",        NULL,        thread_null,   NULL,        },
-	{ "null",        null_init,   thread_null,   null_quit,   },
-	{ "n-body",      nbody_init,  thread_nbody,  nbody_quit,  },
-	{ "barnes-hut",  bhut_init,   thread_bhut,   bhut_quit,   },
+	PHYS_NONE,
+	PHYS_NULL,
+	PHYS_NBODY,
+	PHYS_BHUT,
 	{0}
 };
+
 /* Init function needs to return a double pointer, which then gets
  * distributed amongst threads as arguments and sent to deinit f-n */
 
@@ -83,16 +96,26 @@ thread_destruction phys_find_quit(const char *name)
 	return NULL;
 }
 
+void phys_list_algo()
+{
+	printf("Implemented algorithms:\n");
+	printf("    name		version			description\n");
+	for(int n = 0; phys_algorithms[n].name; n++) {
+		printf("    %s		%s		%s\n",
+			   phys_algorithms[n].name,
+			   phys_algorithms[n].version,
+			   phys_algorithms[n].desc);
+	}
+}
+
 int phys_init(data** object)
 {
 	/* Check if physics algorithm is valid */
 	if(phys_find_algorithm(option->algorithm) == NULL) {
 		pprintf(PRI_ERR,
-				"Algorithm \"%s\" not found! Implemented algorithms:\n",
+				"Algorithm \"%s\" not found!\n",
 				option->algorithm);
-		for(int n = 0; phys_algorithms[n].name; n++) {
-			printf("    %s\n", phys_algorithms[n].name);
-		}
+		phys_list_algo();
 		exit(1);
 	}
 	
@@ -155,20 +178,6 @@ int phys_init(data** object)
 	/*	SCHED_RR - Round Robin, SCHED_FIFO - FIFO	*/
 	pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
 	pthread_attr_setschedparam(&thread_attribs, &parameters);
-	return 0;
-}
-
-bool phys_remove_obj(data *object, unsigned int index) {
-	object[index] = object[option->obj];
-	object = realloc(object, (--option->obj)*sizeof(data));
-	if(!object) return 1;
-	return 0;
-}
-
-bool phys_add_obj(data *objects, data *object) {
-	objects = realloc(objects, (++option->obj)*sizeof(data));
-	objects[option->obj] = *object;
-	if(!objects) return 1;
 	return 0;
 }
 

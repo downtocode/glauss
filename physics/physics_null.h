@@ -18,6 +18,16 @@
 #ifndef PHYSENGINE_PHYS_NULL
 #define PHYSENGINE_PHYS_NULL
 
+#define PHYS_NULL {\
+		"null",\
+		PACKAGE_VERSION,\
+		"Null simulation",\
+		"Rostislav Pehlivanov",\
+		null_init,\
+		thread_null,\
+		null_quit,\
+	}
+
 struct thread_config_null {
 	data *obj;
 	double *dists, *maxdist;
