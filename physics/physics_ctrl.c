@@ -20,6 +20,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <unistd.h>
+#include "input/parser.h"
 #include "main/options.h"
 #include "main/out_xyz.h"
 #include "physics.h"
@@ -42,7 +43,7 @@ void ctrl_quit(struct glob_thread_config *cfg)
 void *thread_ctrl(void *thread_setts)
 {
 	struct glob_thread_config *t = thread_setts;
-	unsigned int xyz_counter = 0, sshot_counter = 0;
+	unsigned int xyz_counter = 0, sshot_counter = 0, funct_counter = 0;
 	
 	while(1) {
 		/* Pause all threads by stalling unlocking t->ctrl */
@@ -70,6 +71,12 @@ void *thread_ctrl(void *thread_setts)
 		if(option->dump_sshot && ++sshot_counter > option->dump_sshot) {
 			option->write_sshot_now = true;
 			sshot_counter = 0;
+		}
+		
+		/* Lua function execution */
+		if(option->exec_funct_freq && ++funct_counter > option->exec_funct_freq) {
+			lua_exec_funct(option->timestep_funct);
+			funct_counter = 0;
 		}
 		
 		/* Check if we need to quit */

@@ -17,6 +17,13 @@ settings = {
 		--Assign the octrees of the threads randomly.
 		bh_random_assign = true,
 	},
+	lua_settings = {
+		spawn_funct = "spawn_objects",
+		--Name of function to read objects from
+		timestep_funct = "run_on_timestep",
+		--Function to execute upon timestep completion
+		exec_funct_freq = 0, --Auto timestep_funct run frequency
+	},
 	visual = {
 		width = 1024,
 		height = 600,
@@ -38,18 +45,18 @@ settings = {
 	},
 }
 
-maxobjects = 12000
+maxobjects = 6000
 
 --Add molecules or any additional objects here
 objects = {
--- 	{
--- 		import = "../soccer ball.obj",
--- 		scale = 90,
--- 		posx = 0, rotx = 0, velx = 0,
--- 		posy = 0, roty = 0, vely = 0,
--- 		posz = 0, rotz = 0, velz = 0,
--- 		ignore = false,
--- 	}
+	{
+		import = "../soccer ball.obj",
+		scale = 1,
+		posx = 0, rotx = 0, velx = 0,
+		posy = 0, roty = 0, vely = 0,
+		posz = 0, rotz = 0, velz = 0,
+		ignore = false,
+	}
 }
 
 function spawn_objects(var_C)
@@ -71,4 +78,9 @@ function spawn_objects(var_C)
 		}
 	end
 	return objects, #objects
+end
+
+function run_on_timestep(table_C)
+	print(table_C)
+	return 1
 end

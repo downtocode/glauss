@@ -26,8 +26,12 @@ extern struct option_struct {
 	unsigned short verbosity;
 	int width, height, fontsize;
 	bool nogrv, noele, logenable;
-	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
 	FILE *logfile; //--
+	
+	/* Parser */
+	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
+	char *spawn_funct, *timestep_funct;
+	unsigned int exec_funct_freq;
 	
 	/* Physics */
 	bool status, paused; //--

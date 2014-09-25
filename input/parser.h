@@ -25,6 +25,7 @@ int parse_lua_open_string(const char *script);
 int parse_lua_close();
 int parse_lua_simconf_options();
 int parse_lua_simconf_objects(data **object);
+double lua_exec_funct(const char *funct);
 const char *parse_file_to_str(const char *filename);
 
 #endif

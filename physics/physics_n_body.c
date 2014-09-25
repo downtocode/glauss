@@ -72,6 +72,7 @@ void *thread_nbody(void *thread_setts)
 	struct thread_config_nbody *t = thread_setts;
 	vec3 vecnorm, accprev;
 	double dist;
+	float dt = option->dt;
 	const double pi = acos(-1);
 	const double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele;
@@ -79,8 +80,8 @@ void *thread_nbody(void *thread_setts)
 	while(1) {
 		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			if(t->obj[i].ignore) continue;
-			t->obj[i].pos += (t->obj[i].vel*option->dt) +\
-			(t->obj[i].acc)*((option->dt*option->dt)/2);
+			t->obj[i].pos += (t->obj[i].vel*dt) +\
+			(t->obj[i].acc)*((dt*dt)/2);
 		}
 		
 		pthread_barrier_wait(t->barrier);
@@ -103,7 +104,7 @@ void *thread_nbody(void *thread_setts)
 								((t->obj[i].charge*t->obj[j].charge)/\
 									(4*pi*epsno*dist*dist*t->obj[i].mass));
 			}
-			t->obj[i].vel += (t->obj[i].acc + accprev)*((option->dt)/2);
+			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 		}
 		pthread_barrier_wait(t->ctrl);
 		

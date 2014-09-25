@@ -78,11 +78,21 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 			option->dump_xyz = lua_tonumber(L, -1);
 		if(!strcmp("dump_sshot", lua_tostring(L, -2)))
 			option->dump_sshot = lua_tonumber(L, -1);
+		if(!strcmp("exec_funct_freq", lua_tostring(L, -2)))
+			option->exec_funct_freq = lua_tonumber(L, -1);
 	} else if(lua_isstring(L, -1)) {
 		/* The defaults have been assigned using strdup too, so free them */
 		if(!strcmp("algorithm", lua_tostring(L, -2))) {
 			free(option->algorithm);
 			option->algorithm = strdup(lua_tostring(L, -1));
+		}
+		if(!strcmp("spawn_funct", lua_tostring(L, -2))) {
+			free(option->spawn_funct);
+			option->spawn_funct = strdup(lua_tostring(L, -1));
+		}
+		if(!strcmp("timestep_funct", lua_tostring(L, -2))) {
+			free(option->timestep_funct);
+			option->timestep_funct = strdup(lua_tostring(L, -1));
 		}
 		if(!strcmp("fontname", lua_tostring(L, -2))) {
 			free(option->fontname);
@@ -283,8 +293,7 @@ int parse_lua_simconf_options()
 /* Read objects */
 int parse_lua_simconf_objects(data **object)
 {
-	/* Read returned table of objects */
-	lua_getglobal(L, "spawn_objects");
+	lua_getglobal(L, option->spawn_funct);
 	/* Can send arguments here, currently unused. */
 	lua_pushnumber(L, 0);
 	/* The second returned value is the total number of objects */
@@ -310,6 +319,14 @@ int parse_lua_simconf_objects(data **object)
 	conf_traverse_table(L, &conf_lua_parse_objs, parser_state);
 	
 	return 0;
+}
+
+double lua_exec_funct(const char *funct) {
+	if(!funct) return 0;
+	lua_getglobal(L, funct);
+	lua_pushnumber(L, t_stats[1]->progress);
+	lua_call(L, 1, 1);
+	return lua_tonumber(L, -1);
 }
 
 /* Currently unused, parse an external file into a const char string pointer */

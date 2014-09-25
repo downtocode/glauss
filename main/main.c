@@ -56,6 +56,9 @@ int main(int argc, char *argv[])
 			.width = 1280, .height = 720,
 			.fontsize = 38,
 			.fontname = strdup("Sans"),
+			.spawn_funct = strdup("spawn_objects"),
+			.timestep_funct = NULL,
+			.exec_funct_freq = 0,
 			
 			/* Physics */
 			.threads = 0,

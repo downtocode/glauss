@@ -531,6 +531,7 @@ static void bh_cascade_position(bh_octree *target, bh_octree *root)
 void *thread_bhut(void *thread_setts)
 {
 	struct thread_config_bhut *t = thread_setts;
+	float dt = option->dt;
 	vec3 accprev, dist;
 	
 	while(1) {
@@ -539,8 +540,8 @@ void *thread_bhut(void *thread_setts)
 		/* Move objects */
 		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			if(t->obj[i].ignore) continue;
-			t->obj[i].pos += (t->obj[i].vel*option->dt) +\
-				(t->obj[i].acc)*((option->dt*option->dt)/2);
+			t->obj[i].pos += (t->obj[i].vel*dt) +\
+				(t->obj[i].acc)*((dt*dt)/2);
 		}
 		
 		pthread_barrier_wait(t->barrier);
@@ -558,7 +559,7 @@ void *thread_bhut(void *thread_setts)
 		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;
 			bh_calculate_force(&t->obj[i], t->root);
-			t->obj[i].vel += (t->obj[i].acc + accprev)*((option->dt)/2);
+			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 			/* Get updated maximum for root while we're at it. */
 			dist = t->obj[i].pos - t->root->origin;
 			for(int j = 0; j < 3; j++) if(dist[j] > maxdist) maxdist = dist[j];
