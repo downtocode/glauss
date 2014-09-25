@@ -62,19 +62,19 @@ void *thread_ctrl(void *thread_setts)
 		}
 		
 		/* Dump XYZ file, will not increment timer if !option->dump_xyz */
-		if(option->dump_xyz && ++xyz_counter > option->dump_xyz) {
+		if(option->dump_xyz && ++xyz_counter >= option->dump_xyz) {
 			toxyz(t->obj);
 			xyz_counter = 0;
 		}
 		
 		/* Signal to create a screenshot next frame */
-		if(option->dump_sshot && ++sshot_counter > option->dump_sshot) {
+		if(option->dump_sshot && ++sshot_counter >= option->dump_sshot) {
 			option->write_sshot_now = true;
 			sshot_counter = 0;
 		}
 		
 		/* Lua function execution */
-		if(option->exec_funct_freq && ++funct_counter > option->exec_funct_freq) {
+		if(option->exec_funct_freq && ++funct_counter >= option->exec_funct_freq) {
 			lua_exec_funct(option->timestep_funct);
 			funct_counter = 0;
 		}
