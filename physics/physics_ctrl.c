@@ -75,7 +75,7 @@ void *thread_ctrl(void *thread_setts)
 		
 		/* Lua function execution */
 		if(option->exec_funct_freq && ++funct_counter >= option->exec_funct_freq) {
-			lua_exec_funct(option->timestep_funct);
+			lua_exec_funct(option->timestep_funct, t->obj);
 			funct_counter = 0;
 		}
 		

@@ -111,6 +111,8 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 			option->bh_single_assign = lua_toboolean(L, -1);
 		if(!strcmp("bh_random_assign", lua_tostring(L, -2)))
 			option->bh_random_assign = lua_toboolean(L, -1);
+		if(!strcmp("lua_expose_obj_array", lua_tostring(L, -2)))
+			option->lua_expose_obj_array = lua_toboolean(L, -1);
 	}
 	return 0;
 }
@@ -162,7 +164,7 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 			parser_state->buffer.mass = lua_tonumber(L, -1);
 		if(!strcmp("radius", lua_tostring(L, -2)))
 			parser_state->buffer.radius = lua_tonumber(L, -1);
-		if(!strcmp("atom", lua_tostring(L, -2)))
+		if(!strcmp("atomnumber", lua_tostring(L, -2)))
 			parser_state->buffer.atomnumber = lua_tonumber(L, -1);
 		if(!strcmp("scale", lua_tostring(L, -2)))
 			parser_state->file.scale = lua_tonumber(L, -1);
@@ -345,14 +347,63 @@ static void lua_push_stat_array()
 	}
 }
 
-double lua_exec_funct(const char *funct)
+static void lua_push_object_array(data *obj)
+{
+	/* Create "array" table. */
+	lua_newtable(L);
+	for(int i = 1; i < option->obj + 1; i++) {
+		/* Create a table inside that to hold everything */
+		lua_newtable(L);
+		/* Push variables */
+		
+		/* Position table */
+		lua_newtable(L);
+		for(int j = 0; j < 3; j++) {
+			lua_pushnumber(L, obj[i].pos[j]);
+			lua_rawseti(L, -2, j);
+		}
+		lua_setfield(L, -2, "pos");
+		
+		/* Velocity table */
+		lua_newtable(L);
+		for(int j = 0; j < 3; j++) {
+			lua_pushnumber(L, obj[i].vel[j]);
+			lua_rawseti(L, -2, j);
+		}
+		lua_setfield(L, -2, "vel");
+		
+		/* Everything else */
+		lua_pushnumber(L, obj[i].mass);
+		lua_setfield(L, -2, "mass");
+		lua_pushnumber(L, obj[i].charge);
+		lua_setfield(L, -2, "charge");
+		lua_pushnumber(L, obj[i].radius);
+		lua_setfield(L, -2, "radius");
+		lua_pushnumber(L, obj[i].atomnumber);
+		lua_setfield(L, -2, "atomnumber");
+		lua_pushnumber(L, obj[i].id);
+		lua_setfield(L, -2, "id");
+		lua_pushboolean(L, obj[i].ignore);
+		lua_setfield(L, -2, "ignore");
+		
+		lua_rawseti(L, -2, i);
+	}
+}
+
+double lua_exec_funct(const char *funct, data *object)
 {
 	if(!funct && !lua_loaded) return 0;
 	lua_getglobal(L, funct);
 	
+	int num_args = 1;
 	lua_push_stat_array();
 	
-	lua_call(L, 1, 1);
+	if(option->lua_expose_obj_array) {
+		lua_push_object_array(object);
+		num_args++;
+	}
+	
+	lua_call(L, num_args, 1);
 	return lua_tonumber(L, -1);
 }
 

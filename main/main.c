@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
 			.spawn_funct = strdup("spawn_objects"),
 			.timestep_funct = NULL,
 			.exec_funct_freq = 0,
+			.lua_expose_obj_array = 0,
 			
 			/* Physics */
 			.threads = 0,

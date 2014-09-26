@@ -23,6 +23,8 @@ settings = {
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
 		exec_funct_freq = 10, --Auto timestep_funct run frequency
+		lua_expose_obj_array = true;
+		--Expose object array to the timestep_funct, slight performance decrease
 	},
 	visual = {
 		width = 1024,
@@ -73,14 +75,27 @@ function spawn_objects(var_C)
 			charge = 100,
 			mass = 1000000*i,
 			radius = 0.2,
-			atom = math.random(1,10),
+			atomnumber = math.random(1,10),
 			ignore = false,
 		}
 	end
 	return objects, #objects
 end
 
-function run_on_timestep(t_stats)
+--Consult physics/physics.h for the format of struct thread_statistics and typedef data
+function run_on_timestep(t_stats, obj)
 	print("Current progress:", t_stats[1].progress)
+	
+	memory_usage = 0
+	for i = 1, #t_stats, 1 do
+		memory_usage = memory_usage + t_stats[i].bh_heapsize
+	end
+	print("Total octree memory usage:", memory_usage/1048576.0)
+	
+	if obj == nil then
+		return 0
+	else
+		print("Velocity of object 1:", math.sqrt(obj[1].vel[0]^2 + obj[1].vel[1]^2 + obj[1].vel[2]^2) )
+	end
 	return 1
 end

@@ -32,6 +32,7 @@ extern struct option_struct {
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
 	char *spawn_funct, *timestep_funct;
 	unsigned int exec_funct_freq;
+	bool lua_expose_obj_array;
 	
 	/* Physics */
 	bool status, paused; //--
