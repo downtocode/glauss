@@ -117,10 +117,30 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 	return 0;
 }
 
+static void conf_lua_get_vector(lua_State *L, vec3 *vec)
+{
+	/* Can be used for N dim tables, change 3 to N */
+	for(int i = 0; i < 3; i++) {
+		lua_pushinteger(L, i+1);
+		lua_gettable(L, -2);
+		(*vec)[i] = lua_tonumber(L, -1);
+		lua_pop(L, 1);
+	}
+}
+
 static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
 {
 	/* Variables are read out of order so wait until we see the next object */
 	if(lua_istable(L, -1)) {
+		if(lua_type(L, -2) == LUA_TSTRING) {
+			if(!strcmp("pos", lua_tostring(L, -2))) {
+				conf_lua_get_vector(L, &parser_state->buffer.pos);
+				return 0;
+			} else if(!strcmp("vel", lua_tostring(L, -2))) {
+				conf_lua_get_vector(L, &parser_state->buffer.vel);
+				return 0;
+			}
+		}
 		if(parser_state->fileset) {
 			/* It's a file */
 			if(!access(parser_state->file.filename, R_OK)) {
@@ -146,18 +166,6 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 		/* Object/file finished, go to next */
 		return 1;
 	} else if(lua_isnumber(L, -1)) {
-		if(!strcmp("posx", lua_tostring(L, -2)))
-			parser_state->buffer.pos[0] = lua_tonumber(L, -1);
-		if(!strcmp("posy", lua_tostring(L, -2)))
-			parser_state->buffer.pos[1] = lua_tonumber(L, -1);
-		if(!strcmp("posz", lua_tostring(L, -2)))
-			parser_state->buffer.pos[2] = lua_tonumber(L, -1);
-		if(!strcmp("velx", lua_tostring(L, -2)))
-			parser_state->buffer.vel[0] = lua_tonumber(L, -1);
-		if(!strcmp("vely", lua_tostring(L, -2)))
-			parser_state->buffer.vel[1] = lua_tonumber(L, -1);
-		if(!strcmp("velz", lua_tostring(L, -2)))
-			parser_state->buffer.vel[2] = lua_tonumber(L, -1);
 		if(!strcmp("charge", lua_tostring(L, -2)))
 			parser_state->buffer.charge = lua_tonumber(L, -1)*option->elcharge;
 		if(!strcmp("mass", lua_tostring(L, -2)))
@@ -210,7 +218,9 @@ static void molfiles_traverse_table(lua_State *L)
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
 		if(lua_istable(L, -1)) {
-			molfiles_traverse_table(L);
+			if(lua_type(L, -2) != LUA_TSTRING) {
+				molfiles_traverse_table(L);
+			}
 		} else if(lua_isstring(L, -1)) {
 			if(!strcmp("import", lua_tostring(L, -2))) {
 				if(!access(lua_tostring(L, -1), R_OK)) {
@@ -289,6 +299,7 @@ int parse_lua_simconf_options()
 	} else {
 		option->nogrv = 0;
 	}
+	
 	return 0;
 }
 

@@ -46,30 +46,27 @@ static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer,
 	lua_pushnil(L);
 	while(lua_next(L, -2) != 0) {
 		if(lua_istable(L, -1)) {
-			
+			if(lua_type(L, -2) == LUA_TSTRING) {
+				if(!strcmp("color", lua_tostring(L, -2))) {
+					for(int i = 0; i < 4; i++) {
+						lua_pushinteger(L, i+1);
+						lua_gettable(L, -2);
+						buffer->color[i] = lua_tonumber(L, -1);
+						lua_pop(L, 1);
+					}
+					return;
+				}
+			}
 			if(parser_state->nullswitch) {
 				atom_prop[parser_state->i++] = *buffer;
 			} else parser_state->nullswitch = 1;
 			elements_traverse_table(L, buffer, parser_state);
-			
 		} else if(lua_isnumber(L, -1)) {
-			
 			if(!strcmp("mass", lua_tostring(L, -2)))
 				buffer->mass = lua_tonumber(L, -1);
-			if(!strcmp("R", lua_tostring(L, -2)))
-				buffer->color[0] = lua_tonumber(L, -1);
-			if(!strcmp("G", lua_tostring(L, -2)))
-				buffer->color[1] = lua_tonumber(L, -1);
-			if(!strcmp("B", lua_tostring(L, -2)))
-				buffer->color[2] = lua_tonumber(L, -1);
-			if(!strcmp("A", lua_tostring(L, -2)))
-				buffer->color[3] = lua_tonumber(L, -1);
-			
 		} else if(lua_isstring(L, -1)) {
-			
 			if(!strcmp("name", lua_tostring(L, -2))) 
 				buffer->name = strdup(lua_tostring(L, -1));
-			
 		}
 		lua_pop(L, 1);
 	}

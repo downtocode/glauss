@@ -23,7 +23,7 @@ settings = {
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
 		exec_funct_freq = 10, --Auto timestep_funct run frequency
-		lua_expose_obj_array = true;
+		lua_expose_obj_array = false;
 		--Expose object array to the timestep_funct, slight performance decrease
 	},
 	visual = {
@@ -47,7 +47,7 @@ settings = {
 	},
 }
 
-maxobjects = 6000
+maxobjects = 24000
 
 --Add molecules or any additional objects here
 objects = {
@@ -61,17 +61,34 @@ objects = {
 -- 	}
 }
 
+-- Any objects returned to or from the main program have the following format:
+-- table/array_of_objects = {
+-- 	{ --object
+-- 		pos = {table/vector of 3 values},
+-- 		vel = {table/vector of 3 values},
+-- 		chage = value,
+-- 		mass = value,
+-- 		radius = value,
+-- 		atomnumber = value,
+-- 		ignore = value,
+-- 	},
+-- 	{ --object
+-- 		...
+-- 	},
+-- 	...
+-- }
+
 function spawn_objects(var_C)
 	math.randomseed( os.time() )
 	scale_obj = 45
 	for i = #objects+1, maxobjects+1, 1 do
 		objects[i] = {
-			posx = scale_obj*math.sin(i)*(i/maxobjects),
-			posy = scale_obj*(math.random()-0.5)/10,
-			posz = scale_obj*math.cos(i)*(i/maxobjects),
-			velx = 0,
-			vely = 0,
-			velz = 0,
+			pos = {
+				scale_obj*math.sin(i)*(i/maxobjects),
+				scale_obj*(math.random()-0.5)/10,
+				scale_obj*math.cos(i)*(i/maxobjects),
+			},
+			vel = {0,0,0},
 			charge = 100,
 			mass = 1000000*i,
 			radius = 0.2,
