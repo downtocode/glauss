@@ -119,7 +119,9 @@ Syntax
 ------
 
 The program takes input in the form of a Lua script. It's used to configure both
-the system being simulated as well as the programs by setting variables.
+the system being simulated as well as the programs by setting variables. The Lua
+script **has** to contain a table named "settings", which is the only hardcoded object.
+See below to set other Lua function names.
 
 *Option variables*
 ------------------
@@ -142,6 +144,14 @@ however most do not.
     Algorithm specific. Sets limit on threads per octree. Increase to spread distribution.
 ``bh_single_assign`` - *Boolean*
     If only a single thread is used will still split the octree normally. Debugging.
+``spawn_funct`` - *String*
+    Name of function to read objects from
+``timestep_funct`` - *String*
+    Function to execute upon timestep completion
+``exec_funct_freq`` - *Integer*
+    Auto timestep_funct run frequency
+``lua_expose_obj_array`` - *Boolean*
+    Expose the object array(updated upon timestep completion), may affect performance.
 ``screenshot_template`` - *String*
     Template to use in screenshot file creation. Standard sprintf syntax.
 ``file_template`` - *String*
