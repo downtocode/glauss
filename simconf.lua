@@ -22,7 +22,7 @@ settings = {
 		--Name of function to read objects from
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
-		exec_funct_freq = 0, --Auto timestep_funct run frequency
+		exec_funct_freq = 10, --Auto timestep_funct run frequency
 	},
 	visual = {
 		width = 1024,
@@ -37,7 +37,7 @@ settings = {
 	},
 	constants = {
 		--elcharge = 1.602176565*10^-2,
-		gconst = 6.67384*10^-12,
+		gconst = 6.67384*10^-8,
 		--epsno = 8.854187817*10^-4,
 		elcharge = 0,
 		--gconst = 0,
@@ -49,14 +49,14 @@ maxobjects = 6000
 
 --Add molecules or any additional objects here
 objects = {
-	{
-		import = "../soccer ball.obj",
-		scale = 1,
-		posx = 0, rotx = 0, velx = 0,
-		posy = 0, roty = 0, vely = 0,
-		posz = 0, rotz = 0, velz = 0,
-		ignore = false,
-	}
+-- 	{
+-- 		import = "../soccer ball.obj",
+-- 		scale = 1,
+-- 		posx = 0, rotx = 0, velx = 0,
+-- 		posy = 0, roty = 0, vely = 0,
+-- 		posz = 0, rotz = 0, velz = 0,
+-- 		ignore = false,
+-- 	}
 }
 
 function spawn_objects(var_C)
@@ -64,9 +64,9 @@ function spawn_objects(var_C)
 	scale_obj = 45
 	for i = #objects+1, maxobjects+1, 1 do
 		objects[i] = {
-			posx = scale_obj*(math.random()-.5),
-			posy = scale_obj*(math.random()-.5),
-			posz = scale_obj*(math.random()-.5),
+			posx = scale_obj*math.sin(i)*(i/maxobjects),
+			posy = scale_obj*(math.random()-0.5)/10,
+			posz = scale_obj*math.cos(i)*(i/maxobjects),
 			velx = 0,
 			vely = 0,
 			velz = 0,
@@ -80,7 +80,7 @@ function spawn_objects(var_C)
 	return objects, #objects
 end
 
-function run_on_timestep(table_C)
-	print(table_C)
+function run_on_timestep(t_stats)
+	print("Current progress:", t_stats[1].progress)
 	return 1
 end

@@ -321,10 +321,37 @@ int parse_lua_simconf_objects(data **object)
 	return 0;
 }
 
-double lua_exec_funct(const char *funct) {
-	if(!funct) return 0;
+static void lua_push_stat_array()
+{
+	/* Create "array" table. */
+	lua_newtable(L);
+	for(short i = 1; i < option->threads + 1; i++) {
+		/* Create a table inside that to hold everything */
+		lua_newtable(L);
+		/* Push variables */
+		lua_pushnumber(L, t_stats[i]->progress);
+		lua_setfield(L, -2, "progress");
+		lua_pushnumber(L, t_stats[i]->clockid);
+		lua_setfield(L, -2, "clockid");
+		lua_pushnumber(L, t_stats[i]->bh_total_alloc);
+		lua_setfield(L, -2, "bh_total_alloc");
+		lua_pushnumber(L, t_stats[i]->bh_new_alloc);
+		lua_setfield(L, -2, "bh_new_alloc");
+		lua_pushnumber(L, t_stats[i]->bh_new_cleaned);
+		lua_setfield(L, -2, "bh_new_cleaned");
+		lua_pushnumber(L, t_stats[i]->bh_heapsize);
+		lua_setfield(L, -2, "bh_heapsize");
+		lua_rawseti(L, -2, i);
+	}
+}
+
+double lua_exec_funct(const char *funct)
+{
+	if(!funct && !lua_loaded) return 0;
 	lua_getglobal(L, funct);
-	lua_pushnumber(L, t_stats[1]->progress);
+	
+	lua_push_stat_array();
+	
 	lua_call(L, 1, 1);
 	return lua_tonumber(L, -1);
 }
