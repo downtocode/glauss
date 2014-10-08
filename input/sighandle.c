@@ -74,7 +74,7 @@ void on_quit_signal(int signo)
 	parse_lua_close();
 	if(option->logenable)
 		fclose(option->logfile);
-	graph_quit();
+	graph_quit(NULL);
 	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
 		free(to_be_freed[i]);
 	}

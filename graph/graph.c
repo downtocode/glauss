@@ -100,7 +100,6 @@ const GLfloat COL_YELLOW[]  =  {  1.0f,   1.0f,   0.0f,   1.0f  };
 const GLfloat COL_ORANGE[]  =  { 0.82f,  0.41f,  0.11f,   1.0f  };
 /* COLORS */
 
-static GLfloat aspect_ratio;
 static GLuint pointvbo, textvbo;
 static GLuint object_shader, text_shader;
 static GLint trn_matrix, rot_matrix, scl_matrix, per_matrix;
@@ -192,32 +191,29 @@ static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near,
 	m[15] = 2*far*near / nearmfar;
 }
 
-void graph_view(struct graph_cam_view *camera)
+void graph_reset_viewport()
 {
-	make_translation_matrix(camera->tr_x, camera->tr_y, camera->tr_z, transl);
+	glViewport(0, 0, option->width, option->height);
+}
+
+void graph_set_view(graph_window *win)
+{
+	make_translation_matrix(win->camera.tr_x, win->camera.tr_y, win->camera.tr_z, transl);
 	
-	make_scale_matrix(aspect_ratio*camera->scalefactor, camera->scalefactor,
-					  camera->scalefactor, scale);
+	make_scale_matrix(win->camera.aspect_ratio*win->camera.scalefactor, win->camera.scalefactor,
+					  win->camera.scalefactor, scale);
 	
 	make_pers_matrix(10, option->width/option->height, -1, 10, pers);
 	
-	make_x_rot_matrix(camera->view_rotx, rotx);
-	make_y_rot_matrix(camera->view_roty, roty);
-	make_z_rot_matrix(camera->view_rotz, rotz);
+	make_x_rot_matrix(win->camera.view_rotx, rotx);
+	make_y_rot_matrix(win->camera.view_roty, roty);
+	make_z_rot_matrix(win->camera.view_rotz, rotz);
 	mul_matrix(mat, roty, rotx);
 	mul_matrix(rotation, mat, rotz);
 	glUniformMatrix4fv(trn_matrix, 1, GL_FALSE, transl);
 	glUniformMatrix4fv(scl_matrix, 1, GL_FALSE, scale);
 	glUniformMatrix4fv(rot_matrix, 1, GL_FALSE, rotation);
 	glUniformMatrix4fv(per_matrix, 1, GL_FALSE, pers);
-}
-
-float graph_resize_wind()
-{
-	/* Usually it's the other way around */
-	aspect_ratio = (GLfloat)option->height/option->width;
-	glViewport(0, 0, option->width, option->height);
-	return aspect_ratio;
 }
 
 unsigned int graph_compile_shader(const char *src_vert_shader,
@@ -266,10 +262,15 @@ void graph_draw_scene(graph_window *win)
 	struct timespec ts;
 	const GLfloat *fpscolor;
 	
+	/* Move camera */
+	graph_sdl_move_cam(win);
+	
 	/*	Text/static drawing	*/
-	glUseProgram(text_shader);
-	glBindBuffer(GL_ARRAY_BUFFER, textvbo);
 	{
+		/* Set shader and vbo */
+		glUseProgram(text_shader);
+		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
+		
 		/* FPS */
 		fpscolor = (win->fps < 25) ? COL_RED : (win->fps < 48) ? COL_BLUE : COL_GREEN;
 		snprintf(osdtext, OSD_BUFFER, "FPS = %3.2f", win->fps);
@@ -347,21 +348,24 @@ void graph_draw_scene(graph_window *win)
 				graph_display_text(osdtext, OCTx+.49, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
 			}
 		}
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	/*	Text/static drawing	*/
 	
 	/*	Dynamic drawing	*/
-	glUseProgram(object_shader);
-	glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
 	{
+		/* Shader and VBO */
+		glUseProgram(object_shader);
+		glBindBuffer(GL_ARRAY_BUFFER, pointvbo);
+		
 		/* Axis */
 		draw_obj_axis(AXISs);
 		
 		/* Objects(as points) */
 		draw_obj_points(win->object);
+		
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
 	/* Take screenshot if signaled by physics ctrl thread */
 	if(option->write_sshot_now) {
@@ -374,7 +378,7 @@ void graph_draw_scene(graph_window *win)
 	graph_sdl_swapwin(win);
 }
 
-void graph_init()
+void graph_init(graph_window *win)
 {
 	mat       =  calloc(16, sizeof(GLfloat));
 	rotx      =  calloc(16, sizeof(GLfloat));
@@ -385,7 +389,7 @@ void graph_init()
 	pers      =  calloc(16, sizeof(GLfloat));
 	transl    =  calloc(16, sizeof(GLfloat));
 	
-	graph_resize_wind();
+	graph_sdl_resize_wind(win);
 	object_shader = graph_init_objects();
 	text_shader = graph_init_freetype(graph_init_fontconfig());
 	glEnable(GL_DEPTH_TEST);
@@ -402,7 +406,7 @@ void graph_init()
 	per_matrix = glGetUniformLocation(object_shader, "perspectiveMat");
 }
 
-void graph_quit()
+void graph_quit(graph_window *win)
 {
 	free(mat);
 	free(rotx);

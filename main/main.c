@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
 		if(!novid) {
 			win = graph_sdl_init(object);
 			/* OpenGL */
-			graph_init();
+			graph_init(win);
 		}
 	/*	Graphics	*/
 	
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 		frames++;
 		
 		/* Timer trigg'd events */
-		if(totaltime >  timer) {
+		if(totaltime > timer) {
 			if(!novid)
 				win->fps = frames/totaltime;
 			
@@ -280,9 +280,6 @@ int main(int argc, char *argv[])
 			/* TODO: Wakeup a bit before physics_ctrl thread wakes up */
 			SDL_Delay(50);
 		}
-		
-		/* Move camera */
-		graph_sdl_move_cam(win);
 		
 		/* Draw scene */
 		graph_draw_scene(win);

@@ -30,10 +30,10 @@ enum {
 	GL_YELLOW,
 };
 
-void graph_init();
-void graph_quit();
-void graph_view(struct graph_cam_view *camera);
-float graph_resize_wind();
+void graph_init(graph_window *win);
+void graph_quit(graph_window *win);
+void graph_reset_viewport();
+void graph_set_view(graph_window *win);
 unsigned int graph_compile_shader(const char *src_vert_shader,
 								  const char *src_frag_shader);
 void graph_draw_scene(graph_window *win);

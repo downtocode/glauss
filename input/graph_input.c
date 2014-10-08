@@ -136,16 +136,7 @@ static void graph_scan_keypress(graph_window *win)
 		if(win->chosen > 0) win->chosen--;
 	}
 	if(win->event->key.keysym.sym==SDLK_f) {
-		if(win->fullscreen) {
-			SDL_SetWindowFullscreen(win->window, 0);
-			win->fullscreen = 0;
-		} else {
-			/* Because real fullscreen sucks */
-			SDL_SetWindowFullscreen(win->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-			win->fullscreen = 1;
-		}
-		SDL_GL_GetDrawableSize(win->window, &option->width, &option->height);
-		graph_resize_wind();
+		graph_sdl_toggle_fullscreen(win);
 	}
 	if(win->event->key.keysym.sym==SDLK_s) {
 		graph_sshot(t_stats[1]->progress);
@@ -164,10 +155,8 @@ void graph_sdl_input_main(graph_window *win)
 	while(SDL_PollEvent(win->event)) {
 		switch(win->event->type) {
 			case SDL_WINDOWEVENT:
-				if(win->event->window.event == SDL_WINDOWEVENT_RESIZED) {
-					SDL_GL_GetDrawableSize(win->window, &option->width, &option->height);
-					graph_resize_wind();
-				}
+				if(win->event->window.event == SDL_WINDOWEVENT_RESIZED)
+					graph_sdl_resize_wind(win);
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				graph_press_mouse(win);

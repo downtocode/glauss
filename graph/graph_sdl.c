@@ -76,6 +76,34 @@ graph_window *graph_sdl_init(data *object)
 	return win;
 }
 
+float graph_sdl_resize_wind(graph_window *win)
+{
+	float aspect_ratio = 0.0;
+	if(!win) return aspect_ratio;
+	SDL_GL_GetDrawableSize(win->window, &option->width, &option->height);
+	/* Usually it's the other way around */
+	aspect_ratio = (float)option->height/option->width;
+	graph_reset_viewport();
+	win->camera.aspect_ratio = aspect_ratio;
+	return aspect_ratio;
+}
+
+int graph_sdl_toggle_fullscreen(graph_window *win)
+{
+	if(!win) return 1;
+	if(win->fullscreen) {
+		SDL_SetWindowFullscreen(win->window, 0);
+		win->fullscreen = 0;
+	} else {
+		/* Because real fullscreen sucks */
+		SDL_SetWindowFullscreen(win->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		win->fullscreen = 1;
+	}
+	SDL_GL_GetDrawableSize(win->window, &option->width, &option->height);
+	graph_sdl_resize_wind(win);
+	return 0;
+}
+
 void graph_sdl_move_cam(graph_window *win)
 {
 	if(!win) return;
@@ -95,7 +123,7 @@ void graph_sdl_move_cam(graph_window *win)
 		win->camera.tr_y = win->object[win->chosen].pos[1];
 		win->camera.tr_z = win->object[win->chosen].pos[2];
 	}
-	graph_view(&win->camera);
+	graph_set_view(win);
 }
 
 void graph_sdl_swapwin(graph_window *win)

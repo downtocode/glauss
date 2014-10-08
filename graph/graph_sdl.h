@@ -27,7 +27,7 @@
 struct graph_cam_view {
 	float view_rotx, view_roty, view_rotz;
 	float tr_x, tr_y, tr_z;
-	float scalefactor;
+	float scalefactor, aspect_ratio;
 };
 
 typedef struct {
@@ -49,6 +49,8 @@ typedef struct {
 extern const struct graph_cam_view def_cam;
 
 graph_window *graph_sdl_init(data *object);
+float graph_sdl_resize_wind(graph_window *win);
+int graph_sdl_toggle_fullscreen(graph_window *win);
 void graph_sdl_move_cam(graph_window *win);
 void graph_sdl_swapwin(graph_window *win);
 void graph_sdl_deinit(graph_window *win);
