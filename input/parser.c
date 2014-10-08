@@ -341,11 +341,14 @@ static void lua_push_stat_array()
 	for(short i = 1; i < option->threads + 1; i++) {
 		/* Create a table inside that to hold everything */
 		lua_newtable(L);
-		/* Push variables */
+		
+		/* Shared */
 		lua_pushnumber(L, t_stats[i]->progress);
 		lua_setfield(L, -2, "progress");
 		lua_pushnumber(L, t_stats[i]->clockid);
 		lua_setfield(L, -2, "clockid");
+		
+		/* Barnes-Hut */
 		lua_pushnumber(L, t_stats[i]->bh_total_alloc);
 		lua_setfield(L, -2, "bh_total_alloc");
 		lua_pushnumber(L, t_stats[i]->bh_new_alloc);
@@ -354,6 +357,14 @@ static void lua_push_stat_array()
 		lua_setfield(L, -2, "bh_new_cleaned");
 		lua_pushnumber(L, t_stats[i]->bh_heapsize);
 		lua_setfield(L, -2, "bh_heapsize");
+		
+		/* Null */
+		lua_pushnumber(L, t_stats[i]->null_avg_dist);
+		lua_setfield(L, -2, "null_avg_dist");
+		lua_pushnumber(L, t_stats[i]->null_max_dist);
+		lua_setfield(L, -2, "null_max_dist");
+		
+		/* Record index */
 		lua_rawseti(L, -2, i);
 	}
 }

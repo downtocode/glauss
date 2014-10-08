@@ -30,7 +30,7 @@
 
 struct thread_config_null {
 	data *obj;
-	double *dists, *maxdist;
+	struct thread_statistics *stats;
 	unsigned int id, objs_low, objs_high;
 	pthread_barrier_t *ctrl;
 	pthread_mutex_t *mute;

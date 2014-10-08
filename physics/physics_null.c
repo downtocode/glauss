@@ -37,16 +37,12 @@ void **null_init(struct glob_thread_config *cfg)
 	pthread_mutex_t *mute = calloc(1, sizeof(pthread_mutex_t));
 	pthread_mutex_init(mute, NULL);
 	
-	double *dists = malloc(option->obj*option->obj*sizeof(double));
-	double *maxdist = malloc(sizeof(double));
-	
 	int totcore = (int)((float)option->obj/option->threads);
 	
 	for(int k = 1; k < option->threads + 1; k++) {
+		thread_config[k]->stats = cfg->stats[k];
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->mute = mute;
-		thread_config[k]->dists = dists;
-		thread_config[k]->maxdist = maxdist;
 		thread_config[k]->id = k;
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
@@ -64,8 +60,6 @@ void null_quit(void **threads)
 {
 	struct thread_config_null **t = (struct thread_config_null **)threads;
 	pthread_mutex_destroy(t[1]->mute);
-	free(t[1]->dists);
-	free(t[1]->maxdist);
 	free(t[1]->mute);
 	for(int k = 0; k < option->threads + 1; k++) {
 		free(t[k]);
@@ -77,10 +71,10 @@ void null_quit(void **threads)
 void *thread_null(void *thread_setts)
 {
 	struct thread_config_null *t = thread_setts;
-	vec3 vecnorm;
-	double dist;
 	/* We need to play along with the control thread, so continue running. */
 	while(1) {
+		vec3 vecnorm = (vec3){0};
+		double dist = 0.0, avg_dist = 0.0, max_dist = 0.0;
 		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			for(unsigned int j = 1; j < option->obj + 1; j++) {
 				if(i==j) continue;
@@ -88,14 +82,14 @@ void *thread_null(void *thread_setts)
 				dist = sqrt(vecnorm[0]*vecnorm[0] +\
 							vecnorm[1]*vecnorm[1] +\
 							vecnorm[2]*vecnorm[2]);
-				if(dist > *t->maxdist) {
-					pthread_mutex_lock(t->mute);
-					*t->maxdist = dist;
-					pthread_mutex_unlock(t->mute);
-				}
-				t->dists[j + (i-1)*option->obj] = dist;
+				if(dist > max_dist) max_dist = dist;
+				avg_dist = (dist + avg_dist)/2;
 			}
 		}
+		
+		t->stats->null_avg_dist = avg_dist;
+		t->stats->null_max_dist = max_dist;
+		
 		pthread_barrier_wait(t->ctrl);
 		pthread_testcancel();
 	}

@@ -22,7 +22,7 @@ settings = {
 		--Name of function to read objects from
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
-		exec_funct_freq = 10, --Auto timestep_funct run frequency
+		exec_funct_freq = 5, --Auto timestep_funct run frequency
 		lua_expose_obj_array = false;
 		--Expose object array to the timestep_funct, slight performance decrease
 	},
@@ -47,7 +47,7 @@ settings = {
 	},
 }
 
-maxobjects = 24000
+maxobjects = 2400
 
 --Add molecules or any additional objects here
 objects = {

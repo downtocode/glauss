@@ -60,6 +60,9 @@ struct thread_statistics {
 	unsigned int bh_new_alloc;
 	unsigned int bh_new_cleaned;
 	size_t bh_heapsize;
+	
+	/* physics_null */
+	double null_avg_dist, null_max_dist;
 };
 
 /* Struct sent to threads' init functions */
