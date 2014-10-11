@@ -19,13 +19,13 @@
 #define PHYSENGINE_PHYS_BARNES_HUT
 
 #define PHYS_BHUT {\
-		"barnes-hut",\
-		PACKAGE_VERSION,\
-		"Barnes-Hut simulation",\
-		"Rostislav Pehlivanov",\
-		bhut_init,\
-		thread_bhut,\
-		bhut_quit,\
+		.name = "barnes-hut",\
+		.version = PACKAGE_VERSION,\
+		.desc = "Barnes-Hut simulation",\
+		.author = "Rostislav Pehlivanov",\
+		.thread_configuration = bhut_init,\
+		.thread_location = thread_bhut,\
+		.thread_destruction = bhut_quit,\
 	}
 
 /* Octree structure */

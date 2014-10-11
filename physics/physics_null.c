@@ -53,12 +53,15 @@ void **null_init(struct glob_thread_config *cfg)
 		}
 	}
 	
+	option->stats_null = true;
+	
 	return (void**)thread_config;
 }
 
 void null_quit(void **threads)
 {
 	struct thread_config_null **t = (struct thread_config_null **)threads;
+	option->stats_null = false;
 	pthread_mutex_destroy(t[1]->mute);
 	free(t[1]->mute);
 	for(int k = 0; k < option->threads + 1; k++) {

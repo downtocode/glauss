@@ -33,19 +33,19 @@
 #include "input_thread.h"
 #include "sighandle.h"
 
-#define CMD_CLEAR_REPS 20
-#define CMD_MAX_TOKENS 20
-#define CMD_PROMPT "phys> "
+static const char pointgreen[] = "\033[032m"CMD_PROMPT_DOT"\033[0m";
+static const char pointyellow[] = "\033[033m"CMD_PROMPT_DOT"\033[0m";
+static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 
 static struct interp_opt *global_cmd_map = NULL;
 static struct input_cfg *global_cfg = NULL;
 
-int input_thread_init(graph_window *win)
+int input_thread_init(graph_window *win, data *object)
 {
 	struct input_cfg *cfg = calloc(1, sizeof(struct input_cfg));
 	
+	cfg->obj = object;
 	cfg->win = win;
-	cfg->prompt = strdup(CMD_PROMPT);
 	cfg->status = true;
 	
 	pthread_create(&cfg->input, NULL, input_thread, cfg);
@@ -64,7 +64,6 @@ void input_thread_quit()
 	pthread_join(global_cfg->input, &res);
 	
 	/* Free resources */
-	free(global_cfg->prompt);
 	free(global_cfg);
 	
 	return;
@@ -164,7 +163,7 @@ void input_cmd_printall(struct interp_opt *cmd_map)
 	}
 }
 
-int input_token_setall(char *line, graph_window *win, struct interp_opt *cmd_map)
+int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_map)
 {
 	int num_tok = 0, retval = CMD_ALL_FINE;
 	bool match = 0;
@@ -175,6 +174,10 @@ int input_token_setall(char *line, graph_window *win, struct interp_opt *cmd_map
 	while(tokstr) {
 		if(num_tok > CMD_MAX_TOKENS) {
 			retval = CMD_TOO_MANY_TOKENS;
+			goto cleanall;
+		}
+		if(*tokstr == '=') {
+			retval = CMD_INVALID_ASSIGN;
 			goto cleanall;
 		}
 		token[num_tok++] = strdup(tokstr);
@@ -192,8 +195,11 @@ int input_token_setall(char *line, graph_window *win, struct interp_opt *cmd_map
 					case T_STOP:
 						phys_ctrl(PHYS_SHUTDOWN, NULL);
 						break;
+					case T_LIST:
+						phys_list_algo();
+						break;
 					case T_START:
-						phys_ctrl(PHYS_START, &win->object);
+						phys_ctrl(PHYS_START, &t->obj);
 						break;
 					case T_PAUSE:
 						phys_ctrl(PHYS_PAUSESTART, NULL);
@@ -237,6 +243,8 @@ void *input_thread(void *thread_setts)
 {
 	struct input_cfg *t = thread_setts;
 	
+	char prompt[sizeof(CMD_PROMPT_BASE)+sizeof(pointyellow)+sizeof(CMD_PROMPT_SPACE)];
+	
 	/* Should remain on stack until thread exits */
 	struct interp_opt cmd_map[] = {
 		{"dt", &option->dt, T_FLOAT, T_VAR},
@@ -249,6 +257,8 @@ void *input_thread(void *thread_setts)
 		{"bh_random_assign", &option->bh_random_assign, T_BOOL, T_VAR},
 		{"algorithm", &option->algorithm, T_STRING, T_VAR},
 		{"filename", &option->filename, T_STRING, T_VAR},
+		{"exec_funct_freq", &option->exec_funct_freq, T_UINT, T_VAR},
+		{"list", NULL, T_LIST, T_CMD},
 		{"quit", NULL, T_QUIT, T_CMD},
 		{"exit", NULL, T_QUIT, T_CMD},
 		{"start", NULL, T_START, T_CMD},
@@ -265,15 +275,24 @@ void *input_thread(void *thread_setts)
 	global_cmd_map = cmd_map;
 	
 	while(t->status) {
+		/* Refresh prompt */
+		if(option->paused) {
+			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointyellow);
+		} else if(option->status) {
+			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointgreen);
+		} else {
+			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointred);
+		}
+		
 		/* readline() blocks */
-		char *line = readline(t->prompt);
+		char *line = readline(prompt);
 		
 		if(!line) {
 			global_cfg->status = false;
 		} else if(*line) {
 			add_history(line);
 			
-			switch(input_token_setall(line, t->win, cmd_map)) {
+			switch(input_token_setall(line, t, cmd_map)) {
 				case CMD_ALL_FINE:
 					break;
 				case CMD_EXIT:
@@ -281,6 +300,9 @@ void *input_thread(void *thread_setts)
 					break;
 				case CMD_NOT_FOUND:
 					pprintf(PRI_ERR, "Command not found\n");
+					break;
+				case CMD_INVALID_ASSIGN:
+					pprintf(PRI_ERR, "Correct assignment syntax is \"variable value\"\n");
 					break;
 				default:
 					break;

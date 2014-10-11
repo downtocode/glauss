@@ -33,13 +33,13 @@
 
 /* "none" algorithm description */
 #define PHYS_NONE {\
-		"none",\
-		PACKAGE_VERSION,\
-		NULL,\
-		NULL,\
-		NULL,\
-		thread_null,\
-		NULL,\
+		.name = "none",\
+		.version = PACKAGE_VERSION,\
+		.desc = NULL,\
+		.author = NULL,\
+		.thread_configuration = NULL,\
+		.thread_location = (thread_function)1,\
+		.thread_destruction = NULL,\
 	}
 
 /*	Default threads to use when system != linux.	*/
@@ -49,6 +49,7 @@
 static pthread_t *threads, control_thread;
 static pthread_attr_t thread_attribs;
 static struct sched_param parameters;
+static unsigned int old_threads = 0;
 
 /* Thread statistics and primary struct */
 struct thread_statistics **t_stats;
@@ -165,12 +166,6 @@ int phys_init(data** object)
 		option->threads = option->obj+1;
 	}
 	
-	/* Stats */
-	t_stats = calloc(option->threads+1, sizeof(struct thread_statistics*));
-	for(int k = 1; k < option->threads + 1; k++) {
-		t_stats[k] = calloc(1, sizeof(struct thread_statistics));
-	}
-	
 	/* pthreads configuration */
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
@@ -181,9 +176,40 @@ int phys_init(data** object)
 	return 0;
 }
 
+int phys_stats_init()
+{
+	unsigned short int threads = option->threads;
+	if(old_threads == 0) {
+		t_stats = calloc(threads+1, sizeof(struct thread_statistics *));
+		for(int k = 1; k < threads + 1; k++) {
+			t_stats[k] = calloc(1, sizeof(struct thread_statistics));
+		}
+	} else {
+		for(int k = 1; k < old_threads + 1; k++) {
+			free(t_stats[k]);
+		}
+		free(t_stats);
+		t_stats = calloc(threads+1, sizeof(struct thread_statistics *));
+		for(int k = 1; k < threads + 1; k++) {
+			t_stats[k] = calloc(1, sizeof(struct thread_statistics));
+		}
+	}
+	old_threads = threads;
+	return 0;
+}
+
 int phys_ctrl(int status, data** object)
 {
 	if(!option->threads) return 0;
+	thread_configuration conf_fn = phys_find_config(option->algorithm);
+	thread_function algo_fn = phys_find_algorithm(option->algorithm);
+	thread_destruction quit_fn = phys_find_quit(option->algorithm);
+	if(!conf_fn && !algo_fn && !quit_fn) {
+		pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
+		return 1;
+	}
+	if(algo_fn && !quit_fn) return 1;
+	if(algo_fn && !conf_fn) return 1;
 	switch(status) {
 		case PHYS_STATUS:
 			return option->status;
@@ -193,15 +219,9 @@ int phys_ctrl(int status, data** object)
 			break;
 		case PHYS_START:
 			if(option->status) return 1;
-			thread_configuration conf_fn = phys_find_config(option->algorithm);
-			thread_function algo_fn = phys_find_algorithm(option->algorithm);
-			thread_destruction quit_fn = phys_find_quit(option->algorithm);
-			if(algo_fn && !quit_fn) return 1;
-			if(algo_fn && !conf_fn) return 1;
-			if(!conf_fn && !algo_fn && !quit_fn) {
-				pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
-				return 1;
-			}
+			
+			/* Reinit stats */
+			phys_stats_init();
 			
 			threads = calloc(option->threads+1, sizeof(pthread_t));
 			
@@ -215,8 +235,7 @@ int phys_ctrl(int status, data** object)
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
 			option->paused = true;
 			for(int k = 1; k < option->threads + 1; k++) {
-				int err = pthread_create(&threads[k], &thread_attribs, algo_fn, thread_conf[k]);
-				if(err) {
+				if(pthread_create(&threads[k], &thread_attribs, algo_fn, thread_conf[k])) {
 					pprintf(PRI_ERR, "Creating thread %i failed!\n", k);
 					return 1;
 				} else {
@@ -224,8 +243,7 @@ int phys_ctrl(int status, data** object)
 					pprintf(PRI_ESSENTIAL, "%i...", k);
 				}
 			}
-			int err = pthread_create(&control_thread, &thread_attribs, thread_ctrl, cfg);
-			if(err) {
+			if(pthread_create(&control_thread, &thread_attribs, thread_ctrl, cfg)) {
 				pprintf(PRI_ERR, "Creating control thread failed!\n");
 				return 1;
 			} else {
@@ -239,11 +257,6 @@ int phys_ctrl(int status, data** object)
 			break;
 		case PHYS_SHUTDOWN:
 			if(!option->status) return 1;
-			quit_fn = phys_find_quit(option->algorithm);
-			if(!quit_fn) {
-				pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
-				return 1;
-			}
 			if(option->paused) {
 				option->paused = false;
 				sleep(1);

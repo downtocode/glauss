@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
 	
 	phys_ctrl(PHYS_START, &object);
 	
-	input_thread_init(win);
+	input_thread_init(win, object);
 	
 	gettimeofday(&t1 , NULL);
 	
@@ -262,6 +262,7 @@ int main(int argc, char *argv[])
 		
 		/* Timer trigg'd events */
 		if(totaltime > timer) {
+			option->time_running += totaltime;
 			if(!novid)
 				win->fps = frames/totaltime;
 			

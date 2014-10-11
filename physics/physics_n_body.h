@@ -19,13 +19,13 @@
 #define PHYSENGINE_PHYS_N_BODY
 
 #define PHYS_NBODY {\
-		"n-body",\
-		PACKAGE_VERSION,\
-		"Standard n-body simulation",\
-		"Rostislav Pehlivanov",\
-		nbody_init,\
-		thread_nbody,\
-		nbody_quit,\
+		.name = "n-body",\
+		.version = PACKAGE_VERSION,\
+		.desc = "Standard n-body simulation",\
+		.author = "Rostislav Pehlivanov",\
+		.thread_configuration = nbody_init,\
+		.thread_location = thread_nbody,\
+		.thread_destruction = nbody_quit,\
 	}
 
 struct thread_config_nbody {

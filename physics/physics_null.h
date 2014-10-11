@@ -19,13 +19,13 @@
 #define PHYSENGINE_PHYS_NULL
 
 #define PHYS_NULL {\
-		"null",\
-		PACKAGE_VERSION,\
-		"Null simulation",\
-		"Rostislav Pehlivanov",\
-		null_init,\
-		thread_null,\
-		null_quit,\
+		.name = "null",\
+		.version = PACKAGE_VERSION,\
+		.desc = "Null simulation",\
+		.author = "Rostislav Pehlivanov",\
+		.thread_configuration = null_init,\
+		.thread_location = thread_null,\
+		.thread_destruction = null_quit,\
 	}
 
 struct thread_config_null {

@@ -26,6 +26,7 @@ extern struct option_struct {
 	unsigned short verbosity;
 	int width, height, fontsize;
 	bool nogrv, noele, logenable;
+	long double time_running; //--
 	FILE *logfile; //--
 	
 	/* Parser */
@@ -50,5 +51,5 @@ extern struct option_struct {
 	
 	/* Physics - ctrl */
 	unsigned int dump_xyz, dump_sshot;
-	bool write_sshot_now, stats_bh; //--
+	bool write_sshot_now, stats_bh, stats_null; //--
 } *option;
