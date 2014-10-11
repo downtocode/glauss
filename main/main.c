@@ -30,14 +30,14 @@
 #include "config.h"
 #include "physics/physics.h"
 #include "graph/graph.h"
-#include "graph/graph_sdl.h"
-#include "input/sighandle.h"
 #include "input/graph_input.h"
 #include "input/parser.h"
 #include "out_xyz.h"
 #include "options.h"
 #include "msg_phys.h"
 #include "physics/physics_aux.h"
+#include "input/sighandle.h"
+#include "input/input_thread.h"
 
 static const char ARGSTRING[] =
 // Generated from helpstring.txt
@@ -244,6 +244,8 @@ int main(int argc, char *argv[])
 	/*	Graphics	*/
 	
 	phys_ctrl(PHYS_START, &object);
+	
+	input_thread_init(win);
 	
 	gettimeofday(&t1 , NULL);
 	

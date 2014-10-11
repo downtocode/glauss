@@ -46,7 +46,7 @@
 #define failsafe_cores 2
 
 /*	Indexing of cores = 1, 2, 3...	*/
-static pthread_t *threads;
+static pthread_t *threads, control_thread;
 static pthread_attr_t thread_attribs;
 static struct sched_param parameters;
 
@@ -195,7 +195,13 @@ int phys_ctrl(int status, data** object)
 			if(option->status) return 1;
 			thread_configuration conf_fn = phys_find_config(option->algorithm);
 			thread_function algo_fn = phys_find_algorithm(option->algorithm);
-			if(!conf_fn || !algo_fn) return 1;
+			thread_destruction quit_fn = phys_find_quit(option->algorithm);
+			if(algo_fn && !quit_fn) return 1;
+			if(algo_fn && !conf_fn) return 1;
+			if(!conf_fn && !algo_fn && !quit_fn) {
+				pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
+				return 1;
+			}
 			
 			threads = calloc(option->threads+1, sizeof(pthread_t));
 			
@@ -205,45 +211,76 @@ int phys_ctrl(int status, data** object)
 			cfg->obj = *object;
 			thread_conf = conf_fn(ctrl_init(cfg));
 			
+			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
-			pthread_create(&threads[0], &thread_attribs, thread_ctrl, cfg);
+			option->paused = true;
 			for(int k = 1; k < option->threads + 1; k++) {
-				pthread_create(&threads[k], &thread_attribs, algo_fn, thread_conf[k]);
-				pthread_getcpuclockid(threads[k], &t_stats[k]->clockid);
-				pprintf(PRI_ESSENTIAL, "%i...", k);
+				int err = pthread_create(&threads[k], &thread_attribs, algo_fn, thread_conf[k]);
+				if(err) {
+					pprintf(PRI_ERR, "Creating thread %i failed!\n", k);
+					return 1;
+				} else {
+					pthread_getcpuclockid(threads[k], &t_stats[k]->clockid);
+					pprintf(PRI_ESSENTIAL, "%i...", k);
+				}
 			}
+			int err = pthread_create(&control_thread, &thread_attribs, thread_ctrl, cfg);
+			if(err) {
+				pprintf(PRI_ERR, "Creating control thread failed!\n");
+				return 1;
+			} else {
+				pprintf(PRI_ESSENTIAL, "C...");
+			}
+			option->paused = false;
+			option->status = true;
 			pprintf(PRI_OK, "\n");
-			/* We're running now */
-			option->status = 1;
+			/* Start threads */
+			
 			break;
 		case PHYS_SHUTDOWN:
 			if(!option->status) return 1;
+			quit_fn = phys_find_quit(option->algorithm);
+			if(!quit_fn) {
+				pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
+				return 1;
+			}
 			if(option->paused) {
 				option->paused = false;
 				sleep(1);
 			}
 			
-			/* Should always point to PTHREAD_CALCELLED */
-			void *res;
-			
+			/* Stop threads */
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
-			/* Thread 0 is our control thread */
-			for(int k = 0; k < option->threads + 1; k++) {
+			pthread_cancel(control_thread);
+			for(int k = 1; k < option->threads + 1; k++) {
 				pthread_cancel(threads[k]);
 			}
+			void *res = NULL;
 			for(int k = 1; k < option->threads + 1; k++) {
 				pthread_join(threads[k], &res);
-				pprintf(PRI_ESSENTIAL, "%i...", k);
+				if(res != PTHREAD_CANCELED) {
+					pprintf(PRI_ERR, "Error joining with thread %i!\n", k);
+					return 1;
+				} else {
+					pprintf(PRI_ESSENTIAL, "%i...", k);
+				}
 			}
-			pthread_join(threads[0], &res);
+			pthread_join(control_thread, &res);
+			if(res != PTHREAD_CANCELED) {
+				pprintf(PRI_ERR, "Error joining with control thread!\n");
+				return 1;
+			} else {
+				pprintf(PRI_ESSENTIAL, "C...");
+			}
+			option->status = false;
 			pprintf(PRI_OK, "\n");
+			/* Stop threads */
 			
-			(phys_find_quit(option->algorithm))(thread_conf);
+			quit_fn(thread_conf);
 			
 			ctrl_quit(cfg);
 			free(cfg);
 			free(threads);
-			option->status = 0;
 			break;
 	}
 	return 0;

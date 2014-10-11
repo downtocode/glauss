@@ -48,6 +48,7 @@ def configure(ctx):
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')
 	ctx.check_cfg(package='lua5.2', args='--cflags --libs', uselib_store='LUA')
 	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
+	ctx.check(features='c cprogram', lib=['readline'], cflags='-lreadline', uselib_store='READLN')
 	
 	if (ctx.options.ver):
 		package_ver = ctx.options.ver
@@ -121,6 +122,13 @@ def build(ctx):
 		path=ctx.path,
 		target='graph_input',
 		source='input/graph_input.c',
+		features  = ['c'],
+		includes='. .. ../../',
+	)
+	ctx(name='input_thread',
+		path=ctx.path,
+		target='input_thread',
+		source='input/input_thread.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -220,7 +228,7 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'input_thread', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='main/main.c',
 		features  = ['c', 'cprogram'],

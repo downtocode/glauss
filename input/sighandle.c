@@ -23,6 +23,7 @@
 #include "main/msg_phys.h"
 #include "physics/physics.h"
 #include "graph/graph.h"
+#include "input_thread.h"
 
 #define FREE_QUEUE_MAX 20
 static void *to_be_freed[FREE_QUEUE_MAX] = {NULL};
@@ -74,6 +75,7 @@ void on_quit_signal(int signo)
 	parse_lua_close();
 	if(option->logenable)
 		fclose(option->logfile);
+	input_thread_quit();
 	graph_quit(NULL);
 	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
 		free(to_be_freed[i]);
