@@ -139,6 +139,7 @@ static void graph_scan_keypress(graph_window *win)
 		graph_sdl_toggle_fullscreen(win);
 	}
 	if(win->event->key.keysym.sym==SDLK_s) {
+		raise(SIGUSR1);
 		graph_sshot(t_stats[1]->progress);
 	}
 	if(win->event->key.keysym.sym==SDLK_ESCAPE) {

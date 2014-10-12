@@ -24,6 +24,7 @@
 #include "physics/physics.h"
 #include "main/msg_phys.h"
 #include "input/parser.h"
+#include "input/sighandle.h"
 #include "graph.h"
 #include "graph_sdl.h"
 #include "graph_objects.h"
@@ -389,6 +390,15 @@ void graph_init(graph_window *win)
 	pers      =  calloc(16, sizeof(GLfloat));
 	transl    =  calloc(16, sizeof(GLfloat));
 	
+	/*add_to_free_queue(mat);
+	add_to_free_queue(rotx);
+	add_to_free_queue(roty);
+	add_to_free_queue(rotz);
+	add_to_free_queue(rotation);
+	add_to_free_queue(scale);
+	add_to_free_queue(pers);
+	add_to_free_queue(transl);*/
+	
 	graph_sdl_resize_wind(win);
 	object_shader = graph_init_objects();
 	text_shader = graph_init_freetype(graph_init_fontconfig());
@@ -404,18 +414,6 @@ void graph_init(graph_window *win)
 	rot_matrix = glGetUniformLocation(object_shader, "rotationMat");
 	scl_matrix = glGetUniformLocation(object_shader, "scalingMat");
 	per_matrix = glGetUniformLocation(object_shader, "perspectiveMat");
-}
-
-void graph_quit(graph_window *win)
-{
-	free(mat);
-	free(rotx);
-	free(roty);
-	free(rotz);
-	free(rotation);
-	free(scale);
-	free(pers);
-	free(transl);
 }
 
 int graph_sshot(long double arg)

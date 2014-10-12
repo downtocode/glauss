@@ -59,9 +59,11 @@ void input_thread_quit()
 {
 	if(!global_cfg) return;
 	
-	/* Stop thread */
-	void *res = NULL;
-	pthread_join(global_cfg->input, &res);
+	global_cfg->status = false;
+	
+	/* NOT CORRECT */
+	/* FIXME */
+	/* FIND A WAY TO UNBLOC KREADLINE */
 	
 	/* Free resources */
 	free(global_cfg);
@@ -257,6 +259,7 @@ void *input_thread(void *thread_setts)
 		{"bh_random_assign", &option->bh_random_assign, T_BOOL, T_VAR},
 		{"algorithm", &option->algorithm, T_STRING, T_VAR},
 		{"filename", &option->filename, T_STRING, T_VAR},
+		{"def_radius", &option->def_radius, T_FLOAT, T_VAR},
 		{"exec_funct_freq", &option->exec_funct_freq, T_UINT, T_VAR},
 		{"list", NULL, T_LIST, T_CMD},
 		{"quit", NULL, T_QUIT, T_CMD},
@@ -274,6 +277,9 @@ void *input_thread(void *thread_setts)
 	
 	global_cmd_map = cmd_map;
 	
+	rl_instream = stdin;
+	rl_catch_signals = 0;
+	
 	while(t->status) {
 		/* Refresh prompt */
 		if(option->paused) {
@@ -288,7 +294,7 @@ void *input_thread(void *thread_setts)
 		char *line = readline(prompt);
 		
 		if(!line) {
-			global_cfg->status = false;
+			raise(SIGINT);
 		} else if(*line) {
 			add_history(line);
 			
@@ -296,7 +302,7 @@ void *input_thread(void *thread_setts)
 				case CMD_ALL_FINE:
 					break;
 				case CMD_EXIT:
-					global_cfg->status = false;
+					raise(SIGINT);
 					break;
 				case CMD_NOT_FOUND:
 					pprintf(PRI_ERR, "Command not found\n");
@@ -310,8 +316,6 @@ void *input_thread(void *thread_setts)
 			free(line);
 		}
 	}
-	
-	raise(2);
 	
 	return 0;
 }

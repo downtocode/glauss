@@ -17,6 +17,7 @@
  */ 
 #include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "parser.h"
 #include "sighandle.h"
 #include "main/options.h"
@@ -48,6 +49,13 @@ int remove_from_free_queue(void *p)
 		}
 	}
 	return 1;
+}
+
+void free_all_queue()
+{
+	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
+		free(to_be_freed[i]);
+	}
 }
 
 /* Report stats on command line */
@@ -89,14 +97,25 @@ void on_usr1_signal(int signo)
 void on_quit_signal(int signo)
 {
 	printf("\nSignal to quit %i received!\n", signo);
+	
+	/* Physics */
 	phys_ctrl(PHYS_SHUTDOWN, NULL);
+	
+	/* Lua */
 	parse_lua_close();
+	
+	/* Logfile */
 	if(option->logenable)
 		fclose(option->logfile);
+	
+	/* Input thread */
 	input_thread_quit();
-	graph_quit(NULL);
-	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
-		free(to_be_freed[i]);
-	}
-	exit(0);
+	
+	/* Window */
+	option->quit_main_now = true;
+}
+
+void on_alrm_signal(int signo)
+{
+	printf("Watchdog timer kicked in! Program probably hanged up.\n");
 }

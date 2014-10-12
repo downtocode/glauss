@@ -20,8 +20,8 @@
 #include "physics/physics.h"
 
 void draw_obj_axis(float scale);
-void draw_obj_sphere(data* object);
-void draw_obj_points(data* object);
+void draw_obj_sphere(data *object);
+void draw_obj_points(data *object);
 GLuint graph_init_objects();
 
 #endif

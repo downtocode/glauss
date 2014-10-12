@@ -23,7 +23,7 @@
 #include "main/options.h"
 #include "graph_objects.h"
 
-static GLint objattr_pos, objattr_color;
+static GLint objattr_pos, objattr_color, objattr_radius;
 
 /* Drawing points defaults to color = black, so we need white */
 static const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
@@ -46,7 +46,7 @@ void draw_obj_axis(float scale)
 	glDisableVertexAttribArray(objattr_pos);
 }
 
-void draw_obj_sphere(data* object)
+void draw_obj_sphere(data *object)
 {
 	const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 	/* Decrease dj to get better spheres. */
@@ -82,11 +82,12 @@ void draw_obj_sphere(data* object)
 	glUniform4fv(objattr_color, 1, white);
 }
 
-void draw_obj_points(data* object)
+void draw_obj_points(data *object)
 {
 	float points[option->obj][3];
 	
 	glUniform4fv(objattr_color, 1, white);
+	glUniform1f(objattr_radius, option->def_radius);
 	
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(objattr_pos);
@@ -119,6 +120,9 @@ GLuint graph_init_objects()
 	GLuint obj_program = graph_compile_shader(object_vs, object_fs);
 	glBindAttribLocation(obj_program, objattr_pos, "pos");
 	glBindAttribLocation(obj_program, objattr_color, "objcolor");
+	glBindAttribLocation(obj_program, objattr_radius, "radius");
 	objattr_color = glGetUniformLocation(obj_program, "objcolor");
+	objattr_radius = glGetUniformLocation(obj_program, "radius");
+	
 	return obj_program;
 }

@@ -31,7 +31,6 @@ enum {
 };
 
 void graph_init(graph_window *win);
-void graph_quit(graph_window *win);
 void graph_reset_viewport();
 void graph_set_view(graph_window *win);
 unsigned int graph_compile_shader(const char *src_vert_shader,

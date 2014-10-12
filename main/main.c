@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 		add_to_free_queue(option);
 		*option = (struct option_struct){
 			/* Visuals */
+			.def_radius = 1.0,
 			.width = 1280, .height = 720,
 			.fontsize = 38,
 			.fontname = strdup("Sans"),
@@ -60,6 +61,7 @@ int main(int argc, char *argv[])
 			.timestep_funct = NULL,
 			.exec_funct_freq = 0,
 			.lua_expose_obj_array = 0,
+			.quit_main_now = 0,
 			
 			/* Physics */
 			.threads = 0,
@@ -208,6 +210,13 @@ int main(int argc, char *argv[])
 			fputs("An error occurred while setting USR1 signal handler.\n", stderr);
 			return EXIT_FAILURE;
 		}
+		if(signal(SIGALRM, on_alrm_signal) == SIG_ERR) {
+			fputs("An error occurred while setting SIGALRM signal handler.\n", stderr);
+			return EXIT_FAILURE;
+		} else {
+			/* Setup watchdog timer */
+			alarm(timer+2);
+		}
 	/* Signal handling */
 	
 	/*	Physics.	*/
@@ -243,13 +252,15 @@ int main(int argc, char *argv[])
 			/* OpenGL */
 			graph_init(win);
 		} else {
-			input_thread_init(win, object);
+			
 		}
 	/*	Graphics	*/
 	
+	input_thread_init(win, object);
+	
 	gettimeofday(&t1 , NULL);
 	
-	while(1) {
+	while(!option->quit_main_now) {
 		/* Get input from SDL */
 		graph_sdl_input_main(win);
 		
@@ -263,6 +274,8 @@ int main(int argc, char *argv[])
 		
 		/* Timer trigg'd events */
 		if(totaltime > timer) {
+			/* Kick the watchdog timer */
+			alarm(timer+2);
 			if(!novid)
 				win->fps = frames/totaltime;
 			
@@ -287,4 +300,12 @@ int main(int argc, char *argv[])
 		/* Draw scene */
 		graph_draw_scene(win);
 	}
+	
+	graph_sdl_deinit(win);
+	
+	free_all_queue();
+	
+	printf("Done!\n");
+	
+	return 0;
 }

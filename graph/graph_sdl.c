@@ -53,8 +53,6 @@ graph_window *graph_sdl_init(data *object)
 {
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
-	add_to_free_queue(win->event);
-	add_to_free_queue(win);
 	if(!sdl_initd) {
 		SDL_Init(SDL_INIT_VIDEO);
 		sdl_initd = true;
@@ -140,10 +138,10 @@ void graph_sdl_swapwin(graph_window *win)
 }
 
 void graph_sdl_deinit(graph_window *win) {
+	if(!win) return;
 	SDL_GL_DeleteContext(win->context);
 	SDL_DestroyWindow(win->window);
-	if(main_win == win)
-		SDL_Quit();
 	free(win->event);
 	free(win);
+	SDL_Quit();
 }

@@ -24,6 +24,7 @@
 extern struct option_struct {
 	/* Frontend */
 	unsigned short verbosity;
+	float def_radius;
 	int width, height, fontsize;
 	bool nogrv, noele, logenable;
 	long double time_running; //--
@@ -51,5 +52,6 @@ extern struct option_struct {
 	
 	/* Physics - ctrl */
 	unsigned int dump_xyz, dump_sshot;
-	bool write_sshot_now, stats_bh, stats_null; //--
+	volatile bool write_sshot_now, quit_main_now;
+	bool stats_bh, stats_null; //--
 } *option;
