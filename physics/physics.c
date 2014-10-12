@@ -166,6 +166,8 @@ int phys_init(data** object)
 		option->threads = option->obj+1;
 	}
 	
+	phys_stats_init();
+	
 	/* pthreads configuration */
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
@@ -184,7 +186,7 @@ int phys_stats_init()
 		for(int k = 1; k < threads + 1; k++) {
 			t_stats[k] = calloc(1, sizeof(struct thread_statistics));
 		}
-	} else {
+	} else if(old_threads != threads) {
 		for(int k = 1; k < old_threads + 1; k++) {
 			free(t_stats[k]);
 		}

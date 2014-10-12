@@ -47,8 +47,6 @@ settings = {
 	},
 }
 
-maxobjects = 2400
-
 --Add molecules or any additional objects here
 objects = {
 -- 	{
@@ -78,24 +76,67 @@ objects = {
 -- 	...
 -- }
 
+fuzz = 2.0
+arm_rotations = 0.5
+arm_width = 69.0
+arm_number = 3
+disk_radius = 20.0
+disk_width = 1.0
+disk_stars = 2400
+hub_radius = 10.0
+hub_stars = 1400
+hub_width = 4.0
+
 function spawn_objects(var_C)
 	math.randomseed( os.time() )
 	scale_obj = 45
-	for i = #objects+1, maxobjects+1, 1 do
+	for i = 1, disk_stars+1, 1 do
+		dist = (hub_radius + math.random()*disk_radius)
+		theta = ((360.0*arm_rotations*(dist/disk_radius)) + math.random()*arm_width
+			+ (360.0/arm_number)*math.random(0, arm_number)
+			+ math.random()*fuzz*2.0 - fuzz )
+		
 		objects[i] = {
 			pos = {
-				scale_obj*math.sin(i)*(i/maxobjects),
-				scale_obj*(math.random()-0.5)/10,
-				scale_obj*math.cos(i)*(i/maxobjects),
+				math.cos(theta*math.pi/180.0)*dist,
+				math.random()*disk_width*2.0 - disk_width,
+				math.sin(theta*math.pi/180.0)*dist,
 			},
-			vel = {0,0,0},
+			vel = {
+				math.sin(theta*math.pi/180.0)*dist,
+				0,
+				-math.cos(theta*math.pi/180.0)*dist,
+			},
 			charge = 100,
-			mass = 1000000*i,
+			mass = 100000,
 			radius = 0.2,
 			atomnumber = math.random(1,10),
 			ignore = false,
 		}
 	end
+	for i = #objects+1, #objects+1+hub_stars+1, 1 do
+		dist = math.random()*hub_radius
+		theta = math.random()*360
+		
+		objects[i] = {
+			pos = {
+				math.cos(theta*math.pi/180.0)*dist,
+				(math.random()*2 - 1)*(hub_width - (hub_width/(hub_radius*hub_radius))*dist*dist),
+				math.sin(theta*math.pi/180.0)*dist,
+			},
+			vel = {
+				math.sin(theta*math.pi/180.0)*dist,
+				0,
+				-math.cos(theta*math.pi/180.0)*dist,
+			},
+			charge = 100,
+			mass = 100000,
+			radius = 0.2,
+			atomnumber = math.random(1,10),
+			ignore = false,
+		}
+	end
+	
 	return objects, #objects
 end
 

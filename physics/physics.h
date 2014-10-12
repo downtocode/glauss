@@ -99,6 +99,7 @@ extern const struct list_algorithms phys_algorithms[];
 void phys_list_algo();
 
 /* External functions for control */
+int phys_stats_init();
 int phys_init(data** object);
 int phys_ctrl(int status, data** object);
 

@@ -27,7 +27,7 @@
 struct graph_cam_view {
 	float view_rotx, view_roty, view_rotz;
 	float tr_x, tr_y, tr_z;
-	float scalefactor, aspect_ratio;
+	float scalefactor;
 };
 
 typedef struct {
@@ -42,7 +42,7 @@ typedef struct {
 	struct numbers_selection numbers;
 	char currentsel[100];
 	data *object;
-	float fps;
+	float fps, aspect_ratio;
 } graph_window;
 
 /* Default camera position and scale */

@@ -232,6 +232,8 @@ int main(int argc, char *argv[])
 		pprintf(PRI_ESSENTIAL,
 		"Constants: elcharge=%E C, gconst=%E m^3 kg^-1 s^-2, epsno=%E F m^-1\n", 
 							   option->elcharge, option->gconst, option->epsno);
+		
+		phys_ctrl(PHYS_START, &object);
 	/*	Physics.	*/
 	
 	/*	Graphics	*/
@@ -240,12 +242,10 @@ int main(int argc, char *argv[])
 			win = graph_sdl_init(object);
 			/* OpenGL */
 			graph_init(win);
+		} else {
+			input_thread_init(win, object);
 		}
 	/*	Graphics	*/
-	
-	phys_ctrl(PHYS_START, &object);
-	
-	input_thread_init(win, object);
 	
 	gettimeofday(&t1 , NULL);
 	
@@ -256,13 +256,13 @@ int main(int argc, char *argv[])
 		/* Update timer */
 		gettimeofday(&t2, NULL);
 		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
+		option->time_running += deltatime;
 		t1 = t2;
 		totaltime += deltatime;
 		frames++;
 		
 		/* Timer trigg'd events */
 		if(totaltime > timer) {
-			option->time_running += totaltime;
 			if(!novid)
 				win->fps = frames/totaltime;
 			

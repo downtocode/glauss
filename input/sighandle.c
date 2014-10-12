@@ -54,12 +54,12 @@ int remove_from_free_queue(void *p)
 void on_usr1_signal(int signo)
 {
 	printf("\n");
-	struct timespec ts;
 	if(!signo) printf("USR1 signal received, current stats:\n");
 	printf("Time running = %Lf\n", option->time_running);
 	printf("Progress = %Lf\n", t_stats[1]->progress);
 	if(option->status) {
 		printf("CPU time:\n Thread |  Time\n");
+		struct timespec ts;
 		for(int i = 1; i < option->threads + 1; i++) {
 			clock_gettime(t_stats[i]->clockid, &ts);
 			printf("   %02i   |  ", i);

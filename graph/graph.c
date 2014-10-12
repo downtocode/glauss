@@ -200,7 +200,7 @@ void graph_set_view(graph_window *win)
 {
 	make_translation_matrix(win->camera.tr_x, win->camera.tr_y, win->camera.tr_z, transl);
 	
-	make_scale_matrix(win->camera.aspect_ratio*win->camera.scalefactor, win->camera.scalefactor,
+	make_scale_matrix(win->aspect_ratio*win->camera.scalefactor, win->camera.scalefactor,
 					  win->camera.scalefactor, scale);
 	
 	make_pers_matrix(10, option->width/option->height, -1, 10, pers);

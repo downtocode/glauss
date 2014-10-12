@@ -36,7 +36,15 @@
 #define MOUSE_TR_SENS 0.001
 
 /* Default values(for use in graph_input) */
-const struct graph_cam_view def_cam = { 32.0, 315.0, 0, 0, 0, 0, 0.005 };
+const struct graph_cam_view def_cam = { 
+	.view_rotx = 32.0,
+	.view_roty = 315.0,
+	.view_rotz = 0,
+	.tr_x = 0,
+	.tr_y = 0,
+	.tr_z = 0,
+	.scalefactor = 0.005,
+};
 
 graph_window *main_win = NULL;
 static bool sdl_initd = NULL;
@@ -84,7 +92,7 @@ float graph_sdl_resize_wind(graph_window *win)
 	/* Usually it's the other way around */
 	aspect_ratio = (float)option->height/option->width;
 	graph_reset_viewport();
-	win->camera.aspect_ratio = aspect_ratio;
+	win->aspect_ratio = aspect_ratio;
 	return aspect_ratio;
 }
 
