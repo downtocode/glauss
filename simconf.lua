@@ -5,7 +5,7 @@ settings = {
 		threads = 1,
 		dt = 0.001,
 		algorithm = "barnes-hut",
-		bh_ratio = 0.49,
+		bh_ratio = 0.5,
 		--Lifetime of a cell before it's freed.
 		bh_lifetime = 20,
 		--Units are size_t(bytes)! PER THREAD!
@@ -36,6 +36,7 @@ settings = {
 		verbosity = 8,
 		dump_sshot = 0, --Auto screenshot dump frequency
 		dump_xyz = 0, --Auto xyz dump frequency
+		skip_model_vec = 200,
 	},
 	constants = {
 		--elcharge = 1.602176565*10^-2,
@@ -50,11 +51,11 @@ settings = {
 --Add molecules or any additional objects here
 objects = {
 -- 	{
--- 		import = "../soccer ball.obj",
--- 		scale = 1,
--- 		posx = 0, rotx = 0, velx = 0,
--- 		posy = 0, roty = 0, vely = 0,
--- 		posz = 0, rotz = 0, velz = 0,
+-- 		import = "../SpaceBattleShipYAMATO-MG.obj",
+-- 		scale = 0.0001,
+-- 		pos = {0,-200,0},
+-- 		vel = {0,0,0},
+-- 		rot = {0,math.pi/2,math.pi/2},
 -- 		ignore = false,
 -- 	}
 }
@@ -82,15 +83,15 @@ arm_width = 69.0
 arm_number = 3
 disk_radius = 20.0
 disk_width = 1.0
-disk_stars = 2400
+disk_stars = 2420
 hub_radius = 10.0
-hub_stars = 1400
+hub_stars = 1240
 hub_width = 4.0
 
 function spawn_objects(var_C)
 	math.randomseed( os.time() )
 	scale_obj = 45
-	for i = 1, disk_stars+1, 1 do
+	for i = #objects+1, disk_stars+1, 1 do
 		dist = (hub_radius + math.random()*disk_radius)
 		theta = ((360.0*arm_rotations*(dist/disk_radius)) + math.random()*arm_width
 			+ (360.0/arm_number)*math.random(0, arm_number)

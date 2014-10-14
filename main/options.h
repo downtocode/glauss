@@ -33,7 +33,7 @@ extern struct option_struct {
 	/* Parser */
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
 	char *spawn_funct, *timestep_funct;
-	unsigned int exec_funct_freq;
+	unsigned int exec_funct_freq, skip_model_vec;
 	bool lua_expose_obj_array;
 	
 	/* Physics */

@@ -96,20 +96,30 @@ void on_usr1_signal(int signo)
 /* Function given to signal handler */
 void on_quit_signal(int signo)
 {
-	printf("\nSignal to quit %i received!\n", signo);
+	pprintf(PRI_ESSENTIAL, "\nSignal to quit %i received!\n", signo);
 	
 	/* Physics */
 	phys_ctrl(PHYS_SHUTDOWN, NULL);
 	
+	pprintf(PRI_ESSENTIAL, "Closing: ");
+	
 	/* Lua */
+	pprintf(PRI_ESSENTIAL, "Lua: ");
 	parse_lua_close();
+	pprintf(PRI_OK, "&& ");
 	
 	/* Logfile */
-	if(option->logenable)
+	if(option->logenable) {
+		pprintf(PRI_ESSENTIAL, "Log: ");
 		fclose(option->logfile);
+		option->logenable = false;
+		pprintf(PRI_OK, "&& ");
+	}
 	
 	/* Input thread */
+	pprintf(PRI_ESSENTIAL, "Input: ");
 	input_thread_quit();
+	pprintf(PRI_OK, "");
 	
 	/* Window */
 	option->quit_main_now = true;

@@ -52,30 +52,30 @@ int in_probe_file(const char *filename)
 		fgets(str, sizeof(str), inprep);
 		fclose(inprep);
 		sscanf(str, "%i", &counter);
-		return counter;
 	} else if(filetype == MOL_PDB) {
 		while(fgets (str, sizeof(str), inprep)!= NULL) {
 			if(strstr(str, "#") == NULL) {
 				if(strncmp(str, "ATOM", 4)==0) counter++;
 			}
 		}
-		return counter;
 	} else if(filetype == MOL_OBJ) {
 		while(fgets (str, sizeof(str), inprep)!= NULL) {
 			if(strstr(str, "#") == NULL) {
 				if(strncmp(str, "v ", 2)==0) counter++;
 			}
 		}
-		return counter;
 	}
-	return 0;
+	if(option->skip_model_vec) {
+		counter/=option->skip_model_vec;
+	}
+	return counter;
 }
 
 int in_read_file(data *object, int *i, in_file *file)
 {
 	char str[500] = {0}, atom[2] = {0}, pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;
-	int filetype, pdbatomindex, pdbresidueseq;
+	int filetype, pdbatomindex, pdbresidueseq, vec_counter = 0;
 	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
 	vec3 pos;
 	FILE *inpars = fopen(file->filename, "r");
@@ -97,6 +97,12 @@ int in_read_file(data *object, int *i, in_file *file)
 	
 	/* TODO: use something less primitive */
 	while(fgets (str, sizeof(str), inpars)!= NULL) {
+		/* Skip if needed */
+		if(option->skip_model_vec && ++vec_counter < option->skip_model_vec) {
+			continue;
+		} else {
+			vec_counter = 0;
+		}
 		if(strstr(str, "#") == NULL) {
 			if(filetype == MOL_XYZ) {
 				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos,

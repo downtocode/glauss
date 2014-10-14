@@ -80,6 +80,8 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 			option->dump_sshot = lua_tonumber(L, -1);
 		if(!strcmp("exec_funct_freq", lua_tostring(L, -2)))
 			option->exec_funct_freq = lua_tonumber(L, -1);
+		if(!strcmp("skip_model_vec", lua_tostring(L, -2)))
+			option->skip_model_vec = lua_tonumber(L, -1);
 	} else if(lua_isstring(L, -1)) {
 		/* The defaults have been assigned using strdup too, so free them */
 		if(!strcmp("algorithm", lua_tostring(L, -2))) {
@@ -139,6 +141,9 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 			} else if(!strcmp("vel", lua_tostring(L, -2))) {
 				conf_lua_get_vector(L, &parser_state->buffer.vel);
 				return 0;
+			} else if(!strcmp("rot", lua_tostring(L, -2))) {
+				conf_lua_get_vector(L, &parser_state->file.rot);
+				return 0;
 			}
 		}
 		if(parser_state->fileset) {
@@ -176,12 +181,6 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 			parser_state->buffer.atomnumber = lua_tonumber(L, -1);
 		if(!strcmp("scale", lua_tostring(L, -2)))
 			parser_state->file.scale = lua_tonumber(L, -1);
-		if(!strcmp("rotx", lua_tostring(L, -2)))
-			parser_state->file.rot[0] = lua_tonumber(L, -1);
-		if(!strcmp("roty", lua_tostring(L, -2)))
-			parser_state->file.rot[1] = lua_tonumber(L, -1);
-		if(!strcmp("rotz", lua_tostring(L, -2)))
-			parser_state->file.rot[2] = lua_tonumber(L, -1);
 	} else if(lua_isstring(L, -1)) {
 		/* It's a file to import, so we set the flag */
 		if(!strcmp("import", lua_tostring(L, -2))) {

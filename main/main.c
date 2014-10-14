@@ -39,6 +39,8 @@
 #include "input/sighandle.h"
 #include "input/input_thread.h"
 
+#define WATCHDOG_OFFSET_SEC 10
+
 static const char ARGSTRING[] =
 // Generated from helpstring.txt
 #include "main/resources/helpstring.h"
@@ -62,6 +64,7 @@ int main(int argc, char *argv[])
 			.exec_funct_freq = 0,
 			.lua_expose_obj_array = 0,
 			.quit_main_now = 0,
+			.skip_model_vec = 250,
 			
 			/* Physics */
 			.threads = 0,
@@ -215,7 +218,7 @@ int main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		} else {
 			/* Setup watchdog timer */
-			alarm(timer+2);
+			alarm(timer+WATCHDOG_OFFSET_SEC);
 		}
 	/* Signal handling */
 	
@@ -251,8 +254,6 @@ int main(int argc, char *argv[])
 			win = graph_sdl_init(object);
 			/* OpenGL */
 			graph_init(win);
-		} else {
-			
 		}
 	/*	Graphics	*/
 	
@@ -275,7 +276,7 @@ int main(int argc, char *argv[])
 		/* Timer trigg'd events */
 		if(totaltime > timer) {
 			/* Kick the watchdog timer */
-			alarm(timer+2);
+			alarm(timer+WATCHDOG_OFFSET_SEC);
 			if(!novid)
 				win->fps = frames/totaltime;
 			
@@ -301,7 +302,12 @@ int main(int argc, char *argv[])
 		graph_draw_scene(win);
 	}
 	
-	graph_sdl_deinit(win);
+	/* To prevent explosions exit last to make sure no one uses it */
+	if(win) {
+		pprintf(PRI_ESSENTIAL, "&& Window: ");
+		graph_sdl_deinit(win);
+		pprintf(PRI_OK, "\n");
+	}
 	
 	free_all_queue();
 	
