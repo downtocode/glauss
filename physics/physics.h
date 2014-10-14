@@ -49,10 +49,24 @@ typedef struct {
 	bool ignore;
 } data;
 
+struct global_statistics {
+	long double progress, time_running;
+	
+	/* physics_barnes_hut */
+	unsigned int bh_total_alloc;
+	unsigned int bh_new_alloc;
+	unsigned int bh_new_cleaned;
+	size_t bh_heapsize;
+	
+	/* physics_null */
+	double null_avg_dist, null_max_dist;
+	
+	struct thread_statistics **t_stats;
+};
+
 /* Statistics structure */
 struct thread_statistics {
 	/* Shared across all algorithms */
-	long double progress;
 	clockid_t clockid;
 	
 	/* physics_barnes_hut */
@@ -68,7 +82,7 @@ struct thread_statistics {
 /* Struct sent to threads' init functions */
 struct glob_thread_config {
 	data *obj;
-	struct thread_statistics **stats;
+	struct global_statistics *stats;
 	pthread_barrier_t *ctrl;
 };
 
@@ -90,7 +104,7 @@ thread_configuration   phys_find_config(const char *name);
 thread_destruction     phys_find_quit(const char *name);
 
 /* Statistics directly from the threads */
-extern struct thread_statistics **t_stats;
+extern struct global_statistics *phys_stats;
 
 /* List of algorithms and their function pointers */
 extern const struct list_algorithms phys_algorithms[];

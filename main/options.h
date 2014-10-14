@@ -27,7 +27,6 @@ extern struct option_struct {
 	float def_radius;
 	int width, height, fontsize;
 	bool nogrv, noele, logenable;
-	long double time_running; //--
 	FILE *logfile; //--
 	
 	/* Parser */
@@ -37,7 +36,7 @@ extern struct option_struct {
 	bool lua_expose_obj_array;
 	
 	/* Physics */
-	bool status, paused; //--
+	volatile bool status, paused; //--
 	float dt;
 	unsigned int obj; //--
 	unsigned short threads;
@@ -51,7 +50,7 @@ extern struct option_struct {
 	bool bh_single_assign, bh_random_assign;
 	
 	/* Physics - ctrl */
-	unsigned int dump_xyz, dump_sshot;
+	unsigned int dump_xyz, dump_sshot, reset_stats_freq;
 	volatile bool write_sshot_now, quit_main_now;
 	bool stats_bh, stats_null; //--
 } *option;

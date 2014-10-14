@@ -29,7 +29,7 @@
 int toxyz(data *object)
 {
 	char filetodump[120];
-	snprintf(filetodump, sizeof(filetodump), option->xyz_temp, t_stats[1]->progress);
+	snprintf(filetodump, sizeof(filetodump), option->xyz_temp, phys_stats->progress);
 	/* Check if file exist */
 	if(!access(filetodump, R_OK)) return 1;
 	FILE *out = fopen(filetodump, "w");

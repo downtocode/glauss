@@ -43,7 +43,8 @@ void ctrl_quit(struct glob_thread_config *cfg)
 void *thread_ctrl(void *thread_setts)
 {
 	struct glob_thread_config *t = thread_setts;
-	unsigned int xyz_counter = 0, sshot_counter = 0, funct_counter = 0;
+	const float dt = option->dt;
+	unsigned int xyz_counter = 0, sshot_counter = 0, funct_counter = 0, stats_counter = 0;
 	
 	while(1) {
 		/* Pause all threads by stalling unlocking t->ctrl */
@@ -56,10 +57,8 @@ void *thread_ctrl(void *thread_setts)
 		/* Unblock and hope the other threads follow */
 		pthread_barrier_wait(t->ctrl);
 		
-		/* Update progress */
-		for(int th = 1; th < option->threads+1; th++) {
-			t->stats[th]->progress += option->dt;
-		}
+		/* Update progress & clean stats */
+		t->stats->progress += dt;
 		
 		/* Dump XYZ file, will not increment timer if !option->dump_xyz */
 		if(option->dump_xyz && ++xyz_counter >= option->dump_xyz) {
@@ -77,6 +76,20 @@ void *thread_ctrl(void *thread_setts)
 		if(option->exec_funct_freq && ++funct_counter >= option->exec_funct_freq) {
 			lua_exec_funct(option->timestep_funct, t->obj);
 			funct_counter = 0;
+		}
+		
+		/* Reset some stats */
+		if(option->reset_stats_freq && ++stats_counter >= option->reset_stats_freq) {
+			if(option->stats_null) {
+				t->stats->null_max_dist = 0;
+				t->stats->null_avg_dist = 0;
+			}
+			if(option->stats_bh) {
+				t->stats->bh_total_alloc = 0;
+				t->stats->bh_new_alloc = 0;
+				t->stats->bh_new_cleaned = 0;
+				t->stats->bh_heapsize = 0;
+			}
 		}
 		
 		/* Check if we need to quit */

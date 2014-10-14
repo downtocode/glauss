@@ -39,7 +39,8 @@ void **nbody_init(struct glob_thread_config *cfg)
 	int totcore = (int)((float)option->obj/option->threads);
 	
 	for(int k = 1; k < option->threads + 1; k++) {
-		thread_config[k]->stats = cfg->stats[k];
+		thread_config[k]->glob_stats = cfg->stats;
+		thread_config[k]->stats = cfg->stats->t_stats[k];
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->barrier = barrier;

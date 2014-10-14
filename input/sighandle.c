@@ -63,13 +63,13 @@ void on_usr1_signal(int signo)
 {
 	printf("\n");
 	if(!signo) printf("USR1 signal received, current stats:\n");
-	printf("Time running = %Lf\n", option->time_running);
-	printf("Progress = %Lf\n", t_stats[1]->progress);
+	printf("Time running = %Lf\n", phys_stats->time_running);
+	printf("Progress = %Lf\n", phys_stats->progress);
 	if(option->status) {
 		printf("CPU time:\n Thread |  Time\n");
 		struct timespec ts;
 		for(int i = 1; i < option->threads + 1; i++) {
-			clock_gettime(t_stats[i]->clockid, &ts);
+			clock_gettime(phys_stats->t_stats[i]->clockid, &ts);
 			printf("   %02i   |  ", i);
 			printf("%ld.%ld\n",  ts.tv_sec, ts.tv_nsec / 1000000);
 		}
@@ -78,18 +78,21 @@ void on_usr1_signal(int signo)
 		printf("BH Tree stats:\n Thread |  Total   New  Cleaned    Size\n");
 		for(int i = 1; i < option->threads + 1; i++) {
 			printf("   %02i   |  ", i);
-			printf("%u    %u    %u       %lu\n", t_stats[i]->bh_total_alloc,
-				   t_stats[i]->bh_new_alloc, t_stats[i]->bh_new_cleaned,
-		  t_stats[i]->bh_heapsize);
+			printf("%u    %u    %u       %lu\n", phys_stats->t_stats[i]->bh_total_alloc,
+				   phys_stats->t_stats[i]->bh_new_alloc, phys_stats->t_stats[i]->bh_new_cleaned,
+				   phys_stats->t_stats[i]->bh_heapsize);
 		}
+		printf("Glob: %u    %u    %u       %0.3lf(MiB)\n", phys_stats->bh_total_alloc,
+			   phys_stats->bh_new_alloc, phys_stats->bh_new_cleaned, phys_stats->bh_heapsize/1048576.0);
 	}
 	if(option->stats_null) {
 		printf("Null stats:\n Thread |  Avg dist   Max dist\n");
 		for(int i = 1; i < option->threads + 1; i++) {
 			printf("   %02i   |  ", i);
-			printf("%lf    %lf\n", t_stats[i]->null_avg_dist,
-				   t_stats[i]->null_max_dist);
+			printf("%lf    %lf\n", phys_stats->t_stats[i]->null_avg_dist,
+				   phys_stats->t_stats[i]->null_max_dist);
 		}
+		printf("Glob: %lf    %lf\n", phys_stats->null_avg_dist, phys_stats->null_max_dist);
 	}
 }
 

@@ -22,9 +22,11 @@ settings = {
 		--Name of function to read objects from
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
-		exec_funct_freq = 0, --Auto timestep_funct run frequency
+		exec_funct_freq = 21, --Auto timestep_funct run frequency
 		lua_expose_obj_array = false;
 		--Expose object array to the timestep_funct, slight performance decrease
+		reset_stats_freq = 1;
+		--Disable any averaging and reset global stats every cycle
 	},
 	visual = {
 		width = 1024,
@@ -143,13 +145,12 @@ end
 
 --Consult physics/physics.h for the format of struct thread_statistics and typedef data
 function run_on_timestep(t_stats, obj)
-	print("Current progress:", t_stats[1].progress)
+	print("Current progress:", t_stats.progress)
 	
-	memory_usage = 0
 	for i = 1, #t_stats, 1 do
-		memory_usage = memory_usage + t_stats[i].bh_heapsize
+		--print("Thread", i, "Usage: ", t_stats[i].bh_heapsize/1048576, "MiB")
 	end
-	print("Total octree memory usage:", memory_usage/1048576.0)
+	print("Total octree memory usage:", t_stats.bh_heapsize/1048576, "MiB")
 	
 	if obj == nil then
 		return 0

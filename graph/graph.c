@@ -282,7 +282,7 @@ void graph_draw_scene(graph_window *win)
 		graph_display_text(osdtext, OBJx, OBJy, OBJs, COL_WHITE);
 		
 		/* Timestep display */
-		snprintf(osdtext, OSD_BUFFER, "Timestep = %0.4Lf", t_stats[1]->progress);
+		snprintf(osdtext, OSD_BUFFER, "Timestep = %0.4Lf", phys_stats->progress);
 		graph_display_text(osdtext, DTx, DTy, DTs, COL_WHITE);
 		
 		/* Time constant */
@@ -310,7 +310,7 @@ void graph_draw_scene(graph_window *win)
 			
 			/* Thread time stats */
 			for(short i = 1; i < option->threads + 1; i++) {
-				clock_gettime(t_stats[i]->clockid, &ts);
+				clock_gettime(phys_stats->t_stats[i]->clockid, &ts);
 				snprintf(osdtext, OSD_BUFFER,
 						 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
@@ -335,17 +335,17 @@ void graph_draw_scene(graph_window *win)
 				snprintf(osdtext, OSD_BUFFER, "%i", i);
 				graph_display_text(osdtext, OCTx, OCTy-((float)i/18)-.05, OCTs, COL_WHITE);
 				
-				snprintf(osdtext, OSD_BUFFER, "%i", t_stats[i]->bh_total_alloc);
+				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i]->bh_total_alloc);
 				graph_display_text(osdtext, OCTx+.12, OCTy-((float)i/18)-.05, OCTs, COL_ORANGE);
 				
-				snprintf(osdtext, OSD_BUFFER, "%i", t_stats[i]->bh_new_alloc);
+				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i]->bh_new_alloc);
 				graph_display_text(osdtext, OCTx+.25, OCTy-((float)i/18)-.05, OCTs, COL_GREEN);
 				
-				snprintf(osdtext, OSD_BUFFER, "%i", t_stats[i]->bh_new_cleaned);
+				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i]->bh_new_cleaned);
 				graph_display_text(osdtext, OCTx+.37, OCTy-((float)i/18)-.05, OCTs, COL_RED);
 				
 				snprintf(osdtext, OSD_BUFFER, "%0.3lf",
-						t_stats[i]->bh_heapsize/1048576.0);
+						phys_stats->t_stats[i]->bh_heapsize/1048576.0);
 				graph_display_text(osdtext, OCTx+.49, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
 			}
 		}
@@ -370,7 +370,7 @@ void graph_draw_scene(graph_window *win)
 	
 	/* Take screenshot if signaled by physics ctrl thread */
 	if(option->write_sshot_now) {
-		graph_sshot(t_stats[1]->progress);
+		graph_sshot(phys_stats->progress);
 		option->write_sshot_now = false;
 	}
 	/*	Dynamic drawing	*/
@@ -390,14 +390,14 @@ void graph_init(graph_window *win)
 	pers      =  calloc(16, sizeof(GLfloat));
 	transl    =  calloc(16, sizeof(GLfloat));
 	
-	/*add_to_free_queue(mat);
+	add_to_free_queue(mat);
 	add_to_free_queue(rotx);
 	add_to_free_queue(roty);
 	add_to_free_queue(rotz);
 	add_to_free_queue(rotation);
 	add_to_free_queue(scale);
 	add_to_free_queue(pers);
-	add_to_free_queue(transl);*/
+	add_to_free_queue(transl);
 	
 	graph_sdl_resize_wind(win);
 	object_shader = graph_init_objects();

@@ -30,6 +30,7 @@
 
 struct thread_config_null {
 	data *obj;
+	struct global_statistics *glob_stats;
 	struct thread_statistics *stats;
 	unsigned int id, objs_low, objs_high;
 	pthread_barrier_t *ctrl;

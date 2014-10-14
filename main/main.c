@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
 			.xyz_temp = strdup("system_%0.2Lf.xyz"),
 			.dump_sshot = 0,
 			.sshot_temp = strdup("sshot_%3.3Lf.png"),
+			.reset_stats_freq = 1,
 		};
 	/*	Default settings.	*/
 	
@@ -268,7 +269,7 @@ int main(int argc, char *argv[])
 		/* Update timer */
 		gettimeofday(&t2, NULL);
 		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
-		option->time_running += deltatime;
+		phys_stats->time_running += deltatime;
 		t1 = t2;
 		totaltime += deltatime;
 		frames++;
@@ -283,11 +284,11 @@ int main(int argc, char *argv[])
 			if(bench) {
 				pprintf(PRI_ESSENTIAL,
 						"Progressed %Lf timeunits over %f seconds.\n",
-						t_stats[1]->progress, totaltime);
+						phys_stats->progress, totaltime);
 				pprintf(PRI_ESSENTIAL,
 						"Average = %Lf timeunits per second.\n",
-						t_stats[1]->progress/totaltime);
-				on_quit_signal(2);
+						phys_stats->progress/totaltime);
+				raise(SIGINT);
 			}
 			totaltime = frames = 0;
 		}

@@ -26,6 +26,7 @@
 #include "physics.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
+#include "input/sighandle.h"
 #include "physics_ctrl.h"
 #include "physics_null.h"
 #include "physics_n_body.h"
@@ -52,7 +53,7 @@ static struct sched_param parameters;
 static unsigned int old_threads = 0;
 
 /* Thread statistics and primary struct */
-struct thread_statistics **t_stats;
+struct global_statistics *phys_stats;
 struct glob_thread_config *cfg;
 
 /* Only sent to deinit function */
@@ -166,6 +167,9 @@ int phys_init(data** object)
 		option->threads = option->obj+1;
 	}
 	
+	phys_stats = calloc(1, sizeof(struct global_statistics));
+	add_to_free_queue(phys_stats);
+	
 	phys_stats_init();
 	
 	/* pthreads configuration */
@@ -182,18 +186,18 @@ int phys_stats_init()
 {
 	unsigned short int threads = option->threads;
 	if(old_threads == 0) {
-		t_stats = calloc(threads+1, sizeof(struct thread_statistics *));
+		phys_stats->t_stats = calloc(threads+1, sizeof(struct thread_statistics *));
 		for(int k = 1; k < threads + 1; k++) {
-			t_stats[k] = calloc(1, sizeof(struct thread_statistics));
+			phys_stats->t_stats[k] = calloc(1, sizeof(struct thread_statistics));
 		}
 	} else if(old_threads != threads) {
 		for(int k = 1; k < old_threads + 1; k++) {
-			free(t_stats[k]);
+			free(phys_stats->t_stats[k]);
 		}
-		free(t_stats);
-		t_stats = calloc(threads+1, sizeof(struct thread_statistics *));
+		free(phys_stats->t_stats);
+		phys_stats->t_stats = calloc(threads+1, sizeof(struct thread_statistics *));
 		for(int k = 1; k < threads + 1; k++) {
-			t_stats[k] = calloc(1, sizeof(struct thread_statistics));
+			phys_stats->t_stats[k] = calloc(1, sizeof(struct thread_statistics));
 		}
 	}
 	old_threads = threads;
@@ -229,7 +233,7 @@ int phys_ctrl(int status, data** object)
 			
 			/* Create configuration */
 			cfg = calloc(1, sizeof(struct glob_thread_config));
-			cfg->stats = t_stats;
+			cfg->stats = phys_stats;
 			cfg->obj = *object;
 			thread_conf = conf_fn(ctrl_init(cfg));
 			
@@ -241,7 +245,7 @@ int phys_ctrl(int status, data** object)
 					pprintf(PRI_ERR, "Creating thread %i failed!\n", k);
 					return 1;
 				} else {
-					pthread_getcpuclockid(threads[k], &t_stats[k]->clockid);
+					pthread_getcpuclockid(threads[k], &phys_stats->t_stats[k]->clockid);
 					pprintf(PRI_ESSENTIAL, "%i...", k);
 				}
 			}

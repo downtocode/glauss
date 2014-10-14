@@ -40,7 +40,8 @@ void **null_init(struct glob_thread_config *cfg)
 	int totcore = (int)((float)option->obj/option->threads);
 	
 	for(int k = 1; k < option->threads + 1; k++) {
-		thread_config[k]->stats = cfg->stats[k];
+		thread_config[k]->glob_stats = cfg->stats;
+		thread_config[k]->stats = cfg->stats->t_stats[k];
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->mute = mute;
 		thread_config[k]->id = k;
@@ -94,6 +95,15 @@ void *thread_null(void *thread_setts)
 		t->stats->null_max_dist = max_dist;
 		
 		pthread_barrier_wait(t->ctrl);
+		
+		/* Racy as hell */
+		pthread_mutex_lock(t->mute);
+		t->glob_stats->null_avg_dist = (avg_dist+t->glob_stats->null_avg_dist)/2;
+		if(t->glob_stats->null_max_dist < max_dist) {
+			t->glob_stats->null_max_dist = max_dist;
+		}
+		pthread_mutex_unlock(t->mute);
+		
 		pthread_testcancel();
 	}
 	return 0;

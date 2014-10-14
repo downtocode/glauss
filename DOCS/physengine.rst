@@ -161,9 +161,11 @@ however most do not.
 ``fontsize`` - *Unsigned Integer*
     Fontsize adjustment.
 ``dump_sshot`` - *Unsigned Integer*
-    Specify the frequency of screenshots taken. 1 - every step, 2 - every two steps.
+    Specify the frequency of screenshots taken. 1 - every step, 2 - every two steps, 3...
 ``dump_xyz`` - *Unsigned Integer*
-    Specify the frequency of state dumps created. 1 - every step, 2 - every two steps.
+    Specify the frequency of state dumps created. 1 - every step, 2 - every two steps, 3...
+``reset_stats_freq`` - *Unsigned Integer*
+    Specify how often to reset global stats. 0 disables, 1 will reset stats every cycle.
 ``width`` - *Integer*
     Set window width in pixels.
 ``height`` - *Integer*
@@ -176,6 +178,8 @@ however most do not.
     Gravitational force constant. Set to 0 to disable such force calculations.
 ``verbosity`` - *Integer, 0 to 10.*
     Specify the amount of information being outputted to the terminal.
+``skip_model_vec`` - *Unsigned Integer*
+    When importing a file limit the imported objects. Increase to limit further.
 
 *Object specific variables*
 ---------------------------
@@ -183,10 +187,12 @@ Every object has to be a part of an array, which has to be returned with the fir
 value of a function named *spawn_objects*. Second returned value should specify
 the number of elements inside the array.
 
-``posx``, ``posy``, ``posz`` - *Double*
-    Used to position an object.
-``velx``, ``vely``, ``velz`` - *Double*
+``pos`` - *Table of 3 doubles*
+    Used to position an object
+``vel`` - *Table of 3 doubles*
     Initial velocity
+``rot`` - *Table of 3 doubles*
+    Rotation of an imported object
 ``charge`` - *Double*
     Charge, if the object should have one.
 ``mass`` - *Double*

@@ -140,7 +140,7 @@ static void graph_scan_keypress(graph_window *win)
 	}
 	if(win->event->key.keysym.sym==SDLK_s) {
 		raise(SIGUSR1);
-		graph_sshot(t_stats[1]->progress);
+		graph_sshot(phys_stats->progress);
 	}
 	if(win->event->key.keysym.sym==SDLK_ESCAPE) {
 		raise(SIGINT);

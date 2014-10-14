@@ -171,8 +171,12 @@ void **bhut_init(struct glob_thread_config *cfg)
 		exit(1);
 	}
 	
-	/* Init mutex */
+	/* Init root mutex */
 	pthread_mutex_init(&root_lock, NULL);
+	
+	/* Init main thread mutex */
+	pthread_mutex_t *mute = calloc(1, sizeof(pthread_mutex_t));
+	pthread_mutex_init(mute, NULL);
 	
 	/* Init barrier */
 	pthread_barrier_t *barrier = calloc(1, sizeof(pthread_barrier_t));
@@ -192,10 +196,12 @@ void **bhut_init(struct glob_thread_config *cfg)
 		/* Recursively insert the threads into assignment octree and map it to
 		 * the root octree */
 		bh_assign_thread(thread_tree, root_octree, thread_config[k]);
-		thread_config[k]->stats = cfg->stats[k];
+		thread_config[k]->glob_stats = cfg->stats;
+		thread_config[k]->stats = cfg->stats->t_stats[k];
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->barrier = barrier;
+		thread_config[k]->mute = mute;
 		thread_config[k]->id = k;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
@@ -235,6 +241,10 @@ void bhut_quit(void **threads) {
 	/* Barrier */
 	pthread_barrier_destroy(t[1]->barrier);
 	free(t[1]->barrier);
+	
+	/* Mutex */
+	pthread_mutex_destroy(t[1]->mute);
+	free(t[1]->mute);
 	
 	/* Main octree */
 	bh_decimate_octree(t[1]->root);
@@ -582,6 +592,13 @@ void *thread_bhut(void *thread_setts)
 		t->stats->bh_new_alloc    =  new_alloc;
 		t->stats->bh_new_cleaned  =  new_cleaned;
 		t->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
+		
+		pthread_mutex_lock(t->mute);
+			t->glob_stats->bh_total_alloc  +=  allocated_cells;
+			t->glob_stats->bh_new_alloc    +=  new_alloc;
+			t->glob_stats->bh_new_cleaned  +=  new_cleaned;
+			t->glob_stats->bh_heapsize     +=  t->stats->bh_heapsize;
+		pthread_mutex_unlock(t->mute);
 		
 		/* Quit if requested */
 		pthread_testcancel();

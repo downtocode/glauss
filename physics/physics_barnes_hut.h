@@ -52,8 +52,10 @@ struct thread_config_bhut {
 	data *obj;
 	struct phys_barnes_hut_octree *root, *octrees[8];
 	unsigned int id, objs_low, objs_high;
+	struct global_statistics *glob_stats;
 	struct thread_statistics *stats;
 	pthread_barrier_t *ctrl, *barrier;
+	pthread_mutex_t *mute;
 };
 
 /* Returns flux of octrees */

@@ -82,6 +82,8 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 			option->exec_funct_freq = lua_tonumber(L, -1);
 		if(!strcmp("skip_model_vec", lua_tostring(L, -2)))
 			option->skip_model_vec = lua_tonumber(L, -1);
+		if(!strcmp("reset_stats_freq", lua_tostring(L, -2)))
+			option->reset_stats_freq = lua_tonumber(L, -1);
 	} else if(lua_isstring(L, -1)) {
 		/* The defaults have been assigned using strdup too, so free them */
 		if(!strcmp("algorithm", lua_tostring(L, -2))) {
@@ -337,30 +339,52 @@ static void lua_push_stat_array()
 {
 	/* Create "array" table. */
 	lua_newtable(L);
+	
+	/* Any single variable go here */
+	lua_pushnumber(L, phys_stats->progress);
+	lua_setfield(L, -2, "progress");
+	lua_pushnumber(L, phys_stats->time_running);
+	lua_setfield(L, -2, "time_running");
+	
+	/* Null */
+	lua_pushnumber(L, phys_stats->null_avg_dist);
+	lua_setfield(L, -2, "null_avg_dist");
+	lua_pushnumber(L, phys_stats->null_max_dist);
+	lua_setfield(L, -2, "null_max_dist");
+	
+	/* Barnes-Hut */
+	lua_pushnumber(L, phys_stats->bh_total_alloc);
+	lua_setfield(L, -2, "bh_total_alloc");
+	lua_pushnumber(L, phys_stats->bh_new_alloc);
+	lua_setfield(L, -2, "bh_new_alloc");
+	lua_pushnumber(L, phys_stats->bh_new_cleaned);
+	lua_setfield(L, -2, "bh_new_cleaned");
+	lua_pushnumber(L, phys_stats->bh_heapsize);
+	lua_setfield(L, -2, "bh_heapsize");
+	
+	/* Variables for each thread */
 	for(short i = 1; i < option->threads + 1; i++) {
 		/* Create a table inside that to hold everything */
 		lua_newtable(L);
 		
 		/* Shared */
-		lua_pushnumber(L, t_stats[i]->progress);
-		lua_setfield(L, -2, "progress");
-		lua_pushnumber(L, t_stats[i]->clockid);
+		lua_pushnumber(L, phys_stats->t_stats[i]->clockid);
 		lua_setfield(L, -2, "clockid");
 		
 		/* Barnes-Hut */
-		lua_pushnumber(L, t_stats[i]->bh_total_alloc);
+		lua_pushnumber(L, phys_stats->t_stats[i]->bh_total_alloc);
 		lua_setfield(L, -2, "bh_total_alloc");
-		lua_pushnumber(L, t_stats[i]->bh_new_alloc);
+		lua_pushnumber(L, phys_stats->t_stats[i]->bh_new_alloc);
 		lua_setfield(L, -2, "bh_new_alloc");
-		lua_pushnumber(L, t_stats[i]->bh_new_cleaned);
+		lua_pushnumber(L, phys_stats->t_stats[i]->bh_new_cleaned);
 		lua_setfield(L, -2, "bh_new_cleaned");
-		lua_pushnumber(L, t_stats[i]->bh_heapsize);
+		lua_pushnumber(L, phys_stats->t_stats[i]->bh_heapsize);
 		lua_setfield(L, -2, "bh_heapsize");
 		
 		/* Null */
-		lua_pushnumber(L, t_stats[i]->null_avg_dist);
+		lua_pushnumber(L, phys_stats->t_stats[i]->null_avg_dist);
 		lua_setfield(L, -2, "null_avg_dist");
-		lua_pushnumber(L, t_stats[i]->null_max_dist);
+		lua_pushnumber(L, phys_stats->t_stats[i]->null_max_dist);
 		lua_setfield(L, -2, "null_max_dist");
 		
 		/* Record index */
