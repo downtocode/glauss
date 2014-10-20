@@ -100,10 +100,10 @@ thread_destruction phys_find_quit(const char *name)
 
 void phys_list_algo()
 {
-	printf("Implemented algorithms:\n");
-	printf("    name		version			description\n");
+	pprintf(PRI_ESSENTIAL, "Implemented algorithms:\n");
+	pprintf(PRI_ESSENTIAL, "    name		version			description\n");
 	for(int n = 0; phys_algorithms[n].name; n++) {
-		printf("    %s		%s		%s\n",
+		pprintf(PRI_ESSENTIAL, "    %s		%s		%s\n",
 			   phys_algorithms[n].name,
 			   phys_algorithms[n].version,
 			   phys_algorithms[n].desc);

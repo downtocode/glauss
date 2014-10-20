@@ -33,5 +33,11 @@
 #define PRI_ERR 12
 
 void pprintf(unsigned int priority, const char *format, ...);
+void pprint_ok(const char *format, ...);
+void pprint_warn(const char *format, ...);
+void pprint_err(const char *format, ...);
+void pprint(const char *format, ...);
+void pprint_deb(const char *format, ...);
+void pprint_verb(const char *format, ...);
 
 #endif

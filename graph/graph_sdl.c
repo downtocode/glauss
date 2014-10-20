@@ -47,17 +47,16 @@ const struct graph_cam_view def_cam = {
 };
 
 graph_window *main_win = NULL;
-static bool sdl_initd = NULL;
+static bool sdl_initd = 0;
 
 graph_window *graph_sdl_init(data *object)
 {
+	if(sdl_initd) return NULL;
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
-	if(!sdl_initd) {
-		SDL_Init(SDL_INIT_VIDEO);
-		sdl_initd = true;
-		main_win = win;
-	}
+	
+	SDL_Init(SDL_INIT_VIDEO);
+	sdl_initd = true;
 	
 	/* Default options */
 	win->camera = def_cam;
@@ -144,4 +143,5 @@ void graph_sdl_deinit(graph_window *win) {
 	free(win->event);
 	free(win);
 	SDL_Quit();
+	sdl_initd = 0;
 }

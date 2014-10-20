@@ -431,7 +431,7 @@ void bh_print_octree(bh_octree *octree)
 void bh_depth_print(bh_octree *octree)
 {
 	if(!octree) return;
-	printf("Oct depth = %i, halfdim = %Lf\n", octree->depth, octree->halfdim);
+	pprintf(PRI_ESSENTIAL, "Oct depth = %i, halfdim = %Lf\n", octree->depth, octree->halfdim);
 	for(short i=0; i < 8; i++) {
 		if(octree->cells[i]) bh_depth_print(octree->cells[i]);
 	}

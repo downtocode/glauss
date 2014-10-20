@@ -37,7 +37,6 @@ static const char pointgreen[] = "\033[032m"CMD_PROMPT_DOT"\033[0m";
 static const char pointyellow[] = "\033[033m"CMD_PROMPT_DOT"\033[0m";
 static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 
-static struct interp_opt *global_cmd_map = NULL;
 static struct input_cfg *global_cfg = NULL;
 
 int input_thread_init(graph_window *win, data *object)
@@ -47,6 +46,8 @@ int input_thread_init(graph_window *win, data *object)
 	cfg->obj = object;
 	cfg->win = win;
 	cfg->status = true;
+	cfg->selfquit = false;
+	cfg->line = NULL;
 	
 	pthread_create(&cfg->input, NULL, input_thread, cfg);
 	
@@ -61,9 +62,20 @@ void input_thread_quit()
 	
 	global_cfg->status = false;
 	
-	/* NOT CORRECT */
-	/* FIXME */
-	/* FIND A WAY TO UNBLOC KREADLINE */
+	void *val = NULL, *res = NULL;
+	
+	if(!global_cfg->selfquit) {
+		pthread_cancel(global_cfg->input);
+		rl_free_line_state();
+		rl_cleanup_after_signal();
+		val = PTHREAD_CANCELED;
+	}
+	
+	pthread_join(global_cfg->input, &res);
+	
+	if(res != val) {
+		pprint_err("Error joining with input thread!\n");
+	}
 	
 	/* Free resources */
 	free(global_cfg);
@@ -75,31 +87,31 @@ void input_print_typed(struct interp_opt *var)
 {
 	switch(var->type) {
 		case T_FLOAT:
-			printf("%s = %f\n", var->name, *(float *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
 			break;
 		case T_BOOL:
-			printf("%s = %i\n", var->name, *(bool *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(bool *)var->val);
 			break;
 		case T_UINT:
-			printf("%s = %u\n", var->name, *(unsigned int *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %u\n", var->name, *(unsigned int *)var->val);
 			break;
 		case T_INT:
-			printf("%s = %i\n", var->name, *(int *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(int *)var->val);
 			break;
 		case T_USHORT:
-			printf("%s = %hu\n", var->name, *(unsigned short *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %hu\n", var->name, *(unsigned short *)var->val);
 			break;
 		case T_SHORT:
-			printf("%s = %hi\n", var->name, *(short *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %hi\n", var->name, *(short *)var->val);
 			break;
 		case T_LONGINT:
-			printf("%s = %li\n", var->name, *(long *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %li\n", var->name, *(long *)var->val);
 			break;
 		case T_LONGUINT:
-			printf("%s = %lu\n", var->name, *(long unsigned *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %lu\n", var->name, *(long unsigned *)var->val);
 			break;
 		case T_STRING:
-			printf("%s = %s\n", var->name, *(char **)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %s\n", var->name, *(char **)var->val);
 			break;
 		default:
 			break;
@@ -111,40 +123,40 @@ void input_set_typed(struct interp_opt *var, char *val)
 	switch(var->type) {
 		case T_FLOAT:
 			*(float *)var->val = strtof(val, NULL);
-			printf("%s = %f\n", var->name, *(float *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
 			break;
 		case T_BOOL:
 			*(bool *)var->val = (bool)strtol(val, NULL, 10);
-			printf("%s = %i\n", var->name, *(bool *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(bool *)var->val);
 			break;
 		case T_UINT:
 			*(unsigned int *)var->val = (unsigned int)strtol(val, NULL, 10);
-			printf("%s = %u\n", var->name, *(unsigned int *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %u\n", var->name, *(unsigned int *)var->val);
 			break;
 		case T_INT:
 			*(int *)var->val = (int)strtol(val, NULL, 10);
-			printf("%s = %i\n", var->name, *(int *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(int *)var->val);
 			break;
 		case T_USHORT:
 			*(unsigned short *)var->val = (unsigned short)strtol(val, NULL, 10);
-			printf("%s = %hu\n", var->name, *(unsigned short *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %hu\n", var->name, *(unsigned short *)var->val);
 			break;
 		case T_SHORT:
 			*(short *)var->val = (short)strtol(val, NULL, 10);
-			printf("%s = %hi\n", var->name, *(short *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %hi\n", var->name, *(short *)var->val);
 			break;
 		case T_LONGINT:
 			*(long *)var->val = (long)strtol(val, NULL, 10);
-			printf("%s = %li\n", var->name, *(long *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %li\n", var->name, *(long *)var->val);
 			break;
 		case T_LONGUINT:
 			*(long unsigned *)var->val = (long unsigned)strtol(val, NULL, 10);
-			printf("%s = %lu\n", var->name, *(long unsigned *)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %lu\n", var->name, *(long unsigned *)var->val);
 			break;
 		case T_STRING:
 			free(*(char **)var->val);
 			*(char **)var->val = strdup(val);
-			printf("%s = %s\n", var->name, *(char **)var->val);
+			pprintf(PRI_ESSENTIAL, "%s = %s\n", var->name, *(char **)var->val);
 			break;
 		default:
 			break;
@@ -153,14 +165,14 @@ void input_set_typed(struct interp_opt *var, char *val)
 
 void input_cmd_printall(struct interp_opt *cmd_map)
 {
-	printf("Implemented commands(current value):\n");
+	pprintf(PRI_ESSENTIAL, "Implemented commands(current value):\n");
 	for(struct interp_opt *i = cmd_map; i->name; i++) {
 		if(i->cmd == T_CMD) {
-			printf("%s\n", i->name);
+			pprintf(PRI_ESSENTIAL, "%s\n", i->name);
 		} else if(i->cmd == T_VAR) {
 			input_print_typed(i);
 		} else {
-			printf("Unrecognized type: %s\n", i->name);
+			pprintf(PRI_ESSENTIAL, "Unrecognized type: %s\n", i->name);
 		}
 	}
 }
@@ -216,7 +228,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 						raise(SIGUSR1);
 						break;
 					case T_CLEAR:
-						for(int c = 0; c < CMD_CLEAR_REPS; c++) printf("\n");
+						for(int c = 0; c < CMD_CLEAR_REPS; c++) pprintf(PRI_ESSENTIAL, "\n");
 						break;
 					default:
 						break;
@@ -244,8 +256,9 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 void *input_thread(void *thread_setts)
 {
 	struct input_cfg *t = thread_setts;
-	
 	char prompt[sizeof(CMD_PROMPT_BASE)+sizeof(pointyellow)+sizeof(CMD_PROMPT_SPACE)];
+	
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	/* Should remain on stack until thread exits */
 	struct interp_opt cmd_map[] = {
@@ -275,11 +288,6 @@ void *input_thread(void *thread_setts)
 		{0}
 	};
 	
-	global_cmd_map = cmd_map;
-	
-	rl_instream = stdin;
-	rl_catch_signals = 0;
-	
 	while(t->status) {
 		/* Refresh prompt */
 		if(option->paused) {
@@ -290,18 +298,17 @@ void *input_thread(void *thread_setts)
 			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointred);
 		}
 		
-		/* readline() blocks */
-		char *line = readline(prompt);
+		t->line = readline(prompt);
 		
-		if(!line) {
+		if(!t->line) {
+			t->selfquit = true;
 			raise(SIGINT);
-		} else if(*line) {
-			add_history(line);
-			
-			switch(input_token_setall(line, t, cmd_map)) {
+		} else if(*t->line) {
+			switch(input_token_setall(t->line, t, cmd_map)) {
 				case CMD_ALL_FINE:
 					break;
 				case CMD_EXIT:
+					t->selfquit = true;
 					raise(SIGINT);
 					break;
 				case CMD_NOT_FOUND:
@@ -313,8 +320,9 @@ void *input_thread(void *thread_setts)
 				default:
 					break;
 			}
-			free(line);
 		}
+		free(t->line);
+		t->line = NULL;
 	}
 	
 	return 0;

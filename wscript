@@ -127,6 +127,7 @@ def build(ctx):
 	)
 	ctx(name='input_thread',
 		path=ctx.path,
+		uselib='READLN',
 		target='input_thread',
 		source='input/input_thread.c',
 		features  = ['c'],

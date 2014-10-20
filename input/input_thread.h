@@ -72,7 +72,8 @@ struct input_cfg {
 	pthread_t input;
 	data *obj;
 	graph_window *win;
-	bool status;
+	char *line;
+	volatile bool status, selfquit;
 };
 
 int input_thread_ctrl(struct input_cfg *cfg, int ctrl);

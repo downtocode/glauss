@@ -16,11 +16,12 @@
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include "graph_input.h"
 #include "physics/physics.h"
 #include "main/out_xyz.h"
-#include "signal.h"
+#include "sighandle.h"
 #include "graph/graph.h"
 #include "graph/graph_sdl.h"
 #include "main/options.h"
@@ -142,11 +143,8 @@ static void graph_scan_keypress(graph_window *win)
 		raise(SIGUSR1);
 		graph_sshot(phys_stats->progress);
 	}
-	if(win->event->key.keysym.sym==SDLK_ESCAPE) {
-		raise(SIGINT);
-	}
-	if(win->event->key.keysym.sym==SDLK_q) {
-		raise(SIGINT);
+	if(win->event->key.keysym.sym==SDLK_ESCAPE || win->event->key.keysym.sym==SDLK_q) {
+		on_quit_signal(SIGINT);
 	}
 }
 
@@ -172,7 +170,7 @@ void graph_sdl_input_main(graph_window *win)
 				graph_scan_keypress(win);
 				break;
 			case SDL_QUIT:
-				raise(SIGINT);
+				on_quit_signal(SIGINT);
 				break;
 		}
 	}

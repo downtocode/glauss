@@ -128,10 +128,10 @@ int main(int argc, char *argv[])
 					/* If this option set a flag, do nothing else now. */
 					if(long_options[option_index].flag != 0)
 						break;
-					printf("option %s", long_options[option_index].name);
+					pprintf(PRI_ESSENTIAL, "option %s", long_options[option_index].name);
 					if(optarg)
-						printf(" with arg %s", optarg);
-					printf("\n");
+						pprintf(PRI_ESSENTIAL, " with arg %s", optarg);
+					pprintf(PRI_ESSENTIAL, "\n");
 					break;
 				case 'a':
 					if(strcmp(optarg, "help") == 0) {
@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 					sscanf(optarg, "%hu", &option->verbosity);
 					break;
 				case 'V':
-					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING,
+					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s\n", PACKAGE_STRING,
 						   __DATE__, __TIME__);
 					exit(0);
 					break;
@@ -170,9 +170,9 @@ int main(int argc, char *argv[])
 					} else parse_lua_simconf_options();
 					break;
 				case 'h':
-					printf("%s\nCompiled on %s, %s\n", PACKAGE_STRING,
+					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s\n", PACKAGE_STRING,
 						   __DATE__, __TIME__);
-					printf("%s", ARGSTRING);
+					pprintf(PRI_ESSENTIAL, "%s", ARGSTRING);
 					exit(0);
 					break;
 				case '?':
@@ -186,8 +186,8 @@ int main(int argc, char *argv[])
 		if(optind < argc) {
 			pprintf(PRI_ERR, "Arguments not recognized: ");
 			while(optind < argc)
-				printf("%s ", argv[optind++]);
-			printf("\n");
+				pprintf(PRI_ESSENTIAL, "%s ", argv[optind++]);
+			pprintf(PRI_ESSENTIAL, "\n");
 			exit(1);
 		}
 		
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
 	
 	free_all_queue();
 	
-	printf("Done!\n");
+	pprintf(PRI_ESSENTIAL, "Done!\n");
 	
 	return 0;
 }

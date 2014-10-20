@@ -98,10 +98,10 @@ void *thread_null(void *thread_setts)
 		
 		/* Racy as hell */
 		pthread_mutex_lock(t->mute);
-		t->glob_stats->null_avg_dist = (avg_dist+t->glob_stats->null_avg_dist)/2;
-		if(t->glob_stats->null_max_dist < max_dist) {
-			t->glob_stats->null_max_dist = max_dist;
-		}
+			t->glob_stats->null_avg_dist = (avg_dist+t->glob_stats->null_avg_dist)/2;
+			if(t->glob_stats->null_max_dist < max_dist) {
+				t->glob_stats->null_max_dist = max_dist;
+			}
 		pthread_mutex_unlock(t->mute);
 		
 		pthread_testcancel();
