@@ -49,6 +49,22 @@ typedef struct {
 	bool ignore;
 } data;
 
+/* Thread statistics structure */
+struct thread_statistics {
+	/* Shared across all algorithms */
+	clockid_t clockid;
+	
+	/* physics_barnes_hut */
+	unsigned int bh_total_alloc;
+	unsigned int bh_new_alloc;
+	unsigned int bh_new_cleaned;
+	size_t bh_heapsize;
+	
+	/* physics_null */
+	double null_avg_dist, null_max_dist;
+};
+
+/* Global statistics structure */
 struct global_statistics {
 	long double progress, time_running;
 	
@@ -64,21 +80,6 @@ struct global_statistics {
 	struct thread_statistics **t_stats;
 };
 
-/* Statistics structure */
-struct thread_statistics {
-	/* Shared across all algorithms */
-	clockid_t clockid;
-	
-	/* physics_barnes_hut */
-	unsigned int bh_total_alloc;
-	unsigned int bh_new_alloc;
-	unsigned int bh_new_cleaned;
-	size_t bh_heapsize;
-	
-	/* physics_null */
-	double null_avg_dist, null_max_dist;
-};
-
 /* Struct sent to threads' init functions */
 struct glob_thread_config {
 	data *obj;
@@ -87,21 +88,19 @@ struct glob_thread_config {
 };
 
 /* Algorithm structure */
-struct list_algorithms {
+typedef const struct list_algorithms {
 	const char *name, *version, *desc, *author;
 	void **(*thread_configuration)(struct glob_thread_config *cfg);
 	void *(*thread_location)(void *thread_setts);
 	void (*thread_destruction)(void **);
-};
+} phys_algorithm;
 
 typedef void  *(*thread_function)(void*);
 typedef void **(*thread_configuration)(struct glob_thread_config *cfg);
 typedef void   (*thread_destruction)(void **);
 
-/* These functions will return a function pointer */
-thread_function        phys_find_algorithm(const char *name);
-thread_configuration   phys_find_config(const char *name);
-thread_destruction     phys_find_quit(const char *name);
+/* Returns struct */
+phys_algorithm *phys_find_algorithm(const char *name);
 
 /* Statistics directly from the threads */
 extern struct global_statistics *phys_stats;

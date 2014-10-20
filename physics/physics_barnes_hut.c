@@ -31,7 +31,10 @@
 #define INDENT "  "
 
 /* Thread local storage allocation stats */
-static _Thread_local unsigned int allocated_cells;
+static _Thread_local unsigned int allocated_cells = 0;
+
+/* Maximum octrees, calculated from option->bh_heapsize_max */
+static unsigned int bh_octrees_max = 0;
 
 /* Will be replaced with atomics as soon as Clang supports stdatomic.h */
 static pthread_mutex_t root_lock;
@@ -171,6 +174,9 @@ void **bhut_init(struct glob_thread_config *cfg)
 		exit(1);
 	}
 	
+	/* Calculate maximum octrees */
+	bh_octrees_max = (option->bh_heapsize_max/sizeof(bh_octree))+1;
+	
 	/* Init root mutex */
 	pthread_mutex_init(&root_lock, NULL);
 	
@@ -210,9 +216,8 @@ void **bhut_init(struct glob_thread_config *cfg)
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
 	}
-	/* Workaround when only a single thread is available.
-	 * Reason why we couldn't have this in the bh_assign_thread function:
-	 * this happens ONLY once in this extremely unique corner case. */
+	
+	/* When operating on 1 thread */
 	if(option->threads == 1 && option->bh_single_assign) {
 		for(short h=0; h < 8; h++) {
 			thread_config[1]->octrees[h] = NULL;
@@ -235,6 +240,9 @@ void **bhut_init(struct glob_thread_config *cfg)
 /* Deinit function */
 void bhut_quit(void **threads) {
 	struct thread_config_bhut **t = (struct thread_config_bhut **)threads;
+	
+	option->stats_bh = false;
+	
 	/* Root mutex */
 	pthread_mutex_destroy(&root_lock);
 	
@@ -253,7 +261,7 @@ void bhut_quit(void **threads) {
 		free(t[k]);
 	}
 	free(t);
-	option->stats_bh = false;
+	
 	return;
 }
 
@@ -349,10 +357,10 @@ short bh_get_octant(vec3 *pos, bh_octree *octree)
 /* Inits a cell, in case it isn't, updates score and position */
 static void bh_init_cell(bh_octree *octree, short k)
 {
-	if(allocated_cells*sizeof(bh_octree) > option->bh_heapsize_max) {
+	if(allocated_cells > bh_octrees_max) {
 		pprintf(PRI_ERR, "Reached maximum octree heapsize of %lu bytes!\n",
 				option->bh_heapsize_max);
-		exit(3);
+		raise(SIGINT);
 	}
 	if(!octree->cells[k]) {
 		octree->cells[k] = calloc(1, sizeof(bh_octree));
@@ -395,7 +403,6 @@ static void bh_insert_object(data *object, bh_octree *octree)
 	}
 }
 
-/* Prints octree, with indentation defined by INDENT macro */
 void bh_print_octree(bh_octree *octree)
 {
 	if(octree->data) {
@@ -431,13 +438,14 @@ void bh_print_octree(bh_octree *octree)
 void bh_depth_print(bh_octree *octree)
 {
 	if(!octree) return;
-	pprintf(PRI_ESSENTIAL, "Oct depth = %i, halfdim = %Lf\n", octree->depth, octree->halfdim);
+	pprintf(PRI_ESSENTIAL, "Oct depth = %i, halfdim = %Lf\n",
+			octree->depth, octree->halfdim);
 	for(short i=0; i < 8; i++) {
 		if(octree->cells[i]) bh_depth_print(octree->cells[i]);
 	}
 }
 
-/* Will init a sub-root octree as root. We have to do the sync ourselves too. */
+/* Will init a sub-root octree as root. We have to do the sync ourselves. */
 bh_octree *bh_init_tree()
 {
 	bh_octree *octree = calloc(1, sizeof(bh_octree));
@@ -480,7 +488,6 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 	}
 }
 
-/* Build octrees with */
 unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 {
 	unsigned int prev_allocated_cells = allocated_cells;

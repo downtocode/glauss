@@ -60,7 +60,7 @@ struct glob_thread_config *cfg;
 void **thread_conf;
 
 /* Populate structure with names and function pointers */
-const struct list_algorithms phys_algorithms[] = {
+phys_algorithm phys_algorithms[] = {
 	PHYS_NONE,
 	PHYS_NULL,
 	PHYS_NBODY,
@@ -68,32 +68,12 @@ const struct list_algorithms phys_algorithms[] = {
 	{0}
 };
 
-/* Init function needs to return a double pointer, which then gets
- * distributed amongst threads as arguments and sent to deinit f-n */
-
-thread_function phys_find_algorithm(const char *name)
+phys_algorithm *phys_find_algorithm(const char *name)
 {
-	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
-		if(!strcmp(i->name, name))
-			return i->thread_location;
-	}
-	return NULL;
-}
-
-thread_configuration phys_find_config(const char *name)
-{
-	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
-		if(!strcmp(i->name, name))
-			return i->thread_configuration;
-	}
-	return NULL;
-}
-
-thread_destruction phys_find_quit(const char *name)
-{
-	for(const struct list_algorithms *i = phys_algorithms; i->name; i++) {
-		if(!strcmp(i->name, name))
-			return i->thread_destruction;
+	for(phys_algorithm *i = phys_algorithms; i->name; i++) {
+		if(!strcmp(i->name, name)) {
+			return i;
+		}
 	}
 	return NULL;
 }
@@ -207,15 +187,14 @@ int phys_stats_init()
 int phys_ctrl(int status, data** object)
 {
 	if(!option->threads) return 0;
-	thread_configuration conf_fn = phys_find_config(option->algorithm);
-	thread_function algo_fn = phys_find_algorithm(option->algorithm);
-	thread_destruction quit_fn = phys_find_quit(option->algorithm);
-	if(!conf_fn && !algo_fn && !quit_fn) {
+	phys_algorithm *algo = phys_find_algorithm(option->algorithm);
+	if(!algo) {
 		pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
 		return 1;
 	}
-	if(algo_fn && !quit_fn) return 1;
-	if(algo_fn && !conf_fn) return 1;
+	/* It's how we define a NULL function */
+	if(algo->thread_location && !algo->thread_destruction) return 1;
+	if(algo->thread_location && !algo->thread_configuration) return 1;
 	switch(status) {
 		case PHYS_STATUS:
 			return option->status;
@@ -235,13 +214,14 @@ int phys_ctrl(int status, data** object)
 			cfg = calloc(1, sizeof(struct glob_thread_config));
 			cfg->stats = phys_stats;
 			cfg->obj = *object;
-			thread_conf = conf_fn(ctrl_init(cfg));
+			thread_conf = algo->thread_configuration(ctrl_init(cfg));
 			
 			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
+			option->status = false;
 			option->paused = true;
 			for(int k = 1; k < option->threads + 1; k++) {
-				if(pthread_create(&threads[k], &thread_attribs, algo_fn, thread_conf[k])) {
+				if(pthread_create(&threads[k], &thread_attribs, algo->thread_location, thread_conf[k])) {
 					pprintf(PRI_ERR, "Creating thread %i failed!\n", k);
 					return 1;
 				} else {
@@ -295,7 +275,7 @@ int phys_ctrl(int status, data** object)
 			pprintf(PRI_OK, "\n");
 			/* Stop threads */
 			
-			quit_fn(thread_conf);
+			algo->thread_destruction(thread_conf);
 			
 			ctrl_quit(cfg);
 			free(cfg);

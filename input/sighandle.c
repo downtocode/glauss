@@ -62,7 +62,8 @@ void free_all_queue()
 void on_usr1_signal(int signo)
 {
 	pprintf(PRI_ESSENTIAL, "\n");
-	if(!signo) pprintf(PRI_ESSENTIAL, "USR1 signal received, current stats:\n");
+	if(!signo)
+		pprintf(PRI_ESSENTIAL, "USR1 signal received, current stats:\n");
 	pprintf(PRI_ESSENTIAL, "Time running = %Lf\n", phys_stats->time_running);
 	pprintf(PRI_ESSENTIAL, "Progress = %Lf\n", phys_stats->progress);
 	if(option->status) {
@@ -130,5 +131,5 @@ void on_quit_signal(int signo)
 
 void on_alrm_signal(int signo)
 {
-	pprintf(PRI_WARN, "Watchdog timer kicked in! Program probably hanged up.\n");
+	pprint_warn("Watchdog timer kicked in! Program probably hanged up.\n");
 }

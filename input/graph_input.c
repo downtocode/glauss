@@ -144,7 +144,7 @@ static void graph_scan_keypress(graph_window *win)
 		graph_sshot(phys_stats->progress);
 	}
 	if(win->event->key.keysym.sym==SDLK_ESCAPE || win->event->key.keysym.sym==SDLK_q) {
-		on_quit_signal(SIGINT);
+		raise(SIGINT);
 	}
 }
 
@@ -170,7 +170,7 @@ void graph_sdl_input_main(graph_window *win)
 				graph_scan_keypress(win);
 				break;
 			case SDL_QUIT:
-				on_quit_signal(SIGINT);
+				raise(SIGINT);
 				break;
 		}
 	}

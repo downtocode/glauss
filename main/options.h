@@ -29,7 +29,7 @@ extern struct option_struct {
 	bool nogrv, noele, logenable;
 	FILE *logfile; //--
 	
-	/* Parser */
+	/* Input */
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
 	char *spawn_funct, *timestep_funct;
 	unsigned int exec_funct_freq, skip_model_vec;

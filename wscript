@@ -2,7 +2,7 @@ import sys, os, re
 from waflib.Build import BuildContext
 
 APPNAME='physengine'
-VERSION='0.2'
+VERSION=''
 
 top = '.'
 out = 'build'
@@ -48,12 +48,15 @@ def configure(ctx):
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')
 	ctx.check_cfg(package='lua5.2', args='--cflags --libs', uselib_store='LUA')
 	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
-	ctx.check(features='c cprogram', lib=['readline'], cflags='-lreadline', uselib_store='READLN')
+	ctx.check(features='c cprogram', lib=['readline'], uselib_store='READLN')
 	
 	if (ctx.options.ver):
 		package_ver = ctx.options.ver
 	else:
-		package_ver = try_git_version() + '-git'
+		if (VERSION):
+			package_ver = VERSION
+		else:
+			package_ver = try_git_version() + '-git'
 	
 	FULL_PACKAGE_NAME = APPNAME + ' ' + package_ver
 	
@@ -127,7 +130,6 @@ def build(ctx):
 	)
 	ctx(name='input_thread',
 		path=ctx.path,
-		uselib='READLN',
 		target='input_thread',
 		source='input/input_thread.c',
 		features  = ['c'],

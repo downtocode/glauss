@@ -66,8 +66,6 @@ void input_thread_quit()
 	
 	if(!global_cfg->selfquit) {
 		pthread_cancel(global_cfg->input);
-		rl_free_line_state();
-		rl_cleanup_after_signal();
 		val = PTHREAD_CANCELED;
 	}
 	
@@ -79,6 +77,10 @@ void input_thread_quit()
 	
 	/* Free resources */
 	free(global_cfg);
+	
+	/* Reset terminal */
+	rl_free_line_state();
+	rl_cleanup_after_signal();
 	
 	return;
 }
@@ -256,7 +258,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 void *input_thread(void *thread_setts)
 {
 	struct input_cfg *t = thread_setts;
-	char prompt[sizeof(CMD_PROMPT_BASE)+sizeof(pointyellow)+sizeof(CMD_PROMPT_SPACE)];
+	char prompt[sizeof(CMD_PROMPT_BASE)+sizeof(pointyellow)+sizeof(CMD_PROMPT_SPACE)+1];
 	
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
@@ -287,6 +289,8 @@ void *input_thread(void *thread_setts)
 		{"unpause", NULL, T_PAUSE, T_CMD},
 		{0}
 	};
+	
+	rl_catch_signals = false;
 	
 	while(t->status) {
 		/* Refresh prompt */

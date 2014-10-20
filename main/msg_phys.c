@@ -20,17 +20,13 @@
 #include "msg_phys.h"
 #include "options.h"
 
-#define PRI_NORM 4
-#define PRI_VERB 6
-#define PRI_DEB 10
-
 static const char *okmsg = "[\033[032m Ok! \033[0m] ";
 static const char *warnmsg = "[\033[033m Warning! \033[0m] ";
 static const char *errmsg = "[\033[031m Error! \033[0m] ";
 
 /* pprintf - a priority printing function. */
 void pprintf(unsigned int priority, const char *format, ...)
-{	
+{
 	va_list args;
 	if(option->logenable) {
 		va_start(args, format);
@@ -49,91 +45,4 @@ void pprintf(unsigned int priority, const char *format, ...)
 		vprintf(format, args);
 		va_end(args);
 	}
-}
-
-void pprint_ok(const char *format, ...)
-{
-	va_list args;
-	if(option->logenable) {
-		va_start(args, format);
-		vfprintf(option->logfile, format, args);
-		va_end(args);
-	}
-	printf("%s", okmsg);
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-}
-
-void pprint_warn(const char *format, ...)
-{
-	va_list args;
-	if(option->logenable) {
-		va_start(args, format);
-		vfprintf(option->logfile, format, args);
-		va_end(args);
-	}
-	printf("%s", warnmsg);
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-}
-
-void pprint_err(const char *format, ...)
-{
-	va_list args;
-	if(option->logenable) {
-		va_start(args, format);
-		vfprintf(option->logfile, format, args);
-		va_end(args);
-	}
-	fprintf(stderr, "%s", errmsg);
-	va_start(args, format);
-	vfprintf(stderr, format, args);
-	va_end(args);
-}
-
-void pprint(const char *format, ...)
-{
-	va_list args;
-	if(option->logenable) {
-		va_start(args, format);
-		vfprintf(option->logfile, format, args);
-		va_end(args);
-	}
-	if(option->verbosity < PRI_NORM) return;
-	printf("%s", warnmsg);
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-}
-
-void pprint_deb(const char *format, ...)
-{
-	va_list args;
-	if(option->logenable) {
-		va_start(args, format);
-		vfprintf(option->logfile, format, args);
-		va_end(args);
-	}
-	if(option->verbosity < PRI_DEB) return;
-	printf("%s", warnmsg);
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-}
-
-void pprint_verb(const char *format, ...)
-{
-	va_list args;
-	if(option->logenable) {
-		va_start(args, format);
-		vfprintf(option->logfile, format, args);
-		va_end(args);
-	}
-	if(option->verbosity < PRI_VERB) return;
-	printf("%s", warnmsg);
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
 }

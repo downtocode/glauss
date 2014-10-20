@@ -55,7 +55,7 @@ graph_window *graph_sdl_init(data *object)
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
 	
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE);
 	sdl_initd = true;
 	
 	/* Default options */
