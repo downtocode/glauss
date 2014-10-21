@@ -23,11 +23,11 @@
 #include <SDL2/SDL.h>
 #include "physics/physics_aux.h"
 
-/* Camera info sent from graph_sdl */
+/* Camera info */
 struct graph_cam_view {
 	float view_rotx, view_roty, view_rotz;
 	float tr_x, tr_y, tr_z;
-	float scalefactor;
+	float scalefactor, aspect_ratio;
 };
 
 typedef struct {
@@ -42,7 +42,7 @@ typedef struct {
 	struct numbers_selection numbers;
 	char currentsel[100];
 	data *object;
-	float fps, aspect_ratio;
+	float fps;
 } graph_window;
 
 /* Default camera position and scale */

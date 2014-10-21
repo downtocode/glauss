@@ -29,6 +29,7 @@
 #include "graph_sdl.h"
 #include "graph_objects.h"
 #include "graph_fonts.h"
+#include "input/graph_input.h"
 #include "main/options.h"
 
 /* UI POSITIONS */
@@ -201,7 +202,7 @@ void graph_set_view(graph_window *win)
 {
 	make_translation_matrix(win->camera.tr_x, win->camera.tr_y, win->camera.tr_z, transl);
 	
-	make_scale_matrix(win->aspect_ratio*win->camera.scalefactor, win->camera.scalefactor,
+	make_scale_matrix(win->camera.aspect_ratio*win->camera.scalefactor, win->camera.scalefactor,
 					  win->camera.scalefactor, scale);
 	
 	make_pers_matrix(10, option->width/option->height, -1, 10, pers);
@@ -262,9 +263,6 @@ void graph_draw_scene(graph_window *win)
 	char osdtext[OSD_BUFFER];
 	struct timespec ts;
 	const GLfloat *fpscolor;
-	
-	/* Move camera */
-	graph_sdl_move_cam(win);
 	
 	/*	Text/static drawing	*/
 	{
@@ -374,12 +372,9 @@ void graph_draw_scene(graph_window *win)
 		option->write_sshot_now = false;
 	}
 	/*	Dynamic drawing	*/
-	
-	/* Swap Front and Back buffers */
-	graph_sdl_swapwin(win);
 }
 
-void graph_init(graph_window *win)
+void graph_init()
 {
 	mat       =  calloc(16, sizeof(GLfloat));
 	rotx      =  calloc(16, sizeof(GLfloat));
@@ -399,7 +394,6 @@ void graph_init(graph_window *win)
 	add_to_free_queue(pers);
 	add_to_free_queue(transl);
 	
-	graph_sdl_resize_wind(win);
 	object_shader = graph_init_objects();
 	text_shader = graph_init_freetype(graph_init_fontconfig());
 	glEnable(GL_DEPTH_TEST);

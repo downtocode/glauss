@@ -25,7 +25,7 @@ static const char *warnmsg = "[\033[033m Warning! \033[0m] ";
 static const char *errmsg = "[\033[031m Error! \033[0m] ";
 
 /* pprintf - a priority printing function. */
-void pprintf(unsigned int priority, const char *format, ...)
+void pprintf(int priority, const char *format, ...)
 {
 	va_list args;
 	if(option->logenable) {

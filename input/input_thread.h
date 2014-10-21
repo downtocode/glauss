@@ -35,7 +35,7 @@ enum codepaths {
 	T_BOOL,
 	T_USHORT,
 	T_SHORT,
-	T_STRING, /* WARNING: WILL TRY TO FREE, ONLY USE STRDUP'D STRINGS! */
+	T_STRING, /* WARNING: WILL FREE(), ONLY USE STRDUP'D STRINGS! */
 	T_LONGINT,
 	T_LONGUINT,
 	/* Never mix enums, commands go here */
@@ -49,6 +49,8 @@ enum codepaths {
 	T_STATS,
 	T_CLEAR,
 	T_PAUSE,
+	T_ENABLE_WINDOW,
+	T_DISABLE_WINDOW,
 };
 
 enum intercommunication {
@@ -71,14 +73,14 @@ struct interp_opt {
 struct input_cfg {
 	pthread_t input;
 	data *obj;
-	graph_window *win;
+	graph_window **win;
 	char *line;
+	float *fps;
+	unsigned int *frames;
 	volatile bool status, selfquit;
 };
 
-int input_thread_ctrl(struct input_cfg *cfg, int ctrl);
-int input_thread_init(graph_window *win, data *object);
-void input_thread_handle_char(char *line);
+int input_thread_init(void **win, unsigned int *frames, float *fps, data *object);
 void input_thread_quit();
 int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_map);
 void *input_thread(void *thread_setts);

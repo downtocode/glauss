@@ -15,14 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_GRAPH_INPUT
-#define PHYSENGINE_GRAPH_INPUT
+#ifndef PHYSENGINE_GRAPH_THREAD
+#define PHYSENGINE_GRAPH_THREAD
 
-#include "graph/graph_sdl.h"
+#include <pthread.h>
+#include "graph_sdl.h"
 
-void graph_press_mouse(graph_window *win);
-void graph_release_mouse(graph_window *win);
-void graph_adj_zoom_mwheel(graph_window *win);
-int graph_scan_keypress(graph_window *win);
+/* Sent to graph thread */
+struct graph_cfg {
+	pthread_t graph;
+	data *obj;
+	graph_window *win;
+	unsigned int *frames;
+	float *fps;
+	volatile bool status, selfquit;
+};
+
+void **graph_thread_init(data *object, unsigned int *frames, float *fps);
+void graph_thread_quit();
+void *graph_thread(void *thread_setts);
 
 #endif
+

@@ -124,7 +124,7 @@ const char *return_atom_str(unsigned int num)
 
 /* Function to input numbers in an array and later extract a single number out.
  * Used in selecting objects. */
-int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status)
+int getnumber(struct numbers_selection *numbers, int currentdigit, int status)
 {
 	if(status == NUM_ANOTHER) {
 		numbers->digits[numbers->final_digit] = currentdigit;

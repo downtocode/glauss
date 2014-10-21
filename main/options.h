@@ -28,6 +28,7 @@ extern struct option_struct {
 	int width, height, fontsize;
 	bool nogrv, noele, logenable;
 	FILE *logfile; //--
+	volatile bool novid;
 	
 	/* Input */
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;

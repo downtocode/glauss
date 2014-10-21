@@ -23,7 +23,7 @@
 #include "main/options.h"
 #include "main/msg_phys.h"
 #include "physics/physics.h"
-#include "graph/graph.h"
+#include "graph/graph_thread.h"
 #include "input_thread.h"
 
 #define FREE_QUEUE_MAX 20
@@ -110,22 +110,30 @@ void on_quit_signal(int signo)
 	/* Lua */
 	pprintf(PRI_ESSENTIAL, "Lua: ");
 	parse_lua_close();
-	pprintf(PRI_OK, "&& ");
+	pprintf(PRI_OK, "");
 	
 	/* Logfile */
 	if(option->logenable) {
-		pprintf(PRI_ESSENTIAL, "Log: ");
+		pprintf(PRI_ESSENTIAL, "&& Log: ");
 		fclose(option->logfile);
 		option->logenable = false;
-		pprintf(PRI_OK, "&& ");
+		pprintf(PRI_OK, "");
 	}
 	
 	/* Input thread */
-	pprintf(PRI_ESSENTIAL, "Input: ");
+	pprintf(PRI_ESSENTIAL, "&& Input: ");
 	input_thread_quit();
 	pprintf(PRI_OK, "");
 	
 	/* Window */
+	if(!option->novid) {
+		pprintf(PRI_ESSENTIAL, "&& Window: ");
+		graph_thread_quit();
+		option->novid = true;
+		pprintf(PRI_OK, "");
+	}
+	
+	/* Main */
 	option->quit_main_now = true;
 }
 

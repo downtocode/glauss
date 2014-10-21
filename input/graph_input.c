@@ -65,7 +65,7 @@ static void graph_sdl_scan_selection(graph_window *win)
 	}
 }
 
-static void graph_press_mouse(graph_window *win)
+void graph_press_mouse(graph_window *win)
 {
 	if(win->event->button.button == SDL_BUTTON_LEFT) win->flicked = 1;
 	if(win->event->button.button == SDL_BUTTON_MIDDLE) {
@@ -79,7 +79,7 @@ static void graph_press_mouse(graph_window *win)
 }
 
 
-static void graph_release_mouse(graph_window *win)
+void graph_release_mouse(graph_window *win)
 {
 	if(win->event->button.button == SDL_BUTTON_LEFT) win->flicked = 0;
 	if(win->event->button.button == SDL_BUTTON_MIDDLE) win->translate = 0;
@@ -88,7 +88,7 @@ static void graph_release_mouse(graph_window *win)
 	SDL_ShowCursor(1);
 }
 
-static void graph_adj_zoom_mwheel(graph_window *win)
+void graph_adj_zoom_mwheel(graph_window *win)
 {
 	if(win->event->wheel.y > 0) win->camera.scalefactor *= ZOOM_SENS;
 	if(win->event->wheel.y < 0) win->camera.scalefactor /= ZOOM_SENS;
@@ -96,82 +96,61 @@ static void graph_adj_zoom_mwheel(graph_window *win)
 	if(win->camera.scalefactor < MIN_SCALE) win->camera.scalefactor = MIN_SCALE;
 }
 
-static void graph_scan_keypress(graph_window *win)
+int graph_scan_keypress(graph_window *win)
 {
 	/* Check if we need to get numbers for object selecting */
 	if(win->start_selection) {
 		graph_sdl_scan_selection(win);
 	}
 	/* Scan hotkeys */
-	if(win->event->key.keysym.sym==SDLK_RETURN) {
-		win->start_selection = 1;
-		return;
+	switch(win->event->key.keysym.sym) {
+		case SDLK_RETURN:
+			win->start_selection = 1;
+			break;
+		case SDLK_RIGHTBRACKET:
+			option->dt /= DT_SCALE;
+			break;
+		case SDLK_LEFTBRACKET:
+			option->dt *= DT_SCALE;
+			break;
+		case SDLK_SPACE:
+			phys_ctrl(PHYS_PAUSESTART, NULL);
+			break;
+		case SDLK_r:
+			win->camera = def_cam;
+			win->chosen = 0;
+			break;
+		case SDLK_z:
+			toxyz(win->object);
+			break;
+		case SDLK_MINUS:
+			phys_shuffle_algorithms();
+			break;
+		case SDLK_BACKSPACE:
+			if(option->status) phys_ctrl(PHYS_SHUTDOWN, NULL);
+			else phys_ctrl(PHYS_START, &win->object);
+			break;
+		case SDLK_PERIOD:
+			if(win->chosen < option->obj) win->chosen++;
+			break;
+		case SDLK_COMMA:
+			if(win->chosen > 0) win->chosen--;
+			break;
+		case SDLK_f:
+			graph_sdl_toggle_fullscreen(win);
+			break;
+		case SDLK_s:
+			raise(SIGUSR1);
+			graph_sshot(phys_stats->progress);
+			break;
+		case SDLK_ESCAPE:
+			return 1;
+			break;
+		case SDLK_q:
+			return 1;
+			break;
+		default:
+			break;
 	}
-	if(win->event->key.keysym.sym==SDLK_RIGHTBRACKET) {
-		option->dt /= DT_SCALE;
-	}
-	if(win->event->key.keysym.sym==SDLK_LEFTBRACKET) {
-		option->dt *= DT_SCALE;
-	}
-	if(win->event->key.keysym.sym==SDLK_SPACE) {
-		phys_ctrl(PHYS_PAUSESTART, NULL);
-	}
-	if(win->event->key.keysym.sym==SDLK_r) {
-		win->camera = def_cam;
-		win->chosen = 0;
-	}
-	if(win->event->key.keysym.sym==SDLK_z) {
-		toxyz(win->object);
-	}
-	if(win->event->key.keysym.sym==SDLK_MINUS) {
-		phys_shuffle_algorithms();
-	}
-	if(win->event->key.keysym.sym==SDLK_BACKSPACE) {
-		if(option->status) phys_ctrl(PHYS_SHUTDOWN, NULL);
-		else phys_ctrl(PHYS_START, &win->object);
-	}
-	if(win->event->key.keysym.sym==SDLK_PERIOD) {
-		if(win->chosen < option->obj) win->chosen++;
-	}
-	if(win->event->key.keysym.sym==SDLK_COMMA) {
-		if(win->chosen > 0) win->chosen--;
-	}
-	if(win->event->key.keysym.sym==SDLK_f) {
-		graph_sdl_toggle_fullscreen(win);
-	}
-	if(win->event->key.keysym.sym==SDLK_s) {
-		raise(SIGUSR1);
-		graph_sshot(phys_stats->progress);
-	}
-	if(win->event->key.keysym.sym==SDLK_ESCAPE || win->event->key.keysym.sym==SDLK_q) {
-		raise(SIGINT);
-	}
+	return 0;
 }
-
-void graph_sdl_input_main(graph_window *win)
-{
-	if(!win) return;
-	while(SDL_PollEvent(win->event)) {
-		switch(win->event->type) {
-			case SDL_WINDOWEVENT:
-				if(win->event->window.event == SDL_WINDOWEVENT_RESIZED)
-					graph_sdl_resize_wind(win);
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				graph_press_mouse(win);
-				break;
-			case SDL_MOUSEBUTTONUP:
-				graph_release_mouse(win);
-				break;
-			case SDL_MOUSEWHEEL:
-				graph_adj_zoom_mwheel(win);
-				break;
-			case SDL_KEYDOWN:
-				graph_scan_keypress(win);
-				break;
-			case SDL_QUIT:
-				raise(SIGINT);
-				break;
-		}
-	}
-} 

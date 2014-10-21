@@ -55,7 +55,8 @@ graph_window *graph_sdl_init(data *object)
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
 	
-	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE);
+	SDL_Init(SDL_INIT_NOPARACHUTE);
+	SDL_Init(SDL_INIT_VIDEO);
 	sdl_initd = true;
 	
 	/* Default options */
@@ -89,7 +90,7 @@ float graph_sdl_resize_wind(graph_window *win)
 	/* Usually it's the other way around */
 	aspect_ratio = (float)option->height/option->width;
 	graph_reset_viewport();
-	win->aspect_ratio = aspect_ratio;
+	win->camera.aspect_ratio = aspect_ratio;
 	return aspect_ratio;
 }
 

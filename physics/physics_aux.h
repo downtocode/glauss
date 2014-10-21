@@ -50,7 +50,7 @@ void phys_shuffle_algorithms();
 
 /* Function to turn individual numbers into a single number. See graph_input
  * for example of how to use */
-int getnumber(struct numbers_selection *numbers, int currentdigit, unsigned int status);
+int getnumber(struct numbers_selection *numbers, int currentdigit, int status);
 
 /* Rotate vector by angles specified in rot1 */
 void rotate_vec(vec3 *vec, vec3 *rot1);

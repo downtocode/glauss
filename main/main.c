@@ -28,16 +28,13 @@
 
 /*	Functions	*/
 #include "config.h"
-#include "physics/physics.h"
-#include "graph/graph.h"
-#include "input/graph_input.h"
-#include "input/parser.h"
-#include "out_xyz.h"
 #include "options.h"
-#include "msg_phys.h"
-#include "physics/physics_aux.h"
-#include "input/sighandle.h"
+#include "physics/physics.h"
+#include "graph/graph_thread.h"
 #include "input/input_thread.h"
+#include "input/sighandle.h"
+#include "input/parser.h"
+#include "msg_phys.h"
 
 #define WATCHDOG_OFFSET_SEC 10
 
@@ -65,6 +62,7 @@ int main(int argc, char *argv[])
 			.lua_expose_obj_array = 0,
 			.quit_main_now = 0,
 			.skip_model_vec = 250,
+			.novid = 0,
 			
 			/* Physics */
 			.threads = 0,
@@ -91,7 +89,6 @@ int main(int argc, char *argv[])
 	/*	Main function vars	*/
 		struct timeval t1 = {0}, t2 = {0};
 		float deltatime = 0.0, totaltime = 0.0;
-		unsigned int frames = 0;
 		int novid = 0, bench = 0;
 		float timer = 1;
 	/*	Main function vars	*/
@@ -197,9 +194,11 @@ int main(int argc, char *argv[])
 			exit(2);
 		}
 		
+		option->novid = novid;
+		
 		if(bench) {
 			pprintf(PRI_WARN, "Benchmark mode active.\n");
-			novid = 1;
+			option->novid = 1;
 			option->verbosity = 8;
 			if(timer==1.0f) timer = 30.0f;
 		}
@@ -250,36 +249,36 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 	
 	/*	Graphics	*/
-		graph_window *win = NULL;
-		if(!novid) {
-			win = graph_sdl_init(object);
-			/* OpenGL */
-			graph_init(win);
+		unsigned int *frames = calloc(1, sizeof(unsigned int));
+		float *fps = calloc(1, sizeof(float));
+		add_to_free_queue(fps);
+		add_to_free_queue(frames);
+		void **window = NULL;
+		if(!option->novid) {
+			window = graph_thread_init(object, frames, fps);
 		}
 	/*	Graphics	*/
 	
-	input_thread_init(win, object);
+	/*	Input	*/
+		input_thread_init(window, frames, fps, object);
+	/*	Input	*/
 	
 	gettimeofday(&t1 , NULL);
 	
 	while(!option->quit_main_now) {
-		/* Get input from SDL */
-		graph_sdl_input_main(win);
-		
 		/* Update timer */
 		gettimeofday(&t2, NULL);
 		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
 		phys_stats->time_running += deltatime;
 		t1 = t2;
 		totaltime += deltatime;
-		frames++;
 		
 		/* Timer trigg'd events */
 		if(totaltime > timer) {
+			if(!option->novid)
+				*fps = *frames/totaltime;
 			/* Kick the watchdog timer */
 			alarm(timer+WATCHDOG_OFFSET_SEC);
-			if(!novid)
-				win->fps = frames/totaltime;
 			
 			if(bench) {
 				pprintf(PRI_ESSENTIAL,
@@ -290,24 +289,11 @@ int main(int argc, char *argv[])
 						phys_stats->progress/totaltime);
 				raise(SIGINT);
 			}
-			totaltime = frames = 0;
+			totaltime = *frames = 0;
 		}
 		
-		/* Prevents wasting CPU time by waking up once every 50 msec. */
-		if(novid) {
-			/* TODO: Wakeup a bit before physics_ctrl thread wakes up */
-			SDL_Delay(50);
-		}
-		
-		/* Draw scene */
-		graph_draw_scene(win);
-	}
-	
-	/* To prevent explosions exit last to make sure no one uses it */
-	if(win) {
-		pprintf(PRI_ESSENTIAL, "&& Window: ");
-		graph_sdl_deinit(win);
-		pprintf(PRI_OK, "\n");
+		/* Prevents wasting CPU time. */
+		usleep(47);
 	}
 	
 	free_all_queue();

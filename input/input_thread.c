@@ -30,6 +30,7 @@
 #include "main/out_xyz.h"
 #include "physics/physics.h"
 #include "graph/graph.h"
+#include "graph/graph_thread.h"
 #include "input_thread.h"
 #include "sighandle.h"
 
@@ -38,13 +39,16 @@ static const char pointyellow[] = "\033[033m"CMD_PROMPT_DOT"\033[0m";
 static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 
 static struct input_cfg *global_cfg = NULL;
+static struct interp_opt *global_cmd_map = NULL;
 
-int input_thread_init(graph_window *win, data *object)
+int input_thread_init(void **win, unsigned int *frames, float *fps, data *object)
 {
 	struct input_cfg *cfg = calloc(1, sizeof(struct input_cfg));
 	
 	cfg->obj = object;
-	cfg->win = win;
+	cfg->win = (graph_window **)win;
+	cfg->fps = fps;
+	cfg->frames = frames;
 	cfg->status = true;
 	cfg->selfquit = false;
 	cfg->line = NULL;
@@ -232,6 +236,17 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 					case T_CLEAR:
 						for(int c = 0; c < CMD_CLEAR_REPS; c++) pprintf(PRI_ESSENTIAL, "\n");
 						break;
+					case T_ENABLE_WINDOW:
+						if(*t->win) break;
+						*t->win = *graph_thread_init(t->obj, t->frames, t->fps);
+						option->novid = false;
+						break;
+					case T_DISABLE_WINDOW:
+						if(!*t->win) break;
+						graph_thread_quit();
+						*t->win = NULL;
+						option->novid = true;
+						break;
 					default:
 						break;
 				}
@@ -253,6 +268,33 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 		free(freestr);
 	
 	return retval;
+}
+
+char *input_cmd_generator(const char *line, int state)
+{
+	/* Readline is fussy as fuck about every single word. Here be dragons */
+	static int list_index = 0, len = 0;
+	char *name = NULL;
+	if(!state) {
+		list_index = 0;
+		len = strlen(line);
+	}
+	while((name = global_cmd_map[list_index++].name)) {
+		if(!strncmp(name, line, len)) {
+			return strdup(name);
+		}
+	}
+	return NULL;
+}
+
+char **input_completion(const char *line, int start, int end)
+{
+	char **matches = NULL;
+	
+	if(start == 0)
+		matches = rl_completion_matches(line, input_cmd_generator);
+	
+	return matches;
 }
 
 void *input_thread(void *thread_setts)
@@ -287,10 +329,14 @@ void *input_thread(void *thread_setts)
 		{"clear", NULL, T_CLEAR, T_CMD},
 		{"pause", NULL, T_PAUSE, T_CMD},
 		{"unpause", NULL, T_PAUSE, T_CMD},
+		{"win_create", NULL, T_ENABLE_WINDOW, T_CMD},
+		{"win_destroy", NULL, T_DISABLE_WINDOW, T_CMD},
 		{0}
 	};
+	global_cmd_map = cmd_map;
 	
 	rl_catch_signals = false;
+	rl_attempted_completion_function = input_completion;
 	
 	while(t->status) {
 		/* Refresh prompt */
@@ -305,14 +351,15 @@ void *input_thread(void *thread_setts)
 		t->line = readline(prompt);
 		
 		if(!t->line) {
-			t->selfquit = true;
+			t->selfquit = 1;
 			raise(SIGINT);
 		} else if(*t->line) {
+			add_history(t->line);
 			switch(input_token_setall(t->line, t, cmd_map)) {
 				case CMD_ALL_FINE:
 					break;
 				case CMD_EXIT:
-					t->selfquit = true;
+					t->selfquit = 1;
 					raise(SIGINT);
 					break;
 				case CMD_NOT_FOUND:
@@ -328,6 +375,8 @@ void *input_thread(void *thread_setts)
 		free(t->line);
 		t->line = NULL;
 	}
+	
+	t->selfquit = 1;
 	
 	return 0;
 }

@@ -33,7 +33,7 @@ enum PRIORITIY {
 	 PRI_ERR = 12,
 };
 
-void pprintf(enum PRIORITIY, const char *format, ...);
+void pprintf(int priority, const char *format, ...);
 
 #define pprint_ok(...) pprintf(PRI_OK, __VA_ARGS__)
 #define pprint_warn(...) pprintf(PRI_WARN, __VA_ARGS__)
