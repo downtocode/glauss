@@ -118,6 +118,7 @@ int graph_scan_keypress(graph_window *win)
 			break;
 		case SDLK_r:
 			win->camera = def_cam;
+			win->camera.aspect_ratio = graph_sdl_resize_wind(win);
 			win->chosen = 0;
 			break;
 		case SDLK_z:

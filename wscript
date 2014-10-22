@@ -33,10 +33,16 @@ def options(ctx):
 				help='Enable link-time optimizations.')
 	ctx.add_option('--set-version', dest='ver', action='store', default='',
 				help='Sets package version.')
+	ctx.add_option('--no-debug', dest='no_deb', action='store_true', default=False,
+				help='Unsets debug compilation flags.')
 	
 def configure(ctx):
 	ctx.load('compiler_c')
-	ctx.env.append_unique('CFLAGS', ['-g', '-O2', '-Wall', '-pedantic', '-std=gnu11', '-march=native'])
+	
+	if (ctx.options.no_deb == False):
+		ctx.env.CFLAGS += ['-g']
+	
+	ctx.env.append_unique('CFLAGS', ['-O2', '-Wall', '-pedantic', '-std=gnu11', '-march=native'])
 	
 	#Add mandatory=False when we don't really need it.
 	
