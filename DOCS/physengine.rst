@@ -108,6 +108,9 @@ The following flags can be used:
 ``--verb``, ``-v`` - *Short Unsigned Integer*
     Sets how much information to output to *STDOUT*.
 
+``--lua_val``, ``-u`` - *String*
+    String to send as an argument to Lua's spawn_objects function.
+
 
 These flags will always override anything set inside the configuration input file.
 

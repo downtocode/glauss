@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
 		struct timeval t1 = {0}, t2 = {0};
 		float deltatime = 0.0, totaltime = 0.0;
 		int novid = 0, bench = 0;
+		char *sent_to_lua = NULL;
 		float timer = 1;
 	/*	Main function vars	*/
 	
@@ -109,12 +110,13 @@ int main(int argc, char *argv[])
 				{"version",		no_argument,			0, 'V'},
 				{"file",		required_argument,		0, 'f'},
 				{"help",		no_argument,			0, 'h'},
+				{"lua_val",		required_argument,		0, 'u'},
 				{0}
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "a:f:l:t:r:v:Vh", long_options,
+			c = getopt_long(argc, argv, "a:f:l:t:r:u:v:Vh", long_options,
 							&option_index);
 			
 			/* Detect the end of the options. */
@@ -156,6 +158,10 @@ int main(int argc, char *argv[])
 					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s\n", PACKAGE_STRING,
 						   __DATE__, __TIME__);
 					exit(0);
+					break;
+				case 'u':
+					sent_to_lua = strdup(optarg);
+					add_to_free_queue(sent_to_lua);
 					break;
 				case 'f':
 					option->filename = strdup(optarg);
@@ -231,7 +237,7 @@ int main(int argc, char *argv[])
 			add_to_free_queue(atom_prop);
 		}
 		
-		if(parse_lua_simconf_objects(&object)) {
+		if(parse_lua_simconf_objects(&object, sent_to_lua)) {
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
 					option->filename);
 			return 2;

@@ -90,7 +90,8 @@ hub_radius = 10.0
 hub_stars = 1240
 hub_width = 4.0
 
-function spawn_objects(var_C)
+function spawn_objects(string_from_arg)
+	print("Sent value", string_from_arg)
 	math.randomseed( os.time() )
 	scale_obj = 45
 	for i = #objects+1, disk_stars+1, 1 do

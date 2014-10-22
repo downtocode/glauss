@@ -305,11 +305,11 @@ int parse_lua_simconf_options()
 }
 
 /* Read objects */
-int parse_lua_simconf_objects(data **object)
+int parse_lua_simconf_objects(data **object, const char* sent_to_lua)
 {
 	lua_getglobal(L, option->spawn_funct);
 	/* Can send arguments here, currently unused. */
-	lua_pushnumber(L, 0);
+	lua_pushstring(L, sent_to_lua);
 	/* The second returned value is the total number of objects */
 	lua_call(L, 1, 2);
 	/* Lua lies when reporting how many objects there are. Either that or us. */
