@@ -80,6 +80,7 @@ void input_thread_quit()
 	}
 	
 	/* Free resources */
+	free(global_cfg->line);
 	free(global_cfg);
 	
 	/* Reset terminal */
@@ -279,7 +280,7 @@ char *input_cmd_generator(const char *line, int state)
 		list_index = 0;
 		len = strlen(line);
 	}
-	while((name = global_cmd_map[list_index++].name)) {
+	while((name = (char *)global_cmd_map[list_index++].name)) {
 		if(!strncmp(name, line, len)) {
 			return strdup(name);
 		}

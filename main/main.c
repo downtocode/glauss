@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
 	
 	free_all_queue();
 	
-	pprintf(PRI_ESSENTIAL, "Done!\n");
+	pprint("Done!\n");
 	
 	return 0;
 }

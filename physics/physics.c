@@ -44,7 +44,10 @@
 	}
 
 /*	Default threads to use when system != linux.	*/
-#define failsafe_cores 2
+#define AUTO_UNAVAIL_THREADS 1
+
+/*	Number of overallocated buffer objects(for just in case) */
+#define OVERALLOC_OBJ 1
 
 /*	Indexing of cores = 1, 2, 3...	*/
 static pthread_t *threads, control_thread;
@@ -102,11 +105,11 @@ int phys_init(data** object)
 	}
 	
 	/* Allocate memory for all the objects */
-	*object = calloc(option->obj, sizeof(data));
+	*object = calloc(option->obj+OVERALLOC_OBJ, sizeof(data));
 	
 	if(*object) {
 		pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n",
-				option->obj*sizeof(data), option->obj, *object);
+				(option->obj+OVERALLOC_OBJ)*sizeof(data), option->obj, *object);
 	} else {
 		return 3; /* Impossible, should never ever happen. */
 	}
@@ -127,10 +130,10 @@ int phys_init(data** object)
 			option->threads = online_cores;
 			pprintf(PRI_OK, "Detected %i threads, will use all.\n", online_cores);
 		} else {
-			option->threads = failsafe_cores;
+			option->threads = AUTO_UNAVAIL_THREADS;
 			pprintf(PRI_WARN,
 					"Core detection unavailable, running with %i thread(s).\n",
-					failsafe_cores);
+					AUTO_UNAVAIL_THREADS);
 		}
 	} else {
 		if(online_cores) {
@@ -215,6 +218,13 @@ int phys_ctrl(int status, data** object)
 			cfg->stats = phys_stats;
 			cfg->obj = *object;
 			thread_conf = algo->thread_configuration(ctrl_init(cfg));
+			
+			/* Check for errors */
+			if(!thread_conf) {
+				pprint_err("Algorithm's config f-n returned NULL, failure.\n");
+				free(cfg);
+				return 1;
+			}
 			
 			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
