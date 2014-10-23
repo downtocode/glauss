@@ -66,6 +66,7 @@ struct thread_statistics {
 
 /* Global statistics structure */
 struct global_statistics {
+	unsigned int rng_seed;
 	long double progress, time_running;
 	
 	/* physics_barnes_hut */

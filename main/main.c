@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
 			.quit_main_now = 0,
 			.skip_model_vec = 250,
 			.novid = 0,
+			.rng_seed = 0,
 			
 			/* Physics */
 			.threads = 0,

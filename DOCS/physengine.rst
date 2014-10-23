@@ -126,15 +126,17 @@ the system being simulated as well as the programs by setting variables. The Lua
 script **has** to contain a table named "settings", which is the only hardcoded object.
 See below to set other Lua function names.
 
-*Option variables*
-------------------
+*Settings variables*
+--------------------
 Used to toggle and adjust options. Some may intersect with command line arguments, 
-however most do not.
+however most do not. For those that do, command line arguments take priority.
 
 ``threads`` - *Unsigned Integer*
     Set the amount of threads to use. Overridden by argument.
 ``dt`` - *Float*
     Set the time constant.
+``rng_seed`` - *Unsigned Integer*
+    Sets the RNG seed. Set to 0 to generate a new one on every physics start.
 ``algorithm`` - *String*
     Set the algorithm to use. Specify help here or in argument to list all.
 ``bh_ratio`` - *Float*
@@ -208,6 +210,12 @@ the number of elements inside the array.
     Will import from a file. Currently, Waveform 3D *Obj*, *XYZ* and *PDB* files are supported.
 ``ignore`` - *Bool*
     Set this flag to prevent the object from being moved. Will still affect others.
+
+*Table sent to exec_funct in Lua*
+---------------------------------
+Every member of phys_stats is exposed here. Look for struct global_statistics 
+in physics/physics.h. Note that the rng_seed here will reflect the rng_seed 
+used, even if it is not supplied.
 
 FILE IMPORTING
 ==============

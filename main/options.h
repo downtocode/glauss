@@ -41,6 +41,7 @@ extern struct option_struct {
 	float dt;
 	unsigned int obj; //--
 	unsigned short threads;
+	unsigned int rng_seed;
 	double elcharge, gconst, epsno;
 	
 	/* Barnes-Hut algorithm specifics */

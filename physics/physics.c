@@ -208,6 +208,16 @@ int phys_ctrl(int status, data** object)
 		case PHYS_START:
 			if(option->status) return 1;
 			
+			/* Init RNG */
+			if(option->rng_seed) {
+				srand(option->rng_seed);
+				phys_stats->rng_seed = option->rng_seed;
+			} else {
+				unsigned int seed = time(NULL);
+				srand(seed);
+				phys_stats->rng_seed = seed;
+			}
+			
 			/* Reinit stats */
 			phys_stats_init();
 			

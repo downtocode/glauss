@@ -319,6 +319,7 @@ void *input_thread(void *thread_setts)
 		{"filename", &option->filename, T_STRING, T_VAR},
 		{"def_radius", &option->def_radius, T_FLOAT, T_VAR},
 		{"exec_funct_freq", &option->exec_funct_freq, T_UINT, T_VAR},
+		{"rng_seed", &option->rng_seed, T_UINT, T_VAR},
 		{"list", NULL, T_LIST, T_CMD},
 		{"quit", NULL, T_QUIT, T_CMD},
 		{"exit", NULL, T_QUIT, T_CMD},

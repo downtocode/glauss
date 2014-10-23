@@ -52,6 +52,8 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 			option->threads = lua_tonumber(L, -1);
 		if(!strcmp("dt", lua_tostring(L, -2)))
 			option->dt = lua_tonumber(L, -1);
+		if(!strcmp("rng_seed", lua_tostring(L, -2)))
+			option->rng_seed = lua_tonumber(L, -1);
 		if(!strcmp("bh_ratio", lua_tostring(L, -2)))
 			option->bh_ratio = lua_tonumber(L, -1);
 		if(!strcmp("bh_lifetime", lua_tostring(L, -2)))
@@ -345,6 +347,8 @@ static void lua_push_stat_array()
 	lua_setfield(L, -2, "progress");
 	lua_pushnumber(L, phys_stats->time_running);
 	lua_setfield(L, -2, "time_running");
+	lua_pushnumber(L, phys_stats->rng_seed);
+	lua_setfield(L, -2, "rng_seed");
 	
 	/* Null */
 	lua_pushnumber(L, phys_stats->null_avg_dist);
