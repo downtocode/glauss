@@ -18,19 +18,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-/*	Dependencies	*/
-#include <SDL2/SDL.h>
 #include <signal.h>
-
-#include "main/options.h"
-#include "config.h"
-#include "main/msg_phys.h"
-#include "main/out_xyz.h"
-#include "physics/physics.h"
-#include "physics/physics_aux.h"
 #include "graph.h"
 #include "graph_sdl.h"
+#include "main/options.h"
+#include "main/msg_phys.h"
 #include "input/sighandle.h"
+
+#include "config.h"
 
 #define MOUSE_ROT_SENS 0.4
 #define MOUSE_TR_SENS 0.001
@@ -51,7 +46,8 @@ static bool sdl_initd = 0;
 
 graph_window *graph_sdl_init(data *object)
 {
-	if(sdl_initd) return NULL;
+	if (sdl_initd)
+		return NULL;
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
 	
@@ -85,7 +81,8 @@ graph_window *graph_sdl_init(data *object)
 float graph_sdl_resize_wind(graph_window *win)
 {
 	float aspect_ratio = 0.0;
-	if(!win) return aspect_ratio;
+	if (!win) 
+		return aspect_ratio;
 	SDL_GL_GetDrawableSize(win->window, &option->width, &option->height);
 	/* Usually it's the other way around */
 	aspect_ratio = (float)option->height/option->width;
@@ -96,8 +93,9 @@ float graph_sdl_resize_wind(graph_window *win)
 
 int graph_sdl_toggle_fullscreen(graph_window *win)
 {
-	if(!win) return 1;
-	if(win->fullscreen) {
+	if (!win)
+		return 1;
+	if (win->fullscreen) {
 		SDL_SetWindowFullscreen(win->window, 0);
 		win->fullscreen = 0;
 	} else {
@@ -112,19 +110,20 @@ int graph_sdl_toggle_fullscreen(graph_window *win)
 
 void graph_sdl_move_cam(graph_window *win)
 {
-	if(!win) return;
-	if(win->flicked || win->translate) {
+	if (!win)
+		return;
+	if (win->flicked || win->translate) {
 		SDL_GetRelativeMouseState(&win->mousex, &win->mousey);
-		if(win->flicked) {
+		if (win->flicked) {
 			win->camera.view_roty += (float)win->mousex*MOUSE_ROT_SENS;
 			win->camera.view_rotx += (float)win->mousey*MOUSE_ROT_SENS;
 		}
-		if(win->translate) {
+		if (win->translate) {
 			win->camera.tr_x += -(float)win->mousex*MOUSE_TR_SENS;
 			win->camera.tr_y += (float)win->mousey*MOUSE_TR_SENS;
 		}
 	}
-	if(win->chosen) {
+	if (win->chosen) {
 		win->camera.tr_x = win->object[win->chosen].pos[0];
 		win->camera.tr_y = win->object[win->chosen].pos[1];
 		win->camera.tr_z = win->object[win->chosen].pos[2];
@@ -138,7 +137,9 @@ void graph_sdl_swapwin(graph_window *win)
 }
 
 void graph_sdl_deinit(graph_window *win) {
-	if(!win) return;
+	if (!win)
+		return;
+	graph_quit();
 	SDL_GL_DeleteContext(win->context);
 	SDL_DestroyWindow(win->window);
 	free(win->event);

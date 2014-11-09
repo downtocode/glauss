@@ -18,7 +18,6 @@
 #ifndef PHYSENGINE_GRAPH_THREAD
 #define PHYSENGINE_GRAPH_THREAD
 
-#include <pthread.h>
 #include "graph_sdl.h"
 
 /* Sent to graph thread */
@@ -31,8 +30,8 @@ struct graph_cfg {
 	volatile bool status, selfquit;
 };
 
-void **graph_thread_init(data *object, unsigned int *frames, float *fps);
-void graph_thread_quit();
+void **graph_thread_init(data *object);
+void graph_thread_quit(void);
 void *graph_thread(void *thread_setts);
 
 #endif

@@ -18,20 +18,12 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
-#include "physics/physics.h"
+#include <GLES2/gl2.h>
 #include "graph_sdl.h"
 
-/* Identifiers for colors */
-enum {
-	GL_WHITE,
-	GL_RED,
-	GL_GREEN,
-	GL_BLUE,
-	GL_YELLOW,
-};
-
-void graph_init();
-void graph_reset_viewport();
+void graph_init(void);
+void graph_quit(void);
+void graph_reset_viewport(void);
 void graph_set_view(graph_window *win);
 unsigned int graph_compile_shader(const char *src_vert_shader,
 								  const char *src_frag_shader);

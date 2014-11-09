@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
 		option = calloc(1, sizeof(*option));
-		add_to_free_queue(option);
 		*option = (struct option_struct){
 			/* Visuals */
 			.def_radius = 1.0,
@@ -64,6 +63,9 @@ int main(int argc, char *argv[])
 			.skip_model_vec = 250,
 			.novid = 0,
 			.rng_seed = 0,
+			
+			/* Input */
+			.input_thread_enable = 1,
 			
 			/* Physics */
 			.threads = 0,
@@ -88,8 +90,8 @@ int main(int argc, char *argv[])
 	/*	Default settings.	*/
 	
 	/*	Main function vars	*/
-		struct timeval t1 = {0}, t2 = {0};
-		float deltatime = 0.0, totaltime = 0.0;
+		unsigned long long int t1 = phys_gettime_us(), t2 = 0;
+		long double time = 0.0, deltatime = 0.0;
 		int novid = 0, bench = 0;
 		char *sent_to_lua = NULL;
 		float timer = 1;
@@ -99,8 +101,7 @@ int main(int argc, char *argv[])
 		int c;
 		
 		while(1) {
-			struct option long_options[] =
-			{
+			struct option long_options[] = {
 				{"novid",		no_argument,			&novid, 1},
 				{"bench",		no_argument,			&bench, 1},
 				{"log",			required_argument,		0, 'l'},
@@ -121,7 +122,7 @@ int main(int argc, char *argv[])
 							&option_index);
 			
 			/* Detect the end of the options. */
-			if(c == -1)
+			if (c == -1)
 				break;
 			switch(c) {
 				case 0:
@@ -162,16 +163,16 @@ int main(int argc, char *argv[])
 					break;
 				case 'u':
 					sent_to_lua = strdup(optarg);
-					add_to_free_queue(sent_to_lua);
 					break;
 				case 'f':
 					option->filename = strdup(optarg);
-					if(parse_lua_open_file(option->filename)) {
+					if (parse_lua_open_file(option->filename)) {
 						pprintf(PRI_ERR,
 								"Could not parse configuration from %s!\n",
 								option->filename);
 						return 0;
-					} else parse_lua_simconf_options();
+					} else
+						parse_lua_simconf_options();
 					break;
 				case 'h':
 					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s\n", PACKAGE_STRING,
@@ -187,15 +188,15 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		if(optind < argc) {
+		if (optind < argc) {
 			pprintf(PRI_ERR, "Arguments not recognized: ");
-			while(optind < argc)
+			while (optind < argc)
 				pprintf(PRI_ESSENTIAL, "%s ", argv[optind++]);
 			pprintf(PRI_ESSENTIAL, "\n");
 			exit(1);
 		}
 		
-		if(option->filename == NULL) {
+		if (option->filename == NULL) {
 			pprintf(PRI_ERR,
 					"No file specified! Use -f (filename) to specify one.\n");
 			exit(2);
@@ -203,24 +204,25 @@ int main(int argc, char *argv[])
 		
 		option->novid = novid;
 		
-		if(bench) {
+		if (bench) {
 			pprintf(PRI_WARN, "Benchmark mode active.\n");
 			option->novid = 1;
 			option->verbosity = 8;
-			if(timer==1.0f) timer = 30.0f;
+			if (timer==1.0f)
+				timer = 30.0f;
 		}
 	/*	Arguments	*/
 	
 	/* Signal handling */
-		if(signal(SIGINT, on_quit_signal) == SIG_ERR) {
+		if (signal(SIGINT, on_quit_signal) == SIG_ERR) {
 			fputs("An error occurred while setting SIGINT signal handler.\n", stderr);
 			return EXIT_FAILURE;
 		}
-		if(signal(SIGUSR1, on_usr1_signal) == SIG_ERR) {
+		if (signal(SIGUSR1, on_usr1_signal) == SIG_ERR) {
 			fputs("An error occurred while setting USR1 signal handler.\n", stderr);
 			return EXIT_FAILURE;
 		}
-		if(signal(SIGALRM, on_alrm_signal) == SIG_ERR) {
+		if (signal(SIGALRM, on_alrm_signal) == SIG_ERR) {
 			fputs("An error occurred while setting SIGALRM signal handler.\n", stderr);
 			return EXIT_FAILURE;
 		} else {
@@ -230,21 +232,17 @@ int main(int argc, char *argv[])
 	/* Signal handling */
 	
 	/*	Physics.	*/
-		data* object;
+		data* object = NULL;
 		
-		if(init_elements(NULL)) {
+		if (init_elements(NULL)) {
 			pprintf(PRI_OK, "Failed to init elements db!\n");
-		} else {
-			add_to_free_queue(atom_prop);
 		}
 		
-		if(parse_lua_simconf_objects(&object, sent_to_lua)) {
+		if (parse_lua_simconf_objects(&object, sent_to_lua)) {
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
 					option->filename);
 			return 2;
 		}
-		
-		add_to_free_queue(object);
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
 		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
@@ -256,54 +254,51 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 	
 	/*	Graphics	*/
-		unsigned int *frames = calloc(1, sizeof(unsigned int));
-		float *fps = calloc(1, sizeof(float));
-		add_to_free_queue(fps);
-		add_to_free_queue(frames);
-		void **window = NULL;
-		if(!option->novid) {
-			window = graph_thread_init(object, frames, fps);
-		}
+		void **window = option->novid ? NULL : graph_thread_init(object);
 	/*	Graphics	*/
 	
 	/*	Input	*/
-		input_thread_init(window, frames, fps, object);
+		if(option->input_thread_enable) {
+			input_thread_init(window, &object);
+		}
 	/*	Input	*/
 	
-	gettimeofday(&t1 , NULL);
-	
-	while(!option->quit_main_now) {
+	while (!option->quit_main_now) {
 		/* Update timer */
-		gettimeofday(&t2, NULL);
-		deltatime = (float)(t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) * 1e-6);
+		t2 = phys_gettime_us();
+		deltatime = (t2 - t1)*(long double)1.0e-6;
+		time += deltatime;
 		phys_stats->time_running += deltatime;
 		t1 = t2;
-		totaltime += deltatime;
 		
 		/* Timer trigg'd events */
-		if(totaltime > timer) {
-			if(!option->novid)
-				*fps = *frames/totaltime;
+		if (time > timer) {
 			/* Kick the watchdog timer */
 			alarm(timer+WATCHDOG_OFFSET_SEC);
 			
-			if(bench) {
+			if (bench) {
 				pprintf(PRI_ESSENTIAL,
-						"Progressed %Lf timeunits over %f seconds.\n",
-						phys_stats->progress, totaltime);
+						"Progressed %Lf timeunits over %Lf seconds.\n",
+						phys_stats->progress, time);
 				pprintf(PRI_ESSENTIAL,
 						"Average = %Lf timeunits per second.\n",
-						phys_stats->progress/totaltime);
+						phys_stats->progress/time);
 				raise(SIGINT);
 			}
-			totaltime = *frames = 0;
+			
+			time = 0.0;
 		}
 		
 		/* Prevents wasting CPU time. */
-		usleep(47);
+		usleep(50);
 	}
 	
-	free_all_queue();
+	free(sent_to_lua);
+	free(atom_prop);
+	free(object);
+	free(option);
+	//free(phys_stats->t_stats);
+	//free(phys_stats);
 	
 	pprint("Done!\n");
 	

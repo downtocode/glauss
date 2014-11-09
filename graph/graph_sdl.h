@@ -32,17 +32,24 @@ struct graph_cam_view {
 
 typedef struct {
 	/* TODO: Align this mess */
+	
+	/* SDL */
 	SDL_Window *window;
 	SDL_GLContext context;
 	SDL_Event *event;
+	
+	/* Status */
 	bool flicked, translate, fullscreen, start_selection;
 	int mousex, mousey, initmousex, initmousey;
 	unsigned int chosen, currentnum;
 	struct graph_cam_view camera;
 	struct numbers_selection numbers;
 	char currentsel[100];
-	data *object;
 	float fps;
+	
+	/* Physics */
+	data *object;
+	pthread_mutex_t *io_halt;
 } graph_window;
 
 /* Default camera position and scale */

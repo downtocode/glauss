@@ -18,14 +18,16 @@
 #ifndef PHYSENGINE_PHYS_BARNES_HUT
 #define PHYSENGINE_PHYS_BARNES_HUT
 
-#define PHYS_BHUT {\
-		.name = "barnes-hut",\
-		.version = PACKAGE_VERSION,\
-		.desc = "Barnes-Hut simulation",\
-		.author = "Rostislav Pehlivanov",\
-		.thread_configuration = bhut_init,\
-		.thread_location = thread_bhut,\
-		.thread_destruction = bhut_quit,\
+#define PHYS_BARNES_HUT {                                                      \
+		.name = "barnes-hut",                                                  \
+		.version = PACKAGE_VERSION,                                            \
+		.desc = "Barnes-Hut simulation, velocity verlet algorithm",            \
+		.author = "Rostislav Pehlivanov",                                      \
+		.thread_preconfiguration = bhut_preinit,                               \
+		.thread_configuration = bhut_init,                                     \
+		.thread_location = thread_bhut,                                        \
+		.thread_destruction = bhut_quit,                                       \
+		.thread_sched_fn = bhut_balance_threads                                \
 	}
 
 /* Octree structure */
@@ -55,7 +57,8 @@ struct thread_config_bhut {
 	struct global_statistics *glob_stats;
 	struct thread_statistics *stats;
 	pthread_barrier_t *ctrl, *barrier;
-	pthread_mutex_t *mute;
+	pthread_mutex_t *mute, *root_lock;
+	bool *quit;
 };
 
 /* Returns flux of octrees */
@@ -75,15 +78,18 @@ double bh_init_max_displacement(data *object, bh_octree *octree);
 void bh_init_center_of_mass(data *object, bh_octree *octree);
 
 /* Init a tree(start of one - NOT A SUBCELL) */
-bh_octree *bh_init_tree();
+bh_octree *bh_init_tree(void);
 /* Get octant an object is in(mostly used for direction) */
 short bh_get_octant(vec3 *pos, bh_octree *octree);
 /* Checks if object is within a specific octree */
 bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root);
 
-/* Start - Thread - Stop */
+/* Functions */
+void bhut_balance_threads(void **threads);
+void *bhut_preinit(struct glob_thread_config *cfg);
 void **bhut_init(struct glob_thread_config *cfg);
 void *thread_bhut(void *thread_setts);
+void *thread_bhut_rk4(void *thread_setts);
 void bhut_quit(void **threads);
 
 #endif

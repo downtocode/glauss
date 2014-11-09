@@ -47,14 +47,15 @@ def configure(ctx):
 	#Add mandatory=False when we don't really need it.
 	
 	ctx.check(features='c cprogram', lib=['m'], uselib_store='MATH')
+	ctx.check(features='c cprogram', lib=['rt'], uselib_store='RT')
+	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
+	ctx.check(features='c cprogram', lib=['readline'], uselib_store='READLN')
 	ctx.check_cfg(package='sdl2', args='--cflags --libs', uselib_store='SDL')
 	ctx.check_cfg(package='glesv2', args='--cflags --libs', uselib_store='GL')
-	ctx.check_cfg(package='libpng12', args='--cflags --libs', uselib_store='PNG')
+	ctx.check_cfg(package='libpng12', args='--cflags --libs', mandatory=False, uselib_store='PNG')
 	ctx.check_cfg(package='freetype2', args='--cflags --libs', uselib_store='FT')
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')
 	ctx.check_cfg(package='lua5.2', args='--cflags --libs', uselib_store='LUA')
-	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
-	ctx.check(features='c cprogram', lib=['readline'], uselib_store='READLN')
 	
 	if (ctx.options.ver):
 		package_ver = ctx.options.ver
@@ -70,6 +71,8 @@ def configure(ctx):
 	ctx.define('PACKAGE_VERSION', package_ver)
 	ctx.define('PACKAGE_STRING', FULL_PACKAGE_NAME)
 	ctx.define('OPT_LTO', ctx.options.lto)
+	if (ctx.env.LIB_PNG):
+		ctx.define('HAS_PNG', 1)
 	ctx.write_config_header('config.h')
 	
 	if (ctx.options.lto):
@@ -195,11 +198,11 @@ def build(ctx):
 		features  = ['c'],
 		includes='. .. ../../',
 	)
-	ctx(name='out_xyz',
+	ctx(name='output',
 		path=ctx.path,
 		uselib='MATH',
-		target='out_xyz',
-		source='main/out_xyz.c',
+		target='output',
+		source='main/output.c',
 		features  = ['c'],
 		includes='. .. ../../',
 	)
@@ -245,7 +248,7 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'out_xyz', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='main/main.c',
 		features  = ['c', 'cprogram'],

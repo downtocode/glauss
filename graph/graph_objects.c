@@ -16,12 +16,9 @@
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <tgmath.h>
-#include <GLES2/gl2.h>
-#include "physics/physics.h"
-#include "physics/physics_aux.h"
 #include "graph/graph.h"
-#include "main/options.h"
 #include "graph_objects.h"
+#include "main/options.h"
 
 static GLint objattr_pos, objattr_color, objattr_radius;
 
@@ -39,11 +36,15 @@ void draw_obj_axis(float scale)
 		{0    ,0    ,scale},
 	};
 	
+	glUniform4fv(objattr_color, 1, white);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, white);
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(objattr_pos);
+	glEnableVertexAttribArray(objattr_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_LINE_LOOP, 0, 6);
 	glDisableVertexAttribArray(objattr_pos);
+	glDisableVertexAttribArray(objattr_color);
 }
 
 void draw_obj_sphere(data *object)
@@ -56,8 +57,8 @@ void draw_obj_sphere(data *object)
 	
 	glUniform4fv(objattr_color, 1, atom_prop[object->atomnumber].color);
 	
-	for(float i = 0; i < pi; i+=dj) {
-		for(float j = 0; j < 2*pi; j+=dj) {
+	for (float i = 0; i < pi; i+=dj) {
+		for (float j = 0; j < 2*pi; j+=dj) {
 			points[pointcount][0] = object->pos[0] +\
 												   object->radius*sin(i)*cos(j);
 			points[pointcount][1] = object->pos[1] +\
@@ -82,27 +83,51 @@ void draw_obj_sphere(data *object)
 	glUniform4fv(objattr_color, 1, white);
 }
 
-void draw_obj_points(data *object)
+void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element)
 {
 	float points[option->obj][3];
+	unsigned int size = 0;
+	const float *col;
 	
-	glUniform4fv(objattr_color, 1, white);
+	if (!element) {
+		col = white;
+	} else {
+		col = element->color;
+	}
+	
+	glUniform4fv(objattr_color, 1, col);
 	glUniform1f(objattr_radius, option->def_radius);
-	
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, col);
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(objattr_pos);
 	
-	for(int i = 1; i < option->obj+1; i++) {
-		points[i-1][0] = object[i].pos[0];
-		points[i-1][1] = object[i].pos[1];
-		points[i-1][2] = object[i].pos[2];
+	glEnableVertexAttribArray(objattr_pos);
+	glEnableVertexAttribArray(objattr_color);
+	
+	for (int i = 1; i < option->obj+1; i++) {
+		if (element) {
+			if (object[i].atomnumber != element->number) {
+				continue;
+			}
+		}
+		points[size][0] = object[i].pos[0];
+		points[size][1] = object[i].pos[1];
+		points[size][2] = object[i].pos[2];
+		size++;
 	}
 	
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
 	
-	glDrawArrays(GL_POINTS, 0, option->obj);
+	glDrawArrays(GL_POINTS, 0, size);
 	
 	glDisableVertexAttribArray(objattr_pos);
+	glDisableVertexAttribArray(objattr_color);
+}
+
+void draw_obj_col_points(data *object)
+{
+	for (int i = 0; i < 120; i++) {
+		draw_obj_packed_elements_draw(object, &atom_prop[i]);
+	}
 }
 
 static const char object_vs[] =
@@ -115,7 +140,7 @@ static const char object_fs[] =
 #include "graph/shaders/object_fs.h"
 ;
 
-GLuint graph_init_objects()
+GLuint graph_init_objects(void)
 {
 	GLuint obj_program = graph_compile_shader(object_vs, object_fs);
 	glBindAttribLocation(obj_program, objattr_pos, "pos");

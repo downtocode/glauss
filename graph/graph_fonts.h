@@ -18,9 +18,11 @@
 #ifndef PHYSENGINE_FONTS
 #define PHYSENGINE_FONTS
 
-const char *graph_init_fontconfig();
+#include "physics/physics.h"
+
+const char *graph_init_fontconfig(void);
 unsigned int graph_init_freetype(const char *fontname);
-void graph_stop_freetype();
+void graph_stop_freetype(void);
 void graph_display_text(const char *text, float x, float y, float s, const GLfloat *col);
 void graph_display_object_info(data *object, unsigned int num);
 

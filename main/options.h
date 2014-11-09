@@ -28,24 +28,24 @@ extern struct option_struct {
 	int width, height, fontsize;
 	bool nogrv, noele, logenable;
 	FILE *logfile; //--
-	volatile bool novid;
+	bool novid;
 	
 	/* Input */
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
 	char *spawn_funct, *timestep_funct;
 	unsigned int exec_funct_freq, skip_model_vec;
 	bool lua_expose_obj_array;
+	bool input_thread_enable;
 	
 	/* Physics */
-	volatile bool status, paused; //--
-	float dt;
+	double dt;
 	unsigned int obj; //--
 	unsigned short threads;
 	unsigned int rng_seed;
 	double elcharge, gconst, epsno;
 	
 	/* Barnes-Hut algorithm specifics */
-	float bh_ratio;
+	double bh_ratio;
 	unsigned short bh_tree_limit;
 	unsigned short bh_lifetime;
 	size_t bh_heapsize_max;

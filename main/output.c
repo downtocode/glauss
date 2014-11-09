@@ -22,14 +22,15 @@
 #include "config.h"
 #include "options.h"
 #include "physics/physics.h"
-#include "out_xyz.h"
+#include "output.h"
 #include "msg_phys.h"
 #include "physics/physics_aux.h"
 
-int toxyz(data *object)
+int out_write_xyz(data *object, const char *template_str, pthread_mutex_t *io_halt)
 {
+	if(io_halt) pthread_mutex_lock(io_halt);
 	char filetodump[120];
-	snprintf(filetodump, sizeof(filetodump), option->xyz_temp, phys_stats->progress);
+	snprintf(filetodump, sizeof(filetodump), template_str, phys_stats->progress);
 	/* Check if file exist */
 	if(!access(filetodump, R_OK)) return 1;
 	FILE *out = fopen(filetodump, "w");
@@ -42,5 +43,39 @@ int toxyz(data *object)
 				(float)object[i].pos[2]);
 	}
 	fclose(out);
+	if(io_halt) pthread_mutex_unlock(io_halt);
 	return 0;
+}
+
+size_t out_write_array(data *object, const char *template_str, pthread_mutex_t *io_halt)
+{
+	if(io_halt)
+		pthread_mutex_lock(io_halt);
+	
+	char filetodump[120];
+	snprintf(filetodump, sizeof(filetodump), template_str, phys_stats->progress);
+	/* Check if file exist */
+	if(!access(filetodump, R_OK)) return 1;
+	FILE *out = fopen(filetodump, "wb");
+	
+	size_t written = fwrite(object, sizeof(data), option->obj, out);
+	
+	pprint("Wrote %lu bytes to %s\n", written*sizeof(data), filetodump);
+	
+	fclose(out);
+	if(io_halt)
+		pthread_mutex_unlock(io_halt);
+	return written;
+}
+
+size_t in_write_array(data **object, const char *filename)
+{
+	if(!access(filename, R_OK)) return 1;
+	FILE *in = fopen(filename, "r");
+	
+	size_t read = fread(*object, sizeof(data), option->obj, in);
+	
+	fclose(in);
+	
+	return read;
 }

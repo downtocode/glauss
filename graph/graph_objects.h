@@ -18,10 +18,14 @@
 #ifdef PHYSENGINE_GRAPH
 
 #include "physics/physics.h"
+#include "physics/physics_aux.h"
 
 void draw_obj_axis(float scale);
 void draw_obj_sphere(data *object);
-void draw_obj_points(data *object);
-GLuint graph_init_objects();
+void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element);
+void draw_obj_col_points(data *object);
+GLuint graph_init_objects(void);
+
+#define draw_obj_points(obj) draw_obj_packed_elements_draw(obj, NULL)
 
 #endif

@@ -25,11 +25,17 @@
 #include "physics_null.h"
 #include "main/options.h"
 
+void *null_preinit(struct glob_thread_config *cfg)
+{
+	cfg->total_syncd_threads = 1;
+	return NULL;
+}
+
 void **null_init(struct glob_thread_config *cfg)
 {
 	struct thread_config_null **thread_config = calloc(option->threads+1,
 		sizeof(struct thread_config_nbody*));
-	for(int k = 0; k < option->threads + 1; k++) {
+	for (int k = 0; k < option->threads + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_null));
 	}
 	
@@ -39,16 +45,17 @@ void **null_init(struct glob_thread_config *cfg)
 	
 	int totcore = (int)((float)option->obj/option->threads);
 	
-	for(int k = 1; k < option->threads + 1; k++) {
+	for (int k = 1; k < option->threads + 1; k++) {
 		thread_config[k]->glob_stats = cfg->stats;
-		thread_config[k]->stats = cfg->stats->t_stats[k];
+		thread_config[k]->stats = &cfg->stats->t_stats[k];
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->mute = mute;
 		thread_config[k]->id = k;
+		thread_config[k]->quit = cfg->quit;
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
-		if(k == option->threads) {
+		if (k == option->threads) {
 			/*	Takes care of rounding problems with odd numbers.	*/
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
@@ -65,28 +72,29 @@ void null_quit(void **threads)
 	option->stats_null = false;
 	pthread_mutex_destroy(t[1]->mute);
 	free(t[1]->mute);
-	for(int k = 0; k < option->threads + 1; k++) {
+	for (int k = 0; k < option->threads + 1; k++) {
 		free(t[k]);
 	}
 	free(t);
 	return;
 }
 
-void *thread_null(void *thread_setts)
+void *thread_stats(void *thread_setts)
 {
 	struct thread_config_null *t = thread_setts;
 	/* We need to play along with the control thread, so continue running. */
-	while(1) {
+	while (!*t->quit) {
 		vec3 vecnorm = (vec3){0};
 		double dist = 0.0, avg_dist = 0.0, max_dist = 0.0;
-		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
-			for(unsigned int j = 1; j < option->obj + 1; j++) {
-				if(i==j) continue;
+		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
+			for (unsigned int j = 1; j < option->obj + 1; j++) {
+				if (i==j)
+					continue;
 				vecnorm = t->obj[j].pos - t->obj[i].pos;
 				dist = sqrt(vecnorm[0]*vecnorm[0] +\
 							vecnorm[1]*vecnorm[1] +\
 							vecnorm[2]*vecnorm[2]);
-				if(dist > max_dist) max_dist = dist;
+				max_dist = fmax(max_dist, dist);
 				avg_dist = (dist + avg_dist)/2;
 			}
 		}
@@ -99,12 +107,13 @@ void *thread_null(void *thread_setts)
 		/* Racy as hell */
 		pthread_mutex_lock(t->mute);
 			t->glob_stats->null_avg_dist = (avg_dist+t->glob_stats->null_avg_dist)/2;
-			if(t->glob_stats->null_max_dist < max_dist) {
-				t->glob_stats->null_max_dist = max_dist;
-			}
+			t->glob_stats->null_max_dist = fmax(t->glob_stats->null_max_dist, max_dist);
 		pthread_mutex_unlock(t->mute);
-		
-		pthread_testcancel();
 	}
+	return 0;
+}
+
+void *thread_null(void *thread_setts)
+{
 	return 0;
 }

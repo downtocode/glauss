@@ -18,11 +18,11 @@
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "physics/physics.h"
 #include "parser.h"
 #include "sighandle.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
-#include "physics/physics.h"
 #include "graph/graph_thread.h"
 #include "input_thread.h"
 
@@ -51,7 +51,7 @@ int remove_from_free_queue(void *p)
 	return 1;
 }
 
-void free_all_queue()
+void free_all_queue(void)
 {
 	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
 		free(to_be_freed[i]);
@@ -66,11 +66,11 @@ void on_usr1_signal(int signo)
 		pprintf(PRI_ESSENTIAL, "USR1 signal received, current stats:\n");
 	pprintf(PRI_ESSENTIAL, "Time running = %Lf\n", phys_stats->time_running);
 	pprintf(PRI_ESSENTIAL, "Progress = %Lf\n", phys_stats->progress);
-	if(option->status) {
+	if(phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
 		pprintf(PRI_ESSENTIAL, "CPU time:\n Thread |  Time\n");
 		struct timespec ts;
 		for(int i = 1; i < option->threads + 1; i++) {
-			clock_gettime(phys_stats->t_stats[i]->clockid, &ts);
+			clock_gettime(phys_stats->t_stats[i].clockid, &ts);
 			pprintf(PRI_ESSENTIAL, "   %02i   |  ", i);
 			pprintf(PRI_ESSENTIAL, "%ld.%ld\n",  ts.tv_sec, ts.tv_nsec / 1000000);
 		}
@@ -79,9 +79,9 @@ void on_usr1_signal(int signo)
 		pprintf(PRI_ESSENTIAL, "BH Tree stats:\n Thread |  Total   New  Cleaned    Size\n");
 		for(int i = 1; i < option->threads + 1; i++) {
 			pprintf(PRI_ESSENTIAL, "   %02i   |  ", i);
-			pprintf(PRI_ESSENTIAL, "%u    %u    %u       %lu\n", phys_stats->t_stats[i]->bh_total_alloc,
-				   phys_stats->t_stats[i]->bh_new_alloc, phys_stats->t_stats[i]->bh_new_cleaned,
-				   phys_stats->t_stats[i]->bh_heapsize);
+			pprintf(PRI_ESSENTIAL, "%u    %u    %u       %lu\n", phys_stats->t_stats[i].bh_total_alloc,
+				   phys_stats->t_stats[i].bh_new_alloc, phys_stats->t_stats[i].bh_new_cleaned,
+				   phys_stats->t_stats[i].bh_heapsize);
 		}
 		pprintf(PRI_ESSENTIAL, "Glob: %u    %u    %u       %0.3lf(MiB)\n", phys_stats->bh_total_alloc,
 			   phys_stats->bh_new_alloc, phys_stats->bh_new_cleaned, phys_stats->bh_heapsize/1048576.0);
@@ -90,8 +90,8 @@ void on_usr1_signal(int signo)
 		pprintf(PRI_ESSENTIAL, "Null stats:\n Thread |  Avg dist   Max dist\n");
 		for(int i = 1; i < option->threads + 1; i++) {
 			pprintf(PRI_ESSENTIAL, "   %02i   |  ", i);
-			pprintf(PRI_ESSENTIAL, "%lf    %lf\n", phys_stats->t_stats[i]->null_avg_dist,
-				   phys_stats->t_stats[i]->null_max_dist);
+			pprintf(PRI_ESSENTIAL, "%lf    %lf\n", phys_stats->t_stats[i].null_avg_dist,
+				   phys_stats->t_stats[i].null_max_dist);
 		}
 		pprintf(PRI_ESSENTIAL, "Glob: %lf    %lf\n", phys_stats->null_avg_dist, phys_stats->null_max_dist);
 	}
@@ -121,9 +121,11 @@ void on_quit_signal(int signo)
 	}
 	
 	/* Input thread */
-	pprintf(PRI_ESSENTIAL, "&& Input: ");
-	input_thread_quit();
-	pprintf(PRI_OK, "");
+	if(option->input_thread_enable) {
+		pprintf(PRI_ESSENTIAL, "&& Input: ");
+		input_thread_quit();
+		pprintf(PRI_OK, "");
+	}
 	
 	/* Window */
 	if(!option->novid) {

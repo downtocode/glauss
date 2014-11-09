@@ -27,7 +27,7 @@
 #include "input/parser.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
-#include "main/out_xyz.h"
+#include "main/output.h"
 #include "physics/physics.h"
 #include "graph/graph.h"
 #include "graph/graph_thread.h"
@@ -41,14 +41,12 @@ static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 static struct input_cfg *global_cfg = NULL;
 static struct interp_opt *global_cmd_map = NULL;
 
-int input_thread_init(void **win, unsigned int *frames, float *fps, data *object)
+int input_thread_init(void **win, data **object)
 {
 	struct input_cfg *cfg = calloc(1, sizeof(struct input_cfg));
 	
 	cfg->obj = object;
 	cfg->win = (graph_window **)win;
-	cfg->fps = fps;
-	cfg->frames = frames;
 	cfg->status = true;
 	cfg->selfquit = false;
 	cfg->line = NULL;
@@ -60,32 +58,33 @@ int input_thread_init(void **win, unsigned int *frames, float *fps, data *object
 	return 0;
 }
 
-void input_thread_quit()
+void input_thread_quit(void)
 {
-	if(!global_cfg) return;
+	if (!global_cfg)
+		return;
 	
 	global_cfg->status = false;
 	
 	void *val = NULL, *res = NULL;
 	
-	if(!global_cfg->selfquit) {
+	if (!global_cfg->selfquit) {
 		pthread_cancel(global_cfg->input);
 		val = PTHREAD_CANCELED;
+		free(global_cfg->line);
 	}
 	
 	pthread_join(global_cfg->input, &res);
 	
-	if(res != val) {
+	if (res != val) {
 		pprint_err("Error joining with input thread!\n");
 	}
-	
-	/* Free resources */
-	free(global_cfg->line);
-	free(global_cfg);
 	
 	/* Reset terminal */
 	rl_free_line_state();
 	rl_cleanup_after_signal();
+	
+	/* Free resources */
+	free(global_cfg);
 	
 	return;
 }
@@ -95,6 +94,9 @@ void input_print_typed(struct interp_opt *var)
 	switch(var->type) {
 		case T_FLOAT:
 			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
+			break;
+		case T_DOUBLE:
+			pprintf(PRI_ESSENTIAL, "%s = %lf\n", var->name, *(double *)var->val);
 			break;
 		case T_BOOL:
 			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(bool *)var->val);
@@ -131,6 +133,10 @@ void input_set_typed(struct interp_opt *var, char *val)
 		case T_FLOAT:
 			*(float *)var->val = strtof(val, NULL);
 			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
+			break;
+		case T_DOUBLE:
+			*(double *)var->val = strtod(val, NULL);
+			pprintf(PRI_ESSENTIAL, "%s = %lf\n", var->name, *(double *)var->val);
 			break;
 		case T_BOOL:
 			*(bool *)var->val = (bool)strtol(val, NULL, 10);
@@ -173,15 +179,23 @@ void input_set_typed(struct interp_opt *var, char *val)
 void input_cmd_printall(struct interp_opt *cmd_map)
 {
 	pprintf(PRI_ESSENTIAL, "Implemented commands(current value):\n");
-	for(struct interp_opt *i = cmd_map; i->name; i++) {
-		if(i->cmd == T_CMD) {
+	for (struct interp_opt *i = cmd_map; i->name; i++) {
+		if (i->cmd == T_CMD) {
 			pprintf(PRI_ESSENTIAL, "%s\n", i->name);
-		} else if(i->cmd == T_VAR) {
+		} else if (i->cmd == T_VAR) {
 			input_print_typed(i);
 		} else {
 			pprintf(PRI_ESSENTIAL, "Unrecognized type: %s\n", i->name);
 		}
 	}
+}
+
+int input_call_system(const char *cmd)
+{
+	pprint_disable();
+	int ret = system(cmd);
+	pprint_enable();
+	return ret;
 }
 
 int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_map)
@@ -192,12 +206,12 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 	char *token[CMD_MAX_TOKENS] = {NULL}, *freestr = tokstr;
 	
 	tokstr = strtok(tokstr, " ");
-	while(tokstr) {
-		if(num_tok > CMD_MAX_TOKENS) {
+	while (tokstr) {
+		if (num_tok > CMD_MAX_TOKENS) {
 			retval = CMD_TOO_MANY_TOKENS;
 			goto cleanall;
 		}
-		if(*tokstr == '=') {
+		if (*tokstr == '=') {
 			retval = CMD_INVALID_ASSIGN;
 			goto cleanall;
 		}
@@ -205,11 +219,32 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 		tokstr = strtok (NULL, " ");
 	}
 	
-	for(struct interp_opt *i = cmd_map; i->name; i++) {
-		if(!strcmp(i->name, token[0])) {
+	if (token[0][0] == '#') {
+		size_t len = strlen(line)-1;
+		char *command = calloc(1, len);
+		strncpy(command, line+1, len);
+		int cmd_ret = input_call_system(command);
+		free(command);
+		retval = cmd_ret ? CMD_SYS_RET_ERR : CMD_ALL_FINE;
+		goto cleanall;
+	}
+	
+	for (struct interp_opt *i = cmd_map; i->name; i++) {
+		if (!strcmp(i->name, token[0])) {
 			match = 1;
-			if(i->cmd == T_CMD) {
+			if (i->cmd == T_CMD) {
 				switch(i->type) {
+					case T_CHECK_COLLISIONS:
+						pprint_warn("Checking for collisions...\n");
+						unsigned int coll = phys_check_collisions(*t->obj, 1, option->obj+1);
+						if (coll) {
+							pprint_err("%i objects share coordinates,\
+									   reconsider starting anything at all and\
+									   check your input script\n");
+						} else {
+							pprint_ok("No object share coordinates\n");
+						}
+						break;
 					case T_HELP:
 						input_cmd_printall(cmd_map);
 						break;
@@ -220,7 +255,17 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 						phys_list_algo();
 						break;
 					case T_START:
-						phys_ctrl(PHYS_START, &t->obj);
+						phys_ctrl(PHYS_START, t->obj);
+						break;
+					case T_SAVE:
+						out_write_array(*t->obj, "array_%0.2Lf.bin", halt_objects);
+						break;
+					case T_LOAD:
+						if (num_tok < 2) {
+							printf("Usage: \"load <filename>\"\n");
+						} else {
+							in_write_array(t->obj, token[1]);
+						}
 						break;
 					case T_PAUSE:
 						phys_ctrl(PHYS_PAUSESTART, NULL);
@@ -235,15 +280,27 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 						raise(SIGUSR1);
 						break;
 					case T_CLEAR:
-						for(int c = 0; c < CMD_CLEAR_REPS; c++) pprintf(PRI_ESSENTIAL, "\n");
+						for (int c = 0; c < CMD_CLEAR_REPS; c++) pprintf(PRI_ESSENTIAL, "\n");
+						break;
+					case T_LUA_READOPTS:
+						if (num_tok < 2) {
+							parse_lua_simconf_options();
+						} else {
+							if (strcmp(option->filename, token[1])) {
+								if (parse_lua_open_file(token[1])) {
+									break;
+								}
+							}
+							parse_lua_simconf_options();
+						}
 						break;
 					case T_ENABLE_WINDOW:
-						if(*t->win) break;
-						*t->win = *graph_thread_init(t->obj, t->frames, t->fps);
+						if (*t->win) break;
+						*t->win = *graph_thread_init(*t->obj);
 						option->novid = false;
 						break;
 					case T_DISABLE_WINDOW:
-						if(!*t->win) break;
+						if (!*t->win) break;
 						graph_thread_quit();
 						*t->win = NULL;
 						option->novid = true;
@@ -252,7 +309,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 						break;
 				}
 			} else {
-				if(num_tok < 2)
+				if (num_tok < 2)
 					input_print_typed(i);
 				else
 					input_set_typed(i, token[1]);
@@ -276,12 +333,12 @@ char *input_cmd_generator(const char *line, int state)
 	/* Readline is fussy as fuck about every single word. Here be dragons */
 	static int list_index = 0, len = 0;
 	char *name = NULL;
-	if(!state) {
+	if (!state) {
 		list_index = 0;
 		len = strlen(line);
 	}
-	while((name = (char *)global_cmd_map[list_index++].name)) {
-		if(!strncmp(name, line, len)) {
+	while ((name = (char *)global_cmd_map[list_index++].name)) {
+		if (!strncmp(name, line, len)) {
 			return strdup(name);
 		}
 	}
@@ -307,7 +364,7 @@ void *input_thread(void *thread_setts)
 	
 	/* Should remain on stack until thread exits */
 	struct interp_opt cmd_map[] = {
-		{"dt", &option->dt, T_FLOAT, T_VAR},
+		{"dt", &option->dt, T_DOUBLE, T_VAR},
 		{"threads", &option->threads, T_USHORT, T_VAR},
 		{"bh_ratio", &option->bh_ratio, T_FLOAT, T_VAR},
 		{"bh_tree_limit", &option->bh_tree_limit, T_USHORT, T_VAR},
@@ -320,6 +377,9 @@ void *input_thread(void *thread_setts)
 		{"def_radius", &option->def_radius, T_FLOAT, T_VAR},
 		{"exec_funct_freq", &option->exec_funct_freq, T_UINT, T_VAR},
 		{"rng_seed", &option->rng_seed, T_UINT, T_VAR},
+		{"phys_check_collisions", NULL, T_CHECK_COLLISIONS, T_CMD},
+		{"save", NULL, T_SAVE, T_CMD},
+		{"load", NULL, T_LOAD, T_CMD},
 		{"list", NULL, T_LIST, T_CMD},
 		{"quit", NULL, T_QUIT, T_CMD},
 		{"exit", NULL, T_QUIT, T_CMD},
@@ -333,18 +393,24 @@ void *input_thread(void *thread_setts)
 		{"unpause", NULL, T_PAUSE, T_CMD},
 		{"win_create", NULL, T_ENABLE_WINDOW, T_CMD},
 		{"win_destroy", NULL, T_DISABLE_WINDOW, T_CMD},
+		{"lua_readopts", NULL, T_LUA_READOPTS, T_CMD},
+		{"#command (runs a system command)", NULL, T_CMD_SYS, T_CMD},
 		{0}
 	};
 	global_cmd_map = cmd_map;
 	
+	/* Rant: why the shit does every library in existance want to install its
+	 * own signal handler which THEN passes the signal to us? Even damn SDL
+	 * tries to do that, DESPITE having to make us call SDL_Quit(). It's retarded */
 	rl_catch_signals = false;
 	rl_attempted_completion_function = input_completion;
+	//rl_expand_prompt = true;
 	
-	while(t->status) {
+	while (t->status) {
 		/* Refresh prompt */
-		if(option->paused) {
+		if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_PAUSED) {
 			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointyellow);
-		} else if(option->status) {
+		} else if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
 			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointgreen);
 		} else {
 			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointred);
@@ -352,12 +418,15 @@ void *input_thread(void *thread_setts)
 		
 		t->line = readline(prompt);
 		
-		if(!t->line) {
+		if (!t->line) {
 			t->selfquit = 1;
 			raise(SIGINT);
-		} else if(*t->line) {
+		} else if (*t->line) {
 			add_history(t->line);
 			switch(input_token_setall(t->line, t, cmd_map)) {
+				case CMD_SYS_RET_ERR:
+					pprint_err("System command error\n");
+					break;
 				case CMD_ALL_FINE:
 					break;
 				case CMD_EXIT:

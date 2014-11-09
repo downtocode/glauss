@@ -28,7 +28,7 @@ void **nbody_init(struct glob_thread_config *cfg)
 {
 	struct thread_config_nbody **thread_config = calloc(option->threads+1,
 		sizeof(struct thread_config_nbody*));
-	for(int k = 0; k < option->threads + 1; k++) {
+	for (int k = 0; k < option->threads + 1; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_nbody));
 	}
 	
@@ -38,13 +38,14 @@ void **nbody_init(struct glob_thread_config *cfg)
 	
 	int totcore = (int)((float)option->obj/option->threads);
 	
-	for(int k = 1; k < option->threads + 1; k++) {
+	for (int k = 1; k < option->threads + 1; k++) {
 		thread_config[k]->glob_stats = cfg->stats;
-		thread_config[k]->stats = cfg->stats->t_stats[k];
+		thread_config[k]->stats = &cfg->stats->t_stats[k];
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->barrier = barrier;
 		thread_config[k]->id = k;
+		thread_config[k]->quit = cfg->quit;
 		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
 		if(k == option->threads) {
@@ -61,7 +62,7 @@ void nbody_quit(void **threads)
 	struct thread_config_nbody **t = (struct thread_config_nbody **)threads;
 	pthread_barrier_destroy(t[1]->barrier);
 	free(t[1]->barrier);
-	for(int k = 0; k < option->threads + 1; k++) {
+	for (int k = 0; k < option->threads + 1; k++) {
 		free(t[k]);
 	}
 	free(t);
@@ -78,29 +79,31 @@ void *thread_nbody(void *thread_setts)
 	const double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele;
 	
-	while(1) {
-		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
-			if(t->obj[i].ignore) continue;
+	while (!*t->quit) {
+		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
+			if (t->obj[i].ignore)
+				continue;
 			t->obj[i].pos += (t->obj[i].vel*dt) +\
 			(t->obj[i].acc)*((dt*dt)/2);
 		}
 		
 		pthread_barrier_wait(t->barrier);
 		
-		for(unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
+		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;
-			for(unsigned int j = 1; j < option->obj + 1; j++) {
-				if(i==j) continue;
+			for (unsigned int j = 1; j < option->obj + 1; j++) {
+				if (i==j)
+					continue;
 				vecnorm = t->obj[j].pos - t->obj[i].pos;
 				dist = sqrt(vecnorm[0]*vecnorm[0] +\
 							vecnorm[1]*vecnorm[1] +\
 							vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
 				
-				if(!nogrv)
+				if (!nogrv)
 					t->obj[i].acc += vecnorm*\
 									   (gconst*t->obj[j].mass)/(dist*dist);
-				if(!noele)
+				if (!noele)
 					t->obj[i].acc += -vecnorm*\
 								((t->obj[i].charge*t->obj[j].charge)/\
 									(4*pi*epsno*dist*dist*t->obj[i].mass));
@@ -108,9 +111,6 @@ void *thread_nbody(void *thread_setts)
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 		}
 		pthread_barrier_wait(t->ctrl);
-		
-		/* Quit if requested */
-		pthread_testcancel();
 	}
 	return 0;
 }

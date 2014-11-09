@@ -33,11 +33,11 @@ int in_probe_file(const char *filename)
 	int filetype = 0;
 	
 	/* Put format specific quirks here. */
-	if(strstr(filename, "xyz")!=NULL) {
+	if (strstr(filename, "xyz")!=NULL) {
 		filetype = MOL_XYZ;
-	} else if(strstr(filename, "pdb")!=NULL) {
+	} else if (strstr(filename, "pdb")!=NULL) {
 		filetype = MOL_PDB;
-	} else if(strstr(filename, "obj")!=NULL) {
+	} else if (strstr(filename, "obj")!=NULL) {
 		filetype = MOL_OBJ;
 	} else {
 		fprintf(stderr, "[IN] Filetype of %s not recognized!\n", filename);
@@ -48,24 +48,26 @@ int in_probe_file(const char *filename)
 	 * XYZ files have total number of atoms in their first line.
 	 * PDB files contain an incrementing index, but I'd like to avoid sscanf.
 	 */
-	if(filetype == MOL_XYZ) {
+	if (filetype == MOL_XYZ) {
 		fgets(str, sizeof(str), inprep);
 		fclose(inprep);
 		sscanf(str, "%i", &counter);
-	} else if(filetype == MOL_PDB) {
-		while(fgets (str, sizeof(str), inprep)!= NULL) {
-			if(strstr(str, "#") == NULL) {
-				if(strncmp(str, "ATOM", 4)==0) counter++;
+	} else if (filetype == MOL_PDB) {
+		while (fgets(str, sizeof(str), inprep)) {
+			if (!strstr(str, "#")) {
+				if (!strncmp(str, "ATOM", 4))
+					counter++;
 			}
 		}
-	} else if(filetype == MOL_OBJ) {
-		while(fgets (str, sizeof(str), inprep)!= NULL) {
-			if(strstr(str, "#") == NULL) {
-				if(strncmp(str, "v ", 2)==0) counter++;
+	} else if (filetype == MOL_OBJ) {
+		while (fgets (str, sizeof(str), inprep)!= NULL) {
+			if (!strstr(str, "#")) {
+				if (!strncmp(str, "v ", 2))
+					counter++;
 			}
 		}
 	}
-	if(option->skip_model_vec) {
+	if (option->skip_model_vec) {
 		counter/=option->skip_model_vec;
 	}
 	return counter;
@@ -81,14 +83,14 @@ int in_read_file(data *object, int *i, in_file *file)
 	FILE *inpars = fopen(file->filename, "r");
 	
 	/* Put format specific quirks here. */
-	if(strstr(file->filename, "xyz")!=NULL) {
+	if (strstr(file->filename, "xyz")) {
 		filetype = MOL_XYZ;
 		/* Skip first two lines of XYZ files. */
 		fgets(str, sizeof(str), inpars);
 		fgets(str, sizeof(str), inpars);
-	} else if(strstr(file->filename, "pdb")!=NULL) {
+	} else if (strstr(file->filename, "pdb")) {
 		filetype = MOL_PDB;
-	} else if(strstr(file->filename, "obj")!=NULL) {
+	} else if (strstr(file->filename, "obj")) {
 		filetype = MOL_OBJ;
 	} else {
 		fprintf(stderr, "Error! Filetype of %s not recognized!\n", file->filename);
@@ -96,29 +98,28 @@ int in_read_file(data *object, int *i, in_file *file)
 	}
 	
 	/* TODO: use something less primitive */
-	while(fgets (str, sizeof(str), inpars)!= NULL) {
+	while (fgets (str, sizeof(str), inpars)!= NULL) {
 		/* Skip if needed */
-		if(option->skip_model_vec && ++vec_counter < option->skip_model_vec) {
+		if (option->skip_model_vec && ++vec_counter < option->skip_model_vec) {
 			continue;
 		} else {
 			vec_counter = 0;
 		}
-		if(strstr(str, "#") == NULL) {
-			if(filetype == MOL_XYZ) {
+		if (!strstr(str, "#")) {
+			if (filetype == MOL_XYZ) {
 				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos,
 					   &zpos);
-			} else if(filetype == MOL_PDB) {
-				if(strncmp(str, "ATOM", 4)==0) {
+			} else if (filetype == MOL_PDB) {
+				if (!strncmp(str, "ATOM", 4)) {
 					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",\
 							pdbtype, &pdbatomindex, pdbatomname, pdbresidue,
 							&pdbreschain, &pdbresidueseq,\
 							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp,
 							atom, &pdboffset);
 				} else continue;
-			} else if(filetype == MOL_OBJ) {
-				if(strncmp(str, "v ", 2)==0) {
+			} else if (filetype == MOL_OBJ) {
+				if (!strncmp(str, "v ", 2)) {
 					sscanf(str, "v  %f %f %f", &xpos, &ypos, &zpos);
-					pos/=100;
 				} else continue;
 			}
 			object[*i].atomnumber = return_atom_num(atom);
@@ -129,14 +130,14 @@ int in_read_file(data *object, int *i, in_file *file)
 			object[*i].vel = file->inf->vel;
 			object[*i].ignore = file->inf->ignore;
 			object[*i].charge = file->inf->charge*option->elcharge;
-			if(object[*i].atomnumber == 1) {
+			if (object[*i].atomnumber == 1) {
 				object[*i].mass = 1.0;
 				object[*i].radius = 0.05;
-			} else if(object[*i].atomnumber == 6) {
+			} else if (object[*i].atomnumber == 6) {
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			} else {
-				object[*i].atomnumber = 0;
+				object[*i].atomnumber = 1;
 				object[*i].mass = 12.0;
 				object[*i].radius = 0.1;
 			}

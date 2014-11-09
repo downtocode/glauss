@@ -15,16 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <GLES2/gl2.h>
 #include <fontconfig/fontconfig.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "main/msg_phys.h"
 #include "graph.h"
-#include "graph_objects.h"
 #include "graph_fonts.h"
-#include "physics/physics.h"
-#include "physics/physics_aux.h"
+#include "main/msg_phys.h"
 #include "main/options.h"
 
 static const char text_vs[] =
@@ -69,7 +65,7 @@ typedef struct ft_p {
 } point;
 
 /* Ask the fontgod for a generic, standard issue "Arial" font */
-const char *graph_init_fontconfig()
+const char *graph_init_fontconfig(void)
 {
 	/* Offer fontgod sacrificial pointers to hold his highness */
 	FcConfig *fc_config = FcInitLoadConfigAndFonts();
@@ -161,7 +157,7 @@ unsigned int graph_init_freetype(const char *fontname)
 	return text_program;
 }
 
-void graph_stop_freetype()
+void graph_stop_freetype(void)
 {
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);

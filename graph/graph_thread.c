@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "graph.h"
 #include "graph_sdl.h"
 #include "graph_thread.h"
@@ -29,18 +30,17 @@
 #include "main/options.h"
 #include "main/msg_phys.h"
 #include "physics/physics.h"
+#include "physics/physics_aux.h"
 #include "input/graph_input.h"
 
 struct graph_cfg *global_cfg = NULL;
 
-void **graph_thread_init(data *object, unsigned int *frames, float *fps)
+void **graph_thread_init(data *object)
 {
 	struct graph_cfg *cfg = calloc(1, sizeof(struct graph_cfg));
 	
 	cfg->obj = object;
 	cfg->status = true;
-	cfg->frames = frames;
-	cfg->fps = fps;
 	cfg->selfquit = false;
 	
 	pthread_create(&cfg->graph, NULL, graph_thread, cfg);
@@ -50,26 +50,27 @@ void **graph_thread_init(data *object, unsigned int *frames, float *fps)
 	return (void **)&cfg->win;
 }
 
-void graph_thread_quit()
+void graph_thread_quit(void)
 {
-	if(!global_cfg) return;
+	if (!global_cfg)
+		return;
 	
 	global_cfg->status = false;
 	
 	void *val = NULL, *res = NULL;
 	
-	while(!global_cfg->selfquit) {
+	while (!global_cfg->selfquit) {
 		global_cfg->status = false;
 	}
 	
-	if(!global_cfg->selfquit) {
+	if (!global_cfg->selfquit) {
 		pthread_cancel(global_cfg->graph);
 		val = PTHREAD_CANCELED;
 	}
 	
 	pthread_join(global_cfg->graph, &res);
 	
-	if(res != val) {
+	if (res != val) {
 		pprint_err("Error joining with graphics thread!\n");
 	}
 	
@@ -90,17 +91,23 @@ void *graph_thread(void *thread_setts)
 	graph_sdl_resize_wind(t->win);
 	
 	/* OpenGL */
-	graph_init(t->win);
+	graph_init();
 	
 	/* Cancel policy */
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
-	while(t->status) {
+	/* FPS */
+	unsigned int frames = 0;
+	unsigned long long int time = 0, t1 = 0, t2 = 0;
+	
+	t1 = phys_gettime_us();
+	
+	while (t->status) {
 		/* Get input from SDL */
-		while(SDL_PollEvent(t->win->event)) {
-			switch(t->win->event->type) {
+		while (SDL_PollEvent(t->win->event)) {
+			switch (t->win->event->type) {
 				case SDL_WINDOWEVENT:
-					if(t->win->event->window.event == SDL_WINDOWEVENT_RESIZED)
+					if (t->win->event->window.event == SDL_WINDOWEVENT_RESIZED)
 						graph_sdl_resize_wind(t->win);
 					break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -113,7 +120,7 @@ void *graph_thread(void *thread_setts)
 					graph_adj_zoom_mwheel(t->win);
 					break;
 				case SDL_KEYDOWN:
-					if(graph_scan_keypress(t->win)) {
+					if (graph_scan_keypress(t->win)) {
 						t->selfquit = 1;
 						raise(SIGINT);
 					}
@@ -125,6 +132,17 @@ void *graph_thread(void *thread_setts)
 			}
 		}
 		
+		/* FPS */
+		/* Update timer */
+		t2 = phys_gettime_us();
+		time += t2 - t1;
+		if (time > 1.0/1.0e-6) {
+			t->win->fps = frames/(time*1.0e-6);
+			time = frames = 0;
+		}
+		t1 = t2;
+		frames++;
+		
 		/* Move camera */
 		graph_sdl_move_cam(t->win);
 		
@@ -133,10 +151,6 @@ void *graph_thread(void *thread_setts)
 		
 		/* Swap Front and Back buffers */
 		graph_sdl_swapwin(t->win);
-		
-		(*t->frames)++;
-		
-		t->win->fps = *t->fps;
 	}
 	
 	t->selfquit = 1;

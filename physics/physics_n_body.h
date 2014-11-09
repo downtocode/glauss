@@ -18,14 +18,15 @@
 #ifndef PHYSENGINE_PHYS_N_BODY
 #define PHYSENGINE_PHYS_N_BODY
 
-#define PHYS_NBODY {\
-		.name = "n-body",\
-		.version = PACKAGE_VERSION,\
-		.desc = "Standard n-body simulation",\
-		.author = "Rostislav Pehlivanov",\
-		.thread_configuration = nbody_init,\
-		.thread_location = thread_nbody,\
-		.thread_destruction = nbody_quit,\
+#define PHYS_NBODY {                                                           \
+		.name = "n-body",                                                      \
+		.version = PACKAGE_VERSION,                                            \
+		.desc = "Standard n-body simulation, velocity verlet algorithm",       \
+		.author = "Rostislav Pehlivanov",                                      \
+		.thread_preconfiguration = NULL,                                       \
+		.thread_configuration = nbody_init,                                    \
+		.thread_location = thread_nbody,                                       \
+		.thread_destruction = nbody_quit,                                      \
 	}
 
 struct thread_config_nbody {
@@ -34,10 +35,12 @@ struct thread_config_nbody {
 	struct global_statistics *glob_stats;
 	struct thread_statistics *stats;
 	pthread_barrier_t *ctrl, *barrier;
+	bool *quit;
 };
 
 void **nbody_init(struct glob_thread_config *cfg);
 void nbody_quit(void **threads);
 void *thread_nbody(void *thread_setts);
+void *thread_nbody_rk4(void *thread_setts);
 
 #endif

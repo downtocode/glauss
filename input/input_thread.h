@@ -30,6 +30,7 @@
 enum codepaths {
 	T_VAR,
 	T_FLOAT,
+	T_DOUBLE,
 	T_INT,
 	T_UINT,
 	T_BOOL,
@@ -49,11 +50,17 @@ enum codepaths {
 	T_STATS,
 	T_CLEAR,
 	T_PAUSE,
+	T_SAVE,
+	T_LOAD,
 	T_ENABLE_WINDOW,
 	T_DISABLE_WINDOW,
+	T_LUA_READOPTS,
+	T_CHECK_COLLISIONS,
+	T_CMD_SYS,
 };
 
 enum intercommunication {
+	CMD_SYS_RET_ERR,
 	CMD_ALL_FINE,
 	CMD_EXIT,
 	CMD_NOT_FOUND,
@@ -72,16 +79,15 @@ struct interp_opt {
 /* Sent to input thread */
 struct input_cfg {
 	pthread_t input;
-	data *obj;
+	data **obj;
 	graph_window **win;
 	char *line;
-	float *fps;
-	unsigned int *frames;
 	volatile bool status, selfquit;
 };
 
-int input_thread_init(void **win, unsigned int *frames, float *fps, data *object);
-void input_thread_quit();
+int input_thread_init(void **win, data **object);
+void input_thread_quit(void);
+int input_call_system(const char *cmd);
 int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_map);
 void *input_thread(void *thread_setts);
 

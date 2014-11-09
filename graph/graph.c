@@ -19,18 +19,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tgmath.h>
-#include <GLES2/gl2.h>
 #include <png.h>
-#include "physics/physics.h"
-#include "main/msg_phys.h"
-#include "input/parser.h"
-#include "input/sighandle.h"
 #include "graph.h"
 #include "graph_sdl.h"
 #include "graph_objects.h"
 #include "graph_fonts.h"
-#include "input/graph_input.h"
 #include "main/options.h"
+#include "main/msg_phys.h"
 
 /* UI POSITIONS */
 
@@ -193,7 +188,7 @@ static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near,
 	m[15] = 2*far*near / nearmfar;
 }
 
-void graph_reset_viewport()
+void graph_reset_viewport(void)
 {
 	glViewport(0, 0, option->width, option->height);
 }
@@ -292,23 +287,23 @@ void graph_draw_scene(graph_window *win)
 		graph_display_text(osdtext, ALGx, ALGy, ALGs, COL_WHITE);
 		
 		/* Object selection */
-		if(win->start_selection)
+		if (win->start_selection)
 			graph_display_text(win->currentsel, OSLx, OSLy, OSLs, COL_WHITE);
 		
 		/* Chosen object */
-		if(win->chosen)
+		if (win->chosen)
 			graph_display_object_info(win->object, win->chosen);
 		
-		if(option->status) {
+		if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
 			/* Only displayed if running */
 			
-			if(option->paused) {
+			if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_PAUSED) {
 				graph_display_text("Simulation paused", SIMx, SIMy, SIMs, COL_YELLOW);
 			}
 			
 			/* Thread time stats */
-			for(short i = 1; i < option->threads + 1; i++) {
-				clock_gettime(phys_stats->t_stats[i]->clockid, &ts);
+			for (short i = 1; i < option->threads + 1; i++) {
+				clock_gettime(phys_stats->t_stats[i].clockid, &ts);
 				snprintf(osdtext, OSD_BUFFER,
 						 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
@@ -321,7 +316,7 @@ void graph_draw_scene(graph_window *win)
 		}
 		
 		/* BH tree stats */
-		if(option->stats_bh) {
+		if (option->stats_bh) {
 			graph_display_text("Octree stats:", OCTx, OCTy, OCTs, COL_WHITE);
 			graph_display_text("Thread", OCTx, OCTy-.05, OCTs, COL_WHITE);
 			graph_display_text("Total", OCTx+.12, OCTy-.05, OCTs, COL_ORANGE);
@@ -329,21 +324,21 @@ void graph_draw_scene(graph_window *win)
 			graph_display_text("-", OCTx+.37, OCTy-.05, OCTs, COL_RED);
 			graph_display_text("Size(MiB)", OCTx+.49, OCTy-.05, OCTs, COL_YELLOW);
 			
-			for(short i = 1; i < option->threads + 1; i++) {
+			for (short i = 1; i < option->threads + 1; i++) {
 				snprintf(osdtext, OSD_BUFFER, "%i", i);
 				graph_display_text(osdtext, OCTx, OCTy-((float)i/18)-.05, OCTs, COL_WHITE);
 				
-				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i]->bh_total_alloc);
+				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i].bh_total_alloc);
 				graph_display_text(osdtext, OCTx+.12, OCTy-((float)i/18)-.05, OCTs, COL_ORANGE);
 				
-				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i]->bh_new_alloc);
+				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i].bh_new_alloc);
 				graph_display_text(osdtext, OCTx+.25, OCTy-((float)i/18)-.05, OCTs, COL_GREEN);
 				
-				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i]->bh_new_cleaned);
+				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i].bh_new_cleaned);
 				graph_display_text(osdtext, OCTx+.37, OCTy-((float)i/18)-.05, OCTs, COL_RED);
 				
 				snprintf(osdtext, OSD_BUFFER, "%0.3lf",
-						phys_stats->t_stats[i]->bh_heapsize/1048576.0);
+						phys_stats->t_stats[i].bh_heapsize/1048576.0);
 				graph_display_text(osdtext, OCTx+.49, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
 			}
 		}
@@ -361,20 +356,32 @@ void graph_draw_scene(graph_window *win)
 		draw_obj_axis(AXISs);
 		
 		/* Objects(as points) */
-		draw_obj_points(win->object);
+		draw_obj_col_points(win->object);
 		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	
 	/* Take screenshot if signaled by physics ctrl thread */
-	if(option->write_sshot_now) {
+	if (option->write_sshot_now) {
 		graph_sshot(phys_stats->progress);
 		option->write_sshot_now = false;
 	}
 	/*	Dynamic drawing	*/
 }
 
-void graph_init()
+void graph_quit(void)
+{
+	free(mat);
+	free(rotx);
+	free(roty);
+	free(rotz);
+	free(rotation);
+	free(scale);
+	free(pers);
+	free(transl);
+}
+
+void graph_init(void)
 {
 	mat       =  calloc(16, sizeof(GLfloat));
 	rotx      =  calloc(16, sizeof(GLfloat));
@@ -384,15 +391,6 @@ void graph_init()
 	scale     =  calloc(16, sizeof(GLfloat));
 	pers      =  calloc(16, sizeof(GLfloat));
 	transl    =  calloc(16, sizeof(GLfloat));
-	
-	add_to_free_queue(mat);
-	add_to_free_queue(rotx);
-	add_to_free_queue(roty);
-	add_to_free_queue(rotz);
-	add_to_free_queue(rotation);
-	add_to_free_queue(scale);
-	add_to_free_queue(pers);
-	add_to_free_queue(transl);
 	
 	object_shader = graph_init_objects();
 	text_shader = graph_init_freetype(graph_init_fontconfig());
@@ -412,26 +410,30 @@ void graph_init()
 
 int graph_sshot(long double arg)
 {
+	#if HAS_PNG
 	/* Open file */
 	char filename[32];
 	int w = option->width, h = option->height;
 	
 	/* Open file */
 	snprintf(filename, sizeof(filename), option->sshot_temp, arg);
-	if(!access(filename, R_OK)) return 2;
+	if (!access(filename, R_OK))
+		return 2;
 	
 	FILE *fshot = fopen(filename, "w");
-	if(!fshot) return 2;
+	if (!fshot)
+		return 2;
 	
 	/* Get pixels */
 	unsigned char *pixels = malloc(sizeof(unsigned char)*w*h*4);
 	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	
 	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png) return 1;
+	if (!png)
+		return 1;
 	
 	png_infop info = png_create_info_struct(png);
-	if(!info) {
+	if (!info) {
 		png_destroy_write_struct(&png, &info);
 		return 1;
 	}
@@ -440,7 +442,7 @@ int graph_sshot(long double arg)
 	png_set_IHDR(png, info, w, h, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
 				 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	png_colorp palette = png_malloc(png, PNG_MAX_PALETTE_LENGTH*sizeof(png_color));
-	if(!palette) {
+	if (!palette) {
 		fclose(fshot);
 		png_destroy_write_struct(&png, &info);
 		return 1;
@@ -451,7 +453,8 @@ int graph_sshot(long double arg)
 	png_set_packing(png);
 	
 	png_bytepp rows = png_malloc(png, h*sizeof(png_bytep));
-	for(int r = 0; r < h; r++) rows[r] = (pixels + (h - r)*w*4);
+	for (int r = 0; r < h; r++)
+		rows[r] = (pixels + (h - r)*w*4);
 	
 	png_write_image(png, rows);
 	png_write_end(png, info);
@@ -464,6 +467,6 @@ int graph_sshot(long double arg)
 	free(pixels);
 	
 	pprintf(PRI_MEDIUM, "Wrote screenshot %s\n", filename);
-	
+	#endif
 	return 0;
 }

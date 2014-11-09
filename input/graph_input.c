@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include "graph_input.h"
 #include "physics/physics.h"
-#include "main/out_xyz.h"
 #include "sighandle.h"
 #include "graph/graph.h"
 #include "graph/graph_sdl.h"
@@ -38,14 +37,14 @@
 
 static void graph_sdl_scan_selection(graph_window *win)
 {
-	if(win->event->key.keysym.sym!=SDLK_RETURN && win->numbers.final_digit < DIGITS_MAX) {
-		if(win->event->key.keysym.sym==SDLK_BACKSPACE && win->numbers.final_digit > 0) {
+	if (win->event->key.keysym.sym!=SDLK_RETURN && win->numbers.final_digit < DIGITS_MAX) {
+		if (win->event->key.keysym.sym==SDLK_BACKSPACE && win->numbers.final_digit > 0) {
 			getnumber(&win->numbers, 0, NUM_REMOVE);
 			win->currentsel[strlen(win->currentsel)-1] = '\0';
 			return;
 		}
 		/*	sscanf will return 0 if nothing was done	*/
-		if(!sscanf(SDL_GetKeyName(win->event->key.keysym.sym), "%u", &win->currentnum)) {
+		if (!sscanf(SDL_GetKeyName(win->event->key.keysym.sym), "%u", &win->currentnum)) {
 			return;
 		} else {
 			strcat(win->currentsel, SDL_GetKeyName(win->event->key.keysym.sym));
@@ -56,7 +55,7 @@ static void graph_sdl_scan_selection(graph_window *win)
 		strcpy(win->currentsel, "Select object:");
 		win->start_selection = 0;
 		win->chosen = getnumber(&win->numbers, 0, NUM_GIVEME);
-		if(win->chosen > option->obj) {
+		if (win->chosen > option->obj) {
 			win->chosen = 0;
 		} else {
 			pprintf(PRI_HIGH, "Object %u selected.\n", win->chosen);
@@ -67,8 +66,9 @@ static void graph_sdl_scan_selection(graph_window *win)
 
 void graph_press_mouse(graph_window *win)
 {
-	if(win->event->button.button == SDL_BUTTON_LEFT) win->flicked = 1;
-	if(win->event->button.button == SDL_BUTTON_MIDDLE) {
+	if (win->event->button.button == SDL_BUTTON_LEFT)
+		win->flicked = 1;
+	if (win->event->button.button == SDL_BUTTON_MIDDLE) {
 		win->chosen = 0;
 		win->translate = 1;
 	}
@@ -81,8 +81,10 @@ void graph_press_mouse(graph_window *win)
 
 void graph_release_mouse(graph_window *win)
 {
-	if(win->event->button.button == SDL_BUTTON_LEFT) win->flicked = 0;
-	if(win->event->button.button == SDL_BUTTON_MIDDLE) win->translate = 0;
+	if (win->event->button.button == SDL_BUTTON_LEFT)
+		win->flicked = 0;
+	if (win->event->button.button == SDL_BUTTON_MIDDLE)
+		win->translate = 0;
 	SDL_SetRelativeMouseMode(0);
 	SDL_WarpMouseInWindow(win->window, win->initmousex, win->initmousey);
 	SDL_ShowCursor(1);
@@ -90,16 +92,19 @@ void graph_release_mouse(graph_window *win)
 
 void graph_adj_zoom_mwheel(graph_window *win)
 {
-	if(win->event->wheel.y > 0) win->camera.scalefactor *= ZOOM_SENS;
-	if(win->event->wheel.y < 0) win->camera.scalefactor /= ZOOM_SENS;
+	if (win->event->wheel.y > 0)
+		win->camera.scalefactor *= ZOOM_SENS;
+	if (win->event->wheel.y < 0)
+		win->camera.scalefactor /= ZOOM_SENS;
 	/* Cap to specified max zoom */
-	if(win->camera.scalefactor < MIN_SCALE) win->camera.scalefactor = MIN_SCALE;
+	if (win->camera.scalefactor < MIN_SCALE)
+		win->camera.scalefactor = MIN_SCALE;
 }
 
 int graph_scan_keypress(graph_window *win)
 {
 	/* Check if we need to get numbers for object selecting */
-	if(win->start_selection) {
+	if (win->start_selection) {
 		graph_sdl_scan_selection(win);
 	}
 	/* Scan hotkeys */
@@ -121,27 +126,27 @@ int graph_scan_keypress(graph_window *win)
 			win->camera.aspect_ratio = graph_sdl_resize_wind(win);
 			win->chosen = 0;
 			break;
-		case SDLK_z:
-			toxyz(win->object);
-			break;
 		case SDLK_MINUS:
 			phys_shuffle_algorithms();
 			break;
 		case SDLK_BACKSPACE:
-			if(option->status) phys_ctrl(PHYS_SHUTDOWN, NULL);
-			else phys_ctrl(PHYS_START, &win->object);
+			if(phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING)
+				phys_ctrl(PHYS_SHUTDOWN, NULL);
+			else
+				phys_ctrl(PHYS_START, &win->object);
 			break;
 		case SDLK_PERIOD:
-			if(win->chosen < option->obj) win->chosen++;
+			if(win->chosen < option->obj)
+				win->chosen++;
 			break;
 		case SDLK_COMMA:
-			if(win->chosen > 0) win->chosen--;
+			if(win->chosen > 0)
+				win->chosen--;
 			break;
 		case SDLK_f:
 			graph_sdl_toggle_fullscreen(win);
 			break;
 		case SDLK_s:
-			raise(SIGUSR1);
 			graph_sshot(phys_stats->progress);
 			break;
 		case SDLK_ESCAPE:

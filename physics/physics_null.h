@@ -18,14 +18,26 @@
 #ifndef PHYSENGINE_PHYS_NULL
 #define PHYSENGINE_PHYS_NULL
 
-#define PHYS_NULL {\
-		.name = "null",\
-		.version = PACKAGE_VERSION,\
-		.desc = "Null simulation",\
-		.author = "Rostislav Pehlivanov",\
-		.thread_configuration = null_init,\
-		.thread_location = thread_null,\
-		.thread_destruction = null_quit,\
+#define PHYS_NULL {                                                            \
+		.name = "null",                                                        \
+		.version = PACKAGE_VERSION,                                            \
+		.desc = "Only a control thread running, use with Lua",                 \
+		.author = "Rostislav Pehlivanov",                                      \
+		.thread_preconfiguration = null_preinit,                               \
+		.thread_configuration = null_init,                                     \
+		.thread_location = thread_null,                                        \
+		.thread_destruction = null_quit,                                       \
+	}
+
+#define PHYS_NULL_STATS {                                                      \
+		.name = "null_stats",                                                  \
+		.version = PACKAGE_VERSION,                                            \
+		.desc = "Outputs statistics(n-body), slow",                            \
+		.author = "Rostislav Pehlivanov",                                      \
+		.thread_preconfiguration = NULL,                                       \
+		.thread_configuration = null_init,                                     \
+		.thread_location = thread_stats,                                       \
+		.thread_destruction = null_quit,                                       \
 	}
 
 struct thread_config_null {
@@ -35,10 +47,13 @@ struct thread_config_null {
 	unsigned int id, objs_low, objs_high;
 	pthread_barrier_t *ctrl;
 	pthread_mutex_t *mute;
+	bool *quit;
 };
 
+void *null_preinit(struct glob_thread_config *cfg);
 void **null_init(struct glob_thread_config *cfg);
 void null_quit(void **threads);
+void *thread_stats(void *thread_setts);
 void *thread_null(void *thread_setts);
 
 #endif

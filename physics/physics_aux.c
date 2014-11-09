@@ -23,6 +23,7 @@
 #include <lua5.2/lua.h>
 #include <lua5.2/lauxlib.h>
 #include <lua5.2/lualib.h>
+#include <sys/time.h>
 #include "physics_aux.h"
 #include "main/msg_phys.h"
 #include "main/options.h"
@@ -30,15 +31,26 @@
 struct atomic_cont *atom_prop;
 
 struct lua_parser_state {
-	int i, buffer_cont;
+	int i;
 	bool nullswitch;
-	bool colset;
 };
 
 static const char elements_internal[] =
 // Generated from elements.lua
 #include "physics/resources/elements.h"
 ;
+
+static void conf_lua_get_color(lua_State *L, float color[])
+{
+	/* Can be used for N dim tables, change 3 to N */
+	for(int i = 0; i < 4; i++) {
+		lua_pushinteger(L, i+1);
+		lua_gettable(L, -2);
+		color[i] = lua_tonumber(L, -1);
+		lua_pop(L, 1);
+	}
+	lua_pop(L, 1);
+}
 
 static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer,
 									struct lua_parser_state *parser_state)
@@ -48,17 +60,14 @@ static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer,
 		if(lua_istable(L, -1)) {
 			if(lua_type(L, -2) == LUA_TSTRING) {
 				if(!strcmp("color", lua_tostring(L, -2))) {
-					for(int i = 0; i < 4; i++) {
-						lua_pushinteger(L, i+1);
-						lua_gettable(L, -2);
-						buffer->color[i] = lua_tonumber(L, -1);
-						lua_pop(L, 1);
-					}
-					return;
+					conf_lua_get_color(L, buffer->color);
+					continue;
 				}
 			}
 			if(parser_state->nullswitch) {
+				buffer->number = parser_state->i;
 				atom_prop[parser_state->i++] = *buffer;
+				buffer = &(struct atomic_cont){0};
 			} else parser_state->nullswitch = 1;
 			elements_traverse_table(L, buffer, parser_state);
 		} else if(lua_isnumber(L, -1)) {
@@ -96,9 +105,18 @@ int init_elements(const char *filepath)
 	lua_getglobal(L, "elements");
 	
 	struct atomic_cont buffer = {0};
-	struct lua_parser_state parser_state = {1, 0, 0, 0};
+	struct lua_parser_state parser_state = {1, 0};
 	
 	elements_traverse_table(L, &buffer, &parser_state);
+	
+	atom_prop[0].name = '\0';
+	atom_prop[0].mass = 1.0;
+	atom_prop[0].charge = 0.0;
+	atom_prop[0].number = 0;
+	atom_prop[0].color[0] = 255;
+	atom_prop[0].color[1] = 255;
+	atom_prop[0].color[2] = 255;
+	atom_prop[0].color[3] = 255;
 	
 	lua_close(L);
 	
@@ -109,7 +127,7 @@ unsigned short int return_atom_num(const char *name)
 {
 	if(!name || name[0] == '\0') return 0;
 	for(int i=1; i<121; i++) {
-		if(strcmp(name, atom_prop[i].name) == 0) {
+		if(!strncasecmp(name, atom_prop[i].name, strlen(atom_prop[i].name))) {
 			return i;
 		}
 	}
@@ -146,9 +164,9 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, int status)
 }
 
 /* Change algorithms */
-void phys_shuffle_algorithms()
+void phys_shuffle_algorithms(void)
 {
-	if(option->status) {
+	if(phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
 		pprintf(PRI_WARN, "Physics needs to be stopped before changing modes.\n");
 		return;
 	}
@@ -165,6 +183,49 @@ void phys_shuffle_algorithms()
 			phys_algorithms[num].name);
 	free(option->algorithm);
 	option->algorithm = strdup(phys_algorithms[num].name);
+}
+
+unsigned int phys_check_collisions(data *object, unsigned int low, unsigned int high)
+{
+	unsigned int collisions = 0;
+	vec3 vecnorm = {0};
+	double dist = 0.0;
+	for(unsigned int i = low; i < high; i++) {
+		if(!object[i].mass) {
+			pprint_err("Object %i has no mass!\n", i);
+			collisions++;
+		}
+		for(unsigned int j = low; j < high; j++) {
+			if(i==j) continue;
+			vecnorm = object[j].pos - object[i].pos;
+			dist = sqrt(vecnorm[0]*vecnorm[0] +\
+						vecnorm[1]*vecnorm[1] +\
+						vecnorm[2]*vecnorm[2]);
+			if(dist == 0.0) {
+				collisions+=2;
+				pprint_err("Objects %i and %i share coordinates!\n", i, j);
+			}
+		}
+	}
+	return collisions;
+}
+
+bool phys_check_coords(vec3 *vec, data *object, unsigned int low, unsigned int high)
+{
+	vec3 vecnorm = {0};
+	double dist = 0.0;
+	for(unsigned int i = low; i < high; i++) {
+		for(unsigned int j = low; j < high; j++) {
+			vecnorm = object[j].pos - *vec;
+			dist = sqrt(vecnorm[0]*vecnorm[0] +\
+						vecnorm[1]*vecnorm[1] +\
+						vecnorm[2]*vecnorm[2]);
+			if(dist == 0.0) {
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
 
 /* We have to implement those here too as graphics may not be compiled */
@@ -192,4 +253,22 @@ void rotate_vec(vec3 *vec, vec3 *rot1)
 		res[1] = s*tmp[0] + c*tmp[1];
 	}
 	*vec = res;
+}
+
+unsigned long long int phys_gettime_us(void)
+{
+	#if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0 && defined(CLOCK_MONOTONIC)
+		struct timespec ts;
+	#if defined(CLOCK_MONOTONIC_RAW)
+		if(clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+	#else
+		if(clock_gettime(CLOCK_MONOTONIC, &ts))
+	#endif
+			abort();
+		return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+	#else
+		struct timeval tv;
+		gettimeofday(&tv,NULL);
+		return tv.tv_sec * 1000000LL + tv.tv_usec;
+	#endif
 }

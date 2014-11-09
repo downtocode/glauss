@@ -18,10 +18,9 @@
 #ifndef PHYSENGINE_SIGHANDLE
 #define PHYSENGINE_SIGHANDLE
 
-/* I don't trust SDL2's signal handling */
 int add_to_free_queue(void *p);
 int remove_from_free_queue(void *p);
-void free_all_queue();
+void free_all_queue(void);
 void on_usr1_signal(int signo);
 void on_quit_signal(int signo);
 void on_alrm_signal(int signo);

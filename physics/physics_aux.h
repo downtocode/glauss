@@ -27,6 +27,7 @@ extern struct atomic_cont {
 	double mass;
 	double charge;
 	float color[4];
+	int number;
 } *atom_prop;
 
 enum {
@@ -46,7 +47,7 @@ unsigned short int return_atom_num(const char *name);
 const char *return_atom_str(unsigned int num);
 
 /* Shuffle through all algorithms available and change option->algorithm */
-void phys_shuffle_algorithms();
+void phys_shuffle_algorithms(void);
 
 /* Function to turn individual numbers into a single number. See graph_input
  * for example of how to use */
@@ -55,4 +56,11 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, int status);
 /* Rotate vector by angles specified in rot1 */
 void rotate_vec(vec3 *vec, vec3 *rot1);
 
+/* Checks for shared coordinates in entire object array */
+unsigned int phys_check_collisions(data *object, unsigned int low, unsigned int high);
+
+/* Check coords for any collisions */
+bool phys_check_coords(vec3 *vec, data *object, unsigned int low, unsigned int high);
+
+unsigned long long int phys_gettime_us(void);
 #endif
