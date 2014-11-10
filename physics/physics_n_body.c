@@ -74,7 +74,7 @@ void *thread_nbody(void *thread_setts)
 	struct thread_config_nbody *t = thread_setts;
 	vec3 vecnorm, accprev;
 	double dist;
-	float dt = option->dt;
+	const double dt = option->dt;
 	const double pi = acos(-1);
 	const double gconst = option->gconst, epsno = option->epsno;
 	const bool nogrv = option->nogrv, noele = option->noele;

@@ -7,7 +7,7 @@ settings = {
 		algorithm = "null",
 		rng_seed = os.time(),
 		algorithm = "barnes-hut",
-		bh_ratio = 0.5,
+		bh_ratio = 0.4,
 		--Lifetime of a cell before it's freed.
 		bh_lifetime = 20,
 		--Units are size_t(bytes)! PER THREAD!

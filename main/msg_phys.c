@@ -24,7 +24,7 @@ static const char *okmsg = "[\033[032m Ok! \033[0m] ";
 static const char *warnmsg = "[\033[033m Warning! \033[0m] ";
 static const char *errmsg = "[\033[031m Error! \033[0m] ";
 
-static bool disable_print;
+static bool disable_print = 0;
 
 void pprint_enable(void)
 {
@@ -51,9 +51,12 @@ void pprintf(int priority, const char *format, ...)
 		vfprintf(stderr, format, args);
 		va_end(args);
 	} else if (priority <= option->verbosity || priority == PRI_OK || priority == PRI_WARN) {
-		if(disable_print) return;
-		if(priority == PRI_OK) printf("%s", okmsg);
-		if(priority == PRI_WARN) printf("%s", warnmsg);
+		if(disable_print)
+			return;
+		else if(priority == PRI_OK)
+			printf("%s", okmsg);
+		else if(priority == PRI_WARN)
+			printf("%s", warnmsg);
 		va_start(args, format);
 		vprintf(format, args);
 		va_end(args);

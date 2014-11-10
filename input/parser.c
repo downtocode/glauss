@@ -21,14 +21,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <lua5.2/lua.h>
-#include <lua5.2/lauxlib.h>
-#include <lua5.2/lualib.h>
+#include "parser.h"
+#include "input_thread.h"
 #include "physics/physics.h"
 #include "physics/physics_aux.h"
-#include "parser.h"
 #include "main/options.h"
-#include "input/in_file.h"
 #include "main/msg_phys.h"
 
 struct lua_parser_state {
@@ -43,87 +40,29 @@ struct lua_parser_state {
 
 static bool lua_loaded = 0;
 static lua_State *L;
+struct parser_opt *total_opt_map = NULL;
 
 static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state)
 {
-	if(lua_istable(L, -1)) {
+	if (lua_istable(L, -1)) {
 		/* Tell conf_traverse_table() to traverse */
 		return 1;
-	} else if(lua_isnumber(L, -1)) {
-		/* lua_tonumber() returns double, so round them the C way */
-		if(!strcmp("threads", lua_tostring(L, -2)))
-			option->threads = lua_tonumber(L, -1);
-		if(!strcmp("dt", lua_tostring(L, -2)))
-			option->dt = lua_tonumber(L, -1);
-		if(!strcmp("rng_seed", lua_tostring(L, -2)))
-			option->rng_seed = lua_tonumber(L, -1);
-		if(!strcmp("bh_ratio", lua_tostring(L, -2)))
-			option->bh_ratio = lua_tonumber(L, -1);
-		if(!strcmp("bh_lifetime", lua_tostring(L, -2)))
-			option->bh_lifetime = lua_tonumber(L, -1);
-		if(!strcmp("bh_heapsize_max", lua_tostring(L, -2)))
-			option->bh_heapsize_max = lua_tonumber(L, -1);
-		if(!strcmp("bh_tree_limit", lua_tostring(L, -2)))
-			option->bh_tree_limit = lua_tonumber(L, -1);
-		if(!strcmp("width", lua_tostring(L, -2)))
-			option->width = lua_tonumber(L, -1);
-		if(!strcmp("height", lua_tostring(L, -2)))
-			option->height = lua_tonumber(L, -1);
-		if(!strcmp("elcharge", lua_tostring(L, -2)))
-			option->elcharge = lua_tonumber(L, -1);
-		if(!strcmp("gconst", lua_tostring(L, -2)))
-			option->gconst = lua_tonumber(L, -1);
-		if(!strcmp("epsno", lua_tostring(L, -2)))
-			option->epsno = lua_tonumber(L, -1);
-		if(!strcmp("verbosity", lua_tostring(L, -2)))
-			option->verbosity = lua_tonumber(L, -1);
-		if(!strcmp("fontsize", lua_tostring(L, -2)))
-			option->fontsize = lua_tonumber(L, -1);
-		if(!strcmp("dump_xyz", lua_tostring(L, -2)))
-			option->dump_xyz = lua_tonumber(L, -1);
-		if(!strcmp("dump_sshot", lua_tostring(L, -2)))
-			option->dump_sshot = lua_tonumber(L, -1);
-		if(!strcmp("exec_funct_freq", lua_tostring(L, -2)))
-			option->exec_funct_freq = lua_tonumber(L, -1);
-		if(!strcmp("skip_model_vec", lua_tostring(L, -2)))
-			option->skip_model_vec = lua_tonumber(L, -1);
-		if(!strcmp("reset_stats_freq", lua_tostring(L, -2)))
-			option->reset_stats_freq = lua_tonumber(L, -1);
-	} else if(lua_isstring(L, -1)) {
-		/* The defaults have been assigned using strdup too, so free them */
-		if(!strcmp("algorithm", lua_tostring(L, -2))) {
-			free(option->algorithm);
-			option->algorithm = strdup(lua_tostring(L, -1));
+	} else {
+		int lua_vartype = lua_type(L, -1);
+		const char *lua_varvalue = lua_tostring(L, -1);
+		const char *lua_varname = lua_tostring(L, -2);
+		for (struct parser_opt *i = parser_state->opt_map; i->name; i++) {
+			if (lua_vartype == i->cmd_or_lua_type) {
+				if (!strcmp(i->name, lua_varname)) {
+					if(lua_vartype == LUA_TBOOLEAN) {
+						/* lua_tostring() of LUA_TBOOLEAN returns NULL */
+						lua_varvalue = lua_toboolean(L, -1) ? "true" : "false";
+					}
+					input_set_typed(i, lua_varvalue);
+					break;
+				}
+			}
 		}
-		if(!strcmp("spawn_funct", lua_tostring(L, -2))) {
-			free(option->spawn_funct);
-			option->spawn_funct = strdup(lua_tostring(L, -1));
-		}
-		if(!strcmp("timestep_funct", lua_tostring(L, -2))) {
-			free(option->timestep_funct);
-			option->timestep_funct = strdup(lua_tostring(L, -1));
-		}
-		if(!strcmp("fontname", lua_tostring(L, -2))) {
-			free(option->fontname);
-			option->fontname = strdup(lua_tostring(L, -1));
-		}
-		if(!strcmp("screenshot_template", lua_tostring(L, -2))) {
-			free(option->sshot_temp);
-			option->sshot_temp = strdup(lua_tostring(L, -1));
-		}
-		if(!strcmp("file_template", lua_tostring(L, -2))) {
-			free(option->xyz_temp);
-			option->xyz_temp = strdup(lua_tostring(L, -1));
-		}
-	} else if(lua_isboolean(L, -1)) {
-		if(!strcmp("bh_single_assign", lua_tostring(L, -2)))
-			option->bh_single_assign = lua_toboolean(L, -1);
-		if(!strcmp("bh_random_assign", lua_tostring(L, -2)))
-			option->bh_random_assign = lua_toboolean(L, -1);
-		if(!strcmp("lua_expose_obj_array", lua_tostring(L, -2)))
-			option->lua_expose_obj_array = lua_toboolean(L, -1);
-		if(!strcmp("input_thread_enable", lua_tostring(L, -2)))
-			option->input_thread_enable = lua_toboolean(L, -1);
 	}
 	return 0;
 }
@@ -332,12 +271,158 @@ int parse_lua_close(void)
 	return 0;
 }
 
-/* Read options */
-int parse_lua_simconf_options(void)
+void print_input_parse_opts(struct parser_opt *map)
 {
+	if (!map) {
+		map = total_opt_map;
+	}
+	unsigned int count = 1;
+	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+		printf("%i. %s\n", count++, i->name);
+	}
+}
+
+struct parser_opt *allocate_input_parse_opts(struct parser_opt *map)
+{
+	if (!map)
+		return NULL;
+	
+	size_t map_size = 0;
+	unsigned int count = 0;
+	struct parser_opt *alloc = NULL;
+	for (struct parser_opt *i = map; i->name; i++) {
+		map_size++;
+	}
+	map_size *= sizeof(struct parser_opt);
+	
+	alloc = malloc(map_size);
+	
+	for (struct parser_opt *i = map; i->name; i++) {
+		alloc[count++] = *i;
+	}
+	
+	return alloc;
+}
+
+unsigned int update_input_parse_opts(struct parser_opt *map)
+{
+	if (!map)
+		return 1;
+	
+	unsigned int map_size = 0;
+	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+		map_size++;
+	}
+	
+	unsigned int rem_map_size = 0;
+	for (struct parser_opt *i = map; i->name; i++) {
+		rem_map_size++;
+	}
+	
+	unsigned int updated = 0;
+	for (int i = 0; i < rem_map_size; i++) {
+		for (int j = 0; j < map_size; j++) {
+			if (!strcmp(total_opt_map[j].name, map[i].name)) {
+				total_opt_map[j] = map[i];
+				updated++;
+				break;
+			}
+		}
+	}
+	
+	return updated;
+}
+
+int register_input_parse_opts(struct parser_opt *map)
+{
+	if (!map)
+		return 1;
+	
+	size_t map_size = 0;
+	for (struct parser_opt *i = map; i->name; i++) {
+		map_size++;
+	}
+	
+	map_size *= sizeof(struct parser_opt);
+	
+	unsigned int end_index = 0;
+	size_t old_map_size = 0;
+	if (total_opt_map) {
+		for (struct parser_opt *i = total_opt_map; i->name; i++) {
+			old_map_size++;
+		}
+	}
+	end_index = old_map_size;
+	old_map_size *= sizeof(struct parser_opt);
+	
+	total_opt_map = realloc(total_opt_map, old_map_size+map_size+1);
+	
+	for (struct parser_opt *i = map; i->name; i++) {
+		total_opt_map[end_index++] = *i;
+	}
+	
+	return 0;
+}
+
+int unregister_input_parse_opts(struct parser_opt *map)
+{
+	if (!map)
+		return 1;
+	
+	size_t map_size = 0;
+	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+		map_size++;
+	}
+	
+	size_t rem_map_size = 0;
+	for (struct parser_opt *i = map; i->name; i++) {
+		rem_map_size++;
+	}
+	
+	for (int i = 0; i < rem_map_size; i++) {
+		for (int j = 0; j < map_size; j++) {
+			if (!strcmp(total_opt_map[j].name, map[i].name)) {
+				for (int k = j; k < map_size; k++) {
+					total_opt_map[k] = total_opt_map[k+1];
+				}
+				map_size--;
+				break;
+			}
+		}
+	}
+	map_size++;
+	map_size *= sizeof(struct parser_opt);
+	
+	total_opt_map = realloc(total_opt_map, map_size);
+	
+	return 0;
+}
+
+void free_input_parse_opts()
+{
+	free(total_opt_map);
+}
+
+/* Read options */
+int parse_lua_simconf_options()
+{
+	struct lua_parser_state *parser_state = &(struct lua_parser_state){
+		.i = 1,
+		.nullswitch = 0,
+		.fileset = 0,
+		.read_id = 0,
+		.file = {0},
+		.buffer = {{0}},
+		.object = NULL,
+		.opt_map = total_opt_map,
+	};
+	
 	/* Read settings table */
 	lua_getglobal(L, "settings");
-	conf_traverse_table(L, &conf_lua_parse_opts, NULL);
+	
+	pprint_disable();
+	conf_traverse_table(L, &conf_lua_parse_opts, parser_state);
+	pprint_enable();
 	
 	if ((option->epsno == 0.0) || (option->elcharge == 0.0)) {
 		option->noele = 1;

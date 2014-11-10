@@ -44,15 +44,10 @@ extern struct option_struct {
 	unsigned int rng_seed;
 	double elcharge, gconst, epsno;
 	
-	/* Barnes-Hut algorithm specifics */
-	double bh_ratio;
-	unsigned short bh_tree_limit;
-	unsigned short bh_lifetime;
-	size_t bh_heapsize_max;
-	bool bh_single_assign, bh_random_assign;
-	
 	/* Physics - ctrl */
 	unsigned int dump_xyz, dump_sshot, reset_stats_freq;
 	volatile bool write_sshot_now, quit_main_now;
 	bool stats_bh, stats_null; //--
+	
+	/* For all other physics options we let the algorithms handle it */
 } *option;

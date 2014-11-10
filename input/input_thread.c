@@ -39,7 +39,7 @@ static const char pointyellow[] = "\033[033m"CMD_PROMPT_DOT"\033[0m";
 static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 
 static struct input_cfg *global_cfg = NULL;
-static struct interp_opt *global_cmd_map = NULL;
+static struct parser_opt *global_cmd_map = NULL;
 
 int input_thread_init(void **win, data **object)
 {
@@ -89,37 +89,40 @@ void input_thread_quit(void)
 	return;
 }
 
-void input_print_typed(struct interp_opt *var)
+void input_print_typed(struct parser_opt *var)
 {
 	switch(var->type) {
-		case T_FLOAT:
+		case VAR_FLOAT:
 			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
 			break;
-		case T_DOUBLE:
+		case VAR_DOUBLE:
 			pprintf(PRI_ESSENTIAL, "%s = %lf\n", var->name, *(double *)var->val);
 			break;
-		case T_BOOL:
+		case VAR_LONG_DOUBLE:
+			pprintf(PRI_ESSENTIAL, "%s = %Lf\n", var->name, *(long double *)var->val);
+			break;
+		case VAR_BOOL:
 			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(bool *)var->val);
 			break;
-		case T_UINT:
+		case VAR_UINT:
 			pprintf(PRI_ESSENTIAL, "%s = %u\n", var->name, *(unsigned int *)var->val);
 			break;
-		case T_INT:
+		case VAR_INT:
 			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(int *)var->val);
 			break;
-		case T_USHORT:
+		case VAR_USHORT:
 			pprintf(PRI_ESSENTIAL, "%s = %hu\n", var->name, *(unsigned short *)var->val);
 			break;
-		case T_SHORT:
+		case VAR_SHORT:
 			pprintf(PRI_ESSENTIAL, "%s = %hi\n", var->name, *(short *)var->val);
 			break;
-		case T_LONGINT:
+		case VAR_LONGINT:
 			pprintf(PRI_ESSENTIAL, "%s = %li\n", var->name, *(long *)var->val);
 			break;
-		case T_LONGUINT:
+		case VAR_LONGUINT:
 			pprintf(PRI_ESSENTIAL, "%s = %lu\n", var->name, *(long unsigned *)var->val);
 			break;
-		case T_STRING:
+		case VAR_STRING:
 			pprintf(PRI_ESSENTIAL, "%s = %s\n", var->name, *(char **)var->val);
 			break;
 		default:
@@ -127,65 +130,85 @@ void input_print_typed(struct interp_opt *var)
 	}
 }
 
-void input_set_typed(struct interp_opt *var, char *val)
+void input_set_typed(struct parser_opt *var, const char *val)
 {
+	if(!val)
+		return;
 	switch(var->type) {
-		case T_FLOAT:
+		case VAR_BOOL:
+			if (!strcmp("true", val))
+				*(bool *)var->val = true;
+			else if (!strcmp("false", val))
+				*(bool *)var->val = false;
+			else
+				*(bool *)var->val = (bool)strtol(val, NULL, 10);
+			pprint("%s = %i\n", var->name, *(bool *)var->val);
+			break;
+		case VAR_FLOAT:
 			*(float *)var->val = strtof(val, NULL);
-			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
+			pprint("%s = %f\n", var->name, *(float *)var->val);
 			break;
-		case T_DOUBLE:
+		case VAR_DOUBLE:
 			*(double *)var->val = strtod(val, NULL);
-			pprintf(PRI_ESSENTIAL, "%s = %lf\n", var->name, *(double *)var->val);
+			pprint("%s = %lf\n", var->name, *(double *)var->val);
 			break;
-		case T_BOOL:
-			*(bool *)var->val = (bool)strtol(val, NULL, 10);
-			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(bool *)var->val);
+		case VAR_LONG_DOUBLE:
+			*(long double *)var->val = strtold(val, NULL);
+			pprint("%s = %Lf\n", var->name, *(long double *)var->val);
 			break;
-		case T_UINT:
-			*(unsigned int *)var->val = (unsigned int)strtol(val, NULL, 10);
-			pprintf(PRI_ESSENTIAL, "%s = %u\n", var->name, *(unsigned int *)var->val);
+		case VAR_SHORT:
+			*(short *)var->val = strtol(val, NULL, 10);
+			pprint("%s = %hi\n", var->name, *(short *)var->val);
 			break;
-		case T_INT:
-			*(int *)var->val = (int)strtol(val, NULL, 10);
-			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(int *)var->val);
+		case VAR_INT:
+			*(int *)var->val = strtol(val, NULL, 10);
+			pprint("%s = %i\n", var->name, *(int *)var->val);
 			break;
-		case T_USHORT:
-			*(unsigned short *)var->val = (unsigned short)strtol(val, NULL, 10);
-			pprintf(PRI_ESSENTIAL, "%s = %hu\n", var->name, *(unsigned short *)var->val);
+		case VAR_LONGINT:
+			*(long *)var->val = strtol(val, NULL, 10);
+			pprint("%s = %li\n", var->name, *(long *)var->val);
 			break;
-		case T_SHORT:
-			*(short *)var->val = (short)strtol(val, NULL, 10);
-			pprintf(PRI_ESSENTIAL, "%s = %hi\n", var->name, *(short *)var->val);
+		case VAR_USHORT:
+			*(unsigned short *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %hu\n", var->name, *(unsigned short *)var->val);
 			break;
-		case T_LONGINT:
-			*(long *)var->val = (long)strtol(val, NULL, 10);
-			pprintf(PRI_ESSENTIAL, "%s = %li\n", var->name, *(long *)var->val);
+		case VAR_UINT:
+			*(unsigned *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %u\n", var->name, *(unsigned int *)var->val);
 			break;
-		case T_LONGUINT:
-			*(long unsigned *)var->val = (long unsigned)strtol(val, NULL, 10);
-			pprintf(PRI_ESSENTIAL, "%s = %lu\n", var->name, *(long unsigned *)var->val);
+		case VAR_LONGUINT:
+			*(long unsigned *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %lu\n", var->name, *(long unsigned *)var->val);
 			break;
-		case T_STRING:
+		case VAR_SIZE_T:
+			*(size_t *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %lu\n", var->name, *(size_t *)var->val);
+			break;
+		case VAR_STRING:
+			if(!var->val)
+				break;
 			free(*(char **)var->val);
 			*(char **)var->val = strdup(val);
-			pprintf(PRI_ESSENTIAL, "%s = %s\n", var->name, *(char **)var->val);
+			pprint("%s = %s\n", var->name, *(char **)var->val);
 			break;
 		default:
 			break;
 	}
 }
 
-void input_cmd_printall(struct interp_opt *cmd_map)
+void input_cmd_printall(struct parser_opt *cmd_map)
 {
-	pprintf(PRI_ESSENTIAL, "Implemented commands(current value):\n");
-	for (struct interp_opt *i = cmd_map; i->name; i++) {
-		if (i->cmd == T_CMD) {
+	pprintf(PRI_ESSENTIAL, "Implemented variables:\n");
+	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+		input_print_typed(i);
+	}
+	
+	pprintf(PRI_ESSENTIAL, "Implemented commands:\n");
+	for (struct parser_opt *i = cmd_map; i->name; i++) {
+		if (i->cmd_or_lua_type == VAR_CMD) {
 			pprintf(PRI_ESSENTIAL, "%s\n", i->name);
-		} else if (i->cmd == T_VAR) {
-			input_print_typed(i);
 		} else {
-			pprintf(PRI_ESSENTIAL, "Unrecognized type: %s\n", i->name);
+			input_print_typed(i);
 		}
 	}
 }
@@ -198,7 +221,7 @@ int input_call_system(const char *cmd)
 	return ret;
 }
 
-int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_map)
+int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_map)
 {
 	int num_tok = 0, retval = CMD_ALL_FINE;
 	bool match = 0;
@@ -229,12 +252,22 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 		goto cleanall;
 	}
 	
-	for (struct interp_opt *i = cmd_map; i->name; i++) {
+	for (struct parser_opt *i = total_opt_map; i->name; i++) {
 		if (!strcmp(i->name, token[0])) {
 			match = 1;
-			if (i->cmd == T_CMD) {
+			if (num_tok < 2)
+				input_print_typed(i);
+			else
+				input_set_typed(i, token[1]);
+		}
+	}
+	
+	for (struct parser_opt *i = cmd_map; i->name; i++) {
+		if (!strcmp(i->name, token[0])) {
+			match = 1;
+			if (i->cmd_or_lua_type == VAR_CMD) {
 				switch(i->type) {
-					case T_CHECK_COLLISIONS:
+					case VAR_CHECK_COLLISIONS:
 						pprint_warn("Checking for collisions...\n");
 						unsigned int coll = phys_check_collisions(*t->obj, 1, option->obj+1);
 						if (coll) {
@@ -245,44 +278,44 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 							pprint_ok("No object share coordinates\n");
 						}
 						break;
-					case T_HELP:
+					case VAR_HELP:
 						input_cmd_printall(cmd_map);
 						break;
-					case T_STOP:
+					case VAR_STOP:
 						phys_ctrl(PHYS_SHUTDOWN, NULL);
 						break;
-					case T_LIST:
+					case VAR_LIST:
 						phys_list_algo();
 						break;
-					case T_START:
+					case VAR_START:
 						phys_ctrl(PHYS_START, t->obj);
 						break;
-					case T_SAVE:
+					case VAR_SAVE:
 						out_write_array(*t->obj, "array_%0.2Lf.bin", halt_objects);
 						break;
-					case T_LOAD:
+					case VAR_LOAD:
 						if (num_tok < 2) {
 							printf("Usage: \"load <filename>\"\n");
 						} else {
 							in_write_array(t->obj, token[1]);
 						}
 						break;
-					case T_PAUSE:
+					case VAR_PAUSE:
 						phys_ctrl(PHYS_PAUSESTART, NULL);
 						break;
-					case T_QUIT:
+					case VAR_QUIT:
 						retval = CMD_EXIT;
 						break;
-					case T_STATS:
+					case VAR_STATS:
 						raise(SIGUSR1);
 						break;
-					case T_STATUS:
+					case VAR_STATUS:
 						raise(SIGUSR1);
 						break;
-					case T_CLEAR:
+					case VAR_CLEAR:
 						for (int c = 0; c < CMD_CLEAR_REPS; c++) pprintf(PRI_ESSENTIAL, "\n");
 						break;
-					case T_LUA_READOPTS:
+					case VAR_LUA_READOPTS:
 						if (num_tok < 2) {
 							parse_lua_simconf_options();
 						} else {
@@ -294,12 +327,12 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 							parse_lua_simconf_options();
 						}
 						break;
-					case T_ENABLE_WINDOW:
+					case VAR_ENABLE_WINDOW:
 						if (*t->win) break;
 						*t->win = *graph_thread_init(*t->obj);
 						option->novid = false;
 						break;
-					case T_DISABLE_WINDOW:
+					case VAR_DISABLE_WINDOW:
 						if (!*t->win) break;
 						graph_thread_quit();
 						*t->win = NULL;
@@ -308,11 +341,6 @@ int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_m
 					default:
 						break;
 				}
-			} else {
-				if (num_tok < 2)
-					input_print_typed(i);
-				else
-					input_set_typed(i, token[1]);
 			}
 			break;
 		}
@@ -342,6 +370,11 @@ char *input_cmd_generator(const char *line, int state)
 			return strdup(name);
 		}
 	}
+	while ((name = (char *)total_opt_map[list_index++].name)) {
+		if (!strncmp(name, line, len)) {
+			return strdup(name);
+		}
+	}
 	return NULL;
 }
 
@@ -363,38 +396,25 @@ void *input_thread(void *thread_setts)
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	/* Should remain on stack until thread exits */
-	struct interp_opt cmd_map[] = {
-		{"dt", &option->dt, T_DOUBLE, T_VAR},
-		{"threads", &option->threads, T_USHORT, T_VAR},
-		{"bh_ratio", &option->bh_ratio, T_FLOAT, T_VAR},
-		{"bh_tree_limit", &option->bh_tree_limit, T_USHORT, T_VAR},
-		{"bh_lifetime", &option->bh_lifetime, T_USHORT, T_VAR},
-		{"bh_heapsize_max", &option->bh_heapsize_max, T_LONGUINT, T_VAR},
-		{"bh_single_assign", &option->bh_single_assign, T_BOOL, T_VAR},
-		{"bh_random_assign", &option->bh_random_assign, T_BOOL, T_VAR},
-		{"algorithm", &option->algorithm, T_STRING, T_VAR},
-		{"filename", &option->filename, T_STRING, T_VAR},
-		{"def_radius", &option->def_radius, T_FLOAT, T_VAR},
-		{"exec_funct_freq", &option->exec_funct_freq, T_UINT, T_VAR},
-		{"rng_seed", &option->rng_seed, T_UINT, T_VAR},
-		{"phys_check_collisions", NULL, T_CHECK_COLLISIONS, T_CMD},
-		{"save", NULL, T_SAVE, T_CMD},
-		{"load", NULL, T_LOAD, T_CMD},
-		{"list", NULL, T_LIST, T_CMD},
-		{"quit", NULL, T_QUIT, T_CMD},
-		{"exit", NULL, T_QUIT, T_CMD},
-		{"start", NULL, T_START, T_CMD},
-		{"stop", NULL, T_STOP, T_CMD},
-		{"help", NULL, T_HELP, T_CMD},
-		{"status", NULL, T_STATUS, T_CMD},
-		{"stats", NULL, T_STATS, T_CMD},
-		{"clear", NULL, T_CLEAR, T_CMD},
-		{"pause", NULL, T_PAUSE, T_CMD},
-		{"unpause", NULL, T_PAUSE, T_CMD},
-		{"win_create", NULL, T_ENABLE_WINDOW, T_CMD},
-		{"win_destroy", NULL, T_DISABLE_WINDOW, T_CMD},
-		{"lua_readopts", NULL, T_LUA_READOPTS, T_CMD},
-		{"#command (runs a system command)", NULL, T_CMD_SYS, T_CMD},
+	struct parser_opt cmd_map[] = {
+		{"phys_check_collisions", NULL, VAR_CHECK_COLLISIONS, VAR_CMD},
+		{"save", NULL, VAR_SAVE, VAR_CMD},
+		{"load", NULL, VAR_LOAD, VAR_CMD},
+		{"list", NULL, VAR_LIST, VAR_CMD},
+		{"quit", NULL, VAR_QUIT, VAR_CMD},
+		{"exit", NULL, VAR_QUIT, VAR_CMD},
+		{"start", NULL, VAR_START, VAR_CMD},
+		{"stop", NULL, VAR_STOP, VAR_CMD},
+		{"help", NULL, VAR_HELP, VAR_CMD},
+		{"status", NULL, VAR_STATUS, VAR_CMD},
+		{"stats", NULL, VAR_STATS, VAR_CMD},
+		{"clear", NULL, VAR_CLEAR, VAR_CMD},
+		{"pause", NULL, VAR_PAUSE, VAR_CMD},
+		{"unpause", NULL, VAR_PAUSE, VAR_CMD},
+		{"win_create", NULL, VAR_ENABLE_WINDOW, VAR_CMD},
+		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
+		{"lua_readopts", NULL, VAR_LUA_READOPTS, VAR_CMD},
+		{"#command (runs a system command)", NULL, VAR_CMD_SYS, VAR_CMD},
 		{0}
 	};
 	global_cmd_map = cmd_map;

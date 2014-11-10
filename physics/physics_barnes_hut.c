@@ -24,6 +24,7 @@
 #include <limits.h>
 #include "main/options.h"
 #include "main/msg_phys.h"
+#include "input/parser.h"
 #include "physics.h"
 #include "physics_barnes_hut.h"
 
@@ -35,6 +36,14 @@ static _Thread_local unsigned int allocated_cells = 0;
 
 /* Maximum octrees, calculated from option->bh_heapsize_max */
 static unsigned int bh_octrees_max = 0;
+
+/* Algorithm specific options */
+static double bh_ratio = 0.1;
+static unsigned short bh_tree_limit = 8;
+static unsigned short bh_lifetime = 24;
+static size_t bh_heapsize_max = 336870912;
+static bool bh_single_assign = true;
+static bool bh_random_assign = true;
 
 /* Used in qsort to assign threads in octrees */
 static int thread_cmp_assigned(const void *a, const void *b)
@@ -78,7 +87,7 @@ static void bh_add_thread(bh_thread *root,
 		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
 		
 		for (int l = 0; l < thread_conts; l++) {
-			if(option->bh_random_assign) {
+			if(bh_random_assign) {
 				/* Map threads to random subtrees */
 				while (1) {
 					oct = (short unsigned int)(8*((float)rand()/RAND_MAX));
@@ -109,7 +118,7 @@ static void bh_assign_thread(bh_thread *root,
 {
 	if (!thread || !root) {
 		return;
-	} else if (++root->assigned < option->bh_tree_limit + 1) {
+	} else if (++root->assigned < bh_tree_limit + 1) {
 		bh_add_thread(root, octree, thread);
 	} else {
 		/* Create backup to prevent qsort from scrambling them.
@@ -159,11 +168,7 @@ void *bhut_preinit(struct glob_thread_config *cfg)
 {
 	/* Attempt to balance out the load every 100 cycles */
 	cfg->thread_sched_fn_freq = 100;
-	return NULL;
-}
-
-void **bhut_init(struct glob_thread_config *cfg)
-{
+	
 #ifdef __linux__
 	/* Use this size for glibc's fastbins. In theory any memory below this size
 	 * will not be consolidated together, allowing us to allocate and free
@@ -171,6 +176,25 @@ void **bhut_init(struct glob_thread_config *cfg)
 	mallopt(M_MXFAST, sizeof(bh_octree));
 #endif
 	
+	/* Call parser and read options */
+	struct parser_opt bh_opt_map[] = {
+		{"bh_single_assign", &bh_single_assign, VAR_BOOL, LUA_TBOOLEAN},
+		{"bh_random_assign", &bh_random_assign, VAR_BOOL, LUA_TBOOLEAN},
+		{"bh_ratio", &bh_ratio, VAR_DOUBLE, LUA_TNUMBER},
+		{"bh_lifetime", &bh_lifetime, VAR_USHORT, LUA_TNUMBER},
+		{"bh_heapsize_max", &bh_heapsize_max, VAR_SIZE_T, LUA_TNUMBER},
+		{"bh_tree_limit", &bh_tree_limit, VAR_USHORT, LUA_TNUMBER},
+		{0},
+	};
+	
+	/* We manage the free()ing of the opts, no worries mate */
+	cfg->algo_opt_map = allocate_input_parse_opts(bh_opt_map);
+	
+	return NULL;
+}
+
+void **bhut_init(struct glob_thread_config *cfg)
+{
 	struct thread_config_bhut **thread_config = calloc(option->threads+1,
 											sizeof(struct thread_config_bhut*));
 	for (int k = 0; k < option->threads + 1; k++) {
@@ -178,23 +202,23 @@ void **bhut_init(struct glob_thread_config *cfg)
 	}
 	
 	/* Check if options are within their limits */
-	if (option->bh_tree_limit  < 2 || option->bh_tree_limit > 8) {
+	if (bh_tree_limit  < 2 || bh_tree_limit > 8) {
 		pprintf(PRI_ERR, "[BH] Option bh_tree_limit must be within [2,8]!");
 		exit(1);
 	}
-	if (option->bh_ratio > 1.0 || option->bh_ratio < 0.0) {
+	if (bh_ratio > 1.0 || bh_ratio < 0.0) {
 		pprint_warn("Option bh_ratio does not belong to [0, 1]. Fixing to ");
-		if (option->bh_ratio > 1.0) {
+		if (bh_ratio > 1.0) {
 			pprint("1.0.\n");
-			option->bh_ratio = 1.0;
+			bh_ratio = 1.0;
 		} else {
 			pprint("0.0.\n");
-			option->bh_ratio = 0.0;
+			bh_ratio = 0.0;
 		}
 	}
 	
 	/* Calculate maximum octrees */
-	bh_octrees_max = (option->bh_heapsize_max/sizeof(bh_octree))+1;
+	bh_octrees_max = (bh_heapsize_max/sizeof(bh_octree))+1;
 	
 	/* Init root mutex */
 	pthread_mutex_t *root_lock = calloc(1, sizeof(pthread_mutex_t));
@@ -240,7 +264,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 	}
 	
 	/* When operating on 1 thread */
-	if (option->threads == 1 && option->bh_single_assign) {
+	if (option->threads == 1 && bh_single_assign) {
 		for (short h=0; h < 8; h++) {
 			thread_config[1]->octrees[h] = NULL;
 		}
@@ -263,6 +287,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 void bhut_quit(void **threads) {
 	struct thread_config_bhut **t = (struct thread_config_bhut **)threads;
 	
+	/* Stats */
 	option->stats_bh = false;
 	
 	/* Root mutex */
@@ -436,17 +461,17 @@ inline short bh_get_octant(vec3 *pos, bh_octree *octree)
 static void bh_init_cell(bh_octree *octree, short k)
 {
 	if (allocated_cells > bh_octrees_max) {
-		pprint_err("Reached maximum octree heapsize of %lu bytes!\n\
-				Possible errors: two objects sharing the same location,\
-				check by calling phys_check_collisions!\n",
-				option->bh_heapsize_max);
+		pprint_err("Reached maximum octree heapsize of %lu bytes!\n"
+				"Possible errors: two objects sharing the same location,"
+				"check by calling phys_check_collisions!\n",
+				bh_heapsize_max);
 		raise(9);
 	}
 	if (!octree->cells[k]) {
 		octree->cells[k] = calloc(1, sizeof(bh_octree));
 		octree->cells[k]->depth = octree->depth+1;
 		octree->cells[k]->leaf = 1;
-		octree->cells[k]->score = option->bh_lifetime;
+		octree->cells[k]->score = bh_lifetime;
 		allocated_cells++;
 	}
 	/* Scoring system: object is in therefore increase score */
@@ -562,7 +587,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 			return;
 		object->acc += -vecnorm*\
 		(option->gconst*octree->data->mass)/(dist*dist);
-	} else if ((octree->halfdim/dist) < option->bh_ratio) {
+	} else if ((octree->halfdim/dist) < bh_ratio) {
 		object->acc += -vecnorm*\
 		(option->gconst*octree->cellsum.mass)/(dist*dist);
 	} else {

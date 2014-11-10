@@ -37,11 +37,11 @@ void pprint_enable(void);
 void pprint_disable(void);
 void pprintf(int priority, const char *format, ...);
 
-#define pprint_ok(...) pprintf(PRI_OK, __VA_ARGS__)
-#define pprint_warn(...) pprintf(PRI_WARN, __VA_ARGS__)
-#define pprint_err(...) pprintf(PRI_ERR, __VA_ARGS__)
-#define pprint(...) pprintf(PRI_ESSENTIAL, __VA_ARGS__)
-#define pprint_verb(...) pprintf(PRI_MEDIUM, __VA_ARGS__)
-#define pprint_deb(...) pprintf(PRI_SPAM, __VA_ARGS__)
+#define pprint_ok(...)     pprintf(PRI_OK, __VA_ARGS__)
+#define pprint_warn(...)   pprintf(PRI_WARN, __VA_ARGS__)
+#define pprint_err(...)    pprintf(PRI_ERR, __VA_ARGS__)
+#define pprint(...)        pprintf(PRI_ESSENTIAL, __VA_ARGS__)
+#define pprint_verb(...)   pprintf(PRI_LOWMED, __VA_ARGS__)
+#define pprint_deb(...)    pprintf(PRI_VERYLOW, __VA_ARGS__)
 
 #endif

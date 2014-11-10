@@ -21,7 +21,7 @@
 #define PHYS_NBODY {                                                           \
 		.name = "n-body",                                                      \
 		.version = PACKAGE_VERSION,                                            \
-		.desc = "Standard n-body simulation, velocity verlet algorithm",       \
+		.desc = "Standard n-body simulation, velocity verlet integration",     \
 		.author = "Rostislav Pehlivanov",                                      \
 		.thread_preconfiguration = NULL,                                       \
 		.thread_configuration = nbody_init,                                    \

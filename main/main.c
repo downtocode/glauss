@@ -36,7 +36,7 @@
 #include "input/parser.h"
 #include "msg_phys.h"
 
-#define WATCHDOG_OFFSET_SEC 10
+#define WATCHDOG_OFFSET_SEC 20
 
 static const char ARGSTRING[] =
 // Generated from helpstring.txt
@@ -74,12 +74,6 @@ int main(int argc, char *argv[])
 			.noele = 1, .nogrv = 1,
 			.algorithm = strdup("none"),
 			
-			/* Physics: Barnes-Hut */
-			.bh_ratio = 0.5, .bh_lifetime = 24,
-			.bh_tree_limit = 8,
-			.bh_heapsize_max = 336870912,
-			.bh_single_assign = true, .bh_random_assign = true,
-			
 			/* Physics - ctrl */
 			.dump_xyz = 0,
 			.xyz_temp = strdup("system_%0.2Lf.xyz"),
@@ -88,6 +82,37 @@ int main(int argc, char *argv[])
 			.reset_stats_freq = 1,
 		};
 	/*	Default settings.	*/
+	
+	/*	Register parser options */
+		struct parser_opt opts_map[] = {
+			{"threads", &option->threads, VAR_USHORT, LUA_TNUMBER},
+			{"dt", &option->dt, VAR_DOUBLE, LUA_TNUMBER},
+			{"rng_seed", &option->dt, VAR_UINT, LUA_TNUMBER},
+			{"width", &option->width, VAR_INT, LUA_TNUMBER},
+			{"height", &option->height, VAR_INT, LUA_TNUMBER},
+			{"elcharge", &option->elcharge, VAR_LONG_DOUBLE, LUA_TNUMBER},
+			{"epsno", &option->epsno, VAR_LONG_DOUBLE, LUA_TNUMBER},
+			{"elcharge", &option->elcharge, VAR_LONG_DOUBLE, LUA_TNUMBER},
+			{"gconst", &option->gconst, VAR_LONG_DOUBLE, LUA_TNUMBER},
+			{"verbosity", &option->verbosity, VAR_USHORT, LUA_TNUMBER},
+			{"fontsize", &option->fontsize, VAR_INT, LUA_TNUMBER},
+			{"dump_xyz", &option->dump_xyz, VAR_UINT, LUA_TNUMBER},
+			{"dump_sshot", &option->dump_sshot, VAR_UINT, LUA_TNUMBER},
+			{"exec_funct_freq", &option->exec_funct_freq, VAR_UINT, LUA_TNUMBER},
+			{"skip_model_vec", &option->skip_model_vec, VAR_UINT, LUA_TNUMBER},
+			{"reset_stats_freq", &option->reset_stats_freq, VAR_UINT, LUA_TNUMBER},
+			{"algorithm", &option->algorithm, VAR_STRING, LUA_TSTRING},
+			{"spawn_funct", &option->spawn_funct, VAR_STRING, LUA_TSTRING},
+			{"timestep_funct", &option->timestep_funct, VAR_STRING, LUA_TSTRING},
+			{"file_template", &option->xyz_temp, VAR_STRING, LUA_TSTRING},
+			{"screenshot_template", &option->sshot_temp, VAR_STRING, LUA_TSTRING},
+			{"fontname", &option->fontname, VAR_STRING, LUA_TSTRING},
+			{"lua_expose_obj_array", &option->lua_expose_obj_array, VAR_BOOL, LUA_TBOOLEAN},
+			{"input_thread_enable", &option->input_thread_enable, VAR_BOOL, LUA_TBOOLEAN},
+			{0},
+		};
+		register_input_parse_opts(opts_map);
+	/*	Register parser options */
 	
 	/*	Main function vars	*/
 		unsigned long long int t1 = phys_gettime_us(), t2 = 0;

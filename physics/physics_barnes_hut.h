@@ -21,7 +21,7 @@
 #define PHYS_BARNES_HUT {                                                      \
 		.name = "barnes-hut",                                                  \
 		.version = PACKAGE_VERSION,                                            \
-		.desc = "Barnes-Hut simulation, velocity verlet algorithm",            \
+		.desc = "Barnes-Hut simulation, velocity verlet integration",          \
 		.author = "Rostislav Pehlivanov",                                      \
 		.thread_preconfiguration = bhut_preinit,                               \
 		.thread_configuration = bhut_init,                                     \

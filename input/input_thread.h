@@ -20,44 +20,13 @@
 
 #include <pthread.h>
 #include "graph/graph_sdl.h"
+#include "input/parser.h"
 
 #define CMD_CLEAR_REPS 20
 #define CMD_MAX_TOKENS 20
 #define CMD_PROMPT_BASE "phys"
 #define CMD_PROMPT_DOT "•"
 #define CMD_PROMPT_SPACE " "
-
-enum codepaths {
-	T_VAR,
-	T_FLOAT,
-	T_DOUBLE,
-	T_INT,
-	T_UINT,
-	T_BOOL,
-	T_USHORT,
-	T_SHORT,
-	T_STRING, /* WARNING: WILL FREE(), ONLY USE STRDUP'D STRINGS! */
-	T_LONGINT,
-	T_LONGUINT,
-	/* Never mix enums, commands go here */
-	T_CMD,
-	T_QUIT,
-	T_LIST,
-	T_START,
-	T_STOP,
-	T_HELP,
-	T_STATUS,
-	T_STATS,
-	T_CLEAR,
-	T_PAUSE,
-	T_SAVE,
-	T_LOAD,
-	T_ENABLE_WINDOW,
-	T_DISABLE_WINDOW,
-	T_LUA_READOPTS,
-	T_CHECK_COLLISIONS,
-	T_CMD_SYS,
-};
 
 enum intercommunication {
 	CMD_SYS_RET_ERR,
@@ -66,14 +35,6 @@ enum intercommunication {
 	CMD_NOT_FOUND,
 	CMD_INVALID_ASSIGN,
 	CMD_TOO_MANY_TOKENS,
-};
-
-/* string as a name, void* to a value, type and T_CMD/T_VAR as cmd */
-struct interp_opt {
-	const char *name;
-	void *val;
-	int type;
-	int cmd;
 };
 
 /* Sent to input thread */
@@ -87,8 +48,10 @@ struct input_cfg {
 
 int input_thread_init(void **win, data **object);
 void input_thread_quit(void);
+void input_print_typed(struct parser_opt *var);
+void input_set_typed(struct parser_opt *var, const char *val);
 int input_call_system(const char *cmd);
-int input_token_setall(char *line, struct input_cfg *t, struct interp_opt *cmd_map);
+int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_map);
 void *input_thread(void *thread_setts);
 
 #endif

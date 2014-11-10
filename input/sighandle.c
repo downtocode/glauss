@@ -26,38 +26,6 @@
 #include "graph/graph_thread.h"
 #include "input_thread.h"
 
-#define FREE_QUEUE_MAX 20
-static void *to_be_freed[FREE_QUEUE_MAX] = {NULL};
-
-int add_to_free_queue(void *p)
-{
-	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
-		if(!to_be_freed[i]) {
-			to_be_freed[i] = p;
-			return 0;
-		}
-	}
-	return 1;
-}
-
-int remove_from_free_queue(void *p)
-{
-	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
-		if(to_be_freed[i] == p) {
-			to_be_freed[i] = NULL;
-			return 0;
-		}
-	}
-	return 1;
-}
-
-void free_all_queue(void)
-{
-	for(int i = 0; i < FREE_QUEUE_MAX; i++) {
-		free(to_be_freed[i]);
-	}
-}
-
 /* Report stats on command line */
 void on_usr1_signal(int signo)
 {
@@ -110,6 +78,7 @@ void on_quit_signal(int signo)
 	/* Lua */
 	pprintf(PRI_ESSENTIAL, "Lua: ");
 	parse_lua_close();
+	free_input_parse_opts();
 	pprintf(PRI_OK, "");
 	
 	/* Logfile */

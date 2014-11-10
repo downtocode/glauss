@@ -94,8 +94,10 @@ struct glob_thread_config {
 	pthread_barrier_t *ctrl;
 	pthread_mutex_t *io_halt;
 	struct global_statistics *stats;
+	struct parser_opt *algo_opt_map;
 	data *obj;
 	void **threads_conf; /* Received from thread_config, sent to thread_quit && thread_sched_fn f-ns */
+	void *returned_from_preinit;
 	bool *quit, *pause;
 	void (*thread_sched_fn)(void **);
 	unsigned int total_syncd_threads, thread_sched_fn_freq;

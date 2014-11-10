@@ -27,6 +27,7 @@
 #include "physics_aux.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
+#include "input/parser.h"
 #include "input/sighandle.h"
 #include "physics_ctrl.h"
 #include "physics_null.h"
@@ -58,6 +59,10 @@ static struct sched_param parameters;
 /* Thread statistics and primary struct */
 struct global_statistics *phys_stats;
 struct glob_thread_config *cfg;
+
+/* Previous algorithm */
+static struct list_algorithms *prev_algorithm = NULL;
+static struct parser_opt *prev_algo_opts = NULL;
 
 /* Populate structure with names and function pointers */
 phys_algorithm phys_algorithms[] = {
@@ -213,9 +218,25 @@ int phys_ctrl(int status, data** object)
 			cfg->obj = *object;
 			cfg->total_syncd_threads = option->threads+1;
 			cfg->thread_sched_fn = algo->thread_sched_fn;
+			
+			/* Algorithm should give us a structure of options */
 			if (algo->thread_preconfiguration) {
-				algo->thread_preconfiguration(cfg);
+				cfg->returned_from_preinit = algo->thread_preconfiguration(cfg);
 			}
+			
+			if (prev_algorithm != algo) {
+				if (prev_algorithm) {
+					unregister_input_parse_opts(prev_algo_opts);
+					free(prev_algo_opts);
+				}
+				register_input_parse_opts(cfg->algo_opt_map);
+				/* Read any options set by algorithm */
+				parse_lua_simconf_options();
+			} else {
+				/* Will just update the pointers */
+				update_input_parse_opts(cfg->algo_opt_map);
+			}
+			
 			cfg = ctrl_init(cfg);
 			halt_objects = cfg->io_halt;
 			cfg->threads_conf = algo->thread_configuration(cfg);
@@ -248,6 +269,9 @@ int phys_ctrl(int status, data** object)
 			*cfg->pause = false;
 			pprintf(PRI_OK, "\n");
 			/* Start threads */
+			
+			prev_algo_opts = cfg->algo_opt_map;
+			prev_algorithm = (struct list_algorithms *)algo;
 			
 			retval = PHYS_STATUS_RUNNING;
 			
