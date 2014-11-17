@@ -139,11 +139,11 @@ void graph_sdl_swapwin(graph_window *win)
 void graph_sdl_deinit(graph_window *win) {
 	if (!win)
 		return;
-	graph_quit();
 	SDL_GL_DeleteContext(win->context);
 	SDL_DestroyWindow(win->window);
 	free(win->event);
 	free(win);
+	graph_quit();
 	SDL_Quit();
 	sdl_initd = 0;
 }

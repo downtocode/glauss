@@ -34,25 +34,30 @@
 		.version = PACKAGE_VERSION,                                            \
 		.desc = "Outputs statistics(n-body), slow",                            \
 		.author = "Rostislav Pehlivanov",                                      \
-		.thread_preconfiguration = NULL,                                       \
+		.thread_preconfiguration = stats_preinit,                              \
 		.thread_configuration = null_init,                                     \
 		.thread_location = thread_stats,                                       \
 		.thread_destruction = null_quit,                                       \
 	}
 
+struct null_statistics {
+	double null_avg_dist, null_max_dist;
+};
+
 struct thread_config_null {
 	data *obj;
-	struct global_statistics *glob_stats;
-	struct thread_statistics *stats;
+	struct null_statistics *glob_stats;
+	struct null_statistics *stats;
 	unsigned int id, objs_low, objs_high;
 	pthread_barrier_t *ctrl;
 	pthread_mutex_t *mute;
-	bool *quit;
+	volatile bool *quit;
 };
 
 void *null_preinit(struct glob_thread_config *cfg);
+void *stats_preinit(struct glob_thread_config *cfg);
 void **null_init(struct glob_thread_config *cfg);
-void null_quit(void **threads);
+void null_quit(struct glob_thread_config *cfg);
 void *thread_stats(void *thread_setts);
 void *thread_null(void *thread_setts);
 

@@ -26,6 +26,7 @@
 #include "graph_fonts.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
+#include "input/parser.h"
 
 /* UI POSITIONS */
 
@@ -59,10 +60,10 @@
 #define SIMy -0.95
 #define SIMs  1.0
 
-/* Octree status */
-#define OCTx -0.95
-#define OCTy -0.64
-#define OCTs  0.75
+/* Algorithm stats */
+#define STATSx -0.95
+#define STATSy -0.41
+#define STATSs  0.75
 
 /* Object selection */
 #define OSLx  0.70
@@ -279,7 +280,7 @@ void graph_draw_scene(graph_window *win)
 		graph_display_text(osdtext, DTx, DTy, DTs, COL_WHITE);
 		
 		/* Time constant */
-		snprintf(osdtext, OSD_BUFFER, "dt = %f", option->dt);
+		snprintf(osdtext, OSD_BUFFER, "dt = %lf", option->dt);
 		graph_display_text(osdtext, TIMEx, TIMEy, TIMEs, COL_WHITE);
 		
 		/* Algorithm display */
@@ -294,20 +295,26 @@ void graph_draw_scene(graph_window *win)
 		if (win->chosen)
 			graph_display_object_info(win->object, win->chosen);
 		
-		if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
+		int status = phys_ctrl(PHYS_STATUS, NULL);
+		if (status == PHYS_STATUS_RUNNING || status == PHYS_STATUS_PAUSED) {
 			/* Only displayed if running */
 			
-			if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_PAUSED) {
+			if (status == PHYS_STATUS_PAUSED) {
 				graph_display_text("Simulation paused", SIMx, SIMy, SIMs, COL_YELLOW);
 			}
 			
 			/* Thread time stats */
 			for (short i = 1; i < option->threads + 1; i++) {
-				clock_gettime(phys_stats->t_stats[i].clockid, &ts);
+				if (phys_stats->t_stats) {
+					clock_gettime(phys_stats->t_stats[i].clockid, &ts);
+				} else {
+					ts = (struct timespec){0};
+				}
 				snprintf(osdtext, OSD_BUFFER,
 						 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
 			}
+			
 		} else {
 			/* Only displayed if not running */
 			
@@ -315,33 +322,19 @@ void graph_draw_scene(graph_window *win)
 			graph_display_text("Simulation stopped", SIMx, SIMy, SIMs, COL_RED);
 		}
 		
-		/* BH tree stats */
-		if (option->stats_bh) {
-			graph_display_text("Octree stats:", OCTx, OCTy, OCTs, COL_WHITE);
-			graph_display_text("Thread", OCTx, OCTy-.05, OCTs, COL_WHITE);
-			graph_display_text("Total", OCTx+.12, OCTy-.05, OCTs, COL_ORANGE);
-			graph_display_text("+", OCTx+.25, OCTy-.05, OCTs, COL_GREEN);
-			graph_display_text("-", OCTx+.37, OCTy-.05, OCTs, COL_RED);
-			graph_display_text("Size(MiB)", OCTx+.49, OCTy-.05, OCTs, COL_YELLOW);
-			
-			for (short i = 1; i < option->threads + 1; i++) {
-				snprintf(osdtext, OSD_BUFFER, "%i", i);
-				graph_display_text(osdtext, OCTx, OCTy-((float)i/18)-.05, OCTs, COL_WHITE);
-				
-				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i].bh_total_alloc);
-				graph_display_text(osdtext, OCTx+.12, OCTy-((float)i/18)-.05, OCTs, COL_ORANGE);
-				
-				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i].bh_new_alloc);
-				graph_display_text(osdtext, OCTx+.25, OCTy-((float)i/18)-.05, OCTs, COL_GREEN);
-				
-				snprintf(osdtext, OSD_BUFFER, "%i", phys_stats->t_stats[i].bh_new_cleaned);
-				graph_display_text(osdtext, OCTx+.37, OCTy-((float)i/18)-.05, OCTs, COL_RED);
-				
-				snprintf(osdtext, OSD_BUFFER, "%0.3lf",
-						phys_stats->t_stats[i].bh_heapsize/1048576.0);
-				graph_display_text(osdtext, OCTx+.49, OCTy-((float)i/18)-.05, OCTs, COL_YELLOW);
-			}
+		/* Algorithm stats */
+		graph_display_text("Algorithm stats:", STATSx, STATSy, STATSs, COL_WHITE);
+		graph_display_text("Name", STATSx, STATSy-.05, STATSs, COL_ORANGE);
+		graph_display_text("Value", STATSx+.25, STATSy-.05, STATSs, COL_YELLOW);
+		
+		unsigned int count = 0;
+		for (struct parser_map *i = phys_stats->global_stats_map; i->name; i++) {
+			char res[50];
+			parser_get_value_str(*i, res, 50);
+			graph_display_text(i->name, STATSx, STATSy-((float)count/18)-.10, STATSs, COL_ORANGE);
+			graph_display_text(res, STATSx+.25, STATSy-((float)count++/18)-.10, STATSs, COL_YELLOW);
 		}
+		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	/*	Text/static drawing	*/
@@ -467,6 +460,7 @@ int graph_sshot(long double arg)
 	free(pixels);
 	
 	pprintf(PRI_MEDIUM, "Wrote screenshot %s\n", filename);
-	#endif
 	return 0;
+	#endif
+	return 1;
 }

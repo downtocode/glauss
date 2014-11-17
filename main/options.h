@@ -45,9 +45,8 @@ extern struct option_struct {
 	double elcharge, gconst, epsno;
 	
 	/* Physics - ctrl */
-	unsigned int dump_xyz, dump_sshot, reset_stats_freq;
+	unsigned int dump_xyz, dump_sshot;
 	volatile bool write_sshot_now, quit_main_now;
-	bool stats_bh, stats_null; //--
 	
 	/* For all other physics options we let the algorithms handle it */
 } *option;

@@ -48,10 +48,8 @@ struct input_cfg {
 
 int input_thread_init(void **win, data **object);
 void input_thread_quit(void);
-void input_print_typed(struct parser_opt *var);
-void input_set_typed(struct parser_opt *var, const char *val);
 int input_call_system(const char *cmd);
-int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_map);
+int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_map);
 void *input_thread(void *thread_setts);
 
 #endif

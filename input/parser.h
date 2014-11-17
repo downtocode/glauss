@@ -37,7 +37,8 @@ enum vars_and_cmds {
 	VAR_STRING,
 	VAR_LONGINT,
 	VAR_LONGUINT,
-	VAR_SIZE_T,
+	VAR_LONGLONGUINT,
+	VAR_NO_IDEA,
 	/* Commands */
 	VAR_CMD,
 	VAR_CMD_SYS,
@@ -45,6 +46,7 @@ enum vars_and_cmds {
 	VAR_LIST,
 	VAR_START,
 	VAR_STOP,
+	VAR_RESTART,
 	VAR_HELP,
 	VAR_STATUS,
 	VAR_STATS,
@@ -58,29 +60,52 @@ enum vars_and_cmds {
 	VAR_CHECK_COLLISIONS,
 };
 
-struct parser_opt {
+#define P_TYPE(x) &(x), _Generic((x),                                            \
+	float: VAR_FLOAT,					double: VAR_DOUBLE,                      \
+	long double: VAR_LONG_DOUBLE,		int: VAR_INT,                            \
+	unsigned int: VAR_UINT,				unsigned short int: VAR_USHORT,          \
+	bool: VAR_BOOL,						short int: VAR_SHORT,                    \
+	char *: VAR_STRING,					long int: VAR_LONGINT,                   \
+	unsigned long int: VAR_LONGUINT,    long long unsigned int: VAR_LONGLONGUINT,\
+	default: VAR_NO_IDEA                                                         \
+), _Generic((x), bool: LUA_TBOOLEAN, char *: LUA_TSTRING, default: LUA_TNUMBER)
+
+struct parser_map {
 	const char *name;
-	void *val;
+	volatile void *val;
 	int type;
 	int cmd_or_lua_type;
 };
 
-extern struct parser_opt *total_opt_map;
+extern struct parser_map *total_opt_map;
 
+/* General */
 int parse_lua_open_file(const char *filename);
 int parse_lua_open_string(const char *script);
 int parse_lua_close(void);
-struct parser_opt *allocate_input_parse_opts(struct parser_opt *map);
-void print_input_parse_opts(struct parser_opt *map);
-int register_input_parse_opts(struct parser_opt *map);
-int unregister_input_parse_opts(struct parser_opt *map);
-unsigned int update_input_parse_opts(struct parser_opt *map);
 void free_input_parse_opts();
-int parse_lua_simconf_options();
+
+/* Maps */
+void print_parser_map(struct parser_map *map);
+struct parser_map *allocate_parser_map(struct parser_map *map);
+unsigned int update_parser_map(struct parser_map *map, struct parser_map **dest);
+int register_parser_map(struct parser_map *map, struct parser_map **dest);
+int unregister_parser_map(struct parser_map *map, struct parser_map **dest);
+
+/* Maps I/O */
+int parser_get_value_str(struct parser_map var, char *str, size_t len);
+void parser_print_generic(struct parser_map *var);
+void parser_set_generic(struct parser_map *var, const char *val);
+void parser_push_generic(lua_State *L, struct parser_map *var);
+void parser_read_generic(lua_State *L, struct parser_map *var);
+
+/* Parser abstractions */
+int parse_lua_simconf_options(struct parser_map *map);
 int parse_lua_simconf_objects(data **object, const char* sent_to_lua);
 
 /* Returns number of changed objects(returned from Lua) */
-unsigned int lua_exec_funct(const char *funct, data *object);
+unsigned int lua_exec_funct(const char *funct, data *object,
+							struct global_statistics *stats);
 
 const char *parse_file_to_str(const char *filename);
 

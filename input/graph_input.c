@@ -130,10 +130,10 @@ int graph_scan_keypress(graph_window *win)
 			phys_shuffle_algorithms();
 			break;
 		case SDLK_BACKSPACE:
-			if(phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING)
-				phys_ctrl(PHYS_SHUTDOWN, NULL);
-			else
+			if(phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_STOPPED)
 				phys_ctrl(PHYS_START, &win->object);
+			else
+				phys_ctrl(PHYS_SHUTDOWN, NULL);
 			break;
 		case SDLK_PERIOD:
 			if(win->chosen < option->obj)

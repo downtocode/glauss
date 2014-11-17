@@ -25,10 +25,50 @@
 #include "main/options.h"
 #include "main/output.h"
 #include "physics.h"
+#include "physics_aux.h"
 #include "physics_ctrl.h"
+#include "main/msg_phys.h"
+
+struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, data *obj)
+{
+	struct glob_thread_config *cfg = calloc(1, sizeof(struct glob_thread_config));
+	
+	cfg->total_syncd_threads = option->threads + 1;
+	cfg->obj = obj;
+	cfg->stats = stats;
+	
+	cfg->algo_thread_stats_map = calloc(option->threads+1, sizeof(struct parser_map *));
+	
+	/* Reinit stats */
+	cfg->stats->t_stats = calloc(option->threads+1, sizeof(struct thread_statistics));
+	
+	for (int k = 1; k < option->threads + 1; k++) {
+		cfg->stats->t_stats[k].thread_stats_map = \
+			allocate_parser_map((struct parser_map []){
+				{"clockid",   P_TYPE(cfg->stats->t_stats[k].clockid)   },
+				{0},
+			});
+	}
+	
+	return cfg;
+}
 
 struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 {
+	/* Transfer global stat map */
+	if (cfg->algo_global_stats_map) {
+		register_parser_map(cfg->algo_global_stats_map,
+							&cfg->stats->global_stats_map);
+	}
+	
+	/* Transfer thread stat map */
+	if (cfg->algo_thread_stats_map) {
+		for (int k = 1; k < option->threads +1; k++) {
+			register_parser_map(cfg->algo_thread_stats_map[k],
+								&cfg->stats->t_stats[k].thread_stats_map);
+		}
+	}
+	
 	cfg->threads = calloc(option->threads+1, sizeof(pthread_t));
 	
 	cfg->ctrl = calloc(1, sizeof(pthread_barrier_t));
@@ -45,13 +85,33 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 
 void ctrl_quit(struct glob_thread_config *cfg)
 {
-	pthread_barrier_destroy(cfg->ctrl);
-	pthread_mutex_destroy(cfg->io_halt);
+	if (cfg->algo_global_stats_map) {
+		unregister_parser_map(cfg->algo_global_stats_map, &cfg->stats->global_stats_map);
+		/* Free all maps set by any threads */
+		free(cfg->algo_global_stats_map);
+	}
 	
-	free(cfg->io_halt);
+	if (cfg->algo_thread_stats_map) {
+		for (int k = 1; k < option->threads + 1; k++) {
+			free(cfg->algo_thread_stats_map[k]);
+			free(cfg->stats->t_stats[k].thread_stats_map);
+		}
+		free(cfg->algo_thread_stats_map);
+	}
+	free(cfg->stats->t_stats);
+	cfg->stats->t_stats = NULL;
+	
+	/* Free global sync barrier */
+	pthread_barrier_destroy(cfg->ctrl);
 	free(cfg->ctrl);
-	free(cfg->quit);
-	free(cfg->pause);
+	
+	/* Free IO mutex */
+	pthread_mutex_destroy(cfg->io_halt);
+	free(cfg->io_halt);
+	
+	/* Free anything else */
+	free((void *)cfg->quit);
+	free((void *)cfg->pause);
 	free(cfg);
 	return;
 }
@@ -60,7 +120,7 @@ void *thread_ctrl(void *thread_setts)
 {
 	struct glob_thread_config *t = thread_setts;
 	const double dt = option->dt;
-	unsigned int xyz_counter = 0, sshot_counter = 0, funct_counter = 0, stats_counter = 0;
+	unsigned int xyz_counter = 0, sshot_counter = 0, funct_counter = 0;
 	unsigned int thread_fn_counter = 0;
 	long long unsigned int t1 = phys_gettime_us(), t2 = 0;
 	
@@ -78,49 +138,30 @@ void *thread_ctrl(void *thread_setts)
 		}
 		
 		/* Update progress */
-		t->stats->steps++;
+		t->stats->total_steps++;
 		t2 = phys_gettime_us();
 		t->stats->time_per_step = (t2 - t1)*1.0e-6;
 		t1 = t2;
 		t->stats->progress += dt;
 		
-		if (t->thread_sched_fn) {
-			if (t->thread_sched_fn_freq && ++thread_fn_counter >= t->thread_sched_fn_freq) {
-				t->thread_sched_fn(t->threads_conf);
-				thread_fn_counter = 0;
-			}
-		}
-		
 		/* Dump XYZ file, will not increment timer if !option->dump_xyz */
-		if (option->dump_xyz && ++xyz_counter >= option->dump_xyz) {
+		if (phys_timer_exec(option->dump_xyz, &xyz_counter)) {
 			out_write_xyz(t->obj, option->xyz_temp, NULL);
-			xyz_counter = 0;
 		}
 		
 		/* Signal to create a screenshot next frame */
-		if (option->dump_sshot && ++sshot_counter >= option->dump_sshot) {
+		if (phys_timer_exec(option->dump_sshot, &sshot_counter)) {
 			option->write_sshot_now = true;
-			sshot_counter = 0;
 		}
 		
 		/* Lua function execution */
-		if (option->exec_funct_freq && ++funct_counter >= option->exec_funct_freq) {
-			lua_exec_funct(option->timestep_funct, t->obj);
-			funct_counter = 0;
+		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
+			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
 		}
 		
-		/* Reset some stats */
-		if (option->reset_stats_freq && ++stats_counter >= option->reset_stats_freq) {
-			if (option->stats_null) {
-				t->stats->null_max_dist = 0;
-				t->stats->null_avg_dist = 0;
-			}
-			if (option->stats_bh) {
-				t->stats->bh_total_alloc = 0;
-				t->stats->bh_new_alloc = 0;
-				t->stats->bh_new_cleaned = 0;
-				t->stats->bh_heapsize = 0;
-			}
+		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,
+												  &thread_fn_counter)) {
+			t->thread_sched_fn(t->threads_conf);
 		}
 		
 		/* Unlock IO mutex */

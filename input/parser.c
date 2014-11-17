@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <signal.h>
 #include "parser.h"
-#include "input_thread.h"
 #include "physics/physics.h"
 #include "physics/physics_aux.h"
 #include "main/options.h"
@@ -35,32 +34,278 @@ struct lua_parser_state {
 	bool read_id;
 	in_file file;
 	data buffer, *object;
-	struct parser_opt *opt_map;
+	struct parser_map *opt_map;
 };
 
 static bool lua_loaded = 0;
 static lua_State *L;
-struct parser_opt *total_opt_map = NULL;
+struct parser_map *total_opt_map = NULL;
+
+void parser_print_generic(struct parser_map *var)
+{
+	switch(var->type) {
+		case VAR_FLOAT:
+			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
+			break;
+		case VAR_DOUBLE:
+			pprintf(PRI_ESSENTIAL, "%s = %lf\n", var->name, *(double *)var->val);
+			break;
+		case VAR_LONG_DOUBLE:
+			pprintf(PRI_ESSENTIAL, "%s = %Lf\n", var->name, *(long double *)var->val);
+			break;
+		case VAR_BOOL:
+			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(bool *)var->val);
+			break;
+		case VAR_UINT:
+			pprintf(PRI_ESSENTIAL, "%s = %u\n", var->name, *(unsigned int *)var->val);
+			break;
+		case VAR_INT:
+			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(int *)var->val);
+			break;
+		case VAR_USHORT:
+			pprintf(PRI_ESSENTIAL, "%s = %hu\n", var->name, *(unsigned short *)var->val);
+			break;
+		case VAR_SHORT:
+			pprintf(PRI_ESSENTIAL, "%s = %hi\n", var->name, *(short *)var->val);
+			break;
+		case VAR_LONGINT:
+			pprintf(PRI_ESSENTIAL, "%s = %li\n", var->name, *(long *)var->val);
+			break;
+		case VAR_LONGUINT:
+			pprintf(PRI_ESSENTIAL, "%s = %lu\n", var->name, *(long unsigned *)var->val);
+			break;
+		case VAR_STRING:
+			pprintf(PRI_ESSENTIAL, "%s = %s\n", var->name, *(char **)var->val);
+			break;
+		default:
+			break;
+	}
+}
+
+void parser_set_generic(struct parser_map *var, const char *val)
+{
+	if(!val)
+		return;
+	switch(var->type) {
+		case VAR_BOOL:
+			if (!strcmp("true", val))
+				*(bool *)var->val = true;
+			else if (!strcmp("false", val))
+				*(bool *)var->val = false;
+			else
+				*(bool *)var->val = (bool)strtol(val, NULL, 10);
+			pprint("%s = %i\n", var->name, *(bool *)var->val);
+			break;
+		case VAR_FLOAT:
+			*(float *)var->val = strtof(val, NULL);
+			pprint("%s = %f\n", var->name, *(float *)var->val);
+			break;
+		case VAR_DOUBLE:
+			*(double *)var->val = strtod(val, NULL);
+			pprint("%s = %lf\n", var->name, *(double *)var->val);
+			break;
+		case VAR_LONG_DOUBLE:
+			*(long double *)var->val = strtold(val, NULL);
+			pprint("%s = %Lf\n", var->name, *(long double *)var->val);
+			break;
+		case VAR_SHORT:
+			*(short *)var->val = strtol(val, NULL, 10);
+			pprint("%s = %hi\n", var->name, *(short *)var->val);
+			break;
+		case VAR_INT:
+			*(int *)var->val = strtol(val, NULL, 10);
+			pprint("%s = %i\n", var->name, *(int *)var->val);
+			break;
+		case VAR_LONGINT:
+			*(long *)var->val = strtol(val, NULL, 10);
+			pprint("%s = %li\n", var->name, *(long *)var->val);
+			break;
+		case VAR_USHORT:
+			*(unsigned short *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %hu\n", var->name, *(unsigned short *)var->val);
+			break;
+		case VAR_UINT:
+			*(unsigned *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %u\n", var->name, *(unsigned int *)var->val);
+			break;
+		case VAR_LONGUINT:
+			*(long unsigned *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %lu\n", var->name, *(long unsigned *)var->val);
+			break;
+		case VAR_LONGLONGUINT:
+			*(long long unsigned int *)var->val = strtoul(val, NULL, 10);
+			pprint("%s = %llu\n", var->name, *(long long unsigned int *)var->val);
+			break;
+		case VAR_STRING:
+			if(!var->val)
+				break;
+			free(*(char **)var->val);
+			*(char **)var->val = strdup(val);
+			pprint("%s = %s\n", var->name, *(char **)var->val);
+			break;
+		default:
+			break;
+	}
+}
+
+int parser_get_value_str(struct parser_map var, char *str, size_t len)
+{
+	switch(var.type) {
+		case VAR_BOOL:
+			if (*(bool *)var.val)
+				snprintf(str, len, "true");
+			else
+				snprintf(str, len, "false");
+			break;
+		case VAR_FLOAT:
+			snprintf(str, len, "%f", *(float *)var.val);
+			break;
+		case VAR_DOUBLE:
+			snprintf(str, len, "%lf", *(double *)var.val);
+			break;
+		case VAR_LONG_DOUBLE:
+			snprintf(str, len, "%Lf", *(long double *)var.val);
+			break;
+		case VAR_SHORT:
+			snprintf(str, len, "%hi", *(short int *)var.val);
+			break;
+		case VAR_INT:
+			snprintf(str, len, "%i", *(int *)var.val);
+			break;
+		case VAR_LONGINT:
+			snprintf(str, len, "%li", *(long int *)var.val);
+			break;
+		case VAR_USHORT:
+			snprintf(str, len, "%hu", *(unsigned short int *)var.val);
+			break;
+		case VAR_UINT:
+			snprintf(str, len, "%u", *(unsigned int *)var.val);
+			break;
+		case VAR_LONGUINT:
+			snprintf(str, len, "%lu", *(long unsigned int *)var.val);
+			break;
+		case VAR_LONGLONGUINT:
+			snprintf(str, len, "%llu", *(long long unsigned int *)var.val);
+			break;
+		case VAR_STRING:
+			snprintf(str, len, "%s", *(char **)var.val);
+			break;
+		default:
+			return 1;
+			break;
+	}
+	return 0;
+}
+
+void parser_push_generic(lua_State *L, struct parser_map *var)
+{
+	if(!var)
+		return;
+	switch(var->type) {
+		case VAR_BOOL:
+			lua_pushboolean(L, *(bool *)var->val);
+			break;
+		case VAR_FLOAT:
+			lua_pushnumber(L, *(float *)var->val);
+			break;
+		case VAR_DOUBLE:
+			lua_pushnumber(L, *(double *)var->val);
+			break;
+		case VAR_LONG_DOUBLE:
+			lua_pushnumber(L, *(long double *)var->val);
+			break;
+		case VAR_SHORT:
+			lua_pushnumber(L, *(short *)var->val);
+			break;
+		case VAR_INT:
+			lua_pushnumber(L, *(int *)var->val);
+			break;
+		case VAR_LONGINT:
+			lua_pushnumber(L, *(long *)var->val);
+			break;
+		case VAR_USHORT:
+			lua_pushnumber(L, *(unsigned short *)var->val);
+			break;
+		case VAR_UINT:
+			lua_pushnumber(L, *(unsigned *)var->val);
+			break;
+		case VAR_LONGUINT:
+			lua_pushnumber(L, *(long unsigned *)var->val);
+			break;
+		case VAR_LONGLONGUINT:
+			lua_pushnumber(L, *(long long unsigned int *) var->val);
+			break;
+		case VAR_STRING:
+			lua_pushstring(L, *(char **)var->val);
+			break;
+		default:
+			lua_pushnumber(L, *(int *)var->val);
+			break;
+	}
+	lua_setfield(L, -2, var->name);
+}
+
+void parser_read_generic(lua_State *L, struct parser_map *var)
+{
+	if(!var)
+		return;
+	switch(var->type) {
+		case VAR_BOOL:
+			*(bool *)var->val = lua_toboolean(L, -1);
+			break;
+		case VAR_FLOAT:
+			*(float *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_DOUBLE:
+			*(double *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_LONG_DOUBLE:
+			*(long double *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_SHORT:
+			*(short *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_INT:
+			*(int *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_LONGINT:
+			*(long *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_USHORT:
+			*(unsigned short *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_UINT:
+			*(unsigned *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_LONGUINT:
+			*(long unsigned *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_LONGLONGUINT:
+			*(long long unsigned int *)var->val = lua_tonumber(L, -1);
+			break;
+		case VAR_STRING:
+			free(*(char **)var->val);
+			*(char **)var->val = strdup(lua_tostring(L, -1));
+			break;
+		default:
+			break;
+	}
+}
 
 static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state)
 {
+	if (!parser_state->opt_map) {
+		pprint_err("Cannot read empty map.\n");
+		return 0;
+	}
 	if (lua_istable(L, -1)) {
 		/* Tell conf_traverse_table() to traverse */
 		return 1;
 	} else {
-		int lua_vartype = lua_type(L, -1);
-		const char *lua_varvalue = lua_tostring(L, -1);
-		const char *lua_varname = lua_tostring(L, -2);
-		for (struct parser_opt *i = parser_state->opt_map; i->name; i++) {
-			if (lua_vartype == i->cmd_or_lua_type) {
-				if (!strcmp(i->name, lua_varname)) {
-					if(lua_vartype == LUA_TBOOLEAN) {
-						/* lua_tostring() of LUA_TBOOLEAN returns NULL */
-						lua_varvalue = lua_toboolean(L, -1) ? "true" : "false";
-					}
-					input_set_typed(i, lua_varvalue);
-					break;
-				}
+		for (struct parser_map *i = parser_state->opt_map; i->name; i++) {
+			if (!strcmp(i->name, lua_tostring(L, -2))) {
+				parser_read_generic(L, i);
+				break;
 			}
 		}
 	}
@@ -213,6 +458,13 @@ static int input_lua_raise(lua_State *L)
 	return 0;
 }
 
+static int parse_lua_register_fn(lua_State *L)
+{
+	/* Register own function to quit */
+	lua_register(L, "raise", input_lua_raise);
+	return 0;
+}
+
 int parse_lua_open_file(const char *filename)
 {
 	if(lua_loaded) {
@@ -222,8 +474,7 @@ int parse_lua_open_file(const char *filename)
 	L = luaL_newstate();
 	luaL_openlibs(L);
 	
-	/* Register own function to quit */
-	lua_register(L, "raise", input_lua_raise);
+	parse_lua_register_fn(L);
 	
 	/* Load file */
 	if(luaL_loadfile(L, filename)) {
@@ -248,10 +499,9 @@ int parse_lua_open_string(const char *script)
 	L = luaL_newstate();
 	luaL_openlibs(L);
 	
-	/* Register own function to quit */
-	lua_register(L, "raise", input_lua_raise);
+	parse_lua_register_fn(L);
 	
-	/* Load file */
+	/* Load string */
 	if(luaL_loadstring(L, script)) {
 		pprintf(PRI_ERR, "Opening Lua script failed!\n");
 		return 2;
@@ -271,59 +521,61 @@ int parse_lua_close(void)
 	return 0;
 }
 
-void print_input_parse_opts(struct parser_opt *map)
+void print_parser_map(struct parser_map *map)
 {
 	if (!map) {
-		map = total_opt_map;
+		if (total_opt_map)
+			map = total_opt_map;
+		else
+			return;
 	}
 	unsigned int count = 1;
-	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+	for (struct parser_map *i = map; i->name; i++) {
 		printf("%i. %s\n", count++, i->name);
 	}
 }
 
-struct parser_opt *allocate_input_parse_opts(struct parser_opt *map)
+struct parser_map *allocate_parser_map(struct parser_map *map)
 {
 	if (!map)
 		return NULL;
 	
-	size_t map_size = 0;
-	unsigned int count = 0;
-	struct parser_opt *alloc = NULL;
-	for (struct parser_opt *i = map; i->name; i++) {
+	unsigned int map_size = 0;
+	for (struct parser_map *i = map; i->name; i++) {
 		map_size++;
 	}
-	map_size *= sizeof(struct parser_opt);
+	map_size++;
 	
-	alloc = malloc(map_size);
+	struct parser_map *alloc = calloc(map_size, sizeof(struct parser_map));
 	
-	for (struct parser_opt *i = map; i->name; i++) {
+	unsigned int count = 0;
+	for (struct parser_map *i = map; i->name; i++) {
 		alloc[count++] = *i;
 	}
 	
 	return alloc;
 }
 
-unsigned int update_input_parse_opts(struct parser_opt *map)
+unsigned int update_parser_map(struct parser_map *map, struct parser_map **dest)
 {
 	if (!map)
 		return 1;
 	
 	unsigned int map_size = 0;
-	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+	for (struct parser_map *i = *dest; i->name; i++) {
 		map_size++;
 	}
 	
 	unsigned int rem_map_size = 0;
-	for (struct parser_opt *i = map; i->name; i++) {
+	for (struct parser_map *i = map; i->name; i++) {
 		rem_map_size++;
 	}
 	
 	unsigned int updated = 0;
 	for (int i = 0; i < rem_map_size; i++) {
 		for (int j = 0; j < map_size; j++) {
-			if (!strcmp(total_opt_map[j].name, map[i].name)) {
-				total_opt_map[j] = map[i];
+			if (!strcmp((*dest)[j].name, map[i].name)) {
+				(*dest)[j] = map[i];
 				updated++;
 				break;
 			}
@@ -333,57 +585,58 @@ unsigned int update_input_parse_opts(struct parser_opt *map)
 	return updated;
 }
 
-int register_input_parse_opts(struct parser_opt *map)
+int register_parser_map(struct parser_map *map, struct parser_map **dest)
 {
 	if (!map)
 		return 1;
 	
 	size_t map_size = 0;
-	for (struct parser_opt *i = map; i->name; i++) {
+	for (struct parser_map *i = map; i->name; i++) {
 		map_size++;
 	}
-	
-	map_size *= sizeof(struct parser_opt);
+	map_size++; /* For the empty option at the end! */
+	map_size *= sizeof(struct parser_map);
 	
 	unsigned int end_index = 0;
 	size_t old_map_size = 0;
-	if (total_opt_map) {
-		for (struct parser_opt *i = total_opt_map; i->name; i++) {
+	if (*dest) {
+		for (struct parser_map *i = *dest; i->name; i++) {
 			old_map_size++;
 		}
 	}
 	end_index = old_map_size;
-	old_map_size *= sizeof(struct parser_opt);
+	old_map_size *= sizeof(struct parser_map);
 	
-	total_opt_map = realloc(total_opt_map, old_map_size+map_size+1);
+	*dest = realloc(*dest, old_map_size+map_size);
 	
-	for (struct parser_opt *i = map; i->name; i++) {
-		total_opt_map[end_index++] = *i;
+	for (struct parser_map *i = map; i->name; i++) {
+		(*dest)[end_index++] = *i;
 	}
+	(*dest)[end_index] = (struct parser_map){0};
 	
 	return 0;
 }
 
-int unregister_input_parse_opts(struct parser_opt *map)
+int unregister_parser_map(struct parser_map *map, struct parser_map **dest)
 {
 	if (!map)
 		return 1;
 	
 	size_t map_size = 0;
-	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+	for (struct parser_map *i = *dest; i->name; i++) {
 		map_size++;
 	}
 	
 	size_t rem_map_size = 0;
-	for (struct parser_opt *i = map; i->name; i++) {
+	for (struct parser_map *i = map; i->name; i++) {
 		rem_map_size++;
 	}
 	
 	for (int i = 0; i < rem_map_size; i++) {
 		for (int j = 0; j < map_size; j++) {
-			if (!strcmp(total_opt_map[j].name, map[i].name)) {
+			if (!strcmp((*dest)[j].name, map[i].name)) {
 				for (int k = j; k < map_size; k++) {
-					total_opt_map[k] = total_opt_map[k+1];
+					(*dest)[k] = (*dest)[k+1];
 				}
 				map_size--;
 				break;
@@ -391,9 +644,9 @@ int unregister_input_parse_opts(struct parser_opt *map)
 		}
 	}
 	map_size++;
-	map_size *= sizeof(struct parser_opt);
+	map_size *= sizeof(struct parser_map);
 	
-	total_opt_map = realloc(total_opt_map, map_size);
+	*dest = realloc(*dest, map_size);
 	
 	return 0;
 }
@@ -404,8 +657,11 @@ void free_input_parse_opts()
 }
 
 /* Read options */
-int parse_lua_simconf_options()
+int parse_lua_simconf_options(struct parser_map *map)
 {
+	if (!map)
+		return 1;
+	
 	struct lua_parser_state *parser_state = &(struct lua_parser_state){
 		.i = 1,
 		.nullswitch = 0,
@@ -414,15 +670,13 @@ int parse_lua_simconf_options()
 		.file = {0},
 		.buffer = {{0}},
 		.object = NULL,
-		.opt_map = total_opt_map,
+		.opt_map = map,
 	};
 	
 	/* Read settings table */
 	lua_getglobal(L, "settings");
 	
-	pprint_disable();
 	conf_traverse_table(L, &conf_lua_parse_opts, parser_state);
-	pprint_enable();
 	
 	if ((option->epsno == 0.0) || (option->elcharge == 0.0)) {
 		option->noele = 1;
@@ -482,70 +736,35 @@ int parse_lua_simconf_objects(data **object, const char* sent_to_lua)
 	return 0;
 }
 
-static void lua_push_stat_array()
+static void parser_push_stat_array(lua_State *L, struct global_statistics *stats)
 {
 	/* Create "array" table. */
 	lua_newtable(L);
 	
 	/* Any single variable go here */
-	lua_pushnumber(L, phys_stats->progress);
-	lua_setfield(L, -2, "progress");
-	lua_pushnumber(L, phys_stats->time_running);
-	lua_setfield(L, -2, "time_running");
-	lua_pushnumber(L, phys_stats->rng_seed);
-	lua_setfield(L, -2, "rng_seed");
-	lua_pushnumber(L, phys_stats->time_per_step);
-	lua_setfield(L, -2, "time_per_step");
-	lua_pushnumber(L, phys_stats->steps);
-	lua_setfield(L, -2, "steps");
+	for (struct parser_map *i = stats->global_stats_map; i->name; i++) {
+		parser_push_generic(L, i);
+	}
 	
-	/* Null */
-	lua_pushnumber(L, phys_stats->null_avg_dist);
-	lua_setfield(L, -2, "null_avg_dist");
-	lua_pushnumber(L, phys_stats->null_max_dist);
-	lua_setfield(L, -2, "null_max_dist");
-	
-	/* Barnes-Hut */
-	lua_pushnumber(L, phys_stats->bh_total_alloc);
-	lua_setfield(L, -2, "bh_total_alloc");
-	lua_pushnumber(L, phys_stats->bh_new_alloc);
-	lua_setfield(L, -2, "bh_new_alloc");
-	lua_pushnumber(L, phys_stats->bh_new_cleaned);
-	lua_setfield(L, -2, "bh_new_cleaned");
-	lua_pushnumber(L, phys_stats->bh_heapsize);
-	lua_setfield(L, -2, "bh_heapsize");
+	if (!stats->t_stats[1].thread_stats_map) {
+		return;
+	}
 	
 	/* Variables for each thread */
 	for(short i = 1; i < option->threads + 1; i++) {
 		/* Create a table inside that to hold everything */
 		lua_newtable(L);
 		
-		/* Shared */
-		lua_pushnumber(L, phys_stats->t_stats[i].clockid);
-		lua_setfield(L, -2, "clockid");
-		
-		/* Barnes-Hut */
-		lua_pushnumber(L, phys_stats->t_stats[i].bh_total_alloc);
-		lua_setfield(L, -2, "bh_total_alloc");
-		lua_pushnumber(L, phys_stats->t_stats[i].bh_new_alloc);
-		lua_setfield(L, -2, "bh_new_alloc");
-		lua_pushnumber(L, phys_stats->t_stats[i].bh_new_cleaned);
-		lua_setfield(L, -2, "bh_new_cleaned");
-		lua_pushnumber(L, phys_stats->t_stats[i].bh_heapsize);
-		lua_setfield(L, -2, "bh_heapsize");
-		
-		/* Null */
-		lua_pushnumber(L, phys_stats->t_stats[i].null_avg_dist);
-		lua_setfield(L, -2, "null_avg_dist");
-		lua_pushnumber(L, phys_stats->t_stats[i].null_max_dist);
-		lua_setfield(L, -2, "null_max_dist");
+		for (struct parser_map *j = stats->t_stats[i].thread_stats_map; j->name; j++) {
+			parser_push_generic(L, j);
+		}
 		
 		/* Record index */
 		lua_rawseti(L, -2, i);
 	}
 }
 
-static void lua_push_object_array(data *obj)
+static void parser_push_object_array(lua_State *L, data *obj)
 {
 	/* Create "array" table. */
 	lua_newtable(L);
@@ -588,17 +807,23 @@ static void lua_push_object_array(data *obj)
 	}
 }
 
-unsigned int lua_exec_funct(const char *funct, data *object)
+unsigned int lua_exec_funct(const char *funct, data *object,
+							struct global_statistics *stats)
 {
 	if (!funct && !lua_loaded)
 		return 0;
+	
+	int num_args = 0;
+	
 	lua_getglobal(L, funct);
 	
-	lua_push_stat_array();
+	if (1) {
+		parser_push_stat_array(L, stats);
+		num_args++;
+	}
 	
-	int num_args = 1;
 	if (option->lua_expose_obj_array) {
-		lua_push_object_array(object);
+		parser_push_object_array(L, object);
 		num_args++;
 	}
 	
@@ -627,7 +852,6 @@ unsigned int lua_exec_funct(const char *funct, data *object)
 	return parser_state->i;
 }
 
-/* Currently unused, parse an external file into a const char string pointer */
 const char *parse_file_to_str(const char* filename)
 {
 	FILE* input = fopen(filename, "r");

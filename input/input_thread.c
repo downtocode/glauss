@@ -39,7 +39,7 @@ static const char pointyellow[] = "\033[033m"CMD_PROMPT_DOT"\033[0m";
 static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 
 static struct input_cfg *global_cfg = NULL;
-static struct parser_opt *global_cmd_map = NULL;
+static struct parser_map *global_cmd_map = NULL;
 
 int input_thread_init(void **win, data **object)
 {
@@ -89,126 +89,19 @@ void input_thread_quit(void)
 	return;
 }
 
-void input_print_typed(struct parser_opt *var)
-{
-	switch(var->type) {
-		case VAR_FLOAT:
-			pprintf(PRI_ESSENTIAL, "%s = %f\n", var->name, *(float *)var->val);
-			break;
-		case VAR_DOUBLE:
-			pprintf(PRI_ESSENTIAL, "%s = %lf\n", var->name, *(double *)var->val);
-			break;
-		case VAR_LONG_DOUBLE:
-			pprintf(PRI_ESSENTIAL, "%s = %Lf\n", var->name, *(long double *)var->val);
-			break;
-		case VAR_BOOL:
-			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(bool *)var->val);
-			break;
-		case VAR_UINT:
-			pprintf(PRI_ESSENTIAL, "%s = %u\n", var->name, *(unsigned int *)var->val);
-			break;
-		case VAR_INT:
-			pprintf(PRI_ESSENTIAL, "%s = %i\n", var->name, *(int *)var->val);
-			break;
-		case VAR_USHORT:
-			pprintf(PRI_ESSENTIAL, "%s = %hu\n", var->name, *(unsigned short *)var->val);
-			break;
-		case VAR_SHORT:
-			pprintf(PRI_ESSENTIAL, "%s = %hi\n", var->name, *(short *)var->val);
-			break;
-		case VAR_LONGINT:
-			pprintf(PRI_ESSENTIAL, "%s = %li\n", var->name, *(long *)var->val);
-			break;
-		case VAR_LONGUINT:
-			pprintf(PRI_ESSENTIAL, "%s = %lu\n", var->name, *(long unsigned *)var->val);
-			break;
-		case VAR_STRING:
-			pprintf(PRI_ESSENTIAL, "%s = %s\n", var->name, *(char **)var->val);
-			break;
-		default:
-			break;
-	}
-}
-
-void input_set_typed(struct parser_opt *var, const char *val)
-{
-	if(!val)
-		return;
-	switch(var->type) {
-		case VAR_BOOL:
-			if (!strcmp("true", val))
-				*(bool *)var->val = true;
-			else if (!strcmp("false", val))
-				*(bool *)var->val = false;
-			else
-				*(bool *)var->val = (bool)strtol(val, NULL, 10);
-			pprint("%s = %i\n", var->name, *(bool *)var->val);
-			break;
-		case VAR_FLOAT:
-			*(float *)var->val = strtof(val, NULL);
-			pprint("%s = %f\n", var->name, *(float *)var->val);
-			break;
-		case VAR_DOUBLE:
-			*(double *)var->val = strtod(val, NULL);
-			pprint("%s = %lf\n", var->name, *(double *)var->val);
-			break;
-		case VAR_LONG_DOUBLE:
-			*(long double *)var->val = strtold(val, NULL);
-			pprint("%s = %Lf\n", var->name, *(long double *)var->val);
-			break;
-		case VAR_SHORT:
-			*(short *)var->val = strtol(val, NULL, 10);
-			pprint("%s = %hi\n", var->name, *(short *)var->val);
-			break;
-		case VAR_INT:
-			*(int *)var->val = strtol(val, NULL, 10);
-			pprint("%s = %i\n", var->name, *(int *)var->val);
-			break;
-		case VAR_LONGINT:
-			*(long *)var->val = strtol(val, NULL, 10);
-			pprint("%s = %li\n", var->name, *(long *)var->val);
-			break;
-		case VAR_USHORT:
-			*(unsigned short *)var->val = strtoul(val, NULL, 10);
-			pprint("%s = %hu\n", var->name, *(unsigned short *)var->val);
-			break;
-		case VAR_UINT:
-			*(unsigned *)var->val = strtoul(val, NULL, 10);
-			pprint("%s = %u\n", var->name, *(unsigned int *)var->val);
-			break;
-		case VAR_LONGUINT:
-			*(long unsigned *)var->val = strtoul(val, NULL, 10);
-			pprint("%s = %lu\n", var->name, *(long unsigned *)var->val);
-			break;
-		case VAR_SIZE_T:
-			*(size_t *)var->val = strtoul(val, NULL, 10);
-			pprint("%s = %lu\n", var->name, *(size_t *)var->val);
-			break;
-		case VAR_STRING:
-			if(!var->val)
-				break;
-			free(*(char **)var->val);
-			*(char **)var->val = strdup(val);
-			pprint("%s = %s\n", var->name, *(char **)var->val);
-			break;
-		default:
-			break;
-	}
-}
-
-void input_cmd_printall(struct parser_opt *cmd_map)
+void input_cmd_printall(struct parser_map *cmd_map)
 {
 	pprintf(PRI_ESSENTIAL, "Implemented variables:\n");
-	for (struct parser_opt *i = total_opt_map; i->name; i++) {
-		input_print_typed(i);
+	for (struct parser_map *i = total_opt_map; i->name; i++) {
+		parser_print_generic(i);
 	}
 	
 	pprintf(PRI_ESSENTIAL, "Implemented commands:\n");
-	for (struct parser_opt *i = cmd_map; i->name; i++) {
+	for (struct parser_map *i = cmd_map; i->name; i++) {
 		if (i->cmd_or_lua_type == VAR_CMD) {
 			pprintf(PRI_ESSENTIAL, "%s\n", i->name);
 		} else {
-			input_print_typed(i);
+			parser_print_generic(i);
 		}
 	}
 }
@@ -221,7 +114,7 @@ int input_call_system(const char *cmd)
 	return ret;
 }
 
-int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_map)
+int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_map)
 {
 	int num_tok = 0, retval = CMD_ALL_FINE;
 	bool match = 0;
@@ -252,17 +145,17 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_m
 		goto cleanall;
 	}
 	
-	for (struct parser_opt *i = total_opt_map; i->name; i++) {
+	for (struct parser_map *i = total_opt_map; i->name; i++) {
 		if (!strcmp(i->name, token[0])) {
 			match = 1;
 			if (num_tok < 2)
-				input_print_typed(i);
+				parser_print_generic(i);
 			else
-				input_set_typed(i, token[1]);
+				parser_set_generic(i, token[1]);
 		}
 	}
 	
-	for (struct parser_opt *i = cmd_map; i->name; i++) {
+	for (struct parser_map *i = cmd_map; i->name; i++) {
 		if (!strcmp(i->name, token[0])) {
 			match = 1;
 			if (i->cmd_or_lua_type == VAR_CMD) {
@@ -284,6 +177,10 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_m
 					case VAR_STOP:
 						phys_ctrl(PHYS_SHUTDOWN, NULL);
 						break;
+					case VAR_RESTART:
+						phys_ctrl(PHYS_SHUTDOWN, NULL);
+						phys_ctrl(PHYS_START, t->obj);
+						break;
 					case VAR_LIST:
 						phys_list_algo();
 						break;
@@ -297,7 +194,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_m
 						if (num_tok < 2) {
 							printf("Usage: \"load <filename>\"\n");
 						} else {
-							in_write_array(t->obj, token[1]);
+							in_write_array(t->obj, token[1], halt_objects);
 						}
 						break;
 					case VAR_PAUSE:
@@ -317,14 +214,14 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_opt *cmd_m
 						break;
 					case VAR_LUA_READOPTS:
 						if (num_tok < 2) {
-							parse_lua_simconf_options();
+							parse_lua_simconf_options(total_opt_map);
 						} else {
 							if (strcmp(option->filename, token[1])) {
 								if (parse_lua_open_file(token[1])) {
 									break;
 								}
 							}
-							parse_lua_simconf_options();
+							parse_lua_simconf_options(total_opt_map);
 						}
 						break;
 					case VAR_ENABLE_WINDOW:
@@ -396,7 +293,7 @@ void *input_thread(void *thread_setts)
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	/* Should remain on stack until thread exits */
-	struct parser_opt cmd_map[] = {
+	struct parser_map cmd_map[] = {
 		{"phys_check_collisions", NULL, VAR_CHECK_COLLISIONS, VAR_CMD},
 		{"save", NULL, VAR_SAVE, VAR_CMD},
 		{"load", NULL, VAR_LOAD, VAR_CMD},
@@ -405,6 +302,7 @@ void *input_thread(void *thread_setts)
 		{"exit", NULL, VAR_QUIT, VAR_CMD},
 		{"start", NULL, VAR_START, VAR_CMD},
 		{"stop", NULL, VAR_STOP, VAR_CMD},
+		{"restart", NULL, VAR_RESTART, VAR_CMD},
 		{"help", NULL, VAR_HELP, VAR_CMD},
 		{"status", NULL, VAR_STATUS, VAR_CMD},
 		{"stats", NULL, VAR_STATS, VAR_CMD},
@@ -424,7 +322,6 @@ void *input_thread(void *thread_setts)
 	 * tries to do that, DESPITE having to make us call SDL_Quit(). It's retarded */
 	rl_catch_signals = false;
 	rl_attempted_completion_function = input_completion;
-	//rl_expand_prompt = true;
 	
 	while (t->status) {
 		/* Refresh prompt */

@@ -32,60 +32,49 @@ void on_usr1_signal(int signo)
 	pprintf(PRI_ESSENTIAL, "\n");
 	if(!signo)
 		pprintf(PRI_ESSENTIAL, "USR1 signal received, current stats:\n");
-	pprintf(PRI_ESSENTIAL, "Time running = %Lf\n", phys_stats->time_running);
-	pprintf(PRI_ESSENTIAL, "Progress = %Lf\n", phys_stats->progress);
-	if(phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
-		pprintf(PRI_ESSENTIAL, "CPU time:\n Thread |  Time\n");
-		struct timespec ts;
-		for(int i = 1; i < option->threads + 1; i++) {
-			clock_gettime(phys_stats->t_stats[i].clockid, &ts);
-			pprintf(PRI_ESSENTIAL, "   %02i   |  ", i);
-			pprintf(PRI_ESSENTIAL, "%ld.%ld\n",  ts.tv_sec, ts.tv_nsec / 1000000);
-		}
+	
+	if (!phys_stats) {
+		pprint_err("Not running!\n");
+		return;
 	}
-	if(option->stats_bh) {
-		pprintf(PRI_ESSENTIAL, "BH Tree stats:\n Thread |  Total   New  Cleaned    Size\n");
-		for(int i = 1; i < option->threads + 1; i++) {
-			pprintf(PRI_ESSENTIAL, "   %02i   |  ", i);
-			pprintf(PRI_ESSENTIAL, "%u    %u    %u       %lu\n", phys_stats->t_stats[i].bh_total_alloc,
-				   phys_stats->t_stats[i].bh_new_alloc, phys_stats->t_stats[i].bh_new_cleaned,
-				   phys_stats->t_stats[i].bh_heapsize);
-		}
-		pprintf(PRI_ESSENTIAL, "Glob: %u    %u    %u       %0.3lf(MiB)\n", phys_stats->bh_total_alloc,
-			   phys_stats->bh_new_alloc, phys_stats->bh_new_cleaned, phys_stats->bh_heapsize/1048576.0);
+	
+	for (struct parser_map *i = phys_stats->global_stats_map; i->name; i++) {
+		char res[50];
+		parser_get_value_str(*i, res, 50);
+		printf("%s = %s\n", i->name, res);
 	}
-	if(option->stats_null) {
-		pprintf(PRI_ESSENTIAL, "Null stats:\n Thread |  Avg dist   Max dist\n");
-		for(int i = 1; i < option->threads + 1; i++) {
-			pprintf(PRI_ESSENTIAL, "   %02i   |  ", i);
-			pprintf(PRI_ESSENTIAL, "%lf    %lf\n", phys_stats->t_stats[i].null_avg_dist,
-				   phys_stats->t_stats[i].null_max_dist);
+	
+	if (phys_stats->t_stats) {
+		for(int t = 0; t < option->threads; t++) {
+			for (struct parser_map *i = phys_stats->t_stats[t].thread_stats_map; i->name; i++) {
+				char res[50];
+				parser_get_value_str(*i, res, 50);
+				printf("%i.	%s = %s\n", t, i->name, res);
+			}
 		}
-		pprintf(PRI_ESSENTIAL, "Glob: %lf    %lf\n", phys_stats->null_avg_dist, phys_stats->null_max_dist);
 	}
 }
 
 /* Function given to signal handler */
 void on_quit_signal(int signo)
 {
+	pprint_enable();
 	pprintf(PRI_ESSENTIAL, "\nSignal to quit %i received!\n", signo);
 	
 	/* Physics */
 	phys_ctrl(PHYS_SHUTDOWN, NULL);
 	
-	pprintf(PRI_ESSENTIAL, "Closing: ");
-	
 	/* Lua */
-	pprintf(PRI_ESSENTIAL, "Lua: ");
+	pprintf(PRI_ESSENTIAL, "Closing: Lua: ");
 	parse_lua_close();
 	free_input_parse_opts();
 	pprintf(PRI_OK, "");
 	
-	/* Logfile */
-	if(option->logenable) {
-		pprintf(PRI_ESSENTIAL, "&& Log: ");
-		fclose(option->logfile);
-		option->logenable = false;
+	/* Window */
+	if(!option->novid) {
+		pprintf(PRI_ESSENTIAL, "&& Window: ");
+		option->novid = true;
+		graph_thread_quit();
 		pprintf(PRI_OK, "");
 	}
 	
@@ -96,13 +85,15 @@ void on_quit_signal(int signo)
 		pprintf(PRI_OK, "");
 	}
 	
-	/* Window */
-	if(!option->novid) {
-		pprintf(PRI_ESSENTIAL, "&& Window: ");
-		graph_thread_quit();
-		option->novid = true;
+	/* Logfile */
+	if(option->logenable) {
+		pprintf(PRI_ESSENTIAL, "&& Log: ");
+		option->logenable = false;
+		fclose(option->logfile);
 		pprintf(PRI_OK, "");
 	}
+	
+	pprintf(PRI_ESSENTIAL, "\n");
 	
 	/* Main */
 	option->quit_main_now = true;

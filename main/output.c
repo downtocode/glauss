@@ -18,7 +18,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include "config.h"
 #include "options.h"
 #include "physics/physics.h"
@@ -32,7 +36,8 @@ int out_write_xyz(data *object, const char *template_str, pthread_mutex_t *io_ha
 	char filetodump[120];
 	snprintf(filetodump, sizeof(filetodump), template_str, phys_stats->progress);
 	/* Check if file exist */
-	if(!access(filetodump, R_OK)) return 1;
+	if(!access(filetodump, R_OK))
+		return 1;
 	FILE *out = fopen(filetodump, "w");
 	pprintf(PRI_ESSENTIAL, "Created %s\n", filetodump);
 	fprintf(out, "%u\n", option->obj + 1);
@@ -68,14 +73,31 @@ size_t out_write_array(data *object, const char *template_str, pthread_mutex_t *
 	return written;
 }
 
-size_t in_write_array(data **object, const char *filename)
+size_t in_write_array(data **object, const char *filename, pthread_mutex_t *io_halt)
 {
-	if(!access(filename, R_OK)) return 1;
-	FILE *in = fopen(filename, "r");
+	if(io_halt)
+		pthread_mutex_lock(io_halt);
 	
-	size_t read = fread(*object, sizeof(data), option->obj, in);
+	int fd = -1;
+	struct stat s;
+	if ((fd = open(filename, O_RDONLY, 0)) == -1)
+		pprint_err("Could not open %s!\n", filename);
 	
-	fclose(in);
+	if (fstat(fd, &s) < 0) {
+		pprint_err("Could not get filesize!\n");
+	}
 	
-	return read;
+	data *obj_e = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	
+	for (int i = 1; i < option->obj + 1; i++) {
+		(*object)[i] = obj_e[i];
+	}
+	
+	munmap(obj_e, s.st_size);
+	close(fd);
+	
+	if(io_halt)
+		pthread_mutex_unlock(io_halt);
+	
+	return s.st_size;
 }

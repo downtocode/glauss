@@ -24,10 +24,36 @@
 #include "physics.h"
 #include "physics_null.h"
 #include "main/options.h"
+#include "input/parser.h"
 
 void *null_preinit(struct glob_thread_config *cfg)
 {
 	cfg->total_syncd_threads = 1;
+	cfg->algo_thread_stats_raw = calloc(option->threads+1, sizeof(struct null_statistics *));
+	return NULL;
+}
+
+void *stats_preinit(struct glob_thread_config *cfg)
+{
+	struct null_statistics *global_stats = calloc(1, sizeof(struct null_statistics));
+	cfg->algo_global_stats_map = allocate_parser_map((struct parser_map []){
+		{"null_avg_dist",   P_TYPE(global_stats->null_avg_dist)   },
+		{"null_max_dist",   P_TYPE(global_stats->null_max_dist)   },
+		{0},
+	});
+	cfg->algo_global_stats_raw = global_stats;
+
+	struct null_statistics **thread_stats = calloc(option->threads+1, sizeof(struct null_statistics *));
+	for (int i = 1; i < option->threads+1; i++) {
+		thread_stats[i] = calloc(1, sizeof(struct null_statistics));
+		cfg->algo_thread_stats_map[i] = allocate_parser_map((struct parser_map []){
+			{"null_avg_dist",   P_TYPE(thread_stats[i]->null_avg_dist)   },
+			{"null_max_dist",   P_TYPE(thread_stats[i]->null_max_dist)   },
+			{0},
+        });
+	}
+	cfg->algo_thread_stats_raw = (void **)thread_stats;
+	
 	return NULL;
 }
 
@@ -46,8 +72,8 @@ void **null_init(struct glob_thread_config *cfg)
 	int totcore = (int)((float)option->obj/option->threads);
 	
 	for (int k = 1; k < option->threads + 1; k++) {
-		thread_config[k]->glob_stats = cfg->stats;
-		thread_config[k]->stats = &cfg->stats->t_stats[k];
+		thread_config[k]->glob_stats = cfg->algo_global_stats_raw;
+		thread_config[k]->stats = cfg->algo_thread_stats_raw[k];
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->mute = mute;
 		thread_config[k]->id = k;
@@ -61,15 +87,17 @@ void **null_init(struct glob_thread_config *cfg)
 		}
 	}
 	
-	option->stats_null = true;
-	
 	return (void**)thread_config;
 }
 
-void null_quit(void **threads)
+void null_quit(struct glob_thread_config *cfg)
 {
-	struct thread_config_null **t = (struct thread_config_null **)threads;
-	option->stats_null = false;
+	if (cfg->total_syncd_threads > 1) {
+		free(cfg->algo_global_stats_raw);
+	}
+	free(cfg->algo_thread_stats_raw);
+	
+	struct thread_config_null **t = (struct thread_config_null **)cfg->threads_conf;
 	pthread_mutex_destroy(t[1]->mute);
 	free(t[1]->mute);
 	for (int k = 0; k < option->threads + 1; k++) {

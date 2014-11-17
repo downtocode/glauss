@@ -79,39 +79,37 @@ int main(int argc, char *argv[])
 			.xyz_temp = strdup("system_%0.2Lf.xyz"),
 			.dump_sshot = 0,
 			.sshot_temp = strdup("sshot_%3.3Lf.png"),
-			.reset_stats_freq = 1,
 		};
 	/*	Default settings.	*/
 	
 	/*	Register parser options */
-		struct parser_opt opts_map[] = {
-			{"threads", &option->threads, VAR_USHORT, LUA_TNUMBER},
-			{"dt", &option->dt, VAR_DOUBLE, LUA_TNUMBER},
-			{"rng_seed", &option->dt, VAR_UINT, LUA_TNUMBER},
-			{"width", &option->width, VAR_INT, LUA_TNUMBER},
-			{"height", &option->height, VAR_INT, LUA_TNUMBER},
-			{"elcharge", &option->elcharge, VAR_LONG_DOUBLE, LUA_TNUMBER},
-			{"epsno", &option->epsno, VAR_LONG_DOUBLE, LUA_TNUMBER},
-			{"elcharge", &option->elcharge, VAR_LONG_DOUBLE, LUA_TNUMBER},
-			{"gconst", &option->gconst, VAR_LONG_DOUBLE, LUA_TNUMBER},
-			{"verbosity", &option->verbosity, VAR_USHORT, LUA_TNUMBER},
-			{"fontsize", &option->fontsize, VAR_INT, LUA_TNUMBER},
-			{"dump_xyz", &option->dump_xyz, VAR_UINT, LUA_TNUMBER},
-			{"dump_sshot", &option->dump_sshot, VAR_UINT, LUA_TNUMBER},
-			{"exec_funct_freq", &option->exec_funct_freq, VAR_UINT, LUA_TNUMBER},
-			{"skip_model_vec", &option->skip_model_vec, VAR_UINT, LUA_TNUMBER},
-			{"reset_stats_freq", &option->reset_stats_freq, VAR_UINT, LUA_TNUMBER},
-			{"algorithm", &option->algorithm, VAR_STRING, LUA_TSTRING},
-			{"spawn_funct", &option->spawn_funct, VAR_STRING, LUA_TSTRING},
-			{"timestep_funct", &option->timestep_funct, VAR_STRING, LUA_TSTRING},
-			{"file_template", &option->xyz_temp, VAR_STRING, LUA_TSTRING},
-			{"screenshot_template", &option->sshot_temp, VAR_STRING, LUA_TSTRING},
-			{"fontname", &option->fontname, VAR_STRING, LUA_TSTRING},
-			{"lua_expose_obj_array", &option->lua_expose_obj_array, VAR_BOOL, LUA_TBOOLEAN},
-			{"input_thread_enable", &option->input_thread_enable, VAR_BOOL, LUA_TBOOLEAN},
+		struct parser_map opts_map[] = {
+			{"threads",                P_TYPE(option->threads)                },
+			{"dt",                     P_TYPE(option->dt)                     },
+			{"rng_seed",               P_TYPE(option->rng_seed)               },
+			{"width",                  P_TYPE(option->width)                  },
+			{"height",                 P_TYPE(option->height)                 },
+			{"elcharge",               P_TYPE(option->elcharge)               },
+			{"epsno",                  P_TYPE(option->epsno)                  },
+			{"elcharge",               P_TYPE(option->elcharge)               },
+			{"gconst",                 P_TYPE(option->gconst)                 },
+			{"verbosity",              P_TYPE(option->verbosity)              },
+			{"fontsize",               P_TYPE(option->fontsize)               },
+			{"dump_xyz",               P_TYPE(option->dump_xyz)               },
+			{"dump_sshot",             P_TYPE(option->dump_sshot)             },
+			{"exec_funct_freq",        P_TYPE(option->exec_funct_freq)        },
+			{"skip_model_vec",         P_TYPE(option->skip_model_vec)         },
+			{"algorithm",              P_TYPE(option->algorithm)              },
+			{"spawn_funct",            P_TYPE(option->spawn_funct)            },
+			{"timestep_funct",         P_TYPE(option->timestep_funct)         },
+			{"file_template",          P_TYPE(option->xyz_temp)               },
+			{"screenshot_template",    P_TYPE(option->sshot_temp)             },
+			{"fontname",               P_TYPE(option->fontname)               },
+			{"lua_expose_obj_array",   P_TYPE(option->lua_expose_obj_array)   },
+			{"input_thread_enable",    P_TYPE(option->input_thread_enable)    },
 			{0},
 		};
-		register_input_parse_opts(opts_map);
+		register_parser_map(opts_map, &total_opt_map);
 	/*	Register parser options */
 	
 	/*	Main function vars	*/
@@ -196,8 +194,9 @@ int main(int argc, char *argv[])
 								"Could not parse configuration from %s!\n",
 								option->filename);
 						return 0;
-					} else
-						parse_lua_simconf_options();
+					} else {
+						parse_lua_simconf_options(total_opt_map);
+					}
 					break;
 				case 'h':
 					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s\n", PACKAGE_STRING,
@@ -259,10 +258,12 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 		data* object = NULL;
 		
+		/* Init elements subsystem */
 		if (init_elements(NULL)) {
 			pprintf(PRI_OK, "Failed to init elements db!\n");
 		}
 		
+		/* Read objects AND initialize physics(we need to know the count) */
 		if (parse_lua_simconf_objects(&object, sent_to_lua)) {
 			pprintf(PRI_ERR, "Could not parse objects from %s!\n",
 					option->filename);
@@ -270,7 +271,6 @@ int main(int argc, char *argv[])
 		}
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
-		pprintf(PRI_ESSENTIAL, "Settings: dt=%f\n", option->dt);
 		pprintf(PRI_ESSENTIAL,
 		"Constants: elcharge=%E C, gconst=%E m^3 kg^-1 s^-2, epsno=%E F m^-1\n", 
 							   option->elcharge, option->gconst, option->epsno);
@@ -315,15 +315,12 @@ int main(int argc, char *argv[])
 		}
 		
 		/* Prevents wasting CPU time. */
-		usleep(50);
+		usleep(100);
 	}
 	
-	free(sent_to_lua);
-	free(atom_prop);
-	free(object);
+	/* free physics */
+	//phys_quit(&object);
 	free(option);
-	//free(phys_stats->t_stats);
-	//free(phys_stats);
 	
 	pprint("Done!\n");
 	

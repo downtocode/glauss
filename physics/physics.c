@@ -48,10 +48,7 @@
 /*	Default threads to use when system != linux.	*/
 #define AUTO_UNAVAIL_THREADS 1
 
-/*	Number of overallocated buffer objects(for just in case) */
-#define OVERALLOC_OBJ 1
-
-/*	Indexing of cores = 1, 2, 3...	*/
+/*	Indexing of threads = 1, 2, 3...	*/
 pthread_mutex_t *halt_objects = NULL;
 pthread_attr_t thread_attribs;
 static struct sched_param parameters;
@@ -62,7 +59,7 @@ struct glob_thread_config *cfg;
 
 /* Previous algorithm */
 static struct list_algorithms *prev_algorithm = NULL;
-static struct parser_opt *prev_algo_opts = NULL;
+static struct parser_map *prev_algo_opts = NULL;
 
 /* Populate structure with names and function pointers */
 phys_algorithm phys_algorithms[] = {
@@ -98,6 +95,10 @@ void phys_list_algo(void)
 
 int phys_init(data** object)
 {
+	if (!object) {
+		pprint_err("Cannot init - received NULL object pointer.\n");
+		return 1;
+	}
 	/* Check if physics algorithm is valid */
 	if (phys_find_algorithm(option->algorithm) == NULL) {
 		pprintf(PRI_ERR,
@@ -108,11 +109,11 @@ int phys_init(data** object)
 	}
 	
 	/* Allocate memory for all the objects */
-	*object = calloc(option->obj+OVERALLOC_OBJ, sizeof(data));
+	*object = calloc(option->obj+1, sizeof(data));
 	
 	if (*object) {
 		pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n",
-				(option->obj+OVERALLOC_OBJ)*sizeof(data), option->obj, *object);
+				(option->obj+1)*sizeof(data), option->obj, *object);
 	} else {
 		return 3; /* Impossible, should never ever happen. */
 	}
@@ -154,7 +155,14 @@ int phys_init(data** object)
 	}
 	
 	phys_stats = calloc(1, sizeof(struct global_statistics));
-	phys_stats->t_stats = calloc(option->threads+1, sizeof(struct thread_statistics));
+	phys_stats->global_stats_map = allocate_parser_map((struct parser_map []){
+			{"total_steps",     P_TYPE(phys_stats->total_steps)     },
+			{"rng_seed",        P_TYPE(phys_stats->rng_seed)        },
+			{"progress",        P_TYPE(phys_stats->progress)        },
+			{"time_running",    P_TYPE(phys_stats->time_running)    },
+			{"time_per_step",   P_TYPE(phys_stats->time_per_step)   },
+			{0},
+		});
 	
 	/* pthreads configuration */
 	parameters.sched_priority = 50;
@@ -166,10 +174,34 @@ int phys_init(data** object)
 	return 0;
 }
 
+int phys_quit(data **object)
+{
+	if (cfg) {
+		pprint_err("Physics threads were probably still running.\n");
+		free(cfg);
+		cfg = NULL;
+		return 1;
+	}
+	free(atom_prop);
+	atom_prop = NULL;
+	free(prev_algo_opts);
+	prev_algo_opts = NULL;
+	free(phys_stats);
+	phys_stats = NULL;
+	if (object) {
+		free(*object);
+		*object = NULL;
+	}
+	return 0;
+}
+
 int phys_ctrl(int status, data** object)
 {
-	if (!option->threads)
+	if (!option->threads) {
+		pprint_err("Threads = 0, nothing to start\n");
 		return 0;
+	}
+	
 	phys_algorithm *algo = phys_find_algorithm(option->algorithm);
 	if (!algo) {
 		pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
@@ -177,9 +209,9 @@ int phys_ctrl(int status, data** object)
 	}
 	/* It's how we define the "null" algorithm */
 	if (algo->thread_location && !algo->thread_destruction)
-		return 1;
+		return PHYS_STATUS_STOPPED;
 	if (algo->thread_location && !algo->thread_configuration)
-		return 1;
+		return PHYS_STATUS_STOPPED;
 	int retval = PHYS_CMD_NOT_FOUND;
 	switch(status) {
 		case PHYS_STATUS:
@@ -205,36 +237,35 @@ int phys_ctrl(int status, data** object)
 				break;
 			}
 			
+			if (!object) {
+				pprint_err("Cannot start - received NULL object pointer.\n");
+			}
+			
 			/* Init RNG */
 			phys_stats->rng_seed = option->rng_seed ? option->rng_seed : phys_gettime_us();
 			srand(phys_stats->rng_seed);
 			
-			/* Reinit stats */
-			phys_stats->t_stats = realloc(phys_stats->t_stats, (option->threads+1)*sizeof(struct thread_statistics));
-			
 			/* Create configuration */
-			cfg = calloc(1, sizeof(struct glob_thread_config));
-			cfg->stats = phys_stats;
-			cfg->obj = *object;
-			cfg->total_syncd_threads = option->threads+1;
+			cfg = ctrl_preinit(phys_stats, *object);
 			cfg->thread_sched_fn = algo->thread_sched_fn;
 			
-			/* Algorithm should give us a structure of options */
+			/* Algorithms should register options here */
 			if (algo->thread_preconfiguration) {
 				cfg->returned_from_preinit = algo->thread_preconfiguration(cfg);
 			}
 			
+			/* Options state machine - only replace upon algorithm change */
 			if (prev_algorithm != algo) {
 				if (prev_algorithm) {
-					unregister_input_parse_opts(prev_algo_opts);
+					unregister_parser_map(prev_algo_opts, &total_opt_map);
 					free(prev_algo_opts);
 				}
-				register_input_parse_opts(cfg->algo_opt_map);
+				register_parser_map(cfg->algo_opt_map, &total_opt_map);
 				/* Read any options set by algorithm */
-				parse_lua_simconf_options();
+				parse_lua_simconf_options(cfg->algo_opt_map);
 			} else {
 				/* Will just update the pointers */
-				update_input_parse_opts(cfg->algo_opt_map);
+				update_parser_map(cfg->algo_opt_map, &total_opt_map);
 			}
 			
 			cfg = ctrl_init(cfg);
@@ -252,11 +283,13 @@ int phys_ctrl(int status, data** object)
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
 			*cfg->pause = true;
 			for (int k = 1; k < option->threads + 1; k++) {
-				if (pthread_create(&cfg->threads[k], &thread_attribs, algo->thread_location, cfg->threads_conf[k])) {
+				if (pthread_create(&cfg->threads[k], &thread_attribs,
+								  algo->thread_location, cfg->threads_conf[k])) {
 					pprintf(PRI_ERR, "Creating thread %i failed!\n", k);
 					return 1;
 				} else {
-					pthread_getcpuclockid(cfg->threads[k], &phys_stats->t_stats[k].clockid);
+					pthread_getcpuclockid(cfg->threads[k],
+										  &phys_stats->t_stats[k].clockid);
 					pprintf(PRI_ESSENTIAL, "%i...", k);
 				}
 			}
@@ -296,7 +329,7 @@ int phys_ctrl(int status, data** object)
 			pprintf(PRI_OK, "\n");
 			/* Stop threads */
 			
-			algo->thread_destruction(cfg->threads_conf);
+			algo->thread_destruction(cfg);
 			
 			ctrl_quit(cfg);
 			halt_objects = NULL;

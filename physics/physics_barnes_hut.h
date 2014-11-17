@@ -27,7 +27,7 @@
 		.thread_configuration = bhut_init,                                     \
 		.thread_location = thread_bhut,                                        \
 		.thread_destruction = bhut_quit,                                       \
-		.thread_sched_fn = bhut_balance_threads                                \
+		.thread_sched_fn = bhut_runtime_fn                                     \
 	}
 
 /* Octree structure */
@@ -49,16 +49,23 @@ typedef struct thread_alloc_tree {
 	struct thread_alloc_tree *parent, *subdiv[8];
 } bh_thread;
 
+struct bh_statistics {
+	unsigned int bh_total_alloc;
+	unsigned int bh_new_alloc;
+	unsigned int bh_new_cleaned;
+	size_t bh_heapsize;
+};
+
 /* Thread configuration struct */
 struct thread_config_bhut {
 	data *obj;
 	struct phys_barnes_hut_octree *root, *octrees[8];
 	unsigned int id, objs_low, objs_high;
-	struct global_statistics *glob_stats;
-	struct thread_statistics *stats;
+	struct bh_statistics *glob_stats;
+	struct bh_statistics *stats;
 	pthread_barrier_t *ctrl, *barrier;
 	pthread_mutex_t *mute, *root_lock;
-	bool *quit;
+	volatile bool *quit;
 };
 
 /* Returns flux of octrees */
@@ -85,11 +92,11 @@ short bh_get_octant(vec3 *pos, bh_octree *octree);
 bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root);
 
 /* Functions */
-void bhut_balance_threads(void **threads);
+void bhut_runtime_fn(void **threads);
 void *bhut_preinit(struct glob_thread_config *cfg);
 void **bhut_init(struct glob_thread_config *cfg);
 void *thread_bhut(void *thread_setts);
 void *thread_bhut_rk4(void *thread_setts);
-void bhut_quit(void **threads);
+void bhut_quit(struct glob_thread_config *cfg);
 
 #endif

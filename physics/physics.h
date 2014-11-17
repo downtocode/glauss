@@ -33,7 +33,7 @@ typedef double vec3 __attribute__ ((vector_size (32)));
 #include <time.h>
 
 /* Status enum */
-enum {
+enum returned_phys_status {
 	PHYS_STATUS,
 	PHYS_STATUS_RUNNING,
 	PHYS_STATUS_STOPPED,
@@ -41,6 +41,7 @@ enum {
 	PHYS_STATUS_ERROR,
 	PHYS_STATUS_INIT, /* Somewhere in between initializaion */
 	PHYS_CMD_NOT_FOUND,
+	PHYS_INVALID_ALGORITHM,
 	PHYS_PAUSESTART,
 	PHYS_START,
 	PHYS_SHUTDOWN,
@@ -60,53 +61,51 @@ struct thread_statistics {
 	/* Shared across all algorithms */
 	clockid_t clockid;
 	
-	/* physics_barnes_hut */
-	unsigned int bh_total_alloc;
-	unsigned int bh_new_alloc;
-	unsigned int bh_new_cleaned;
-	size_t bh_heapsize;
-	
-	/* physics_null */
-	double null_avg_dist, null_max_dist;
+	/* Algorithm statistics */
+	struct parser_map *thread_stats_map;
 };
 
 /* Global statistics structure */
 struct global_statistics {
 	unsigned int rng_seed;
 	long double progress, time_running, time_per_step;
-	long long unsigned int steps;
+	unsigned long long int total_steps;
 	
-	/* physics_barnes_hut */
-	unsigned int bh_total_alloc;
-	unsigned int bh_new_alloc;
-	unsigned int bh_new_cleaned;
-	size_t bh_heapsize;
-	
-	/* physics_null */
-	double null_avg_dist, null_max_dist;
+	/* Algorithm statistics */
+	struct parser_map *global_stats_map;
 	
 	struct thread_statistics *t_stats;
 };
 
 /* Struct sent to threads' init functions */
 struct glob_thread_config {
+	volatile bool *quit, *pause;
+	unsigned int total_syncd_threads;
 	pthread_t *threads, control_thread;
 	pthread_barrier_t *ctrl;
 	pthread_mutex_t *io_halt;
 	struct global_statistics *stats;
-	struct parser_opt *algo_opt_map;
+	struct parser_map *algo_opt_map;
 	data *obj;
-	void **threads_conf; /* Received from thread_config, sent to thread_quit && thread_sched_fn f-ns */
-	void *returned_from_preinit;
-	bool *quit, *pause;
+	
+	/* Thread-set variables */
+	void **threads_conf; /* Returned from thread_config */
+	void *returned_from_preinit; /* Returned from preinit */
+	
+	struct parser_map *algo_global_stats_map;     /* Preinit->ctrl_init */
+	void *algo_global_stats_raw;                  /* Preinit->init */
+	struct parser_map **algo_thread_stats_map;    /* Preinit->ctrl_init */
+	void **algo_thread_stats_raw;                 /* Preinit->init */
 	void (*thread_sched_fn)(void **);
-	unsigned int total_syncd_threads, thread_sched_fn_freq;
+	unsigned int thread_sched_fn_freq;
 };
 
 /*
  * Guidelines:
- * thread_preconfiguration = make adjustments to cfg before it's send to ctrl thread
- * thread_configuration = gets cfg and returns a void**(an array of void*), args of each thread
+ * thread_preconfiguration = make adjustments to cfg before it's send to
+ * ctrl thread and initialize any options here
+ * thread_configuration = gets cfg and returns a void**(an array of void*),
+ * which are the arguments of each thread
  * thread_function = receives a void* from config, run by pthread
  * thread_destruction = called upon stopping
  */
@@ -117,7 +116,7 @@ typedef const struct list_algorithms {
 	void *(*thread_preconfiguration)(struct glob_thread_config *);
 	void **(*thread_configuration)(struct glob_thread_config *);
 	void *(*thread_location)(void *);
-	void (*thread_destruction)(void **);
+	void (*thread_destruction)(struct glob_thread_config *);
 	void (*thread_sched_fn)(void **);
 } phys_algorithm;
 
@@ -125,7 +124,7 @@ typedef void  *(*thread_preconfiguration)(struct glob_thread_config *);
 typedef void **(*thread_configuration)(struct glob_thread_config *);
 typedef void  *(*thread_function)(void *);
 typedef void   (*thread_sched_fn)(void **);
-typedef void   (*thread_destruction)(void **);
+typedef void   (*thread_destruction)(struct glob_thread_config *);
 
 /* Returns struct */
 phys_algorithm *phys_find_algorithm(const char *name);
@@ -147,6 +146,7 @@ void phys_list_algo(void);
 
 /* External functions for control */
 int phys_init(data** object);
+int phys_quit(data **object);
 int phys_ctrl(int status, data** object);
 
 #endif

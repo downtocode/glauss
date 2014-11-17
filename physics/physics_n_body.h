@@ -35,11 +35,11 @@ struct thread_config_nbody {
 	struct global_statistics *glob_stats;
 	struct thread_statistics *stats;
 	pthread_barrier_t *ctrl, *barrier;
-	bool *quit;
+	volatile bool *quit;
 };
 
 void **nbody_init(struct glob_thread_config *cfg);
-void nbody_quit(void **threads);
+void nbody_quit(struct glob_thread_config *cfg);
 void *thread_nbody(void *thread_setts);
 void *thread_nbody_rk4(void *thread_setts);
 

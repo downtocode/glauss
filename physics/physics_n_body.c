@@ -57,9 +57,9 @@ void **nbody_init(struct glob_thread_config *cfg)
 	return (void**)thread_config;
 }
 
-void nbody_quit(void **threads)
+void nbody_quit(struct glob_thread_config *cfg)
 {
-	struct thread_config_nbody **t = (struct thread_config_nbody **)threads;
+	struct thread_config_nbody **t = (struct thread_config_nbody **)cfg->threads_conf;
 	pthread_barrier_destroy(t[1]->barrier);
 	free(t[1]->barrier);
 	for (int k = 0; k < option->threads + 1; k++) {

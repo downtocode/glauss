@@ -20,9 +20,21 @@
 
 #include "physics.h"
 
-/* Schedule thread. Handles any scheduled events(XYZ dumps, screenshots) */
+/* Allocate the cfg structure, as well as the maps needed to push the stats to Lua.
+ * It also allocates the double pointer(**) to the map per thread so you don't have to */
+struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, data *obj);
+
+/* Initialize the cfg. Once this is called, it's all been set in stone and modifying
+ * whatever you want in your own algorithm's init function is not recommended.
+ * The maps for statistics are merged by us into the global statistics structure.
+ * The options map is registered by physics.c, which for convenience keeps them until
+ * an algorithm has been changed. So you could stop, modify a setting and restart. */
 struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg);
+
+/* Free everything. Yes, every map allocated will be freed. You can access the _map
+ * pointers until this point. Afterwards, they are cleaned up. */
 void ctrl_quit(struct glob_thread_config *cfg);
+
 void *thread_ctrl(void *thread_setts);
 
 #endif

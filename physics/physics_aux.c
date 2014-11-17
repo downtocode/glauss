@@ -185,7 +185,8 @@ void phys_shuffle_algorithms(void)
 	option->algorithm = strdup(phys_algorithms[num].name);
 }
 
-unsigned int phys_check_collisions(data *object, unsigned int low, unsigned int high)
+unsigned int phys_check_collisions(data *object,
+								   unsigned int low, unsigned int high)
 {
 	unsigned int collisions = 0;
 	vec3 vecnorm = {0};
@@ -210,7 +211,8 @@ unsigned int phys_check_collisions(data *object, unsigned int low, unsigned int 
 	return collisions;
 }
 
-bool phys_check_coords(vec3 *vec, data *object, unsigned int low, unsigned int high)
+bool phys_check_coords(vec3 *vec, data *object,
+					   unsigned int low, unsigned int high)
 {
 	vec3 vecnorm = {0};
 	double dist = 0.0;
@@ -253,6 +255,18 @@ void rotate_vec(vec3 *vec, vec3 *rot1)
 		res[1] = s*tmp[0] + c*tmp[1];
 	}
 	*vec = res;
+}
+
+bool phys_timer_exec(unsigned int freq, unsigned int *counter)
+{
+	if (!freq) {
+		return false;
+	} else if (freq <= ++(*counter)) {
+		*counter = 0;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 unsigned long long int phys_gettime_us(void)

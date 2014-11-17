@@ -3,10 +3,9 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 1,
-		dt = 0.001,
-		algorithm = "null",
-		rng_seed = os.time(),
+		dt = 0.012322312,
 		algorithm = "barnes-hut",
+		rng_seed = os.time(),
 		bh_ratio = 0.4,
 		--Lifetime of a cell before it's freed.
 		bh_lifetime = 20,
@@ -24,14 +23,12 @@ settings = {
 		--Name of function to read objects from
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
-		exec_funct_freq = 0, --Auto timestep_funct run frequency
+		exec_funct_freq = 50, --Auto timestep_funct run frequency
 		lua_expose_obj_array = true,
 		--Expose object array to the timestep_funct, slight performance decrease
-		reset_stats_freq = 1,
-		--Disable any averaging and reset global stats every cycle
 	},
 	input = {
-		input_thread_enable = true,
+		input_thread_enable = false,
 		--Disable command line interface
 	},
 	visual = {
@@ -63,8 +60,8 @@ function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
 	math.randomseed( settings.physics.rng_seed )
 	
-	cube_size = 1
-	velocity = 10
+	local cube_size = 1
+	local velocity = 10
 	
 	for i = #objects+1, #objects+1+1241, 1 do
 		objects[i] = {
@@ -79,7 +76,7 @@ function spawn_objects(string_from_arg)
 				(math.random()-0.5)*velocity,
 			},
 			charge = 0,
-			mass = 100000,
+			mass = 10000000000,
 			radius = 0.2,
 			atomnumber = math.random(1,10),
 			ignore = false,
@@ -92,14 +89,15 @@ end
 --Consult physics/physics.h for the format of struct thread_statistics and typedef data
 function run_on_timestep(t_stats, obj)
 	print("Current progress:", t_stats.progress)
-	print("Steps = ", t_stats.steps, "Time per step = ", t_stats.time_per_step)
+	print("Steps = ", t_stats.total_steps, "Time per step = ", t_stats.time_per_step)
 	
-	copied_objs = {}
+	local copied_objs = {}
+	local velocity = 10
 	
 	--if t_stats.progress > 1 then raise() end
-	--raise()
+	--raise(2)
 	
-	cube_size = 2
+	local cube_size = 2
 	
 	for i = 1, 55, 1 do
 		copied_objs[i] = obj[i+22]
@@ -108,6 +106,12 @@ function run_on_timestep(t_stats, obj)
 			(math.random()-0.5)*cube_size,
 			(math.random()-0.5)*cube_size,
 			(math.random()-0.5)*cube_size,
+		}
+		
+		copied_objs[i].vel = {
+			(math.random()-0.5)*velocity,
+			(math.random()-0.5)*velocity,
+			(math.random()-0.5)*velocity,
 		}
 		
 	end

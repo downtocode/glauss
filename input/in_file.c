@@ -97,8 +97,9 @@ int in_read_file(data *object, int *i, in_file *file)
 		exit(1);
 	}
 	
-	/* TODO: use something less primitive */
-	while (fgets (str, sizeof(str), inpars)!= NULL) {
+	/* TODO: use something less primitive   */
+	/* TODO: figure out what I mean by that */
+	while (fgets (str, sizeof(str), inpars)) {
 		/* Skip if needed */
 		if (option->skip_model_vec && ++vec_counter < option->skip_model_vec) {
 			continue;

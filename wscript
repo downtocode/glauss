@@ -84,11 +84,11 @@ def configure(ctx):
 	
 def build(ctx):
 	#Generate manual page
-	ctx(name='manpage',
-		source = 'DOCS/physengine.rst',
-		target = 'physengine.1',
-		rule = 'rst2man ${SRC} ${TGT}',
-	)
+	#ctx(name='manpage',
+	#	source = 'DOCS/physengine.rst',
+	#	target = 'physengine.1',
+	#	rule = 'rst2man ${SRC} ${TGT}',
+	#)
 	#Generate included files.
 	ctx.file2string(
 		source = "resources/shaders/object_vs.glsl",

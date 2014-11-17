@@ -38,12 +38,13 @@ static _Thread_local unsigned int allocated_cells = 0;
 static unsigned int bh_octrees_max = 0;
 
 /* Algorithm specific options */
-static double bh_ratio = 0.1;
-static unsigned short bh_tree_limit = 8;
-static unsigned short bh_lifetime = 24;
-static size_t bh_heapsize_max = 336870912;
-static bool bh_single_assign = true;
-static bool bh_random_assign = true;
+static volatile  double          bh_ratio = 0.1;
+static volatile  double          bh_balance_threshold = 0.5;
+static volatile  unsigned short  bh_tree_limit = 8;
+static volatile  unsigned short  bh_lifetime = 24;
+static volatile  size_t          bh_heapsize_max = 336870912;
+static volatile  bool            bh_single_assign = true;
+static volatile  bool            bh_random_assign = true;
 
 /* Used in qsort to assign threads in octrees */
 static int thread_cmp_assigned(const void *a, const void *b)
@@ -114,7 +115,8 @@ static void bh_add_thread(bh_thread *root,
 
 /* Recursive function to assign threads to octrees */
 static void bh_assign_thread(bh_thread *root,
-							 bh_octree *octree, struct thread_config_bhut *thread)
+							 bh_octree *octree,
+							 struct thread_config_bhut *thread)
 {
 	if (!thread || !root) {
 		return;
@@ -166,8 +168,8 @@ static void bh_print_thread_tree(struct thread_config_bhut **thread)
 
 void *bhut_preinit(struct glob_thread_config *cfg)
 {
-	/* Attempt to balance out the load every 100 cycles */
-	cfg->thread_sched_fn_freq = 100;
+	/* Attempt to balance out the load every cycle */
+	cfg->thread_sched_fn_freq = 1;
 	
 #ifdef __linux__
 	/* Use this size for glibc's fastbins. In theory any memory below this size
@@ -176,19 +178,50 @@ void *bhut_preinit(struct glob_thread_config *cfg)
 	mallopt(M_MXFAST, sizeof(bh_octree));
 #endif
 	
-	/* Call parser and read options */
-	struct parser_opt bh_opt_map[] = {
-		{"bh_single_assign", &bh_single_assign, VAR_BOOL, LUA_TBOOLEAN},
-		{"bh_random_assign", &bh_random_assign, VAR_BOOL, LUA_TBOOLEAN},
-		{"bh_ratio", &bh_ratio, VAR_DOUBLE, LUA_TNUMBER},
-		{"bh_lifetime", &bh_lifetime, VAR_USHORT, LUA_TNUMBER},
-		{"bh_heapsize_max", &bh_heapsize_max, VAR_SIZE_T, LUA_TNUMBER},
-		{"bh_tree_limit", &bh_tree_limit, VAR_USHORT, LUA_TNUMBER},
-		{0},
-	};
+	struct bh_statistics *global_stats = calloc(1, sizeof(struct bh_statistics));
+	cfg->algo_global_stats_map = \
+		allocate_parser_map((struct parser_map []){
+			{"bh_total_alloc",   P_TYPE(global_stats->bh_total_alloc)   },
+			{"bh_new_alloc",     P_TYPE(global_stats->bh_new_alloc)     },
+			{"bh_new_cleaned",   P_TYPE(global_stats->bh_new_cleaned)   },
+			{"bh_heapsize",      P_TYPE(global_stats->bh_heapsize)      },
+			{0},
+		});
+	cfg->algo_global_stats_raw = global_stats;
 	
-	/* We manage the free()ing of the opts, no worries mate */
-	cfg->algo_opt_map = allocate_input_parse_opts(bh_opt_map);
+	struct bh_statistics **thread_stats = calloc(option->threads+1, sizeof(struct bh_statistics *));
+	for (int k = 1; k < option->threads + 1; k++) {
+		thread_stats[k] = calloc(1, sizeof(struct bh_statistics));
+		cfg->algo_thread_stats_map[k] = \
+			allocate_parser_map((struct parser_map []){
+				{"bh_total_alloc",   P_TYPE(thread_stats[k]->bh_total_alloc)   },
+				{"bh_new_alloc",     P_TYPE(thread_stats[k]->bh_new_alloc)     },
+				{"bh_new_cleaned",   P_TYPE(thread_stats[k]->bh_new_cleaned)   },
+				{"bh_heapsize",      P_TYPE(thread_stats[k]->bh_heapsize)      },
+				{0},
+			});
+	}
+	cfg->algo_thread_stats_raw = (void **)thread_stats;
+	
+	/* Call parser and read options */
+	cfg->algo_opt_map = \
+		allocate_parser_map((struct parser_map []){
+			/* C can be a beautiful language sometimes too            */
+			{"bh_single_assign",       P_TYPE(bh_single_assign)       },
+			{"bh_random_assign",       P_TYPE(bh_random_assign)       },
+			{"bh_ratio",               P_TYPE(bh_ratio)               },
+			{"bh_lifetime",            P_TYPE(bh_lifetime)            },
+			{"bh_heapsize_max",        P_TYPE(bh_heapsize_max)        },
+			{"bh_tree_limit",          P_TYPE(bh_tree_limit)          },
+			{"bh_balance_threshold",   P_TYPE(bh_balance_threshold)   },
+			{0},
+		});
+	
+	/* We manage the free()ing of every map and global/thread_stats_init */
+	/* Yes absolutely every memory allocation here relating to maps is freed by ctrl_quit. */
+	/* I'll say this again, NO NEED TO FREE ANY MEMORY RELATING TO MAPS! */
+	
+	/* You still need to free the structures hosting the stats however! */
 	
 	return NULL;
 }
@@ -246,8 +279,8 @@ void **bhut_init(struct glob_thread_config *cfg)
 		/* Recursively insert the threads into assignment octree and map it to
 		 * the root octree */
 		bh_assign_thread(thread_tree, root_octree, thread_config[k]);
-		thread_config[k]->glob_stats = cfg->stats;
-		thread_config[k]->stats = &cfg->stats->t_stats[k];
+		thread_config[k]->glob_stats = cfg->algo_global_stats_raw;
+		thread_config[k]->stats = cfg->algo_thread_stats_raw[k];
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->barrier = barrier;
@@ -259,7 +292,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
 		if (k == option->threads) {
 			/*	Takes care of rounding problems with odd numbers.	*/
-			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
+			thread_config[k]->objs_high+=option->obj-thread_config[k]->objs_high;
 		}
 	}
 	
@@ -277,18 +310,15 @@ void **bhut_init(struct glob_thread_config *cfg)
 	/* Free assignment octree since all's been done with */
 	bh_decimate_assignment_tree(thread_tree);
 	
-	/* Turn on BH specific stats */
-	option->stats_bh = true;
-	
 	return (void**)thread_config;
 }
 
 /* Deinit function */
-void bhut_quit(void **threads) {
-	struct thread_config_bhut **t = (struct thread_config_bhut **)threads;
+void bhut_quit(struct glob_thread_config *cfg) {
+	struct thread_config_bhut **t = (struct thread_config_bhut **)cfg->threads_conf;
 	
-	/* Stats */
-	option->stats_bh = false;
+	free(cfg->algo_thread_stats_raw);
+	free(cfg->algo_global_stats_raw);
 	
 	/* Root mutex */
 	pthread_mutex_destroy(t[1]->root_lock);
@@ -313,9 +343,14 @@ void bhut_quit(void **threads) {
 	return;
 }
 
-void bhut_balance_threads(void **threads)
+void bhut_runtime_fn(void **threads)
 {
 	struct thread_config_bhut **t = (struct thread_config_bhut **)threads;
+	
+	t[1]->glob_stats->bh_total_alloc  = 0;
+	t[1]->glob_stats->bh_new_alloc    = 0;
+	t[1]->glob_stats->bh_new_cleaned  = 0;
+	t[1]->glob_stats->bh_heapsize     = 0;
 	
 	if (option->threads == 1)
 		return;
@@ -345,23 +380,21 @@ void bhut_balance_threads(void **threads)
 		}
 	}
 	
-	printf("T1 - %i, T2 - %i\n", alloc_oct[1], alloc_oct[2]);
-	printf("Ind 1 = %i ind 2 = %i\n", t_index_max, t_index_min);
+	double bal_ratio = fabs(((double)alloc_oct[t_index_min]/alloc_oct[t_index_max])-1);
 	
-	if (t_index_min == t_index_max)
+	if (bal_ratio < bh_balance_threshold && count_oct[t_index_min] < 8)
 		return;
 	
-	if (count_oct[t_index_max] < 8 && count_oct[t_index_min] < 8 ) {
-		for (int i = 0; i < 8; i++) {
-			if (t[t_index_max]->octrees[i]) {
-				for (int j = 0; j < 8; j++) {
-					if (!t[t_index_min]->octrees[j]) {
-						bh_octree *temp = t[t_index_min]->octrees[j];
-						t[t_index_min]->octrees[j] = t[t_index_max]->octrees[i];
-						t[t_index_max]->octrees[i] = temp;
-						printf("Octree swapped: %i->%i\n", t_index_min, t_index_max);
-						return;
-					}
+	for (int i = 0; i < 8; i++) {
+		if (t[t_index_max]->octrees[i]) {
+			for (int j = 0; j < 8; j++) {
+				if (!t[t_index_min]->octrees[j]) {
+					bh_octree *temp = t[t_index_min]->octrees[j];
+					t[t_index_min]->octrees[j] = t[t_index_max]->octrees[i];
+					t[t_index_max]->octrees[i] = temp;
+					pprint("Ratio: %lf => Swap 1 octree: %i->%i\n", bal_ratio,
+						   t_index_min, t_index_max);
+					return;
 				}
 			}
 		}
@@ -386,7 +419,7 @@ double bh_init_max_displacement(data *object, bh_octree *octree)
 void bh_init_center_of_mass(data *object, bh_octree *octree)
 {
 	vec3 center = (vec3){0,0,0};
-	for (int i = 1; i < option->obj + 1; i++) {
+	for (unsigned int i = 1; i < option->obj + 1; i++) {
 		center = (center + object[i].pos)/2;
 	}
 	octree->origin = octree->cellsum.pos = center;
@@ -564,7 +597,7 @@ bh_octree *bh_init_tree(void)
 }
 
 /* Check whether the object is in the target octree. Returns 1 in case it is. */
-bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
+inline bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
 {
 	if (!root)
 		return 0;
@@ -599,7 +632,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 	}
 }
 
-unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
+inline unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 {
 	unsigned int prev_allocated_cells = allocated_cells;
 	if (!octree || !root || !object)
@@ -613,7 +646,8 @@ unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 }
 
 /* Will sync the centre of mass and origin of all related octrees root-target */
-static void bh_cascade_mass(bh_octree *target, bh_octree *root, pthread_mutex_t *root_lock)
+static void bh_cascade_mass(bh_octree *target, bh_octree *root,
+							pthread_mutex_t *root_lock)
 {
 	/* Will not update target */
 	if (!root || !target)
@@ -624,11 +658,13 @@ static void bh_cascade_mass(bh_octree *target, bh_octree *root, pthread_mutex_t 
 		root->cellsum.pos = (root->cellsum.pos+target->cellsum.pos)/2;
 		root->cellsum.mass += target->cellsum.mass;
 	pthread_mutex_unlock(root_lock);
-	bh_cascade_mass(target, root->cells[bh_get_octant(&target->origin, root)], root_lock);
+	bh_cascade_mass(target, root->cells[bh_get_octant(&target->origin, root)],
+					root_lock);
 }
 
 /* Sets the root's position and dimensions, resets mass */
-static void bh_atomic_update_root(double dimension, bh_octree *root, pthread_mutex_t *root_lock)
+static void bh_atomic_update_root(double dimension, bh_octree *root,
+								  pthread_mutex_t *root_lock)
 {
 	if (!root)
 		return;
@@ -640,7 +676,8 @@ static void bh_atomic_update_root(double dimension, bh_octree *root, pthread_mut
 }
 
 /* Sets the origins and dimensions of any thread octrees and in between root. */
-static void bh_cascade_position(bh_octree *target, bh_octree *root, pthread_mutex_t *root_lock)
+static void bh_cascade_position(bh_octree *target, bh_octree *root,
+								pthread_mutex_t *root_lock)
 {
 	/* Will update the target as well */
 	if (!root || !target)
@@ -716,7 +753,7 @@ void *thread_bhut(void *thread_setts)
 			bh_cascade_position(t->octrees[s], t->root, t->root_lock);
 		}
 		
-		/* Update statistics */
+		/* Update stats */
 		t->stats->bh_total_alloc  =  allocated_cells;
 		t->stats->bh_new_alloc    =  new_alloc;
 		t->stats->bh_new_cleaned  =  new_cleaned;
@@ -726,7 +763,7 @@ void *thread_bhut(void *thread_setts)
 			t->glob_stats->bh_total_alloc  +=  allocated_cells;
 			t->glob_stats->bh_new_alloc    +=  new_alloc;
 			t->glob_stats->bh_new_cleaned  +=  new_cleaned;
-			t->glob_stats->bh_heapsize     +=  t->stats->bh_heapsize;
+			t->glob_stats->bh_heapsize     +=  sizeof(bh_octree)*allocated_cells;
 		pthread_mutex_unlock(t->mute);
 	}
 	return 0;
