@@ -127,13 +127,13 @@ void *thread_ctrl(void *thread_setts)
 	while (!*t->quit) {
 		/* Pause all threads by stalling unlocking t->ctrl */
 		while (*t->pause) {
-			usleep(25);
+			phys_sleep_msec(25);
 		}
 		
 		/* Check if someone else needs to have IO */
 		while (pthread_mutex_trylock(t->io_halt)) {
 			*t->pause = true;
-			usleep(25);
+			phys_sleep_msec(25);
 			*t->pause = false;
 		}
 		

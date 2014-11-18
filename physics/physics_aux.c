@@ -43,7 +43,7 @@ static const char elements_internal[] =
 static void conf_lua_get_color(lua_State *L, float color[])
 {
 	/* Can be used for N dim tables, change 3 to N */
-	for(int i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++) {
 		lua_pushinteger(L, i+1);
 		lua_gettable(L, -2);
 		color[i] = lua_tonumber(L, -1);
@@ -56,25 +56,25 @@ static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer,
 									struct lua_parser_state *parser_state)
 {
 	lua_pushnil(L);
-	while(lua_next(L, -2) != 0) {
-		if(lua_istable(L, -1)) {
-			if(lua_type(L, -2) == LUA_TSTRING) {
-				if(!strcmp("color", lua_tostring(L, -2))) {
+	while (lua_next(L, -2) != 0) {
+		if (lua_istable(L, -1)) {
+			if (lua_type(L, -2) == LUA_TSTRING) {
+				if (!strcmp("color", lua_tostring(L, -2))) {
 					conf_lua_get_color(L, buffer->color);
 					continue;
 				}
 			}
-			if(parser_state->nullswitch) {
+			if (parser_state->nullswitch) {
 				buffer->number = parser_state->i;
 				atom_prop[parser_state->i++] = *buffer;
 				buffer = &(struct atomic_cont){0};
 			} else parser_state->nullswitch = 1;
 			elements_traverse_table(L, buffer, parser_state);
-		} else if(lua_isnumber(L, -1)) {
+		} else if (lua_isnumber(L, -1)) {
 			if(!strcmp("mass", lua_tostring(L, -2)))
 				buffer->mass = lua_tonumber(L, -1);
-		} else if(lua_isstring(L, -1)) {
-			if(!strcmp("name", lua_tostring(L, -2))) 
+		} else if (lua_isstring(L, -1)) {
+			if (!strcmp("name", lua_tostring(L, -2))) 
 				buffer->name = strdup(lua_tostring(L, -1));
 		}
 		lua_pop(L, 1);
@@ -89,7 +89,7 @@ int init_elements(const char *filepath)
 	luaL_openlibs(L);
 	
 	/* Load file */
-	if(filepath) {
+	if (filepath) {
 		if(luaL_loadfile(L, "./resources/elements.lua"))
 			pprintf(PRI_ERR, "Opening Lua file %s failed! Using internal DB.\n",
 					filepath);
@@ -125,9 +125,10 @@ int init_elements(const char *filepath)
 
 unsigned short int return_atom_num(const char *name)
 {
-	if(!name || name[0] == '\0') return 0;
-	for(int i=1; i<121; i++) {
-		if(!strncasecmp(name, atom_prop[i].name, strlen(atom_prop[i].name))) {
+	if (!name || name[0] == '\0')
+		return 0;
+	for (int i=1; i<121; i++) {
+		if (!strncasecmp(name, atom_prop[i].name, strlen(atom_prop[i].name))) {
 			return i;
 		}
 	}
@@ -136,19 +137,21 @@ unsigned short int return_atom_num(const char *name)
 
 const char *return_atom_str(unsigned int num)
 {
-	if(num > 120) return NULL;
-	else return atom_prop[num].name;
+	if (num > 120)
+		return NULL;
+	else
+		return atom_prop[num].name;
 }
 
 /* Function to input numbers in an array and later extract a single number out.
  * Used in selecting objects. */
 int getnumber(struct numbers_selection *numbers, int currentdigit, int status)
 {
-	if(status == NUM_ANOTHER) {
+	if (status == NUM_ANOTHER) {
 		numbers->digits[numbers->final_digit] = currentdigit;
 		numbers->final_digit+=1;
 		return 0;
-	} else if(status == NUM_GIVEME) {
+	} else if (status == NUM_GIVEME) {
 		unsigned int result = 0;
 		for(int i=0; i < numbers->final_digit; i++) {
 			result*=10;
@@ -156,7 +159,7 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, int status)
 		}
 		numbers->final_digit = 0;
 		return result;
-	} else if(status == NUM_REMOVE) {
+	} else if (status == NUM_REMOVE) {
 		numbers->final_digit-=1;
 		return 0;
 	}
@@ -166,19 +169,20 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, int status)
 /* Change algorithms */
 void phys_shuffle_algorithms(void)
 {
-	if(phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
+	if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_RUNNING) {
 		pprintf(PRI_WARN, "Physics needs to be stopped before changing modes.\n");
 		return;
 	}
 	/* Shuffle algorithms */
 	int num;
 	/* Get number of algorithm */
-	for(num = 0; phys_algorithms[num].name; num++) {
-		if(!strcmp(option->algorithm, phys_algorithms[num].name))
+	for (num = 0; phys_algorithms[num].name; num++) {
+		if (!strcmp(option->algorithm, phys_algorithms[num].name))
 			break;
 	}
 	/* Select next and check if we're on the last */
-	if(!phys_algorithms[++num].name) num = 0;
+	if (!phys_algorithms[++num].name)
+		num = 0;
 	pprintf(PRI_HIGH, "Changing algorithm to \"%s\".\n",
 			phys_algorithms[num].name);
 	free(option->algorithm);
@@ -191,18 +195,19 @@ unsigned int phys_check_collisions(data *object,
 	unsigned int collisions = 0;
 	vec3 vecnorm = {0};
 	double dist = 0.0;
-	for(unsigned int i = low; i < high; i++) {
-		if(!object[i].mass) {
+	for (unsigned int i = low; i < high; i++) {
+		if (!object[i].mass) {
 			pprint_err("Object %i has no mass!\n", i);
 			collisions++;
 		}
-		for(unsigned int j = low; j < high; j++) {
-			if(i==j) continue;
+		for (unsigned int j = low; j < high; j++) {
+			if (i==j)
+				continue;
 			vecnorm = object[j].pos - object[i].pos;
 			dist = sqrt(vecnorm[0]*vecnorm[0] +\
 						vecnorm[1]*vecnorm[1] +\
 						vecnorm[2]*vecnorm[2]);
-			if(dist == 0.0) {
+			if (dist == 0.0) {
 				collisions+=2;
 				pprint_err("Objects %i and %i share coordinates!\n", i, j);
 			}
@@ -216,13 +221,13 @@ bool phys_check_coords(vec3 *vec, data *object,
 {
 	vec3 vecnorm = {0};
 	double dist = 0.0;
-	for(unsigned int i = low; i < high; i++) {
-		for(unsigned int j = low; j < high; j++) {
+	for (unsigned int i = low; i < high; i++) {
+		for (unsigned int j = low; j < high; j++) {
 			vecnorm = object[j].pos - *vec;
 			dist = sqrt(vecnorm[0]*vecnorm[0] +\
 						vecnorm[1]*vecnorm[1] +\
 						vecnorm[2]*vecnorm[2]);
-			if(dist == 0.0) {
+			if (dist == 0.0) {
 				return 1;
 			}
 		}
@@ -234,20 +239,20 @@ bool phys_check_coords(vec3 *vec, data *object,
 void rotate_vec(vec3 *vec, vec3 *rot1)
 {
 	vec3 res = *vec, rot = *rot1;
-	if(rot[0]) {
+	if (rot[0]) {
 		double c = cos(rot[0]);
 		double s = sin(rot[0]);
 		res[1] = c*(*vec)[1] - s*(*vec)[2];
 		res[2] = s*(*vec)[1] + c*(*vec)[2];
 	}
-	if(rot[1]) {
+	if (rot[1]) {
 		vec3 tmp = res;
 		double c = cos(rot[1]);
 		double s = sin(rot[1]);
 		res[0] = c*tmp[0] + s*tmp[2];
 		res[2] = c*tmp[2] - s*tmp[0];
 	}
-	if(rot[2]) {
+	if (rot[2]) {
 		vec3 tmp = res;
 		double c = cos(rot[2]);
 		double s = sin(rot[2]);
@@ -274,9 +279,9 @@ unsigned long long int phys_gettime_us(void)
 	#if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0 && defined(CLOCK_MONOTONIC)
 		struct timespec ts;
 	#if defined(CLOCK_MONOTONIC_RAW)
-		if(clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+		if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
 	#else
-		if(clock_gettime(CLOCK_MONOTONIC, &ts))
+		if (clock_gettime(CLOCK_MONOTONIC, &ts))
 	#endif
 			abort();
 		return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
@@ -285,4 +290,19 @@ unsigned long long int phys_gettime_us(void)
 		gettimeofday(&tv,NULL);
 		return tv.tv_sec * 1000000LL + tv.tv_usec;
 	#endif
+}
+
+int phys_sleep_msec(long unsigned int time)
+{
+	struct timespec dur = {0};
+	
+	/* nanosleep can't tolerate ts_nsec larger than 1 second */
+	while (time*1000000 > 999999999) {
+		dur.tv_sec += 1;
+		time -= 1000;
+	}
+	
+	dur.tv_nsec = time*1000000;
+	
+	return nanosleep(&dur, NULL);
 }

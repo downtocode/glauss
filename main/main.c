@@ -315,10 +315,8 @@ int main(int argc, char *argv[])
 		}
 		
 		/* Prevents wasting CPU time. */
-		usleep(100);
+		phys_sleep_msec(37);
 	}
-	
-	usleep(1000);
 	
 	/* free physics */
 	phys_quit(&object);
