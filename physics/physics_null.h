@@ -38,6 +38,7 @@
 		.thread_configuration = null_init,                                     \
 		.thread_location = thread_stats,                                       \
 		.thread_destruction = null_quit,                                       \
+		.thread_sched_fn = stats_runtime_fn,                                   \
 	}
 
 struct null_statistics {
@@ -54,11 +55,15 @@ struct thread_config_null {
 	volatile bool *quit;
 };
 
-void *null_preinit(struct glob_thread_config *cfg);
-void *stats_preinit(struct glob_thread_config *cfg);
 void **null_init(struct glob_thread_config *cfg);
-void null_quit(struct glob_thread_config *cfg);
-void *thread_stats(void *thread_setts);
+
+void *null_preinit(struct glob_thread_config *cfg);
 void *thread_null(void *thread_setts);
+
+void *stats_preinit(struct glob_thread_config *cfg);
+void stats_runtime_fn(void **threads);
+void *thread_stats(void *thread_setts);
+
+void null_quit(struct glob_thread_config *cfg);
 
 #endif

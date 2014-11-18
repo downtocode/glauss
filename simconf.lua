@@ -63,7 +63,7 @@ function spawn_objects(string_from_arg)
 	local cube_size = 1
 	local velocity = 10
 	
-	for i = #objects+1, #objects+1+1241, 1 do
+	for i = #objects+1, #objects+1+1562, 1 do
 		objects[i] = {
 			pos = {
 				(math.random()-0.5)*cube_size,
@@ -83,7 +83,7 @@ function spawn_objects(string_from_arg)
 		}
 	end
 	
-	return objects, #objects
+	return objects
 end
 
 --Consult physics/physics.h for the format of struct thread_statistics and typedef data
@@ -94,13 +94,12 @@ function run_on_timestep(t_stats, obj)
 	local copied_objs = {}
 	local velocity = 10
 	
-	--if t_stats.progress > 1 then raise() end
-	--raise(2)
+	--if t_stats.progress > 0.2 then phys_pause() end
 	
 	local cube_size = 2
 	
-	for i = 1, 55, 1 do
-		copied_objs[i] = obj[i+22]
+	for i = 4, 16, 1 do
+		copied_objs[i] = obj[i]
 		
 		copied_objs[i].pos = {
 			(math.random()-0.5)*cube_size,
@@ -116,5 +115,5 @@ function run_on_timestep(t_stats, obj)
 		
 	end
 	
-	return nil
+	return copied_objs
 end

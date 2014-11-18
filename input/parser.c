@@ -215,25 +215,25 @@ void parser_push_generic(lua_State *L, struct parser_map *var)
 			lua_pushnumber(L, *(long double *)var->val);
 			break;
 		case VAR_SHORT:
-			lua_pushnumber(L, *(short *)var->val);
+			lua_pushinteger(L, *(short *)var->val);
 			break;
 		case VAR_INT:
-			lua_pushnumber(L, *(int *)var->val);
+			lua_pushinteger(L, *(int *)var->val);
 			break;
 		case VAR_LONGINT:
-			lua_pushnumber(L, *(long *)var->val);
+			lua_pushinteger(L, *(long *)var->val);
 			break;
 		case VAR_USHORT:
-			lua_pushnumber(L, *(unsigned short *)var->val);
+			lua_pushinteger(L, *(unsigned short *)var->val);
 			break;
 		case VAR_UINT:
-			lua_pushnumber(L, *(unsigned *)var->val);
+			lua_pushinteger(L, *(unsigned *)var->val);
 			break;
 		case VAR_LONGUINT:
-			lua_pushnumber(L, *(long unsigned *)var->val);
+			lua_pushinteger(L, *(long unsigned *)var->val);
 			break;
 		case VAR_LONGLONGUINT:
-			lua_pushnumber(L, *(long long unsigned int *) var->val);
+			lua_pushinteger(L, *(long long unsigned int *) var->val);
 			break;
 		case VAR_STRING:
 			lua_pushstring(L, *(char **)var->val);
@@ -263,25 +263,25 @@ void parser_read_generic(lua_State *L, struct parser_map *var)
 			*(long double *)var->val = lua_tonumber(L, -1);
 			break;
 		case VAR_SHORT:
-			*(short *)var->val = lua_tonumber(L, -1);
+			*(short *)var->val = lua_tointeger(L, -1);
 			break;
 		case VAR_INT:
-			*(int *)var->val = lua_tonumber(L, -1);
+			*(int *)var->val = lua_tointeger(L, -1);
 			break;
 		case VAR_LONGINT:
-			*(long *)var->val = lua_tonumber(L, -1);
+			*(long *)var->val = lua_tointeger(L, -1);
 			break;
 		case VAR_USHORT:
-			*(unsigned short *)var->val = lua_tonumber(L, -1);
+			*(unsigned short *)var->val = lua_tointeger(L, -1);
 			break;
 		case VAR_UINT:
-			*(unsigned *)var->val = lua_tonumber(L, -1);
+			*(unsigned *)var->val = lua_tointeger(L, -1);
 			break;
 		case VAR_LONGUINT:
-			*(long unsigned *)var->val = lua_tonumber(L, -1);
+			*(long unsigned *)var->val = lua_tointeger(L, -1);
 			break;
 		case VAR_LONGLONGUINT:
-			*(long long unsigned int *)var->val = lua_tonumber(L, -1);
+			*(long long unsigned int *)var->val = lua_tointeger(L, -1);
 			break;
 		case VAR_STRING:
 			free(*(char **)var->val);
@@ -387,12 +387,12 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 		if(!strcmp("radius", lua_tostring(L, -2)))
 			parser_state->buffer.radius = lua_tonumber(L, -1);
 		if(!strcmp("atomnumber", lua_tostring(L, -2)))
-			parser_state->buffer.atomnumber = lua_tonumber(L, -1);
+			parser_state->buffer.atomnumber = lua_tointeger(L, -1);
 		if(!strcmp("scale", lua_tostring(L, -2)))
 			parser_state->file.scale = lua_tonumber(L, -1);
 		if(parser_state->read_id) {
 			if(!strcmp("id", lua_tostring(L, -2))) {
-				parser_state->buffer.id = lua_tonumber(L, -1);
+				parser_state->buffer.id = lua_tointeger(L, -1);
 			}
 		}
 	} else if(lua_isstring(L, -1)) {
@@ -460,10 +460,17 @@ static int input_lua_raise(lua_State *L)
 	return 0;
 }
 
+static int input_lua_stop_physics(lua_State *L)
+{
+	phys_ctrl(PHYS_PAUSESTART, NULL);
+	return 0;
+}
+
 static int parse_lua_register_fn(lua_State *L)
 {
 	/* Register own function to quit */
 	lua_register(L, "raise", input_lua_raise);
+	lua_register(L, "phys_pause", input_lua_stop_physics);
 	return 0;
 }
 
@@ -700,17 +707,11 @@ int parse_lua_simconf_objects(data **object, const char* sent_to_lua)
 	lua_getglobal(L, option->spawn_funct);
 	/* Can send arguments here, currently unused. */
 	lua_pushstring(L, sent_to_lua);
-	/* The second returned value is the total number of objects */
-	lua_call(L, 1, 2);
-	/* Lua lies when reporting how many objects there are. Either that or us. */
-	if(lua_isnumber(L, -1)) {
-		option->obj = lua_tonumber(L, -1)-1;
-	} else {
-		pprint_err("Lua f-n \"%s\" did not return an integer to tell us the number of objects.\n",
-				   option->spawn_funct);
-		raise(SIGINT);
-	}
-	lua_pop(L, 1);
+	
+	lua_call(L, 1, 1);
+	
+	/* Lua table "arrays" are indexed from 1, so offset that */
+	option->obj = luaL_len(L, -1)-1;
 	
 	if(!lua_istable(L, -1)) {
 		pprint_err("Lua f-n \"%s\" did not return a table of objects.\n",
@@ -798,9 +799,9 @@ static void parser_push_object_array(lua_State *L, data *obj)
 		lua_setfield(L, -2, "charge");
 		lua_pushnumber(L, obj[i].radius);
 		lua_setfield(L, -2, "radius");
-		lua_pushnumber(L, obj[i].atomnumber);
+		lua_pushinteger(L, obj[i].atomnumber);
 		lua_setfield(L, -2, "atomnumber");
-		lua_pushnumber(L, obj[i].id);
+		lua_pushinteger(L, obj[i].id);
 		lua_setfield(L, -2, "id");
 		lua_pushboolean(L, obj[i].ignore);
 		lua_setfield(L, -2, "ignore");
@@ -841,7 +842,7 @@ unsigned int lua_exec_funct(const char *funct, data *object,
 		.object = object,
 	};
 	
-	if (!lua_isnil(L, -2)) {
+	if (!lua_isnil(L, -1) && !lua_isnil(L, -2)) {
 		if (lua_istable(L, -2)) {
 			conf_traverse_table(L, &conf_lua_parse_objs, parser_state);
 			pprint_verb("Updated objs = %i\n", parser_state->i);

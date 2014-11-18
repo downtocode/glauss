@@ -347,10 +347,22 @@ void bhut_runtime_fn(void **threads)
 {
 	struct thread_config_bhut **t = (struct thread_config_bhut **)threads;
 	
-	t[0]->glob_stats->bh_total_alloc  = 0;
-	t[0]->glob_stats->bh_new_alloc    = 0;
-	t[0]->glob_stats->bh_new_cleaned  = 0;
-	t[0]->glob_stats->bh_heapsize     = 0;
+	unsigned int bh_total_alloc = 0;
+	unsigned int bh_new_alloc = 0;
+	unsigned int bh_new_cleaned = 0;
+	size_t bh_heapsize = 0;
+	
+	for (int k = 0; k < option->threads; k++) {
+		bh_total_alloc += t[k]->stats->bh_total_alloc;
+		bh_new_alloc += t[k]->stats->bh_new_alloc;
+		bh_new_cleaned += t[k]->stats->bh_new_cleaned;
+		bh_heapsize += t[k]->stats->bh_heapsize;
+	}
+	
+	t[0]->glob_stats->bh_total_alloc  = bh_total_alloc;
+	t[0]->glob_stats->bh_new_alloc    = bh_new_alloc;
+	t[0]->glob_stats->bh_new_cleaned  = bh_new_cleaned;
+	t[0]->glob_stats->bh_heapsize     = bh_heapsize;
 	
 	if (option->threads == 1)
 		return;
@@ -764,13 +776,6 @@ void *thread_bhut(void *thread_setts)
 		t->stats->bh_new_alloc    =  new_alloc;
 		t->stats->bh_new_cleaned  =  new_cleaned;
 		t->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
-		
-		pthread_mutex_lock(t->mute);
-			t->glob_stats->bh_total_alloc  +=  allocated_cells;
-			t->glob_stats->bh_new_alloc    +=  new_alloc;
-			t->glob_stats->bh_new_cleaned  +=  new_cleaned;
-			t->glob_stats->bh_heapsize     +=  sizeof(bh_octree)*allocated_cells;
-		pthread_mutex_unlock(t->mute);
 	}
 	return 0;
 }

@@ -35,6 +35,9 @@ void *null_preinit(struct glob_thread_config *cfg)
 
 void *stats_preinit(struct glob_thread_config *cfg)
 {
+	/* Attempt to balance out the load every cycle */
+	cfg->thread_sched_fn_freq = 1;
+	
 	struct null_statistics *global_stats = calloc(1, sizeof(struct null_statistics));
 	cfg->algo_global_stats_map = allocate_parser_map((struct parser_map []){
 		{"null_avg_dist",   P_TYPE(global_stats->null_avg_dist)   },
@@ -112,6 +115,21 @@ void null_quit(struct glob_thread_config *cfg)
 	return;
 }
 
+void stats_runtime_fn(void **threads)
+{
+	struct thread_config_null **t = (struct thread_config_null **)threads;
+	
+	double null_avg_dist = 0, null_max_dist = 0;
+	
+	for (int k = 0; k < option->threads; k++) {
+		null_avg_dist += t[k]->stats->null_avg_dist+null_avg_dist;
+		null_max_dist = fmax(t[k]->stats->null_max_dist, null_max_dist);
+	}
+	
+	t[0]->glob_stats->null_avg_dist  = null_avg_dist/option->threads;
+	t[0]->glob_stats->null_max_dist  = null_max_dist;
+}
+
 void *thread_stats(void *thread_setts)
 {
 	struct thread_config_null *t = thread_setts;
@@ -136,12 +154,6 @@ void *thread_stats(void *thread_setts)
 		t->stats->null_max_dist = max_dist;
 		
 		pthread_barrier_wait(t->ctrl);
-		
-		/* Racy as hell */
-		pthread_mutex_lock(t->mute);
-			t->glob_stats->null_avg_dist = (avg_dist+t->glob_stats->null_avg_dist)/2;
-			t->glob_stats->null_max_dist = fmax(t->glob_stats->null_max_dist, max_dist);
-		pthread_mutex_unlock(t->mute);
 	}
 	return 0;
 }

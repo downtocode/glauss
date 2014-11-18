@@ -127,13 +127,13 @@ void *thread_ctrl(void *thread_setts)
 	while (!*t->quit) {
 		/* Pause all threads by stalling unlocking t->ctrl */
 		while (*t->pause) {
-			phys_sleep_msec(25);
+			phys_sleep_msec(50);
 		}
 		
 		/* Check if someone else needs to have IO */
 		while (pthread_mutex_trylock(t->io_halt)) {
 			*t->pause = true;
-			phys_sleep_msec(25);
+			phys_sleep_msec(50);
 			*t->pause = false;
 		}
 		
@@ -156,7 +156,7 @@ void *thread_ctrl(void *thread_setts)
 		
 		/* Lua function execution */
 		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
-			//lua_exec_funct(option->timestep_funct, t->obj, t->stats);
+			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
 		}
 		
 		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,

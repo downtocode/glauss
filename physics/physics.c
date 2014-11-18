@@ -108,7 +108,7 @@ int phys_init(data** object)
 	}
 	
 	/* Allocate memory for all the objects */
-	*object = calloc(option->obj, sizeof(data));
+	*object = calloc(option->obj+1, sizeof(data));
 	
 	if (*object) {
 		pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n",

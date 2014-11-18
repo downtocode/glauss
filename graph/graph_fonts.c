@@ -85,7 +85,7 @@ const char *graph_init_fontconfig(void)
 	/* SHOW US YOUR POWER, INVOKE ANCIENT KNOWLEDGE, GIVE US THE LOCATION! */
 	FcPatternGet(fc_font_chosen, "file", 0, &fc_value);
 	/* Fontgod has given us a sacred filename, hail FONTCONFIG! */
-	pprintf(PRI_VERYLOW, "[FC] Font path received = %s\n", (char *)fc_value.u.s);
+	pprintf(PRI_SPAM, "[FC] Font path received = %s\n", (char *)fc_value.u.s);
 	return (const char *)fc_value.u.s;
 }
 
@@ -151,7 +151,7 @@ unsigned int graph_init_freetype(const char *fontname)
 		x += g->bitmap.width;
 	}
 	
-	pprintf(PRI_VERYLOW, "[FT] Created a %i by %i atlas (%3.3lf KiB)\n",
+	pprintf(PRI_SPAM, "[FT] Created a %i by %i atlas (%3.3lf KiB)\n",
 		   atlas_w, atlas_h, atlas_w*atlas_h/1024.0);
 	
 	return text_program;

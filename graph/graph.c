@@ -329,8 +329,8 @@ void graph_draw_scene(graph_window *win)
 		
 		unsigned int count = 0;
 		for (struct parser_map *i = phys_stats->global_stats_map; i->name; i++) {
-			char res[50];
-			parser_get_value_str(*i, res, 50);
+			char res[15];
+			parser_get_value_str(*i, res, 14);
 			graph_display_text(i->name, STATSx, STATSy-((float)count/18)-.10, STATSs, COL_ORANGE);
 			graph_display_text(res, STATSx+.25, STATSy-((float)count++/18)-.10, STATSs, COL_YELLOW);
 		}
@@ -393,7 +393,7 @@ void graph_init(void)
 	glGenBuffers(1, &pointvbo);
 	glGenBuffers(1, &textvbo);
 	glClearColor(BACKr, BACKg, BACKb, BACKa);
-	pprintf(PRI_VERYLOW, "[GL] OpenGL Version %s\n", glGetString(GL_VERSION));
+	pprintf(PRI_SPAM, "[GL] OpenGL Version %s\n", glGetString(GL_VERSION));
 	
 	trn_matrix = glGetUniformLocation(object_shader, "translMat");
 	rot_matrix = glGetUniformLocation(object_shader, "rotationMat");
@@ -403,7 +403,7 @@ void graph_init(void)
 
 int graph_sshot(long double arg)
 {
-	#if HAS_PNG
+#if HAS_PNG
 	/* Open file */
 	char filename[32];
 	int w = option->width, h = option->height;
@@ -461,6 +461,6 @@ int graph_sshot(long double arg)
 	
 	pprintf(PRI_MEDIUM, "Wrote screenshot %s\n", filename);
 	return 0;
-	#endif
+#endif
 	return 1;
 }
