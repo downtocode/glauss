@@ -103,7 +103,7 @@ void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element)
 	glEnableVertexAttribArray(objattr_pos);
 	glEnableVertexAttribArray(objattr_color);
 	
-	for (int i = 1; i < option->obj+1; i++) {
+	for (unsigned int i = 0; i < option->obj; i++) {
 		if (element) {
 			if (object[i].atomnumber != element->number) {
 				continue;

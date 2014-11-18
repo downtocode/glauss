@@ -4,7 +4,7 @@ settings = {
 	physics = {
 		threads = 1,
 		dt = 0.012322312,
-		algorithm = "barnes-hut",
+		--algorithm = "barnes-hut",
 		rng_seed = os.time(),
 		bh_ratio = 0.4,
 		--Lifetime of a cell before it's freed.
@@ -28,7 +28,7 @@ settings = {
 		--Expose object array to the timestep_funct, slight performance decrease
 	},
 	input = {
-		input_thread_enable = false,
+		input_thread_enable = true,
 		--Disable command line interface
 	},
 	visual = {
@@ -116,5 +116,5 @@ function run_on_timestep(t_stats, obj)
 		
 	end
 	
-	return copied_objs
+	return nil
 end

@@ -318,8 +318,10 @@ int main(int argc, char *argv[])
 		usleep(100);
 	}
 	
+	usleep(1000);
+	
 	/* free physics */
-	//phys_quit(&object);
+	phys_quit(&object);
 	free(option);
 	
 	pprint("Done!\n");

@@ -372,8 +372,10 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 				parser_state->buffer.id = parser_state->i;
 				(parser_state->object)[parser_state->i] = parser_state->buffer;
 				parser_state->i++;
-			} else parser_state->nullswitch = 1;
-			/* Cheap hack. Lua's first object is always, always CORRUPTED */
+			} else {
+				parser_state->nullswitch = 1;
+				/* Cheap hack. Lua's first object is always, always CORRUPTED */
+			}
 		}
 		/* Object/file finished, go to next */
 		return 1;
@@ -663,7 +665,7 @@ int parse_lua_simconf_options(struct parser_map *map)
 		return 1;
 	
 	struct lua_parser_state *parser_state = &(struct lua_parser_state){
-		.i = 1,
+		.i = 0,
 		.nullswitch = 0,
 		.fileset = 0,
 		.read_id = 0,
@@ -722,7 +724,7 @@ int parse_lua_simconf_objects(data **object, const char* sent_to_lua)
 	/* Finally read the objects */
 	
 	struct lua_parser_state *parser_state = &(struct lua_parser_state){ 
-		.i = 1,
+		.i = 0,
 		.nullswitch = 0,
 		.fileset = 0,
 		.read_id = 0,
@@ -746,12 +748,12 @@ static void parser_push_stat_array(lua_State *L, struct global_statistics *stats
 		parser_push_generic(L, i);
 	}
 	
-	if (!stats->t_stats[1].thread_stats_map) {
+	if (!stats->t_stats[0].thread_stats_map) {
 		return;
 	}
 	
 	/* Variables for each thread */
-	for(short i = 1; i < option->threads + 1; i++) {
+	for (unsigned int i = 0; i < option->threads; i++) {
 		/* Create a table inside that to hold everything */
 		lua_newtable(L);
 		
@@ -768,7 +770,7 @@ static void parser_push_object_array(lua_State *L, data *obj)
 {
 	/* Create "array" table. */
 	lua_newtable(L);
-	for (int i = 1; i < option->obj + 1; i++) {
+	for (int i = 0; i < option->obj; i++) {
 		/* Create a table inside that to hold everything */
 		lua_newtable(L);
 		/* Push variables */

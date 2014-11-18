@@ -48,7 +48,6 @@
 /*	Default threads to use when system != linux.	*/
 #define AUTO_UNAVAIL_THREADS 1
 
-/*	Indexing of threads = 1, 2, 3...	*/
 pthread_mutex_t *halt_objects = NULL;
 pthread_attr_t thread_attribs;
 static struct sched_param parameters;
@@ -109,11 +108,11 @@ int phys_init(data** object)
 	}
 	
 	/* Allocate memory for all the objects */
-	*object = calloc(option->obj+1, sizeof(data));
+	*object = calloc(option->obj, sizeof(data));
 	
 	if (*object) {
 		pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n",
-				(option->obj+1)*sizeof(data), option->obj, *object);
+				option->obj*sizeof(data), option->obj, *object);
 	} else {
 		return 3; /* Impossible, should never ever happen. */
 	}
@@ -132,26 +131,26 @@ int phys_init(data** object)
 	if (!option->threads) {
 		if (online_cores) {
 			option->threads = online_cores;
-			pprintf(PRI_OK, "Detected %i threads, will use all.\n", online_cores);
+			pprintf(PRI_OK, "Detected %u threads, will use all.\n", online_cores);
 		} else {
 			option->threads = AUTO_UNAVAIL_THREADS;
 			pprintf(PRI_WARN,
-					"Core detection unavailable, running with %i thread(s).\n",
+					"Core detection unavailable, running with %u thread(s).\n",
 					AUTO_UNAVAIL_THREADS);
 		}
 	} else {
 		if (online_cores) {
-			pprintf(PRI_VERYHIGH, "Running with %i thread(s), out of %i cores.\n",
+			pprintf(PRI_VERYHIGH, "Running with %u thread(s), out of %u cores.\n",
 					option->threads, online_cores);
 		} else {
-			pprintf(PRI_VERYHIGH, "Runninh with %i threads.\n", option->threads);
+			pprintf(PRI_VERYHIGH, "Runninh with %u threads.\n", option->threads);
 		}
 	}
 	
 	if (option->threads > option->obj) {
-		pprintf(PRI_WARN, "More threads than objects. Capping threads to %i\n",
-				option->obj+1);
-		option->threads = option->obj+1;
+		pprintf(PRI_WARN, "More threads than objects. Capping threads to %u\n",
+				option->obj);
+		option->threads = option->obj;
 	}
 	
 	phys_stats = calloc(1, sizeof(struct global_statistics));
@@ -182,12 +181,19 @@ int phys_quit(data **object)
 		cfg = NULL;
 		return 1;
 	}
+	/* Elements */
 	free(atom_prop);
 	atom_prop = NULL;
-	free(prev_algo_opts);
-	prev_algo_opts = NULL;
+	
+	/* Stats */
 	free(phys_stats);
 	phys_stats = NULL;
+	
+	/* Prev opts */
+	free(prev_algo_opts);
+	prev_algo_opts = NULL;
+	
+	/* Obj */
 	if (object) {
 		free(*object);
 		*object = NULL;
@@ -282,15 +288,15 @@ int phys_ctrl(int status, data** object)
 			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
 			*cfg->pause = true;
-			for (int k = 1; k < option->threads + 1; k++) {
+			for (unsigned int k = 0; k < option->threads; k++) {
 				if (pthread_create(&cfg->threads[k], &thread_attribs,
 								  algo->thread_location, cfg->threads_conf[k])) {
-					pprintf(PRI_ERR, "Creating thread %i failed!\n", k);
+					pprintf(PRI_ERR, "Creating thread %u failed!\n", k+1);
 					return 1;
 				} else {
 					pthread_getcpuclockid(cfg->threads[k],
 										  &phys_stats->t_stats[k].clockid);
-					pprintf(PRI_ESSENTIAL, "%i...", k);
+					pprintf(PRI_ESSENTIAL, "%u...", k+1);
 				}
 			}
 			if (pthread_create(&cfg->control_thread, &thread_attribs, thread_ctrl, cfg)) {
@@ -320,9 +326,9 @@ int phys_ctrl(int status, data** object)
 			*cfg->quit = true;
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
 			void *res = NULL;
-			for (int k = 1; k < option->threads + 1; k++) {
+			for (unsigned int k = 0; k < option->threads; k++) {
 				pthread_join(cfg->threads[k], &res);
-				pprintf(PRI_ESSENTIAL, "%i...", k);
+				pprintf(PRI_ESSENTIAL, "%u...", k+1);
 			}
 			pthread_join(cfg->control_thread, &res);
 			pprintf(PRI_ESSENTIAL, "C...");

@@ -162,7 +162,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_m
 				switch(i->type) {
 					case VAR_CHECK_COLLISIONS:
 						pprint_warn("Checking for collisions...\n");
-						unsigned int coll = phys_check_collisions(*t->obj, 1, option->obj+1);
+						unsigned int coll = phys_check_collisions(*t->obj, 0, option->obj);
 						if (coll) {
 							pprint_err("%i objects share coordinates,\
 									   reconsider starting anything at all and\

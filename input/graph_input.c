@@ -55,7 +55,7 @@ static void graph_sdl_scan_selection(graph_window *win)
 		strcpy(win->currentsel, "Select object:");
 		win->start_selection = 0;
 		win->chosen = getnumber(&win->numbers, 0, NUM_GIVEME);
-		if (win->chosen > option->obj) {
+		if (win->chosen >= option->obj) {
 			win->chosen = 0;
 		} else {
 			pprintf(PRI_HIGH, "Object %u selected.\n", win->chosen);
@@ -136,7 +136,7 @@ int graph_scan_keypress(graph_window *win)
 				phys_ctrl(PHYS_SHUTDOWN, NULL);
 			break;
 		case SDLK_PERIOD:
-			if(win->chosen < option->obj)
+			if (win->chosen < option->obj)
 				win->chosen++;
 			break;
 		case SDLK_COMMA:

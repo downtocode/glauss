@@ -26,9 +26,9 @@
 
 void **nbody_init(struct glob_thread_config *cfg)
 {
-	struct thread_config_nbody **thread_config = calloc(option->threads+1,
+	struct thread_config_nbody **thread_config = calloc(option->threads,
 		sizeof(struct thread_config_nbody*));
-	for (int k = 0; k < option->threads + 1; k++) {
+	for (int k = 0; k < option->threads; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_nbody));
 	}
 	
@@ -38,7 +38,7 @@ void **nbody_init(struct glob_thread_config *cfg)
 	
 	int totcore = (int)((float)option->obj/option->threads);
 	
-	for (int k = 1; k < option->threads + 1; k++) {
+	for (int k = 0; k < option->threads; k++) {
 		thread_config[k]->glob_stats = cfg->stats;
 		thread_config[k]->stats = &cfg->stats->t_stats[k];
 		thread_config[k]->obj = cfg->obj;
@@ -46,9 +46,9 @@ void **nbody_init(struct glob_thread_config *cfg)
 		thread_config[k]->barrier = barrier;
 		thread_config[k]->id = k;
 		thread_config[k]->quit = cfg->quit;
-		thread_config[k]->objs_low = thread_config[k-1]->objs_high + 1;
+		thread_config[k]->objs_low = !k ? 0 : thread_config[k-1]->objs_high;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
-		if(k == option->threads) {
+		if (k == option->threads - 1) {
 			/*	Takes care of rounding problems with odd numbers.	*/
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
@@ -60,9 +60,13 @@ void **nbody_init(struct glob_thread_config *cfg)
 void nbody_quit(struct glob_thread_config *cfg)
 {
 	struct thread_config_nbody **t = (struct thread_config_nbody **)cfg->threads_conf;
-	pthread_barrier_destroy(t[1]->barrier);
-	free(t[1]->barrier);
-	for (int k = 0; k < option->threads + 1; k++) {
+	
+	/* Barrier */
+	pthread_barrier_destroy(t[0]->barrier);
+	free(t[0]->barrier);
+	
+	/* Config */
+	for (int k = 0; k < option->threads; k++) {
 		free(t[k]);
 	}
 	free(t);
@@ -91,7 +95,7 @@ void *thread_nbody(void *thread_setts)
 		
 		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;
-			for (unsigned int j = 1; j < option->obj + 1; j++) {
+			for (unsigned int j = 0; j < option->obj; j++) {
 				if (i==j)
 					continue;
 				vecnorm = t->obj[j].pos - t->obj[i].pos;

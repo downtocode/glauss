@@ -45,11 +45,11 @@ void on_usr1_signal(int signo)
 	}
 	
 	if (phys_stats->t_stats) {
-		for(int t = 0; t < option->threads; t++) {
+		for (unsigned int t = 0; t < option->threads; t++) {
 			for (struct parser_map *i = phys_stats->t_stats[t].thread_stats_map; i->name; i++) {
 				char res[50];
 				parser_get_value_str(*i, res, 50);
-				printf("%i.	%s = %s\n", t, i->name, res);
+				printf("%u.	%s = %s\n", t, i->name, res);
 			}
 		}
 	}

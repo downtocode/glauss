@@ -304,14 +304,14 @@ void graph_draw_scene(graph_window *win)
 			}
 			
 			/* Thread time stats */
-			for (short i = 1; i < option->threads + 1; i++) {
+			for (unsigned int i = 0; i < option->threads; i++) {
 				if (phys_stats->t_stats) {
 					clock_gettime(phys_stats->t_stats[i].clockid, &ts);
 				} else {
 					ts = (struct timespec){0};
 				}
 				snprintf(osdtext, OSD_BUFFER,
-						 "Thread %i = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
+						 "Thread %u = %ld.%ld", i+1, ts.tv_sec, ts.tv_nsec / 1000000);
 				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
 			}
 			

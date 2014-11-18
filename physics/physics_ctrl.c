@@ -37,12 +37,12 @@ struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, data *o
 	cfg->obj = obj;
 	cfg->stats = stats;
 	
-	cfg->algo_thread_stats_map = calloc(option->threads+1, sizeof(struct parser_map *));
+	cfg->algo_thread_stats_map = calloc(option->threads, sizeof(struct parser_map *));
 	
 	/* Reinit stats */
-	cfg->stats->t_stats = calloc(option->threads+1, sizeof(struct thread_statistics));
+	cfg->stats->t_stats = calloc(option->threads, sizeof(struct thread_statistics));
 	
-	for (int k = 1; k < option->threads + 1; k++) {
+	for (int k = 0; k < option->threads; k++) {
 		cfg->stats->t_stats[k].thread_stats_map = \
 			allocate_parser_map((struct parser_map []){
 				{"clockid",   P_TYPE(cfg->stats->t_stats[k].clockid)   },
@@ -63,13 +63,13 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 	
 	/* Transfer thread stat map */
 	if (cfg->algo_thread_stats_map) {
-		for (int k = 1; k < option->threads +1; k++) {
+		for (int k = 0; k < option->threads; k++) {
 			register_parser_map(cfg->algo_thread_stats_map[k],
 								&cfg->stats->t_stats[k].thread_stats_map);
 		}
 	}
 	
-	cfg->threads = calloc(option->threads+1, sizeof(pthread_t));
+	cfg->threads = calloc(option->threads, sizeof(pthread_t));
 	
 	cfg->ctrl = calloc(1, sizeof(pthread_barrier_t));
 	pthread_barrier_init(cfg->ctrl, NULL, cfg->total_syncd_threads);
@@ -92,7 +92,7 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	}
 	
 	if (cfg->algo_thread_stats_map) {
-		for (int k = 1; k < option->threads + 1; k++) {
+		for (int k = 0; k < option->threads; k++) {
 			free(cfg->algo_thread_stats_map[k]);
 			free(cfg->stats->t_stats[k].thread_stats_map);
 		}
@@ -156,7 +156,7 @@ void *thread_ctrl(void *thread_setts)
 		
 		/* Lua function execution */
 		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
-			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
+			//lua_exec_funct(option->timestep_funct, t->obj, t->stats);
 		}
 		
 		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,
