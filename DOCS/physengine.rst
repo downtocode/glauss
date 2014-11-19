@@ -139,16 +139,6 @@ however most do not. For those that do, command line arguments take priority.
     Sets the RNG seed. Set to 0 to generate a new one on every physics start.
 ``algorithm`` - *String*
     Set the algorithm to use. Specify help here or in argument to list all.
-``bh_ratio`` - *Float*
-    Algorithm specific. Adjusts accuracy and speed.
-``bh_lifetime`` - *Short Unsigned Integer*
-    Algorithm specific. Set empty cell lifetime before its deletion.
-``bh_heapsize_max`` - *Unsigned Integer(bytes, size_t)*
-    Algorithm specific. Set limit on maximum octrees per thread.
-``bh_tree_limit`` - *Short Unsigned Integer, 1 to 8*
-    Algorithm specific. Sets limit on threads per octree. Increase to spread distribution.
-``bh_single_assign`` - *Boolean*
-    If only a single thread is used will still split the octree normally. Debugging.
 ``spawn_funct`` - *String*
     Name of function to read objects from
 ``timestep_funct`` - *String*
@@ -186,11 +176,24 @@ however most do not. For those that do, command line arguments take priority.
 ``skip_model_vec`` - *Unsigned Integer*
     When importing a file limit the imported objects. Increase to limit further.
 
+*Built-in algorithms options*
+-----------------------------
+``bh_ratio`` - *Float*
+    Algorithm specific. Adjusts accuracy and speed.
+``bh_lifetime`` - *Short Unsigned Integer*
+    Algorithm specific. Set empty cell lifetime before its deletion.
+``bh_heapsize_max`` - *Unsigned Integer(bytes, size_t)*
+    Algorithm specific. Set limit on maximum octrees per thread.
+``bh_tree_limit`` - *Short Unsigned Integer, 1 to 8*
+    Algorithm specific. Sets limit on threads per octree. Increase to spread distribution.
+``bh_single_assign`` - *Boolean*
+    If only a single thread is used will still split the octree normally. Debugging.
+
 *Object specific variables*
 ---------------------------
-Every object has to be a part of an array, which has to be returned with the first
-value of a function named *spawn_objects*. Second returned value should specify
-the number of elements inside the array.
+To spawn the objects into the internal array, return the table containing the objects
+by the function spawning the objects. The following variables set the properties of
+each object.
 
 ``pos`` - *Table of 3 doubles*
     Used to position an object
@@ -201,21 +204,28 @@ the number of elements inside the array.
 ``charge`` - *Double*
     Charge, if the object should have one.
 ``mass`` - *Double*
-    Mass. Reqired to be non-zero for every object, as otherwise the program will crash.
+    Mass. Reqired to be non-zero for every object else the algorithms can't handle it.
 ``radius`` - *Float*
-    Radius. Optional, to be used in collisions.
+    Sets the radius of the object. Used only in the ball display mode, although future algorithms might use this.
 ``atom`` - *String*
-    If the object should represent an atom. Use Short Standard Periodic table notation.
+    If the object should represent an atom. Use Short Standard Periodic table notation("O", "N", "LI", "HE", etc.).
+``atomnumber`` - *Unsigned Short Integer*
+    Same as the above, except takes numbers. Set to 0 to just use generic object(with white colour).
+``state`` - *Integer*
+    Specify the state for that particle. No effect in current algorithms, useful when writing your own algorithms.
+``id`` - *Unsigned Integer*
+    The ID to which the object should be in the internal array. Used only in the Lua exec function. Ignored when
+    spawning objects(because there are no guarantees this will be the actual ID if the user imports a model).
 ``import`` - *String*
     Will import from a file. Currently, Waveform 3D *Obj*, *XYZ* and *PDB* files are supported.
 ``ignore`` - *Bool*
     Set this flag to prevent the object from being moved. Will still affect others.
 
-*Table sent to exec_funct in Lua*
----------------------------------
-Every member of phys_stats is exposed here. Look for struct global_statistics 
-in physics/physics.h. Note that the rng_seed here will reflect the rng_seed 
-used, even if it is not supplied.
+*Tables sent to exec_funct in Lua*
+----------------------------------
+The maps of each algorithm and all global stats are exposed via the first argument as a table.
+The second argument will contain the current object array, if enabled, with the same format as the one stated above.
+Note that the rng_seed here will reflect the rng_seed used, even if it is not supplied.
 
 FILE IMPORTING
 ==============
@@ -266,11 +276,14 @@ EXAMPLES
 *Loading a standard simulation:*
     ``physengine -f simconf.lua``
 
-*Don't simulate anything, just display:*
+*Don't simulate anything, just display(default):*
     ``physengine -f simconf.lua -a none``
 
-*Dummy load sim, will pretend to use n-body but won't actually move anything:*
-    ``physengine -f simconf.lua -a null``
+*Only the control thread running, Lua-only algorithm:*
+    ``physengine -f simconf.lua -a none``
+
+*Dummy load sim, will use the n-body algorithm to display stats:*
+    ``physengine -f simconf.lua -a null_stats``
 
 *Simulate using the n-body algorithm using 3 threads:*
     ``physengine -f simconf.lua -t 3 -a n-body``
@@ -278,8 +291,8 @@ EXAMPLES
 *Use the Barnes-Hut algorithm with 4 cores and create a logfile:*
     ``physengine -f simconf.lua -t 4 -a barnes-hut -l phys.log``
 
-CONTACT
-=======
+CONTACTS
+========
 
 For contact:
 

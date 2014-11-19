@@ -6,6 +6,7 @@ VERSION=''
 
 top = '.'
 out = 'build'
+manual_true = 0
 
 def try_git_version():
 	version = VERSION
@@ -35,6 +36,8 @@ def options(ctx):
 				help='Sets package version.')
 	ctx.add_option('--no-debug', dest='no_deb', action='store_true', default=False,
 				help='Unsets debug compilation flags.')
+	ctx.add_option('--enable-manual', dest='enable_manual', action='store_true', default=False,
+				help='Compile and install the manual(requires rst2man)')
 	
 def configure(ctx):
 	ctx.load('compiler_c')
@@ -46,6 +49,7 @@ def configure(ctx):
 	
 	#Add mandatory=False when we don't really need it.
 	
+	ctx.find_program('rst2man', mandatory=False, var='RST2MAN')
 	ctx.check(features='c cprogram', lib=['m'], uselib_store='MATH')
 	ctx.check(features='c cprogram', lib=['rt'], uselib_store='RT')
 	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
@@ -73,7 +77,12 @@ def configure(ctx):
 	ctx.define('OPT_LTO', ctx.options.lto)
 	if (ctx.env.LIB_PNG):
 		ctx.define('HAS_PNG', 1)
+	if (ctx.env.SDL):
+		ctx.define('HAS_SDL', 1)
 	ctx.write_config_header('config.h')
+	
+	if (ctx.options.enable_manual):
+		manual_true = 1
 	
 	if (ctx.options.lto):
 		ctx.env.CFLAGS += ['-flto']
@@ -84,11 +93,12 @@ def configure(ctx):
 	
 def build(ctx):
 	#Generate manual page
-	#ctx(name='manpage',
-	#	source = 'DOCS/physengine.rst',
-	#	target = 'physengine.1',
-	#	rule = 'rst2man ${SRC} ${TGT}',
-	#)
+	if (ctx.env.RST2MAN):
+		ctx(name='manpage',
+			source = 'DOCS/physengine.rst',
+			target = 'physengine.1',
+			rule = '${RST2MAN} ${SRC} ${TGT}',
+		)
 	#Generate included files.
 	ctx.file2string(
 		source = "resources/shaders/object_vs.glsl",

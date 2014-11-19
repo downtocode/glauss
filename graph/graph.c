@@ -75,6 +75,11 @@
 #define THRy  0.95
 #define THRs  0.75
 
+/* Thread stats */
+#define THREAD_MAPx 0.96
+#define THREAD_MAPy -0.55
+#define THREAD_MAPs 0.70
+
 /* Axis scale */
 #define AXISs 0.25
 
@@ -303,6 +308,44 @@ void graph_draw_scene(graph_window *win)
 				graph_display_text("Simulation paused", SIMx, SIMy, SIMs, COL_YELLOW);
 			}
 			
+			if (status == PHYS_STATUS_RUNNING) {
+				unsigned int len = 0;
+				char res[15] = {0};
+				/* Stats */
+				for (unsigned int j = 0; j < option->threads; j++) {
+					len = 0;
+					for (struct parser_map *i = phys_stats->t_stats[j].thread_stats_map;
+						 i->name; i++) {
+						unsigned int word_len = strlen(i->name);
+						len += word_len;
+						if(!j) {
+							graph_display_text(i->name,
+											   THREAD_MAPx-((float)len/65),
+											   THREAD_MAPy, THREAD_MAPs,
+											   COL_YELLOW);
+						}
+						parser_get_value_str(*i, res, sizeof(res));
+						graph_display_text(res, THREAD_MAPx-((float)len/65),
+										   THREAD_MAPy-0.07-((float)j/14),
+										   THREAD_MAPs, COL_ORANGE);
+					}
+				}
+				
+				/* Title, now that we know the final position */
+				graph_display_text("Thread statistics:",
+								   THREAD_MAPx-((float)len/65),
+								   THREAD_MAPy+0.06, THREAD_MAPs+0.1,
+								   COL_WHITE);
+				
+				/* Numbers */
+				for (unsigned int j = 0; j < option->threads; j++) {
+					snprintf(res, sizeof(res), "%i.\n", j);
+					graph_display_text(res, THREAD_MAPx-((float)len/65)-0.04,
+									   THREAD_MAPy-0.07-((float)j/14),
+									   THREAD_MAPs, COL_YELLOW);
+				}
+			}
+			
 			/* Thread time stats */
 			for (unsigned int i = 0; i < option->threads; i++) {
 				if (phys_stats->t_stats) {
@@ -311,7 +354,7 @@ void graph_draw_scene(graph_window *win)
 					ts = (struct timespec){0};
 				}
 				snprintf(osdtext, OSD_BUFFER,
-						 "Thread %u = %ld.%ld", i+1, ts.tv_sec, ts.tv_nsec / 1000000);
+						 "Thread %u = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
 				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
 			}
 			
@@ -323,14 +366,14 @@ void graph_draw_scene(graph_window *win)
 		}
 		
 		/* Algorithm stats */
-		graph_display_text("Algorithm stats:", STATSx, STATSy, STATSs, COL_WHITE);
+		graph_display_text("Global statistics:", STATSx, STATSy, STATSs, COL_WHITE);
 		graph_display_text("Name", STATSx, STATSy-.05, STATSs, COL_ORANGE);
 		graph_display_text("Value", STATSx+.25, STATSy-.05, STATSs, COL_YELLOW);
 		
 		unsigned int count = 0;
 		for (struct parser_map *i = phys_stats->global_stats_map; i->name; i++) {
 			char res[15];
-			parser_get_value_str(*i, res, 14);
+			parser_get_value_str(*i, res, sizeof(res));
 			graph_display_text(i->name, STATSx, STATSy-((float)count/18)-.10, STATSs, COL_ORANGE);
 			graph_display_text(res, STATSx+.25, STATSy-((float)count++/18)-.10, STATSs, COL_YELLOW);
 		}

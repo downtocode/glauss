@@ -51,8 +51,9 @@ enum returned_phys_status {
 typedef struct {
 	vec3 pos, vel, acc;
 	double mass, charge;
-	float radius;
 	unsigned short int atomnumber, id;
+	float radius;
+	int state;
 	bool ignore;
 } data;
 

@@ -37,10 +37,10 @@ struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, data *o
 	cfg->obj = obj;
 	cfg->stats = stats;
 	
-	cfg->algo_thread_stats_map = calloc(option->threads, sizeof(struct parser_map *));
+	cfg->algo_thread_stats_map = calloc(option->threads+1, sizeof(struct parser_map *));
 	
 	/* Reinit stats */
-	cfg->stats->t_stats = calloc(option->threads, sizeof(struct thread_statistics));
+	cfg->stats->t_stats = calloc(option->threads+1, sizeof(struct thread_statistics));
 	
 	for (int k = 0; k < option->threads; k++) {
 		cfg->stats->t_stats[k].thread_stats_map = \

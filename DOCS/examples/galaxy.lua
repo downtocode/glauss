@@ -85,9 +85,9 @@ arm_width = 69.0
 arm_number = 3
 disk_radius = 20.0
 disk_width = 1.0
-disk_stars = 2420
+disk_stars = 2000
 hub_radius = 10.0
-hub_stars = 1240
+hub_stars = disk_stars/2
 hub_width = 4.0
 
 function spawn_objects(string_from_arg)

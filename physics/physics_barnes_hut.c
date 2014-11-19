@@ -364,6 +364,8 @@ void bhut_runtime_fn(void **threads)
 	t[0]->glob_stats->bh_new_cleaned  = bh_new_cleaned;
 	t[0]->glob_stats->bh_heapsize     = bh_heapsize;
 	
+	return;
+	
 	if (option->threads == 1)
 		return;
 	

@@ -318,6 +318,8 @@ int main(int argc, char *argv[])
 		phys_sleep_msec(37);
 	}
 	
+	phys_sleep_msec(37);
+	
 	/* free physics */
 	phys_quit(&object);
 	free(option);

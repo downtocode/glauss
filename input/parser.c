@@ -182,7 +182,7 @@ int parser_get_value_str(struct parser_map var, char *str, size_t len)
 			snprintf(str, len, "%u", *(unsigned int *)var.val);
 			break;
 		case VAR_LONGUINT:
-			snprintf(str, len, "%lu", *(long unsigned int *)var.val);
+			snprintf(str, len, "%0.3lf MiB", *(long unsigned int *)var.val/(double)1048576);
 			break;
 		case VAR_LONGLONGUINT:
 			snprintf(str, len, "%llu", *(long long unsigned int *)var.val);
@@ -390,6 +390,8 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 			parser_state->buffer.atomnumber = lua_tointeger(L, -1);
 		if(!strcmp("scale", lua_tostring(L, -2)))
 			parser_state->file.scale = lua_tonumber(L, -1);
+		if(!strcmp("state", lua_tostring(L, -2)))
+			parser_state->buffer.state = lua_tointeger(L, -1);
 		if(parser_state->read_id) {
 			if(!strcmp("id", lua_tostring(L, -2))) {
 				parser_state->buffer.id = lua_tointeger(L, -1);
@@ -803,6 +805,8 @@ static void parser_push_object_array(lua_State *L, data *obj)
 		lua_setfield(L, -2, "atomnumber");
 		lua_pushinteger(L, obj[i].id);
 		lua_setfield(L, -2, "id");
+		lua_pushinteger(L, obj[i].state);
+		lua_setfield(L, -2, "state");
 		lua_pushboolean(L, obj[i].ignore);
 		lua_setfield(L, -2, "ignore");
 		

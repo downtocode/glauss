@@ -291,12 +291,12 @@ int phys_ctrl(int status, data** object)
 			for (unsigned int k = 0; k < option->threads; k++) {
 				if (pthread_create(&cfg->threads[k], &thread_attribs,
 								  algo->thread_location, cfg->threads_conf[k])) {
-					pprintf(PRI_ERR, "Creating thread %u failed!\n", k+1);
+					pprintf(PRI_ERR, "Creating thread %u failed!\n", k);
 					return 1;
 				} else {
 					pthread_getcpuclockid(cfg->threads[k],
 										  &phys_stats->t_stats[k].clockid);
-					pprintf(PRI_ESSENTIAL, "%u...", k+1);
+					pprintf(PRI_ESSENTIAL, "%u...", k);
 				}
 			}
 			if (pthread_create(&cfg->control_thread, &thread_attribs, thread_ctrl, cfg)) {
@@ -328,7 +328,7 @@ int phys_ctrl(int status, data** object)
 			void *res = NULL;
 			for (unsigned int k = 0; k < option->threads; k++) {
 				pthread_join(cfg->threads[k], &res);
-				pprintf(PRI_ESSENTIAL, "%u...", k+1);
+				pprintf(PRI_ESSENTIAL, "%u...", k);
 			}
 			pthread_join(cfg->control_thread, &res);
 			pprintf(PRI_ESSENTIAL, "C...");

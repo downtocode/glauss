@@ -51,7 +51,7 @@ void pprintf(int priority, const char *format, ...)
 		vfprintf(stderr, format, args);
 		va_end(args);
 	} else if (priority <= option->verbosity || priority == PRI_OK || priority == PRI_WARN) {
-		if(disable_print)
+		if (disable_print)
 			return;
 		else if(priority == PRI_OK)
 			printf("%s", okmsg);

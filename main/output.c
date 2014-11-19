@@ -94,6 +94,7 @@ size_t in_write_array(data **object, const char *filename, pthread_mutex_t *io_h
 	memcpy((*object), obj_e, s.st_size);
 	
 	munmap(obj_e, s.st_size);
+	
 	close(fd);
 	
 	if(io_halt)

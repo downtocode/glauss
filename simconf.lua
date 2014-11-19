@@ -76,6 +76,7 @@ function spawn_objects(string_from_arg)
 				(math.random()-0.5)*velocity,
 			},
 			charge = 0,
+			state = 0,
 			mass = 10000000000,
 			radius = 0.2,
 			atomnumber = math.random(1,10),
