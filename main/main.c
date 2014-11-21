@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 			.gconst = 0, .epsno = 0, .elcharge = 0,
 			.noele = 1, .nogrv = 1,
 			.algorithm = strdup("none"),
+			.thread_schedule_mode = strdup("SCHED_RR"),
 			
 			/* Physics - ctrl */
 			.dump_xyz = 0,
@@ -107,6 +108,7 @@ int main(int argc, char *argv[])
 			{"fontname",               P_TYPE(option->fontname)               },
 			{"lua_expose_obj_array",   P_TYPE(option->lua_expose_obj_array)   },
 			{"input_thread_enable",    P_TYPE(option->input_thread_enable)    },
+			{"thread_schedule_mode",   P_TYPE(option->thread_schedule_mode)   },
 			{0},
 		};
 		register_parser_map(opts_map, &total_opt_map);

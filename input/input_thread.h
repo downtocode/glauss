@@ -43,13 +43,14 @@ struct input_cfg {
 	data **obj;
 	graph_window **win;
 	char *line;
+	struct parser_map *cmd_map, *opt_map;
 	volatile bool status, selfquit;
 };
 
 int input_thread_init(void **win, data **object);
 void input_thread_quit(void);
 int input_call_system(const char *cmd);
-int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_map);
+int input_token_setall(char *line, struct input_cfg *t);
 void *input_thread(void *thread_setts);
 
 #endif

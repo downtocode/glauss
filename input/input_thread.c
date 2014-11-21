@@ -38,8 +38,10 @@ static const char pointgreen[] = "\033[032m"CMD_PROMPT_DOT"\033[0m";
 static const char pointyellow[] = "\033[033m"CMD_PROMPT_DOT"\033[0m";
 static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 
+/* Needed for the generator and completions */
+static int list_index_cmd = 0, len_cmd = 0;
+static int list_index_opt = 0, len_opt = 0;
 static struct input_cfg *global_cfg = NULL;
-static struct parser_map *global_cmd_map = NULL;
 
 int input_thread_init(void **win, data **object)
 {
@@ -50,10 +52,33 @@ int input_thread_init(void **win, data **object)
 	cfg->status = true;
 	cfg->selfquit = false;
 	cfg->line = NULL;
-	
-	pthread_create(&cfg->input, NULL, input_thread, cfg);
+	cfg->opt_map = total_opt_map;
+	cfg->cmd_map = allocate_parser_map((struct parser_map[]){
+		{"phys_check_collisions", NULL, VAR_CHECK_COLLISIONS, VAR_CMD},
+		{"save", NULL, VAR_SAVE, VAR_CMD},
+		{"load", NULL, VAR_LOAD, VAR_CMD},
+		{"list", NULL, VAR_LIST, VAR_CMD},
+		{"quit", NULL, VAR_QUIT, VAR_CMD},
+		{"exit", NULL, VAR_QUIT, VAR_CMD},
+		{"start", NULL, VAR_START, VAR_CMD},
+		{"stop", NULL, VAR_STOP, VAR_CMD},
+		{"restart", NULL, VAR_RESTART, VAR_CMD},
+		{"help", NULL, VAR_HELP, VAR_CMD},
+		{"status", NULL, VAR_STATUS, VAR_CMD},
+		{"stats", NULL, VAR_STATS, VAR_CMD},
+		{"clear", NULL, VAR_CLEAR, VAR_CMD},
+		{"pause", NULL, VAR_PAUSE, VAR_CMD},
+		{"unpause", NULL, VAR_PAUSE, VAR_CMD},
+		{"win_create", NULL, VAR_ENABLE_WINDOW, VAR_CMD},
+		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
+		{"lua_readopts", NULL, VAR_LUA_READOPTS, VAR_CMD},
+		{"#command (runs a system command)", NULL, VAR_CMD_SYS, VAR_CMD},
+		{0}
+	});
 	
 	global_cfg = cfg;
+	
+	pthread_create(&cfg->input, NULL, input_thread, cfg);
 	
 	return 0;
 }
@@ -84,15 +109,16 @@ void input_thread_quit(void)
 	rl_cleanup_after_signal();
 	
 	/* Free resources */
+	free(global_cfg->cmd_map);
 	free(global_cfg);
 	
 	return;
 }
 
-void input_cmd_printall(struct parser_map *cmd_map)
+static void input_cmd_printall(struct parser_map *cmd_map, struct parser_map *opt_map)
 {
 	pprintf(PRI_ESSENTIAL, "Implemented variables:\n");
-	for (struct parser_map *i = total_opt_map; i->name; i++) {
+	for (struct parser_map *i = opt_map; i->name; i++) {
 		parser_print_generic(i);
 	}
 	
@@ -114,7 +140,7 @@ int input_call_system(const char *cmd)
 	return ret;
 }
 
-int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_map)
+int input_token_setall(char *line, struct input_cfg *t)
 {
 	int num_tok = 0, retval = CMD_ALL_FINE;
 	bool match = 0;
@@ -145,7 +171,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_m
 		goto cleanall;
 	}
 	
-	for (struct parser_map *i = total_opt_map; i->name; i++) {
+	for (struct parser_map *i = t->opt_map; i->name; i++) {
 		if (!strcmp(i->name, token[0])) {
 			match = 1;
 			if (num_tok < 2)
@@ -155,7 +181,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_m
 		}
 	}
 	
-	for (struct parser_map *i = cmd_map; i->name; i++) {
+	for (struct parser_map *i = t->cmd_map; i->name; i++) {
 		if (!strcmp(i->name, token[0])) {
 			match = 1;
 			if (i->cmd_or_lua_type == VAR_CMD) {
@@ -172,7 +198,7 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_m
 						}
 						break;
 					case VAR_HELP:
-						input_cmd_printall(cmd_map);
+						input_cmd_printall(t->cmd_map, t->opt_map);
 						break;
 					case VAR_STOP:
 						phys_ctrl(PHYS_SHUTDOWN, NULL);
@@ -214,14 +240,14 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_m
 						break;
 					case VAR_LUA_READOPTS:
 						if (num_tok < 2) {
-							parse_lua_simconf_options(total_opt_map);
+							parse_lua_simconf_options(t->opt_map);
 						} else {
 							if (strcmp(option->filename, token[1])) {
 								if (parse_lua_open_file(token[1])) {
 									break;
 								}
 							}
-							parse_lua_simconf_options(total_opt_map);
+							parse_lua_simconf_options(t->opt_map);
 						}
 						break;
 					case VAR_ENABLE_WINDOW:
@@ -256,19 +282,29 @@ int input_token_setall(char *line, struct input_cfg *t, struct parser_map *cmd_m
 char *input_cmd_generator(const char *line, int state)
 {
 	/* Readline is fussy as fuck about every single word. Here be dragons */
-	static int list_index = 0, len = 0;
 	char *name = NULL;
 	if (!state) {
-		list_index = 0;
-		len = strlen(line);
+		list_index_cmd = 0;
+		len_cmd = strlen(line);
 	}
-	while ((name = (char *)global_cmd_map[list_index++].name)) {
-		if (!strncmp(name, line, len)) {
+	while ((name = (char *)global_cfg->cmd_map[list_index_cmd++].name)) {
+		if (!strncmp(name, line, len_cmd)) {
 			return strdup(name);
 		}
 	}
-	while ((name = (char *)total_opt_map[list_index++].name)) {
-		if (!strncmp(name, line, len)) {
+	return NULL;
+}
+
+char *input_opt_generator(const char *line, int state)
+{
+	/* Readline is fussy as fuck about every single... we did this already*/
+	char *name = NULL;
+	if (!state) {
+		list_index_opt = 0;
+		len_opt = strlen(line);
+	}
+	while ((name = (char *)global_cfg->opt_map[list_index_opt++].name)) {
+		if (!strncmp(name, line, len_opt)) {
 			return strdup(name);
 		}
 	}
@@ -279,8 +315,12 @@ char **input_completion(const char *line, int start, int end)
 {
 	char **matches = NULL;
 	
-	if(start == 0)
+	if (start == 0) {
 		matches = rl_completion_matches(line, input_cmd_generator);
+		if (!matches) {
+			matches = rl_completion_matches(line, input_opt_generator);
+		}
+	}
 	
 	return matches;
 }
@@ -291,31 +331,6 @@ void *input_thread(void *thread_setts)
 	char prompt[sizeof(CMD_PROMPT_BASE)+sizeof(pointyellow)+sizeof(CMD_PROMPT_SPACE)+1];
 	
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	
-	/* Should remain on stack until thread exits */
-	struct parser_map cmd_map[] = {
-		{"phys_check_collisions", NULL, VAR_CHECK_COLLISIONS, VAR_CMD},
-		{"save", NULL, VAR_SAVE, VAR_CMD},
-		{"load", NULL, VAR_LOAD, VAR_CMD},
-		{"list", NULL, VAR_LIST, VAR_CMD},
-		{"quit", NULL, VAR_QUIT, VAR_CMD},
-		{"exit", NULL, VAR_QUIT, VAR_CMD},
-		{"start", NULL, VAR_START, VAR_CMD},
-		{"stop", NULL, VAR_STOP, VAR_CMD},
-		{"restart", NULL, VAR_RESTART, VAR_CMD},
-		{"help", NULL, VAR_HELP, VAR_CMD},
-		{"status", NULL, VAR_STATUS, VAR_CMD},
-		{"stats", NULL, VAR_STATS, VAR_CMD},
-		{"clear", NULL, VAR_CLEAR, VAR_CMD},
-		{"pause", NULL, VAR_PAUSE, VAR_CMD},
-		{"unpause", NULL, VAR_PAUSE, VAR_CMD},
-		{"win_create", NULL, VAR_ENABLE_WINDOW, VAR_CMD},
-		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
-		{"lua_readopts", NULL, VAR_LUA_READOPTS, VAR_CMD},
-		{"#command (runs a system command)", NULL, VAR_CMD_SYS, VAR_CMD},
-		{0}
-	};
-	global_cmd_map = cmd_map;
 	
 	/* Rant: why the shit does every library in existance want to install its
 	 * own signal handler which THEN passes the signal to us? Even damn SDL
@@ -340,7 +355,7 @@ void *input_thread(void *thread_setts)
 			raise(SIGINT);
 		} else if (*t->line) {
 			add_history(t->line);
-			switch(input_token_setall(t->line, t, cmd_map)) {
+			switch(input_token_setall(t->line, t)) {
 				case CMD_SYS_RET_ERR:
 					pprint_err("System command error\n");
 					break;

@@ -22,6 +22,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <signal.h>
 #include "config.h"
 #include "physics.h"
 #include "physics_aux.h"
@@ -167,10 +168,39 @@ int phys_init(data** object)
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
 	pthread_attr_setinheritsched(&thread_attribs, PTHREAD_INHERIT_SCHED);
-	/*	SCHED_RR - Round Robin, SCHED_FIFO - FIFO	*/
-	pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
+	
+	
+	
 	pthread_attr_setschedparam(&thread_attribs, &parameters);
 	return 0;
+}
+
+int phys_set_sched_mode(char **mode)
+{
+	bool found = 0;
+	struct parser_map sched_modes[] = {
+		{"SCHED_RR",      NULL,   SCHED_RR,      LUA_TNUMBER   },
+		{"SCHED_FIFO",    NULL,   SCHED_FIFO,    LUA_TNUMBER   },
+		{"SCHED_OTHER",   NULL,   SCHED_OTHER,   LUA_TNUMBER   },
+		{0},
+	};
+	for (struct parser_map *i = sched_modes; i->name; i++) {
+		if (!strcmp(i->name, *mode)) {
+			pthread_attr_setschedpolicy(&thread_attribs, i->type);
+			found = 1;
+		}
+	}
+	if (!found) {
+		pprint_err("Scheduling mode %s not found. Possible modes: ", *mode);
+		for (struct parser_map *i = sched_modes; i->name; i++) {
+			pprintf(PRI_ESSENTIAL, "%s ", i->name);
+		}
+		pprintf(PRI_ESSENTIAL, "\nSetting mode to default SCHED_RR\n");
+		free(*mode);
+		*mode = strdup("SCHED_RR");
+		pthread_attr_setschedpolicy(&thread_attribs, SCHED_RR);
+	}
+	return found;
 }
 
 int phys_quit(data **object)
@@ -203,21 +233,7 @@ int phys_quit(data **object)
 
 int phys_ctrl(int status, data** object)
 {
-	if (!option->threads) {
-		pprint_err("Threads = 0, nothing to start\n");
-		return 0;
-	}
-	
-	phys_algorithm *algo = phys_find_algorithm(option->algorithm);
-	if (!algo) {
-		pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
-		return 1;
-	}
-	/* It's how we define the "null" algorithm */
-	if (algo->thread_location && !algo->thread_destruction)
-		return PHYS_STATUS_STOPPED;
-	if (algo->thread_location && !algo->thread_configuration)
-		return PHYS_STATUS_STOPPED;
+	phys_algorithm *algo = NULL;
 	int retval = PHYS_CMD_NOT_FOUND;
 	switch(status) {
 		case PHYS_STATUS:
@@ -238,18 +254,38 @@ int phys_ctrl(int status, data** object)
 			retval = *cfg->pause ? PHYS_STATUS_RUNNING : PHYS_STATUS_PAUSED;
 			break;
 		case PHYS_START:
-			if (cfg) {
+			algo = phys_find_algorithm(option->algorithm);
+			if (!algo) {
+				pprintf(PRI_ERR, "Algorithm %s not found!\n", option->algorithm);
+				retval = PHYS_INVALID_ALGORITHM;
+				break;
+			} else if (algo->thread_location && !algo->thread_configuration) {
+				/* Algorithm = none */
+				retval = PHYS_STATUS_STOPPED;
+				break;
+			} else if (cfg) {
 				retval = PHYS_STATUS_RUNNING;
+				break;
+			}
+			
+			if (!option->threads) {
+				pprint_err("Threads = 0, nothing to start\n");
+				retval = PHYS_INVALID_ALGORITHM;
 				break;
 			}
 			
 			if (!object) {
 				pprint_err("Cannot start - received NULL object pointer.\n");
+				retval = PHYS_INVALID_ALGORITHM;
+				break;
 			}
 			
 			/* Init RNG */
 			phys_stats->rng_seed = option->rng_seed ? option->rng_seed : phys_gettime_us();
 			srand(phys_stats->rng_seed);
+			
+			/* Set scheduling mode */
+			phys_set_sched_mode(&option->thread_schedule_mode);
 			
 			/* Create configuration */
 			cfg = ctrl_preinit(phys_stats, *object);
@@ -316,7 +352,12 @@ int phys_ctrl(int status, data** object)
 			
 			break;
 		case PHYS_SHUTDOWN:
-			if (!cfg) {
+			algo = phys_find_algorithm(option->algorithm);
+			if (algo->thread_location && !algo->thread_destruction) {
+				/* Algorithm == none */
+				retval = PHYS_STATUS_STOPPED;
+				break;
+			} else if (!cfg) {
 				retval = PHYS_STATUS_STOPPED;
 				break;
 			}

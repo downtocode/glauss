@@ -148,6 +148,7 @@ void phys_list_algo(void);
 /* External functions for control */
 int phys_init(data** object);
 int phys_quit(data **object);
+int phys_set_sched_mode(char **mode);
 int phys_ctrl(int status, data** object);
 
 #endif
