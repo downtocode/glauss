@@ -38,13 +38,13 @@ static _Thread_local unsigned int allocated_cells = 0;
 static unsigned int bh_octrees_max = 0;
 
 /* Algorithm specific options */
-static volatile  double          bh_ratio = 0.1;
-static volatile  double          bh_balance_threshold = 0.8;
-static volatile  unsigned short  bh_tree_limit = 8;
-static volatile  unsigned short  bh_lifetime = 24;
-static volatile  size_t          bh_heapsize_max = 336870912;
-static volatile  bool            bh_single_assign = true;
-static volatile  bool            bh_random_assign = true;
+static double          bh_ratio = 0.1;
+static double          bh_balance_threshold = 0.8;
+static unsigned short  bh_tree_limit = 8;
+static unsigned short  bh_lifetime = 24;
+static size_t          bh_heapsize_max = 336870912;
+static bool            bh_single_assign = true;
+static bool            bh_random_assign = true;
 
 /* Used in qsort to assign threads in octrees */
 static int thread_cmp_assigned(const void *a, const void *b)
@@ -501,7 +501,7 @@ unsigned int bh_cleanup_octree(bh_octree *octree)
 }
 
 /* Returns the octant of an octree a position is in */
-inline short bh_get_octant(vec3 *pos, bh_octree *octree)
+static inline short bh_get_octant(vec3 *pos, bh_octree *octree)
 {
 	short oct = 0;
 	if ((*pos)[0] >= octree->origin[0]) oct |= 4;
@@ -617,7 +617,7 @@ bh_octree *bh_init_tree(void)
 }
 
 /* Check whether the object is in the target octree. Returns 1 in case it is. */
-inline bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
+static inline bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
 {
 	if (!root)
 		return 0;
@@ -652,7 +652,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 	}
 }
 
-inline unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
+static inline unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
 {
 	unsigned int prev_allocated_cells = allocated_cells;
 	if (!octree || !root || !object)

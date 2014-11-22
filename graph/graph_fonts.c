@@ -217,7 +217,7 @@ void graph_display_object_info(data *object, unsigned int num)
 {
 	char osdstr[30];
 	snprintf(osdstr, sizeof(osdstr), "Object=%i", num);
-	graph_display_text(osdstr, 0.76, -0.87, 1.0, NULL);
+	graph_display_text(osdstr, 0.76, -0.32, 1.0, NULL);
 	snprintf(osdstr, sizeof(osdstr), "Atom=%s", return_atom_str(object[num].atomnumber));
-	graph_display_text(osdstr, 0.76, -0.95, 1.0, NULL);
+	graph_display_text(osdstr, 0.76, -0.40, 1.0, NULL);
 }

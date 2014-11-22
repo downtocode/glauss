@@ -30,7 +30,7 @@ struct graph_cfg {
 	volatile bool status, selfquit;
 };
 
-void **graph_thread_init(data *object);
+graph_window **graph_thread_init(data *object);
 void graph_thread_quit(void);
 void *graph_thread(void *thread_setts);
 

@@ -43,16 +43,15 @@ static int list_index_cmd = 0, len_cmd = 0;
 static int list_index_opt = 0, len_opt = 0;
 static struct input_cfg *global_cfg = NULL;
 
-int input_thread_init(void **win, data **object)
+int input_thread_init(graph_window **win, data **object)
 {
 	struct input_cfg *cfg = calloc(1, sizeof(struct input_cfg));
 	
 	cfg->obj = object;
-	cfg->win = (graph_window **)win;
+	cfg->win = win;
 	cfg->status = true;
 	cfg->selfquit = false;
 	cfg->line = NULL;
-	cfg->opt_map = total_opt_map;
 	cfg->cmd_map = allocate_parser_map((struct parser_map[]){
 		{"phys_check_collisions", NULL, VAR_CHECK_COLLISIONS, VAR_CMD},
 		{"save", NULL, VAR_SAVE, VAR_CMD},
@@ -171,7 +170,7 @@ int input_token_setall(char *line, struct input_cfg *t)
 		goto cleanall;
 	}
 	
-	for (struct parser_map *i = t->opt_map; i->name; i++) {
+	for (struct parser_map *i = total_opt_map; i->name; i++) {
 		if (!strcmp(i->name, token[0])) {
 			match = 1;
 			if (num_tok < 2)
@@ -198,7 +197,7 @@ int input_token_setall(char *line, struct input_cfg *t)
 						}
 						break;
 					case VAR_HELP:
-						input_cmd_printall(t->cmd_map, t->opt_map);
+						input_cmd_printall(t->cmd_map, total_opt_map);
 						break;
 					case VAR_STOP:
 						phys_ctrl(PHYS_SHUTDOWN, NULL);
@@ -240,23 +239,25 @@ int input_token_setall(char *line, struct input_cfg *t)
 						break;
 					case VAR_LUA_READOPTS:
 						if (num_tok < 2) {
-							parse_lua_simconf_options(t->opt_map);
+							parse_lua_simconf_options(total_opt_map);
 						} else {
 							if (strcmp(option->filename, token[1])) {
 								if (parse_lua_open_file(token[1])) {
 									break;
 								}
 							}
-							parse_lua_simconf_options(t->opt_map);
+							parse_lua_simconf_options(total_opt_map);
 						}
 						break;
 					case VAR_ENABLE_WINDOW:
-						if (*t->win) break;
-						*t->win = *graph_thread_init(*t->obj);
+						if (*t->win)
+							break;
+						t->win = graph_thread_init(*t->obj);
 						option->novid = false;
 						break;
 					case VAR_DISABLE_WINDOW:
-						if (!*t->win) break;
+						if (!*t->win)
+							break;
 						graph_thread_quit();
 						*t->win = NULL;
 						option->novid = true;
@@ -297,13 +298,13 @@ char *input_cmd_generator(const char *line, int state)
 
 char *input_opt_generator(const char *line, int state)
 {
-	/* Readline is fussy as fuck about every single... we did this already*/
+	/* Readline is fussy as fuck about every single... we did this already */
 	char *name = NULL;
 	if (!state) {
 		list_index_opt = 0;
 		len_opt = strlen(line);
 	}
-	while ((name = (char *)global_cfg->opt_map[list_index_opt++].name)) {
+	while ((name = (char *)total_opt_map[list_index_opt++].name)) {
 		if (!strncmp(name, line, len_opt)) {
 			return strdup(name);
 		}

@@ -35,8 +35,12 @@
 
 struct graph_cfg *global_cfg = NULL;
 
-void **graph_thread_init(data *object)
+graph_window **graph_thread_init(data *object)
 {
+	if (global_cfg) {
+		return NULL;
+	}
+	
 	struct graph_cfg *cfg = calloc(1, sizeof(struct graph_cfg));
 	
 	cfg->obj = object;
@@ -47,13 +51,14 @@ void **graph_thread_init(data *object)
 	
 	global_cfg = cfg;
 	
-	return (void **)&cfg->win;
+	return &cfg->win;
 }
 
 void graph_thread_quit(void)
 {
-	if (!global_cfg)
+	if (!global_cfg) {
 		return;
+	}
 	
 	global_cfg->status = false;
 	
@@ -78,6 +83,8 @@ void graph_thread_quit(void)
 	
 	/* Free resources */
 	free(global_cfg);
+	
+	global_cfg = NULL;
 	
 	return;
 }

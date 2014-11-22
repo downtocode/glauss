@@ -109,7 +109,7 @@ int init_elements(const char *filepath)
 	
 	elements_traverse_table(L, &buffer, &parser_state);
 	
-	atom_prop[0].name = '\0';
+	atom_prop[0].name = "\0";
 	atom_prop[0].mass = 1.0;
 	atom_prop[0].charge = 0.0;
 	atom_prop[0].number = 0;

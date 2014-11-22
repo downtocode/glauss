@@ -69,7 +69,6 @@ struct thread_config_bhut {
 };
 
 /* Returns flux of octrees */
-unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root);
 unsigned int bh_cleanup_octree(bh_octree *octree);
 
 /* Completely removes octree */
@@ -86,10 +85,6 @@ void bh_init_center_of_mass(data *object, bh_octree *octree);
 
 /* Init a tree(start of one - NOT A SUBCELL) */
 bh_octree *bh_init_tree(void);
-/* Get octant an object is in(mostly used for direction) */
-short bh_get_octant(vec3 *pos, bh_octree *octree);
-/* Checks if object is within a specific octree */
-bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root);
 
 /* Functions */
 void bhut_runtime_fn(void **threads);

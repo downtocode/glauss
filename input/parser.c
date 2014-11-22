@@ -247,7 +247,7 @@ void parser_push_generic(lua_State *L, struct parser_map *var)
 
 void parser_read_generic(lua_State *L, struct parser_map *var)
 {
-	if(!var)
+	if (!var)
 		return;
 	switch(var->type) {
 		case VAR_BOOL:

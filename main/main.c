@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 								option->filename);
 						return 0;
 					} else {
-						parse_lua_simconf_options(total_opt_map);
+						parse_lua_simconf_options(opts_map);
 					}
 					break;
 				case 'h':
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
 	/*	Physics.	*/
 	
 	/*	Graphics	*/
-		void **window = option->novid ? NULL : graph_thread_init(object);
+		graph_window **window = option->novid ? NULL : graph_thread_init(object);
 	/*	Graphics	*/
 	
 	/*	Input	*/

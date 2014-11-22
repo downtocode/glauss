@@ -67,7 +67,7 @@
 
 /* Object selection */
 #define OSLx  0.70
-#define OSLy -0.76
+#define OSLy -0.25
 #define OSLs  1.00
 
 /* Thread time counters */
@@ -308,27 +308,25 @@ void graph_draw_scene(graph_window *win)
 				graph_display_text("Simulation paused", SIMx, SIMy, SIMs, COL_YELLOW);
 			}
 			
-			if (status == PHYS_STATUS_RUNNING) {
-				unsigned int len = 0;
-				char res[15] = {0};
-				/* Stats */
-				for (unsigned int j = 0; j < option->threads; j++) {
-					len = 0;
-					for (struct parser_map *i = phys_stats->t_stats[j].thread_stats_map;
-						 i->name; i++) {
-						unsigned int word_len = strlen(i->name);
-						len += word_len;
-						if(!j) {
-							graph_display_text(i->name,
-											   THREAD_MAPx-((float)len/65),
-											   THREAD_MAPy, THREAD_MAPs,
-											   COL_YELLOW);
-						}
-						parser_get_value_str(*i, res, sizeof(res));
-						graph_display_text(res, THREAD_MAPx-((float)len/65),
-										   THREAD_MAPy-0.07-((float)j/14),
-										   THREAD_MAPs, COL_ORANGE);
+			unsigned int len = 0;
+			char res[15] = {0};
+			/* Stats */
+			for (unsigned int j = 0; j < option->threads; j++) {
+				len = 0;
+				for (struct parser_map *i = phys_stats->t_stats[j].thread_stats_map;
+					 i->name; i++) {
+					unsigned int word_len = strlen(i->name);
+					len += word_len;
+					if(!j) {
+						graph_display_text(i->name,
+										   THREAD_MAPx-((float)len/65),
+										   THREAD_MAPy, THREAD_MAPs,
+										   COL_YELLOW);
 					}
+					parser_get_value_str(*i, res, sizeof(res));
+					graph_display_text(res, THREAD_MAPx-((float)len/65),
+									   THREAD_MAPy-0.07-((float)j/14),
+									   THREAD_MAPs, COL_ORANGE);
 				}
 				
 				/* Title, now that we know the final position */
