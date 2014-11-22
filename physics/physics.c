@@ -212,8 +212,7 @@ int phys_quit(data **object)
 		return 1;
 	}
 	/* Elements */
-	free(atom_prop);
-	atom_prop = NULL;
+	free_elements();
 	
 	/* Stats */
 	free(phys_stats);

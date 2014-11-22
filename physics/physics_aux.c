@@ -109,7 +109,7 @@ int init_elements(const char *filepath)
 	
 	elements_traverse_table(L, &buffer, &parser_state);
 	
-	atom_prop[0].name = "\0";
+	atom_prop[0].name = strdup("\0");
 	atom_prop[0].mass = 1.0;
 	atom_prop[0].charge = 0.0;
 	atom_prop[0].number = 0;
@@ -135,12 +135,21 @@ unsigned short int return_atom_num(const char *name)
 	return 0;
 }
 
-const char *return_atom_str(unsigned int num)
+char *return_atom_str(unsigned int num)
 {
 	if (num > 120)
 		return NULL;
 	else
 		return atom_prop[num].name;
+}
+
+void free_elements()
+{
+	for (int i=0; i<121; i++) {
+		free(atom_prop[i].name);
+	}
+	free(atom_prop);
+	atom_prop = NULL;
 }
 
 /* Function to input numbers in an array and later extract a single number out.

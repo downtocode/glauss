@@ -38,6 +38,9 @@ typedef struct {
 	SDL_GLContext context;
 	SDL_Event *event;
 	
+	/* Graph */
+	int draw_mode;
+	
 	/* Status */
 	bool flicked, translate, fullscreen, start_selection;
 	int mousex, mousey, initmousex, initmousey;

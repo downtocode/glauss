@@ -83,6 +83,34 @@ void draw_obj_sphere(data *object)
 	glUniform4fv(objattr_color, 1, white);
 }
 
+void draw_obj_points(data *object)
+{
+	float points[option->obj][3];
+	unsigned int size = 0;
+	
+	glUniform4fv(objattr_color, 1, white);
+	glUniform1f(objattr_radius, option->def_radius);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, white);
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
+	glEnableVertexAttribArray(objattr_pos);
+	glEnableVertexAttribArray(objattr_color);
+	
+	for (unsigned int i = 0; i < option->obj; i++) {
+		points[size][0] = object[i].pos[0];
+		points[size][1] = object[i].pos[1];
+		points[size][2] = object[i].pos[2];
+		size++;
+	}
+	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
+	
+	glDrawArrays(GL_POINTS, 0, size);
+	
+	glDisableVertexAttribArray(objattr_pos);
+	glDisableVertexAttribArray(objattr_color);
+}
+
 void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element)
 {
 	float points[option->obj][3];
@@ -127,6 +155,25 @@ void draw_obj_col_points(data *object)
 {
 	for (int i = 0; i < 120; i++) {
 		draw_obj_packed_elements_draw(object, &atom_prop[i]);
+	}
+}
+
+void draw_objs_mode(data *object, int mode)
+{
+	switch(mode) {
+		case MODE_SPHERE:
+			for (unsigned int i = 0; i < option->obj; i++) {
+				draw_obj_sphere(&object[i]);
+			}
+			break;
+		case MODE_POINTS:
+			draw_obj_points(object);
+			break;
+		case MODE_POINTS_COL:
+			draw_obj_col_points(object);
+			break;
+		default:
+			break;
 	}
 }
 

@@ -37,6 +37,28 @@ enum intercommunication {
 	CMD_TOO_MANY_TOKENS,
 };
 
+enum commands {
+	VAR_CMD,
+	VAR_CMD_SYS,
+	VAR_QUIT,
+	VAR_LIST,
+	VAR_START,
+	VAR_STOP,
+	VAR_RESTART,
+	VAR_HELP,
+	VAR_STATUS,
+	VAR_STATS,
+	VAR_CLEAR,
+	VAR_PAUSE,
+	VAR_SAVE,
+	VAR_LOAD,
+	VAR_ENABLE_WINDOW,
+	VAR_DISABLE_WINDOW,
+	VAR_WIN_DRAW_MODE,
+	VAR_LUA_READOPTS,
+	VAR_CHECK_COLLISIONS,
+};
+
 /* Sent to input thread */
 struct input_cfg {
 	pthread_t input;

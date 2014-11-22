@@ -22,10 +22,10 @@
 
 void draw_obj_axis(float scale);
 void draw_obj_sphere(data *object);
+void draw_obj_points(data *object);
 void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element);
 void draw_obj_col_points(data *object);
+void draw_objs_mode(data *object, int mode);
 GLuint graph_init_objects(void);
-
-#define draw_obj_points(obj) draw_obj_packed_elements_draw(obj, NULL)
 
 #endif

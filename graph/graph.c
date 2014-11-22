@@ -390,7 +390,7 @@ void graph_draw_scene(graph_window *win)
 		draw_obj_axis(AXISs);
 		
 		/* Objects(as points) */
-		draw_obj_col_points(win->object);
+		draw_objs_mode(win->object, win->draw_mode);
 		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -401,6 +401,37 @@ void graph_draw_scene(graph_window *win)
 		option->write_sshot_now = false;
 	}
 	/*	Dynamic drawing	*/
+}
+
+int graph_set_draw_mode(graph_window *win, const char *mode)
+{
+	if (!mode)
+		goto not_found;
+	
+	struct parser_map draw_modes[] = {
+		{"MODE_SPHERE",       NULL,   MODE_SPHERE,       LUA_TNUMBER   },
+		{"MODE_POINTS",       NULL,   MODE_POINTS,       LUA_TNUMBER   },
+		{"MODE_POINTS_COL",   NULL,   MODE_POINTS_COL,   LUA_TNUMBER   },
+		{0},
+	};
+	for (struct parser_map *i = draw_modes; i->name; i++) {
+		if (!strcmp(i->name, mode)) {
+			win->draw_mode = i->type;
+			pprint("Draw mode set to %s\n", i->name);
+			return 0;
+		}
+	}
+	
+	pprint_err("Draw mode %s not found. ");
+	not_found:
+		pprint_err("Possible modes: ", mode);
+		for (struct parser_map *i = draw_modes; i->name; i++) {
+			pprint("%s ", i->name);
+		}
+		pprint("\nSetting mode to default MODE_POINTS\n");
+		win->draw_mode = MODE_POINTS;
+	
+	return 1;
 }
 
 void graph_quit(void)

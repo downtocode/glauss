@@ -70,6 +70,7 @@ int input_thread_init(graph_window **win, data **object)
 		{"unpause", NULL, VAR_PAUSE, VAR_CMD},
 		{"win_create", NULL, VAR_ENABLE_WINDOW, VAR_CMD},
 		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
+		{"win_draw_mode", NULL, VAR_WIN_DRAW_MODE, VAR_CMD},
 		{"lua_readopts", NULL, VAR_LUA_READOPTS, VAR_CMD},
 		{"#command (runs a system command)", NULL, VAR_CMD_SYS, VAR_CMD},
 		{0}
@@ -249,11 +250,20 @@ int input_token_setall(char *line, struct input_cfg *t)
 							parse_lua_simconf_options(total_opt_map);
 						}
 						break;
+					case VAR_WIN_DRAW_MODE:
+						if (!t->win || !*t->win)
+							break;
+						if (num_tok < 2) {
+							graph_set_draw_mode(*t->win, NULL);
+						} else {
+							graph_set_draw_mode(*t->win, token[1]);
+						}
+						break;
 					case VAR_ENABLE_WINDOW:
 						if (*t->win)
 							break;
-						t->win = graph_thread_init(*t->obj);
 						option->novid = false;
+						t->win = graph_thread_init(*t->obj);
 						break;
 					case VAR_DISABLE_WINDOW:
 						if (!*t->win)

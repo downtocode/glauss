@@ -39,25 +39,6 @@ enum vars_and_cmds {
 	VAR_LONGUINT,
 	VAR_LONGLONGUINT,
 	VAR_NO_IDEA,
-	/* Commands */
-	VAR_CMD,
-	VAR_CMD_SYS,
-	VAR_QUIT,
-	VAR_LIST,
-	VAR_START,
-	VAR_STOP,
-	VAR_RESTART,
-	VAR_HELP,
-	VAR_STATUS,
-	VAR_STATS,
-	VAR_CLEAR,
-	VAR_PAUSE,
-	VAR_SAVE,
-	VAR_LOAD,
-	VAR_ENABLE_WINDOW,
-	VAR_DISABLE_WINDOW,
-	VAR_LUA_READOPTS,
-	VAR_CHECK_COLLISIONS,
 };
 
 #define P_TYPE(x) &(x), _Generic((x),                                            \

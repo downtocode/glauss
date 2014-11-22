@@ -63,7 +63,7 @@ function spawn_objects(string_from_arg)
 	local cube_size = 1
 	local velocity = 10
 	
-	for i = #objects+1, #objects+1+1562, 1 do
+	for i = #objects+1, #objects+1+15062, 1 do
 		objects[i] = {
 			pos = {
 				(math.random()-0.5)*cube_size,

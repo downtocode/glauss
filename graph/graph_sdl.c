@@ -58,6 +58,7 @@ graph_window *graph_sdl_init(data *object)
 	/* Default options */
 	win->camera = def_cam;
 	win->object = object;
+	win->draw_mode = MODE_POINTS;
 	strcpy(win->currentsel, "Select object:");
 	
 	/* Usually helps */

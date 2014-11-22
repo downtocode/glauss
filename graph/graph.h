@@ -18,6 +18,12 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
+enum draw_mode {
+	MODE_SPHERE,
+	MODE_POINTS,
+	MODE_POINTS_COL,
+};
+
 #include <GLES2/gl2.h>
 #include "graph_sdl.h"
 
@@ -28,6 +34,7 @@ void graph_set_view(graph_window *win);
 unsigned int graph_compile_shader(const char *src_vert_shader,
 								  const char *src_frag_shader);
 void graph_draw_scene(graph_window *win);
+int graph_set_draw_mode(graph_window *win, const char *mode);
 int graph_sshot(long double arg);
 
 #endif

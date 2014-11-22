@@ -21,11 +21,11 @@
 #include "physics.h"
 
 extern struct atomic_cont {
-	const char *name;
+	char *name;
 	double mass;
 	double charge;
-	float color[4];
 	int number;
+	float color[4];
 } *atom_prop;
 
 enum {
@@ -44,7 +44,8 @@ struct numbers_selection {
 /* Elements system. Submit a NULL filepath to use compiled internal DB */
 int init_elements(const char *filepath);
 unsigned short int return_atom_num(const char *name);
-const char *return_atom_str(unsigned int num);
+char *return_atom_str(unsigned int num);
+void free_elements();
 
 /* Shuffle through all algorithms available and change option->algorithm */
 void phys_shuffle_algorithms(void);
