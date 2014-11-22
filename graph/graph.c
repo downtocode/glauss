@@ -444,10 +444,24 @@ void graph_quit(void)
 	free(scale);
 	free(pers);
 	free(transl);
+	
+	graph_stop_fontconfig();
+	graph_stop_freetype();
 }
 
 void graph_init(void)
 {
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		pprint_err("Error initializing GLEW\n");
+		exit(1);
+	}
+		
+	if (!GLEW_VERSION_3_0) {
+		pprint_err("GL implementation does not support the 3.0 API\n");
+		exit(1);
+	}
+	
 	mat       =  calloc(16, sizeof(GLfloat));
 	rotx      =  calloc(16, sizeof(GLfloat));
 	roty      =  calloc(16, sizeof(GLfloat));

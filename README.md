@@ -12,7 +12,8 @@ Compiling
 Complete list of dependencies:
 
  * gcc (4.9 or newer)  or clang (3.5 or newer)
- * OpenGL ES 2.0 development libraries (Debian: libgles2-mesa-dev; Fedora: mesa-libGLES)
+ * OpenGL 3.0 development libraries (Debian: libgl1-mesa-dev)
+ * GLEW OpenGL Loading libary (Debian: libglew-dev)
  * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2)
  * Fontconfig development library(Debian: libfontconfig1-dev)
  * PNG 1.2 development library (Debian: libpng12-dev)

@@ -95,6 +95,7 @@ void *graph_thread(void *thread_setts)
 	
 	/* SDL */
 	t->win = graph_sdl_init(t->obj);
+	
 	graph_sdl_resize_wind(t->win);
 	
 	/* OpenGL */

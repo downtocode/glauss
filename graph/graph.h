@@ -24,7 +24,7 @@ enum draw_mode {
 	MODE_POINTS_COL,
 };
 
-#include <GLES2/gl2.h>
+#include <GL/glew.h>
 #include "graph_sdl.h"
 
 void graph_init(void);

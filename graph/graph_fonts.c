@@ -89,6 +89,12 @@ const char *graph_init_fontconfig(void)
 	return (const char *)fc_value.u.s;
 }
 
+void graph_stop_fontconfig(void)
+{
+	/* Buggy */
+	//FcFini();
+}
+
 unsigned int graph_init_freetype(const char *fontname)
 {
 	/* Initialize OpenGL */
@@ -128,7 +134,8 @@ unsigned int graph_init_freetype(const char *fontname)
 	glActiveTexture(GL_TEXTURE0);
 	glGenTextures(1, &font_tex);
 	glBindTexture(GL_TEXTURE_2D, font_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, atlas_w, atlas_h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, atlas_w, atlas_h, 0,
+				 GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -163,7 +170,8 @@ void graph_stop_freetype(void)
 	FT_Done_FreeType(library);
 }
 
-void graph_display_text(const char *text, float x, float y, float s, const GLfloat *col)
+void graph_display_text(const char *text, float x, float y, float s,
+						const GLfloat *col)
 {
 	if(!col) col = white;
 	float sx = s/option->width, sy = s/option->height;
@@ -194,15 +202,28 @@ void graph_display_text(const char *text, float x, float y, float s, const GLflo
 		y += ft_chr[d].ay * sy;
 		
 		/* Skip glyphs that have no pixels */
-		if(!w || !h) continue;
+		if (!w || !h)
+			continue;
 		
 		/* Setup coords */
-		coords[n++] = (point){x2, -y2, ft_chr[d].tx, 0};
-		coords[n++] = (point){x2 + w, -y2, ft_chr[d].tx + ft_chr[d].bw/atlas_w, 0};
-		coords[n++] = (point){x2, -y2 - h, ft_chr[d].tx, ft_chr[d].bh/atlas_h};
-		coords[n++] = (point){x2 + w, -y2, ft_chr[d].tx + ft_chr[d].bw/atlas_w, 0};
-		coords[n++] = (point){x2, -y2 - h, ft_chr[d].tx, ft_chr[d].bh/atlas_h};
-		coords[n++] = (point){x2 + w, -y2 - h, ft_chr[d].tx + ft_chr[d].bw/atlas_w, ft_chr[d].bh/atlas_h};
+		coords[n++] = (point){x2, -y2,
+							  ft_chr[d].tx,
+							  0};
+		coords[n++] = (point){x2 + w, -y2,
+							  ft_chr[d].tx + ft_chr[d].bw/atlas_w,
+							  0};
+		coords[n++] = (point){x2, -y2 - h,
+							  ft_chr[d].tx,
+							  ft_chr[d].bh/atlas_h};
+		coords[n++] = (point){x2 + w, -y2,
+							  ft_chr[d].tx + ft_chr[d].bw/atlas_w,
+							  0};
+		coords[n++] = (point){x2, -y2 - h,
+							  ft_chr[d].tx,
+							  ft_chr[d].bh/atlas_h};
+		coords[n++] = (point){x2 + w, -y2 - h,
+							  ft_chr[d].tx + ft_chr[d].bw/atlas_w,
+							  ft_chr[d].bh/atlas_h};
 	}
 	
 	glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_STATIC_DRAW);
@@ -218,6 +239,7 @@ void graph_display_object_info(data *object, unsigned int num)
 	char osdstr[30];
 	snprintf(osdstr, sizeof(osdstr), "Object=%i", num);
 	graph_display_text(osdstr, 0.76, -0.32, 1.0, NULL);
-	snprintf(osdstr, sizeof(osdstr), "Atom=%s", return_atom_str(object[num].atomnumber));
+	snprintf(osdstr, sizeof(osdstr), "Atom=%s",
+			 return_atom_str(object[num].atomnumber));
 	graph_display_text(osdstr, 0.76, -0.40, 1.0, NULL);
 }
