@@ -405,15 +405,16 @@ void graph_draw_scene(graph_window *win)
 
 int graph_set_draw_mode(graph_window *win, const char *mode)
 {
-	if (!mode)
-		goto not_found;
-	
 	struct parser_map draw_modes[] = {
 		{"MODE_SPHERE",       NULL,   MODE_SPHERE,       LUA_TNUMBER   },
 		{"MODE_POINTS",       NULL,   MODE_POINTS,       LUA_TNUMBER   },
 		{"MODE_POINTS_COL",   NULL,   MODE_POINTS_COL,   LUA_TNUMBER   },
 		{0},
 	};
+	
+	if (!mode)
+		goto not_found;
+	
 	for (struct parser_map *i = draw_modes; i->name; i++) {
 		if (!strcmp(i->name, mode)) {
 			win->draw_mode = i->type;
