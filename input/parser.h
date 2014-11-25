@@ -42,13 +42,13 @@ enum vars_and_cmds {
 };
 
 #define P_TYPE(x) &(x), _Generic((x),                                            \
-	float: VAR_FLOAT,					double: VAR_DOUBLE,                      \
-	long double: VAR_LONG_DOUBLE,		int: VAR_INT,                            \
-	unsigned int: VAR_UINT,				unsigned short int: VAR_USHORT,          \
-	bool: VAR_BOOL,						short int: VAR_SHORT,                    \
-	char *: VAR_STRING,					long int: VAR_LONGINT,                   \
-	unsigned long int: VAR_LONGUINT,    long long unsigned int: VAR_LONGLONGUINT,\
-	default: VAR_NO_IDEA                                                         \
+    float: VAR_FLOAT,                 double: VAR_DOUBLE,                      \
+    long double: VAR_LONG_DOUBLE,     int: VAR_INT,                            \
+    unsigned int: VAR_UINT,           unsigned short int: VAR_USHORT,          \
+    bool: VAR_BOOL,                   short int: VAR_SHORT,                    \
+    char *: VAR_STRING,               long int: VAR_LONGINT,                   \
+    unsigned long int: VAR_LONGUINT,  long long unsigned int: VAR_LONGLONGUINT,\
+    default: VAR_NO_IDEA                                                         \
 ), _Generic((x), bool: LUA_TBOOLEAN, char *: LUA_TSTRING, default: LUA_TNUMBER)
 
 struct parser_map {

@@ -19,15 +19,15 @@
 #define PHYSENGINE_PHYS_N_BODY
 
 #define PHYS_NBODY {                                                           \
-		.name = "n-body",                                                      \
-		.version = PACKAGE_VERSION,                                            \
-		.desc = "Standard n-body simulation, velocity verlet integration",     \
-		.author = "Rostislav Pehlivanov",                                      \
-		.thread_preconfiguration = NULL,                                       \
-		.thread_configuration = nbody_init,                                    \
-		.thread_location = thread_nbody,                                       \
-		.thread_destruction = nbody_quit,                                      \
-	}
+        .name = "n-body",                                                      \
+        .version = PACKAGE_VERSION,                                            \
+        .desc = "Standard n-body simulation, velocity verlet integration",     \
+        .author = "Rostislav Pehlivanov",                                      \
+        .thread_preconfiguration = NULL,                                       \
+        .thread_configuration = nbody_init,                                    \
+        .thread_location = thread_nbody,                                       \
+        .thread_destruction = nbody_quit,                                      \
+    }
 
 struct thread_config_nbody {
 	data* obj;

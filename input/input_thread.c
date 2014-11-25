@@ -42,6 +42,7 @@ static const char pointred[] = "\033[031m"CMD_PROMPT_DOT"\033[0m";
 static int list_index_cmd = 0, len_cmd = 0;
 static int list_index_opt = 0, len_opt = 0;
 static struct input_cfg *global_cfg = NULL;
+static bool cleanup = false;
 
 int input_thread_init(graph_window **win, data **object)
 {
@@ -78,6 +79,8 @@ int input_thread_init(graph_window **win, data **object)
 	
 	global_cfg = cfg;
 	
+	cleanup = false;
+	
 	pthread_create(&cfg->input, NULL, input_thread, cfg);
 	
 	return 0;
@@ -90,29 +93,36 @@ void input_thread_quit(void)
 	
 	global_cfg->status = false;
 	
-	void *val = NULL, *res = NULL;
+	void *res = NULL;
+	void *val = global_cfg->selfquit ? NULL : PTHREAD_CANCELED;
 	
-	if (!global_cfg->selfquit) {
-		pthread_cancel(global_cfg->input);
-		val = PTHREAD_CANCELED;
-		free(global_cfg->line);
-	}
-	
-	pthread_join(global_cfg->input, &res);
-	
-	if (res != val) {
-		pprint_err("Error joining with input thread!\n");
+	while (res != val) {
+		if (!global_cfg->selfquit)
+			pthread_cancel(global_cfg->input);
+		pthread_join(global_cfg->input, &res);
 	}
 	
 	/* Reset terminal */
+	rl_deprep_terminal();
 	rl_free_line_state();
 	rl_cleanup_after_signal();
+	cleanup = true;
 	
 	/* Free resources */
+	free(global_cfg->line);               /* Should be NULL, but just in case */
 	free(global_cfg->cmd_map);
 	free(global_cfg);
 	
 	return;
+}
+
+void input_thread_reset_term(void)
+{
+	if (cleanup == true)
+		return;
+	rl_free_line_state();
+	rl_cleanup_after_signal();
+	cleanup = true;
 }
 
 static void input_cmd_printall(struct parser_map *cmd_map, struct parser_map *opt_map)
@@ -349,6 +359,8 @@ void *input_thread(void *thread_setts)
 	rl_catch_signals = false;
 	rl_attempted_completion_function = input_completion;
 	
+	rl_prep_terminal(0);
+	
 	while (t->status) {
 		/* Refresh prompt */
 		if (phys_ctrl(PHYS_STATUS, NULL) == PHYS_STATUS_PAUSED) {
@@ -358,12 +370,12 @@ void *input_thread(void *thread_setts)
 		} else {
 			sprintf(prompt, "%s %s ", CMD_PROMPT_BASE, pointred);
 		}
-		
+			
 		t->line = readline(prompt);
 		
 		if (!t->line) {
 			t->selfquit = 1;
-			raise(SIGINT);
+			t->status = 0;
 		} else if (*t->line) {
 			add_history(t->line);
 			switch(input_token_setall(t->line, t)) {
@@ -374,7 +386,7 @@ void *input_thread(void *thread_setts)
 					break;
 				case CMD_EXIT:
 					t->selfquit = 1;
-					raise(SIGINT);
+					t->status = 0;
 					break;
 				case CMD_NOT_FOUND:
 					pprintf(PRI_ERR, "Command not found\n");
@@ -386,11 +398,15 @@ void *input_thread(void *thread_setts)
 					break;
 			}
 		}
+		
 		free(t->line);
 		t->line = NULL;
 	}
 	
-	t->selfquit = 1;
+	if (t->selfquit) {
+		raise(SIGINT);
+		return 0;
+	}
 	
 	return 0;
 }

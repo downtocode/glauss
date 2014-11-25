@@ -62,24 +62,25 @@ void graph_thread_quit(void)
 	
 	global_cfg->status = false;
 	
-	void *val = NULL, *res = NULL;
+	pthread_join(global_cfg->graph, NULL);
 	
-	while (!global_cfg->selfquit) {
-		global_cfg->status = false;
-	}
+	//graph_sdl_deinit(global_cfg->win);
+	
+	/*void *res = PTHREAD_CANCELED;
 	
 	if (!global_cfg->selfquit) {
-		pthread_cancel(global_cfg->graph);
-		val = PTHREAD_CANCELED;
-	}
-	
-	pthread_join(global_cfg->graph, &res);
-	
-	if (res != val) {
-		pprint_err("Error joining with graphics thread!\n");
-	}
-	
-	graph_sdl_deinit(global_cfg->win);
+		res = NULL;
+		while (res != PTHREAD_CANCELED) {
+			pthread_cancel(global_cfg->graph);
+			pthread_join(global_cfg->graph, &res);
+		}
+		graph_sdl_deinit(global_cfg->win);
+	} else {
+		res = PTHREAD_CANCELED;
+		while (res) {
+			pthread_join(global_cfg->graph, &res);
+		}
+	}*/
 	
 	/* Free resources */
 	free(global_cfg);
@@ -130,12 +131,12 @@ void *graph_thread(void *thread_setts)
 				case SDL_KEYDOWN:
 					if (graph_scan_keypress(t->win)) {
 						t->selfquit = 1;
-						raise(SIGINT);
+						t->status = 0;
 					}
 					break;
 				case SDL_QUIT:
 					t->selfquit = 1;
-					raise(SIGINT);
+					t->status = 0;
 					break;
 			}
 		}
@@ -161,7 +162,10 @@ void *graph_thread(void *thread_setts)
 		graph_sdl_swapwin(t->win);
 	}
 	
-	t->selfquit = 1;
+	graph_sdl_deinit(t->win);
+	
+	if (t->selfquit)
+		raise(SIGINT);
 	
 	return 0;
 }

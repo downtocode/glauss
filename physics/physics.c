@@ -37,14 +37,14 @@
 
 /* "none" algorithm description */
 #define PHYS_NONE {                               \
-		.name = "none",                           \
-		.version = PACKAGE_VERSION,               \
-		.desc = "Starts absolutely no threads",   \
-		.author = NULL,                           \
-		.thread_configuration = NULL,             \
-		.thread_location = (thread_function)1,    \
-		.thread_destruction = NULL,               \
-	}
+        .name = "none",                           \
+        .version = PACKAGE_VERSION,               \
+        .desc = "Starts absolutely no threads",   \
+        .author = NULL,                           \
+        .thread_configuration = NULL,             \
+        .thread_location = (thread_function)1,    \
+        .thread_destruction = NULL,               \
+    }
 
 /*	Default threads to use when system != linux.	*/
 #define AUTO_UNAVAIL_THREADS 1
@@ -216,16 +216,13 @@ int phys_quit(data **object)
 	
 	/* Stats */
 	free(phys_stats);
-	phys_stats = NULL;
 	
 	/* Prev opts */
 	free(prev_algo_opts);
-	prev_algo_opts = NULL;
 	
 	/* Obj */
 	if (object) {
 		free(*object);
-		*object = NULL;
 	}
 	return 0;
 }
@@ -365,12 +362,17 @@ int phys_ctrl(int status, data** object)
 			*cfg->pause = false;
 			*cfg->quit = true;
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
-			void *res = NULL;
+			void *res = PTHREAD_CANCELED; /* Can be any pointer */
 			for (unsigned int k = 0; k < option->threads; k++) {
-				pthread_join(cfg->threads[k], &res);
+				while (res) {
+					pthread_join(cfg->threads[k], &res);
+				}
+				res = PTHREAD_CANCELED;
 				pprintf(PRI_ESSENTIAL, "%u...", k);
 			}
-			pthread_join(cfg->control_thread, &res);
+			while (res) {
+				pthread_join(cfg->control_thread, &res);
+			}
 			pprintf(PRI_ESSENTIAL, "C...");
 			pprintf(PRI_OK, "\n");
 			/* Stop threads */

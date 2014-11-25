@@ -28,11 +28,13 @@ static bool disable_print = 0;
 
 void pprint_enable(void)
 {
+	fflush(stdout);
 	disable_print = false;
 }
 
 void pprint_disable(void)
 {
+	fflush(stdout);
 	disable_print = true;
 }
 

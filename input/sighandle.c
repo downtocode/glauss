@@ -82,6 +82,7 @@ void on_quit_signal(int signo)
 	if(option->input_thread_enable) {
 		pprintf(PRI_ESSENTIAL, "&& Input: ");
 		input_thread_quit();
+		input_thread_reset_term();
 		pprintf(PRI_OK, "");
 	}
 	

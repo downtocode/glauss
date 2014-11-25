@@ -19,27 +19,27 @@
 #define PHYSENGINE_PHYS_NULL
 
 #define PHYS_NULL {                                                            \
-		.name = "null",                                                        \
-		.version = PACKAGE_VERSION,                                            \
-		.desc = "Only a control thread running, use with Lua",                 \
-		.author = "Rostislav Pehlivanov",                                      \
-		.thread_preconfiguration = null_preinit,                               \
-		.thread_configuration = null_init,                                     \
-		.thread_location = thread_null,                                        \
-		.thread_destruction = null_quit,                                       \
-	}
+        .name = "null",                                                        \
+        .version = PACKAGE_VERSION,                                            \
+        .desc = "Only a control thread running, use with Lua",                 \
+        .author = "Rostislav Pehlivanov",                                      \
+        .thread_preconfiguration = null_preinit,                               \
+        .thread_configuration = null_init,                                     \
+        .thread_location = thread_null,                                        \
+        .thread_destruction = null_quit,                                       \
+    }
 
 #define PHYS_NULL_STATS {                                                      \
-		.name = "null_stats",                                                  \
-		.version = PACKAGE_VERSION,                                            \
-		.desc = "Outputs statistics(n-body), slow",                            \
-		.author = "Rostislav Pehlivanov",                                      \
-		.thread_preconfiguration = stats_preinit,                              \
-		.thread_configuration = null_init,                                     \
-		.thread_location = thread_stats,                                       \
-		.thread_destruction = null_quit,                                       \
-		.thread_sched_fn = stats_runtime_fn,                                   \
-	}
+        .name = "null_stats",                                                  \
+        .version = PACKAGE_VERSION,                                            \
+        .desc = "Outputs statistics(n-body), slow",                            \
+        .author = "Rostislav Pehlivanov",                                      \
+        .thread_preconfiguration = stats_preinit,                              \
+        .thread_configuration = null_init,                                     \
+        .thread_location = thread_stats,                                       \
+        .thread_destruction = null_quit,                                       \
+        .thread_sched_fn = stats_runtime_fn,                                   \
+    }
 
 struct null_statistics {
 	double null_avg_dist, null_max_dist;

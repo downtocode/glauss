@@ -115,12 +115,12 @@ void graph_sdl_move_cam(graph_window *win)
 	if (win->flicked || win->translate) {
 		SDL_GetRelativeMouseState(&win->mousex, &win->mousey);
 		if (win->flicked) {
-			win->camera.view_roty += (float)win->mousex*MOUSE_ROT_SENS;
-			win->camera.view_rotx += (float)win->mousey*MOUSE_ROT_SENS;
+			win->camera.view_roty += win->mousex*MOUSE_ROT_SENS;
+			win->camera.view_rotx += win->mousey*MOUSE_ROT_SENS;
 		}
 		if (win->translate) {
-			win->camera.tr_x += -(float)win->mousex*MOUSE_TR_SENS;
-			win->camera.tr_y += (float)win->mousey*MOUSE_TR_SENS;
+			win->camera.tr_x += -win->mousex*MOUSE_TR_SENS;
+			win->camera.tr_y += win->mousey*MOUSE_TR_SENS;
 		}
 	}
 	if (win->chosen) {

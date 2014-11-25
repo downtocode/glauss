@@ -19,16 +19,16 @@
 #define PHYSENGINE_PHYS_BARNES_HUT
 
 #define PHYS_BARNES_HUT {                                                      \
-		.name = "barnes-hut",                                                  \
-		.version = PACKAGE_VERSION,                                            \
-		.desc = "Barnes-Hut simulation, velocity verlet integration",          \
-		.author = "Rostislav Pehlivanov",                                      \
-		.thread_preconfiguration = bhut_preinit,                               \
-		.thread_configuration = bhut_init,                                     \
-		.thread_location = thread_bhut,                                        \
-		.thread_destruction = bhut_quit,                                       \
-		.thread_sched_fn = bhut_runtime_fn                                     \
-	}
+        .name = "barnes-hut",                                                  \
+        .version = PACKAGE_VERSION,                                            \
+        .desc = "Barnes-Hut simulation, velocity verlet integration",          \
+        .author = "Rostislav Pehlivanov",                                      \
+        .thread_preconfiguration = bhut_preinit,                               \
+        .thread_configuration = bhut_init,                                     \
+        .thread_location = thread_bhut,                                        \
+        .thread_destruction = bhut_quit,                                       \
+        .thread_sched_fn = bhut_runtime_fn                                     \
+    }
 
 /* Octree structure */
 typedef struct phys_barnes_hut_octree {
