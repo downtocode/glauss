@@ -324,6 +324,15 @@ int main(int argc, char *argv[])
 	
 	/* free physics */
 	phys_quit(&object);
+	
+	/* Free options */
+	free(option->spawn_funct);
+	free(option->fontname);
+	free(option->timestep_funct);
+	free(option->algorithm);
+	free(option->thread_schedule_mode);
+	free(option->xyz_temp);
+	free(option->sshot_temp);
 	free(option);
 	
 	pprint("Done!\n");

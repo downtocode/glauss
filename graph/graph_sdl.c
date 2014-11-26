@@ -46,14 +46,15 @@ static bool sdl_initd = 0;
 
 graph_window *graph_sdl_init(data *object)
 {
-	if (sdl_initd)
-		return NULL;
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
 	
-	SDL_Init(SDL_INIT_NOPARACHUTE);
-	SDL_Init(SDL_INIT_VIDEO);
-	sdl_initd = true;
+	if (!sdl_initd) {
+		return NULL;
+		SDL_Init(SDL_INIT_NOPARACHUTE);
+		SDL_Init(SDL_INIT_VIDEO);
+		sdl_initd = true;
+	}
 	
 	/* Default options */
 	win->camera = def_cam;
