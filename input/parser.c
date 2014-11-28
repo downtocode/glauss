@@ -303,8 +303,10 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 		/* Tell conf_traverse_table() to traverse */
 		return 1;
 	} else {
+		/* Should remain on stack for a few microseconds, right? */
+		const char *name = strdup(lua_tostring(L, -2));
 		for (struct parser_map *i = parser_state->opt_map; i->name; i++) {
-			if (!strcmp(i->name, lua_tostring(L, -2))) {
+			if (!strcmp(i->name, name)) {
 				parser_read_generic(L, i);
 				break;
 			}
@@ -519,11 +521,24 @@ static int input_lua_stop_physics(lua_State *L)
 	return 0;
 }
 
+static int input_lua_setopt(lua_State *L)
+{
+	const char *name = lua_tostring(L, -2);
+	for (struct parser_map *i = total_opt_map; i->name; i++) {
+		if (!strcmp(i->name, name)) {
+			parser_read_generic(L, i);
+			return 0;
+		}
+	}
+	return 1;
+}
+
 static int parse_lua_register_fn(lua_State *L)
 {
 	/* Register own function to quit */
 	lua_register(L, "raise", input_lua_raise);
 	lua_register(L, "phys_pause", input_lua_stop_physics);
+	lua_register(L, "set_option", input_lua_setopt);
 	return 0;
 }
 

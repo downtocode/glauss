@@ -133,6 +133,8 @@ function run_on_timestep(t_stats, obj)
 	--if t_stats.progress > 0.0 then phys_pause() end
 	if obj == nil then return nil end
 	
+	--set_option("threads", 3)
+	
 	local cube_size = 2
 	
 	for i = 231, 600, 1 do
