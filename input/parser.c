@@ -939,7 +939,7 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 	};
 	
 	if (!lua_isnil(Lp, -1) && !lua_isnil(Lp, -2)) {
-		if (lua_istable(Lp, -2)) {
+		if (lua_istable(Lp, -1)) {
 			conf_traverse_table(Lp, &conf_lua_parse_objs, parser_state);
 			pprint_verb("Updated objs = %i\n", parser_state->i);
 		} else {

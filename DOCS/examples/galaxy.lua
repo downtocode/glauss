@@ -154,10 +154,10 @@ function run_on_timestep(t_stats, obj)
 	print("Total octree memory usage:", t_stats.bh_heapsize/1048576, "MiB")
 	
 	if obj == nil then
-		return 0
+		return nil
 	else
 		print("Velocity of object 1:", math.sqrt(obj[1].vel[0]^2 + obj[1].vel[1]^2 + obj[1].vel[2]^2) )
 	end
 	
-	return 1
+	return nil
 end
