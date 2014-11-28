@@ -30,9 +30,11 @@
 #include "msg_phys.h"
 #include "physics/physics_aux.h"
 
-int out_write_xyz(phys_obj *object, const char *template_str, pthread_mutex_t *io_halt)
+int out_write_xyz(phys_obj *object, const char *template_str, pthread_spinlock_t *io_halt)
 {
-	if(io_halt) pthread_mutex_lock(io_halt);
+	if(io_halt)
+		pthread_spin_lock(io_halt);
+	
 	char filetodump[120];
 	snprintf(filetodump, sizeof(filetodump), template_str, phys_stats->progress);
 	/* Check if file exist */
@@ -48,14 +50,17 @@ int out_write_xyz(phys_obj *object, const char *template_str, pthread_mutex_t *i
 				(float)object[i].pos[2]);
 	}
 	fclose(out);
-	if(io_halt) pthread_mutex_unlock(io_halt);
+	
+	if(io_halt)
+		pthread_spin_unlock(io_halt);
+	
 	return 0;
 }
 
-size_t out_write_array(phys_obj *object, const char *template_str, pthread_mutex_t *io_halt)
+size_t out_write_array(phys_obj *object, const char *template_str, pthread_spinlock_t *io_halt)
 {
 	if(io_halt)
-		pthread_mutex_lock(io_halt);
+		pthread_spin_lock(io_halt);
 	
 	char filetodump[120];
 	snprintf(filetodump, sizeof(filetodump), template_str, phys_stats->progress);
@@ -71,14 +76,15 @@ size_t out_write_array(phys_obj *object, const char *template_str, pthread_mutex
 	
 	fclose(out);
 	if(io_halt)
-		pthread_mutex_unlock(io_halt);
+		pthread_spin_unlock(io_halt);
+	
 	return written;
 }
 
-size_t in_write_array(phys_obj **object, const char *filename, pthread_mutex_t *io_halt)
+size_t in_write_array(phys_obj **object, const char *filename, pthread_spinlock_t *io_halt)
 {
 	if(io_halt)
-		pthread_mutex_lock(io_halt);
+		pthread_spin_lock(io_halt);
 	
 	int fd = -1;
 	struct stat s;
@@ -98,7 +104,7 @@ size_t in_write_array(phys_obj **object, const char *filename, pthread_mutex_t *
 	close(fd);
 	
 	if(io_halt)
-		pthread_mutex_unlock(io_halt);
+		pthread_spin_unlock(io_halt);
 	
 	return s.st_size;
 }

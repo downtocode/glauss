@@ -50,7 +50,7 @@
 /*	Default threads to use when system != linux.	*/
 #define AUTO_UNAVAIL_THREADS 1
 
-pthread_mutex_t *halt_objects = NULL;
+pthread_spinlock_t *halt_objects = NULL;
 pthread_attr_t thread_attribs;
 static struct sched_param parameters;
 
@@ -235,6 +235,13 @@ int phys_quit(phys_obj **object)
 	return 0;
 }
 
+void phys_ctrl_wait(pthread_barrier_t *barr)
+{
+	/* Signal ctrl thread and wait for it to finish */
+	pthread_barrier_wait(barr);
+	pthread_barrier_wait(barr);
+}
+
 int phys_ctrl(int status, phys_obj **object)
 {
 	phys_algorithm *algo = NULL;
@@ -379,9 +386,11 @@ int phys_ctrl(int status, phys_obj **object)
 				res = PTHREAD_CANCELED;
 				pprintf(PRI_ESSENTIAL, "%u...", k);
 			}
+			
 			while (res) {
 				pthread_join(cfg->control_thread, &res);
 			}
+			
 			pprintf(PRI_ESSENTIAL, "C...");
 			pprintf(PRI_OK, "\n");
 			/* Stop threads */

@@ -74,8 +74,8 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 	cfg->ctrl = calloc(1, sizeof(pthread_barrier_t));
 	pthread_barrier_init(cfg->ctrl, NULL, cfg->total_syncd_threads);
 	
-	cfg->io_halt = calloc(1, sizeof(pthread_mutex_t));
-	pthread_mutex_init(cfg->io_halt, NULL);
+	cfg->io_halt = calloc(1, sizeof(pthread_spinlock_t));
+	pthread_spin_init(cfg->io_halt, PTHREAD_PROCESS_PRIVATE);
 	
 	cfg->quit = calloc(1, sizeof(bool));
 	cfg->pause = calloc(1, sizeof(bool));
@@ -105,9 +105,9 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	pthread_barrier_destroy(cfg->ctrl);
 	free(cfg->ctrl);
 	
-	/* Free IO mutex */
-	pthread_mutex_destroy(cfg->io_halt);
-	free(cfg->io_halt);
+	/* Free IO spinlock */
+	pthread_spin_destroy(cfg->io_halt);
+	free((void *)cfg->io_halt);
 	
 	/* Free anything else */
 	free((void *)cfg->quit);
@@ -125,16 +125,15 @@ void *thread_ctrl(void *thread_setts)
 	long long unsigned int t1 = phys_gettime_us(), t2 = 0;
 	
 	while (!*t->quit) {
+		/* Block all threads */
+		pthread_barrier_wait(t->ctrl);
+		
+		/* Unlock IO */
+		pthread_spin_unlock(t->io_halt);
+		
 		/* Pause all threads by stalling unlocking t->ctrl */
 		while (*t->pause) {
 			phys_sleep_msec(50);
-		}
-		
-		/* Check if someone else needs to have IO */
-		while (pthread_mutex_trylock(t->io_halt)) {
-			*t->pause = true;
-			phys_sleep_msec(50);
-			*t->pause = false;
 		}
 		
 		/* Update progress */
@@ -154,6 +153,9 @@ void *thread_ctrl(void *thread_setts)
 			option->write_sshot_now = true;
 		}
 		
+		/* Lock back the IO */
+		pthread_spin_lock(t->io_halt);
+		
 		/* Lua function execution */
 		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
 			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
@@ -163,9 +165,6 @@ void *thread_ctrl(void *thread_setts)
 												  &thread_fn_counter)) {
 			t->thread_sched_fn(t->threads_conf);
 		}
-		
-		/* Unlock IO mutex */
-		pthread_mutex_unlock(t->io_halt);
 		
 		/* Unblock and hope the other threads follow */
 		pthread_barrier_wait(t->ctrl);

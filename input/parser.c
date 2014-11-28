@@ -369,27 +369,40 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 			}
 		} else {
 			/* It's just an object. */
-			if (parser_state->read_id) {
-				/* Read changed object from Lua */
-				if (parser_state->buffer.id > option->obj) {
-					pprint_warn("Lua told us to change obj id = %i, but no such exists.\
-								\nCheck your Lua exec_funct code. Skipping.\n",
-								parser_state->buffer.id);
-				} else {
-					/*printf("Old = %lf\n", (parser_state->object)[parser_state->buffer.id].pos[0]);
-					printf("New = %lf\n", parser_state->buffer.pos[0]);*/
-					(parser_state->object)[parser_state->buffer.id] = parser_state->buffer;
-					parser_state->i++;
-				}
-			} else if (parser_state->nullswitch) {
-				/* We're reading an object from an entire array(on init) */
-				parser_state->buffer.id = parser_state->i;
-				(parser_state->object)[parser_state->i] = parser_state->buffer;
-				parser_state->i++;
-			} else {
-				parser_state->nullswitch = 1;
+			if (!parser_state->nullswitch) {
 				/* Cheap hack. Lua's first object is always, always CORRUPTED */
+				parser_state->nullswitch = 1;
+				return 1;
 			}
+			
+			/* We're reading an object from an entire array(on init) */
+			unsigned int arr_num = parser_state->i;
+			
+			if (parser_state->read_id) {
+				arr_num = parser_state->buffer.id;
+			} else {
+				parser_state->buffer.id = parser_state->i;
+			}
+			
+			if (arr_num > option->obj) {
+				pprint_warn("Lua told us to change obj id = %i, but no such exists.\
+							\nCheck your Lua exec_function/spawn code. Skipping.\n",
+								arr_num);
+				return 1;
+			}
+			
+			/*printf("Old %i = %lf %lf %lf\n", arr_num,
+				   (parser_state->object)[arr_num].pos[0],
+				   (parser_state->object)[arr_num].pos[1],
+				   (parser_state->object)[arr_num].pos[2]);
+			printf("New %i = %lf %lf %lf\n", arr_num,
+				   parser_state->buffer.pos[0],
+				   parser_state->buffer.pos[1],
+				   parser_state->buffer.pos[2]);*/
+			
+			/* Set object */
+			(parser_state->object)[arr_num] = parser_state->buffer;
+			parser_state->i++;
 		}
 		/* Object/file finished, go to next */
 		return 1;
@@ -406,10 +419,8 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 			parser_state->file.scale = lua_tonumber(L, -1);
 		if(!strcmp("state", lua_tostring(L, -2)))
 			parser_state->buffer.state = lua_tointeger(L, -1);
-		if(parser_state->read_id) {
-			if(!strcmp("id", lua_tostring(L, -2))) {
-				parser_state->buffer.id = lua_tointeger(L, -1);
-			}
+		if(!strcmp("id", lua_tostring(L, -2))) {
+			parser_state->buffer.id = lua_tointeger(L, -1);
 		}
 	} else if(lua_isstring(L, -1)) {
 		/* It's a file to import, so we set the flag */
@@ -459,11 +470,12 @@ static int conf_lua_parse_elements(lua_State *L, struct lua_parser_state *parser
 				return 0;
 			}
 		}
-		if (parser_state->nullswitch) {
-			parser_state->buffer_ele.number = parser_state->i;
-			atom_prop[parser_state->i++] = parser_state->buffer_ele;
-			parser_state->buffer_ele = (struct atomic_cont){0};
-		} else parser_state->nullswitch = 1;
+		if (!parser_state->nullswitch) {
+			parser_state->nullswitch = 1;
+		}
+		parser_state->buffer_ele.number = parser_state->i;
+		atom_prop[parser_state->i++] = parser_state->buffer_ele;
+		parser_state->buffer_ele = (struct atomic_cont){0};
 		return 1;
 	} else if (lua_isnumber(L, -1)) {
 		if(!strcmp("mass", lua_tostring(L, -2)))

@@ -787,9 +787,6 @@ void *thread_bhut(void *thread_setts)
 			maxdist = fmax(dist, maxdist);
 		}
 		
-		/* Sync & wakeup control thread */
-		pthread_barrier_wait(t->ctrl);
-		
 		/* Insert updated halfdim into root */
 		bh_atomic_update_root(bh_even_round(maxdist), t->root, t->root_lock);
 		
@@ -804,6 +801,9 @@ void *thread_bhut(void *thread_setts)
 		t->stats->bh_new_alloc    =  new_alloc;
 		t->stats->bh_new_cleaned  =  new_cleaned;
 		t->stats->bh_heapsize     =  sizeof(bh_octree)*allocated_cells;
+		
+		/* Sync & wakeup control thread */
+		phys_ctrl_wait(t->ctrl);
 	}
 	return 0;
 }

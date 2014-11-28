@@ -20,8 +20,8 @@
 
 #include "physics/physics.h"
 
-int out_write_xyz(phys_obj *object, const char *template_str, pthread_mutex_t *io_halt);
-size_t out_write_array(phys_obj *object, const char *template_str, pthread_mutex_t *io_halt);
-size_t in_write_array(phys_obj **object, const char *filename, pthread_mutex_t *io_halt);
+int out_write_xyz(phys_obj *object, const char *template_str, pthread_spinlock_t *io_halt);
+size_t out_write_array(phys_obj *object, const char *template_str, pthread_spinlock_t *io_halt);
+size_t in_write_array(phys_obj **object, const char *filename, pthread_spinlock_t *io_halt);
 
 #endif

@@ -84,7 +84,7 @@ struct glob_thread_config {
 	unsigned int total_syncd_threads;
 	pthread_t *threads, control_thread;
 	pthread_barrier_t *ctrl;
-	pthread_mutex_t *io_halt;
+	pthread_spinlock_t *io_halt;
 	struct global_statistics *stats;
 	struct parser_map *algo_opt_map;
 	phys_obj *obj;
@@ -131,7 +131,7 @@ typedef void   (*thread_destruction)(struct glob_thread_config *);
 phys_algorithm *phys_find_algorithm(const char *name);
 
 /* Lock this and wait for PHYS_STATUS to return paused to freeze objects */
-extern pthread_mutex_t *halt_objects;
+extern pthread_spinlock_t *halt_objects;
 
 /* Default thread attributes, inheritence and scheduling, init'd by phys_init() */
 extern pthread_attr_t thread_attribs;
@@ -141,6 +141,9 @@ extern struct global_statistics *phys_stats;
 
 /* List of algorithms and their function pointers */
 extern const struct list_algorithms phys_algorithms[];
+
+/* Used by algorithms to wait on ctrl thread */
+void phys_ctrl_wait(pthread_barrier_t *barr);
 
 /* Function to print all avail algorithms */
 void phys_list_algo(void);

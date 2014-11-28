@@ -130,13 +130,14 @@ function run_on_timestep(t_stats, obj)
 	local copied_objs = {}
 	local velocity = 10
 	
-	--if t_stats.progress > 0.2 then phys_pause() end
+	--if t_stats.progress > 0.0 then phys_pause() end
 	if obj == nil then return nil end
 	
 	local cube_size = 2
 	
-	for i = 1, 16, 1 do
-		copied_objs[i] = obj[i+300]
+	for i = 231, 600, 1 do
+		copied_objs[i] = obj[i]
+		--print("Dix = ", obj[i].id)
 		copied_objs[i].pos = {
 			(math.random()-0.5)*cube_size,
 			(math.random()-0.5)*cube_size,

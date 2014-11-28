@@ -153,7 +153,7 @@ void *thread_stats(void *thread_setts)
 		t->stats->null_avg_dist = avg_dist;
 		t->stats->null_max_dist = max_dist;
 		
-		pthread_barrier_wait(t->ctrl);
+		phys_ctrl_wait(t->ctrl);
 	}
 	return 0;
 }

@@ -114,7 +114,8 @@ void *thread_nbody(void *thread_setts)
 			}
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 		}
-		pthread_barrier_wait(t->ctrl);
+		
+		phys_ctrl_wait(t->ctrl);
 	}
 	return 0;
 }
