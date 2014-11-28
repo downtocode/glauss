@@ -239,7 +239,7 @@ void graph_display_text(const char *text, float x, float y, float s,
 	glDisable(GL_TEXTURE_2D);
 }
 
-void graph_display_object_info(data *object, unsigned int num)
+void graph_display_object_info(phys_obj *object, unsigned int num)
 {
 	char osdstr[30];
 	snprintf(osdstr, sizeof(osdstr), "Object=%i", num);

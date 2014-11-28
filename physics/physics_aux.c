@@ -31,8 +31,8 @@ unsigned short int return_atom_num(const char *name)
 {
 	if (!name || name[0] == '\0')
 		return 0;
-	for (int i=1; i<121; i++) {
-		if (!strncasecmp(name, atom_prop[i].name, strlen(atom_prop[i].name))) {
+	for (int i = 1; i < 121; i++) {
+		if (!strncasecmp(name, atom_prop[i].name, strlen(name))) {
 			return i;
 		}
 	}
@@ -102,7 +102,7 @@ void phys_shuffle_algorithms(void)
 	option->algorithm = strdup(phys_algorithms[num].name);
 }
 
-unsigned int phys_check_collisions(data *object,
+unsigned int phys_check_collisions(phys_obj *object,
 								   unsigned int low, unsigned int high)
 {
 	unsigned int collisions = 0;
@@ -129,7 +129,7 @@ unsigned int phys_check_collisions(data *object,
 	return collisions;
 }
 
-bool phys_check_coords(vec3 *vec, data *object,
+bool phys_check_coords(vec3 *vec, phys_obj *object,
 					   unsigned int low, unsigned int high)
 {
 	vec3 vecnorm = {0};

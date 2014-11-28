@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
 	/* Signal handling */
 	
 	/*	Physics.	*/
-		data* object = NULL;
+		phys_obj *object = NULL;
 		
 		/* Init elements subsystem */
 		if (parse_lua_simconf_elements(NULL)) {

@@ -30,7 +30,7 @@
     }
 
 struct thread_config_nbody {
-	data* obj;
+	phys_obj *obj;
 	unsigned int id, objs_low, objs_high;
 	struct global_statistics *glob_stats;
 	struct thread_statistics *stats;

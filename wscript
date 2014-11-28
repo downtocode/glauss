@@ -18,7 +18,7 @@ def try_git_version():
 
 #Custom transformation functions
 def __file2string_cmd__(ctx):
-	return "${{BIN_PERL}} {0}/TOOLS/file2string.pl ${{SRC}} > ${{TGT}}" \
+	return "${{BIN_PYTHON}} {0}/TOOLS/file2string.py ${{SRC}} > ${{TGT}}" \
 				.format(ctx.srcnode.abspath())
 def __file2string__(ctx, **kwargs):
 	ctx(

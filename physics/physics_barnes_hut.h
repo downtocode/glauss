@@ -36,7 +36,7 @@ typedef struct phys_barnes_hut_octree {
 	vec3 origin;
 	long double halfdim;
 	bool leaf;
-	data *data, cellsum;
+	phys_obj *data, cellsum;
 	struct phys_barnes_hut_octree *cells[8];
 } bh_octree;
 
@@ -58,7 +58,7 @@ struct bh_statistics {
 
 /* Thread configuration struct */
 struct thread_config_bhut {
-	data *obj;
+	phys_obj *obj;
 	struct phys_barnes_hut_octree *root, *octrees[8];
 	unsigned int id, objs_low, objs_high;
 	struct bh_statistics *glob_stats;
@@ -80,8 +80,8 @@ void bh_print_octree(bh_octree *octree);
 void bh_depth_print(bh_octree *octree);
 
 /* Used during init only to get a valid octree data */
-double bh_init_max_displacement(data *object, bh_octree *octree);
-void bh_init_center_of_mass(data *object, bh_octree *octree);
+double bh_init_max_displacement(phys_obj *object, bh_octree *octree);
+void bh_init_center_of_mass(phys_obj *object, bh_octree *octree);
 
 /* Init a tree(start of one - NOT A SUBCELL) */
 bh_octree *bh_init_tree(void);

@@ -33,7 +33,7 @@ struct lua_parser_state {
 	bool fileset;
 	bool read_id;
 	in_file file;
-	data buffer, *object;
+	phys_obj buffer, *object;
 	struct atomic_cont buffer_ele;
 	struct parser_map *opt_map;
 };
@@ -740,7 +740,7 @@ int parse_lua_simconf_options(struct parser_map *map)
 }
 
 /* Read objects */
-int parse_lua_simconf_objects(data **object, const char* sent_to_lua)
+int parse_lua_simconf_objects(phys_obj **object, const char* sent_to_lua)
 {
 	lua_getglobal(Lp, option->spawn_funct);
 	/* Can send arguments here, currently unused. */
@@ -850,7 +850,7 @@ static void parser_push_stat_array(lua_State *L, struct global_statistics *stats
 	}
 }
 
-static void parser_push_object_array(lua_State *L, data *obj)
+static void parser_push_object_array(lua_State *L, phys_obj *obj)
 {
 	/* Create "array" table. */
 	lua_newtable(L);
@@ -875,6 +875,14 @@ static void parser_push_object_array(lua_State *L, data *obj)
 		}
 		lua_setfield(L, -2, "vel");
 		
+		/* Accel table */
+		lua_newtable(L);
+		for (int j = 0; j < 3; j++) {
+			lua_pushnumber(L, obj[i].acc[j]);
+			lua_rawseti(L, -2, j);
+		}
+		lua_setfield(L, -2, "acc");
+		
 		/* Everything else */
 		lua_pushnumber(L, obj[i].mass);
 		lua_setfield(L, -2, "mass");
@@ -895,7 +903,7 @@ static void parser_push_object_array(lua_State *L, data *obj)
 	}
 }
 
-unsigned int lua_exec_funct(const char *funct, data *object,
+unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 							struct global_statistics *stats)
 {
 	if (!funct && !lua_loaded)

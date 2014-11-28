@@ -51,7 +51,7 @@ typedef struct {
 	float fps;
 	
 	/* Physics */
-	data *object;
+	phys_obj *object;
 	pthread_mutex_t *io_halt;
 } graph_window;
 
@@ -60,7 +60,7 @@ extern const struct graph_cam_view def_cam;
 
 int graph_sdl_init(void);
 int graph_sdl_deinit(void);
-graph_window *graph_win_create(data *object);
+graph_window *graph_win_create(phys_obj *object);
 float graph_sdl_resize_wind(graph_window *win);
 int graph_sdl_toggle_fullscreen(graph_window *win);
 void graph_sdl_move_cam(graph_window *win);

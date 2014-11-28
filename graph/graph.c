@@ -203,7 +203,8 @@ void graph_set_view(graph_window *win)
 {
 	make_translation_matrix(win->camera.tr_x, win->camera.tr_y, win->camera.tr_z, transl);
 	
-	make_scale_matrix(win->camera.aspect_ratio*win->camera.scalefactor, win->camera.scalefactor,
+	make_scale_matrix(win->camera.aspect_ratio*win->camera.scalefactor,
+					  win->camera.scalefactor,
 					  win->camera.scalefactor, scale);
 	
 	make_pers_matrix(10, option->width/option->height, -1, 10, pers);
@@ -272,7 +273,7 @@ void graph_draw_scene(graph_window *win)
 		glBindBuffer(GL_ARRAY_BUFFER, textvbo);
 		
 		/* FPS */
-		fpscolor = (win->fps < 25) ? COL_RED : (win->fps < 48) ? COL_BLUE : COL_GREEN;
+		fpscolor = win->fps < 25 ? COL_RED : win->fps < 48 ? COL_BLUE : COL_GREEN;
 		snprintf(osdtext, OSD_BUFFER, "FPS = %3.2f", win->fps);
 		graph_display_text(osdtext, FPSx, FPSy, FPSs, fpscolor);
 		
@@ -305,7 +306,8 @@ void graph_draw_scene(graph_window *win)
 			/* Only displayed if running */
 			
 			if (status == PHYS_STATUS_PAUSED) {
-				graph_display_text("Simulation paused", SIMx, SIMy, SIMs, COL_YELLOW);
+				graph_display_text("Simulation paused",
+								   SIMx, SIMy, SIMs, COL_YELLOW);
 			}
 			
 			unsigned int len = 0;
@@ -352,8 +354,9 @@ void graph_draw_scene(graph_window *win)
 					ts = (struct timespec){0};
 				}
 				snprintf(osdtext, OSD_BUFFER,
-						 "Thread %u = %ld.%ld", i, ts.tv_sec, ts.tv_nsec / 1000000);
-				graph_display_text(osdtext, THRx, THRy-((float)i/14), THRs, COL_WHITE);
+						 "Thread %u = %ld.%ld", i, ts.tv_sec, ts.tv_nsec/1000000);
+				graph_display_text(osdtext,
+								   THRx, THRy-((float)i/14), THRs, COL_WHITE);
 			}
 			
 		} else {
@@ -372,8 +375,10 @@ void graph_draw_scene(graph_window *win)
 		for (struct parser_map *i = phys_stats->global_stats_map; i->name; i++) {
 			char res[15];
 			parser_get_value_str(*i, res, sizeof(res));
-			graph_display_text(i->name, STATSx, STATSy-((float)count/18)-.10, STATSs, COL_ORANGE);
-			graph_display_text(res, STATSx+.25, STATSy-((float)count++/18)-.10, STATSs, COL_YELLOW);
+			graph_display_text(i->name, STATSx,
+							   STATSy-((float)count/18)-.10, STATSs, COL_ORANGE);
+			graph_display_text(res, STATSx+.25,
+							   STATSy-((float)count++/18)-.10, STATSs, COL_YELLOW);
 		}
 		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -418,6 +423,8 @@ int graph_set_draw_mode(graph_window *win, const char *mode)
 	
 	for (struct parser_map *i = draw_modes; i->name; i++) {
 		if (!strcmp(i->name, mode)) {
+			free(option->default_draw_mode);
+			option->default_draw_mode = strdup(i->name);
 			win->draw_mode = i->type;
 			pprint("Draw mode set to %s\n", i->name);
 			return 0;
@@ -431,6 +438,8 @@ int graph_set_draw_mode(graph_window *win, const char *mode)
 			pprint("%s ", i->name);
 		}
 		pprint("\nSetting mode to default MODE_POINTS_COL\n");
+		free(option->default_draw_mode);
+		option->default_draw_mode = strdup("MODE_POINTS_COL");
 		win->draw_mode = MODE_POINTS_COL;
 	
 	return 1;
@@ -491,9 +500,11 @@ void graph_init(void)
 }
 
 struct raw_png_read {
-	/* PNG stands for Portable Network Graphics. Notice that "Network" word in
+	/* 
+	 * PNG stands for Portable Network Graphics. Notice that "Network" word in
 	 * there. And guess what? The old greybeards decided anything "Network"
-	 * related must absolutely be big endian. We have to use png own type. */
+	 * related must absolutely be big endian. We have to use libpng's own type.
+	 */
 	png_bytep bin;
 	png_uint_32 pos;
 	png_uint_32 len;
@@ -511,6 +522,7 @@ static void graph_read_raw_stream(png_structp png, png_bytep output,
 		return;
 	}
 	
+	/* We could move the pointer instead, but oh well, whatever */
 	memcpy(output, (data->bin+data->pos), readsize);
 	
 	data->pos += readsize;
@@ -591,7 +603,8 @@ GLuint graph_load_c_png_texture(void *bin, size_t len, int *width, int *height)
 	/* Create texture */
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D,0, GL_RGBA, twidth, theight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glTexImage2D(GL_TEXTURE_2D,0, GL_RGBA, twidth, theight, 0, GL_RGBA,
+				 GL_UNSIGNED_BYTE, image);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	
 	clean:
@@ -680,7 +693,8 @@ GLuint graph_load_png_texture(const char *filename, int *width, int *height)
 	/* Create texture */
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D,0, GL_RGBA, twidth, theight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glTexImage2D(GL_TEXTURE_2D,0, GL_RGBA, twidth, theight, 0, GL_RGBA,
+				 GL_UNSIGNED_BYTE, image);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	
 	clean:
@@ -713,7 +727,8 @@ int graph_sshot(long double arg)
 	unsigned char *pixels = malloc(sizeof(unsigned char)*w*h*4);
 	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	
-	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING,
+											  NULL, NULL, NULL);
 	if (!png)
 		return 1;
 	

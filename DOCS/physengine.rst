@@ -130,6 +130,7 @@ See below to set other Lua function names.
 --------------------
 Used to toggle and adjust options. Some may intersect with command line arguments, 
 however most do not. For those that do, command line arguments take priority.
+All of the variables below are settable via the command line interpreter.
 
 ``threads`` - *Unsigned Integer*
     Set the amount of threads to use. Overridden by argument.
@@ -175,6 +176,10 @@ however most do not. For those that do, command line arguments take priority.
     Specify the amount of information being outputted to the terminal.
 ``skip_model_vec`` - *Unsigned Integer*
     When importing a file limit the imported objects. Increase to limit further.
+``default_draw_mode`` - *String*
+    Specify the default draw mode. Type in "win_draw_mode" in cmd line to get all posttible.
+``custom_sprite_png`` - *String*
+    Path to texture to load when using **MODE_SPRITE** in default_draw_mode.s
 
 *Built-in algorithms options*
 -----------------------------

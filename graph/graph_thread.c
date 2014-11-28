@@ -35,7 +35,7 @@
 
 struct graph_cfg *global_cfg = NULL;
 
-graph_window **graph_thread_init(data *object)
+graph_window **graph_thread_init(phys_obj *object)
 {
 	if (global_cfg) {
 		return NULL;

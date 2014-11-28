@@ -60,7 +60,7 @@ function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
 	math.randomseed( settings.physics.rng_seed )
 	
-	local cube_size = 10
+	local cube_size = 44
 	local z = 1
 	local velocity = 10
 	

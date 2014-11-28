@@ -429,7 +429,7 @@ static inline long double bh_even_round(double num)
 }
 
 /* INIT ONLY: Returns furthest object's furthest position from an octree. */
-double bh_init_max_displacement(data *object, bh_octree *octree)
+double bh_init_max_displacement(phys_obj *object, bh_octree *octree)
 {
 	double dist = 0.0, maxdist = 0.0;
 	vec3 vecnorm = (vec3){0,0,0};
@@ -444,7 +444,7 @@ double bh_init_max_displacement(data *object, bh_octree *octree)
 }
 
 /* INIT ONLY: Will calculate and update an octree's center of mass */
-void bh_init_center_of_mass(data *object, bh_octree *octree)
+void bh_init_center_of_mass(phys_obj *object, bh_octree *octree)
 {
 	vec3 center = (vec3){0,0,0};
 	for (unsigned int i = 0; i < option->obj; i++) {
@@ -518,8 +518,6 @@ static inline short bh_get_octant(vec3 *pos, bh_octree *octree)
 	return oct;
 }
 
-
-
 /* Inits a cell, in case it isn't, updates score and position */
 static void bh_init_cell(bh_octree *octree, short k)
 {
@@ -554,7 +552,7 @@ static void bh_init_cell(bh_octree *octree, short k)
 }
 
 /* Recursive function to insert object into an octree */
-static void bh_insert_object(data *object, bh_octree *octree)
+static void bh_insert_object(phys_obj *object, bh_octree *octree)
 {
 	/* Update octree mass/center of mass. */
 	octree->cellsum.pos = (octree->cellsum.pos+object->pos)/2;
@@ -642,7 +640,7 @@ bh_octree *bh_init_tree(void)
 }
 
 /* Check whether the object is in the target octree. Returns 1 in case it is. */
-static inline bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octree *root)
+static inline bool bh_recurse_check_obj(phys_obj *object, bh_octree *target, bh_octree *root)
 {
 	if (!root)
 		return 0;
@@ -654,7 +652,7 @@ static inline bool bh_recurse_check_obj(data *object, bh_octree *target, bh_octr
 }
 
 /* Recursive function, basis of the BH algorithm */
-static void bh_calculate_force(data* object, bh_octree *octree)
+static void bh_calculate_force(phys_obj *object, bh_octree *octree)
 {
 	vec3 vecnorm = object->pos - octree->origin;
 	double dist = sqrt(vecnorm[0]*vecnorm[0] +\
@@ -677,7 +675,7 @@ static void bh_calculate_force(data* object, bh_octree *octree)
 	}
 }
 
-static inline unsigned int bh_build_octree(data* object, bh_octree *octree, bh_octree *root)
+static inline unsigned int bh_build_octree(phys_obj *object, bh_octree *octree, bh_octree *root)
 {
 	unsigned int prev_allocated_cells = allocated_cells;
 	if (!octree || !root || !object)

@@ -73,7 +73,7 @@ int in_probe_file(const char *filename)
 	return counter;
 }
 
-int in_read_file(data *object, int *i, in_file *file)
+int in_read_file(phys_obj *object, int *i, in_file *file)
 {
 	char str[500] = {0}, atom[2] = {0}, pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;

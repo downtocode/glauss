@@ -27,13 +27,13 @@ enum {
 };
 
 typedef struct {
-	data *inf;
+	phys_obj *inf;
 	vec3 rot;
 	char filename[100];
 	double scale;
 } in_file;
 
 int in_probe_file(const char *filename);
-int in_read_file(data *object, int *i, in_file *file);
+int in_read_file(phys_obj *object, int *i, in_file *file);
 
 #endif

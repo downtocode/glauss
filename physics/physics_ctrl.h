@@ -22,7 +22,7 @@
 
 /* Allocate the cfg structure, as well as the maps needed to push the stats to Lua.
  * It also allocates the double pointer(**) to the map per thread so you don't have to */
-struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, data *obj);
+struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, phys_obj *obj);
 
 /* Initialize the cfg. Once this is called, it's all been set in stone and modifying
  * whatever you want in your own algorithm's init function is not recommended.

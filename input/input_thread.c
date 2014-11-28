@@ -44,7 +44,7 @@ static int list_index_opt = 0, len_opt = 0;
 static struct input_cfg *global_cfg = NULL;
 static bool cleanup = false;
 
-int input_thread_init(graph_window **win, data **object)
+int input_thread_init(graph_window **win, phys_obj **object)
 {
 	struct input_cfg *cfg = calloc(1, sizeof(struct input_cfg));
 	
@@ -159,16 +159,16 @@ int input_change_element_col(const char *name, const char *col, const char *valu
 		return 1;
 	}
 	
-	int i = 0;
+	int i = -1;
 	int res = sscanf(name, "%i", &i);
 	if (!res) {
-		for (i = 1; i<121; i++) {
-			if (!strncasecmp(name, atom_prop[i].name, strlen(atom_prop[i].name))) {
+		for (i = 1; i < 121; i++) {
+			if (!strncasecmp(name, atom_prop[i].name, strlen(name))) {
 				break;
 			}
 		}
 	}
-	if (!i) {
+	if (i < 0 || i > 119) {
 		pprint("%s", usage);
 		return 1;
 	}

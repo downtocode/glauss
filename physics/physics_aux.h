@@ -57,7 +57,7 @@ int getnumber(struct numbers_selection *numbers, int currentdigit, int status);
 void rotate_vec(vec3 *vec, vec3 *rot1);
 
 /* Checks for shared coordinates in entire object array */
-unsigned int phys_check_collisions(data *object,
+unsigned int phys_check_collisions(phys_obj *object,
 								   unsigned int low, unsigned int high);
 
 
@@ -65,7 +65,7 @@ unsigned int phys_check_collisions(data *object,
 bool phys_timer_exec(unsigned int freq, unsigned int *counter);
 
 /* Check coords for any collisions */
-bool phys_check_coords(vec3 *vec, data *object,
+bool phys_check_coords(vec3 *vec, phys_obj *object,
 					   unsigned int low, unsigned int high);
 
 /* Return the CLOCK_MONOTONIC time in microseconds */

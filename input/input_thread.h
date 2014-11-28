@@ -63,14 +63,14 @@ enum commands {
 /* Sent to input thread */
 struct input_cfg {
 	pthread_t input;
-	data **obj;
+	phys_obj **obj;
 	graph_window **win;
 	char *line;
 	struct parser_map *cmd_map;
 	volatile bool status, selfquit;
 };
 
-int input_thread_init(graph_window **win, data **object);
+int input_thread_init(graph_window **win, phys_obj **object);
 void input_thread_quit(void);
 void input_thread_reset_term(void);
 int input_change_element_col(const char *name, const char *col, const char *value);

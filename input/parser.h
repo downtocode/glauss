@@ -85,10 +85,10 @@ int parse_lua_simconf_elements(const char *filepath);
 
 /* Parser abstractions */
 int parse_lua_simconf_options(struct parser_map *map);
-int parse_lua_simconf_objects(data **object, const char* sent_to_lua);
+int parse_lua_simconf_objects(phys_obj **object, const char* sent_to_lua);
 
 /* Returns number of changed objects(returned from Lua) */
-unsigned int lua_exec_funct(const char *funct, data *object,
+unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 							struct global_statistics *stats);
 
 const char *parse_file_to_str(const char *filename);

@@ -23,14 +23,14 @@
 /* Sent to graph thread */
 struct graph_cfg {
 	pthread_t graph;
-	data *obj;
+	phys_obj *obj;
 	graph_window *win;
 	unsigned int *frames;
 	float *fps;
 	volatile bool status, selfquit;
 };
 
-graph_window **graph_thread_init(data *object);
+graph_window **graph_thread_init(phys_obj *object);
 void graph_thread_quit(void);
 void *graph_thread(void *thread_setts);
 

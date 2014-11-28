@@ -46,7 +46,7 @@ struct null_statistics {
 };
 
 struct thread_config_null {
-	data *obj;
+	phys_obj *obj;
 	struct null_statistics *glob_stats;
 	struct null_statistics *stats;
 	unsigned int id, objs_low, objs_high;

@@ -26,6 +26,6 @@ unsigned int graph_init_freetype(const char *fontname);
 void graph_stop_freetype(void);
 void graph_display_text(const char *text, float x, float y, float s,
 						const GLfloat *col);
-void graph_display_object_info(data *object, unsigned int num);
+void graph_display_object_info(phys_obj *object, unsigned int num);
 
 #endif

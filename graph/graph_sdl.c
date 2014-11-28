@@ -64,7 +64,7 @@ int graph_sdl_init(void)
 	return 1;
 }
 
-graph_window *graph_win_create(data *object)
+graph_window *graph_win_create(phys_obj *object)
 {
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));

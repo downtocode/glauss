@@ -30,7 +30,7 @@
 #include "msg_phys.h"
 #include "physics/physics_aux.h"
 
-int out_write_xyz(data *object, const char *template_str, pthread_mutex_t *io_halt)
+int out_write_xyz(phys_obj *object, const char *template_str, pthread_mutex_t *io_halt)
 {
 	if(io_halt) pthread_mutex_lock(io_halt);
 	char filetodump[120];
@@ -52,7 +52,7 @@ int out_write_xyz(data *object, const char *template_str, pthread_mutex_t *io_ha
 	return 0;
 }
 
-size_t out_write_array(data *object, const char *template_str, pthread_mutex_t *io_halt)
+size_t out_write_array(phys_obj *object, const char *template_str, pthread_mutex_t *io_halt)
 {
 	if(io_halt)
 		pthread_mutex_lock(io_halt);
@@ -65,9 +65,9 @@ size_t out_write_array(data *object, const char *template_str, pthread_mutex_t *
 	
 	FILE *out = fopen(filetodump, "wb");
 	
-	size_t written = fwrite(object, sizeof(data), option->obj, out);
+	size_t written = fwrite(object, sizeof(phys_obj), option->obj, out);
 	
-	pprint("Wrote %lu bytes to %s\n", written*sizeof(data), filetodump);
+	pprint("Wrote %lu bytes to %s\n", written*sizeof(phys_obj), filetodump);
 	
 	fclose(out);
 	if(io_halt)
@@ -75,7 +75,7 @@ size_t out_write_array(data *object, const char *template_str, pthread_mutex_t *
 	return written;
 }
 
-size_t in_write_array(data **object, const char *filename, pthread_mutex_t *io_halt)
+size_t in_write_array(phys_obj **object, const char *filename, pthread_mutex_t *io_halt)
 {
 	if(io_halt)
 		pthread_mutex_lock(io_halt);
@@ -89,7 +89,7 @@ size_t in_write_array(data **object, const char *filename, pthread_mutex_t *io_h
 		pprint_err("Could not get filesize!\n");
 	}
 	
-	data *obj_e = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	phys_obj *obj_e = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	
 	memcpy((*object), obj_e, s.st_size);
 	

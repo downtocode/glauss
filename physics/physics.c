@@ -57,7 +57,7 @@ static struct sched_param parameters;
 /* Thread statistics and primary struct */
 struct global_statistics *phys_stats;
 struct glob_thread_config *cfg;
-data *urgetnt_dump_object = NULL;
+phys_obj *urgetnt_dump_object = NULL;
 
 /* Previous algorithm */
 static struct list_algorithms *prev_algorithm = NULL;
@@ -95,7 +95,7 @@ void phys_list_algo(void)
 	}
 }
 
-int phys_init(data** object)
+int phys_init(phys_obj **object)
 {
 	if (!object) {
 		pprint_err("Cannot init - received NULL object pointer.\n");
@@ -111,11 +111,11 @@ int phys_init(data** object)
 	}
 	
 	/* Allocate memory for all the objects */
-	*object = calloc(option->obj+1, sizeof(data));
+	*object = calloc(option->obj+1, sizeof(phys_obj));
 	
 	if (*object) {
 		pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n",
-				option->obj*sizeof(data), option->obj, *object);
+				option->obj*sizeof(phys_obj), option->obj, *object);
 	} else {
 		return 3; /* Impossible, should never ever happen. */
 	}
@@ -211,7 +211,7 @@ void phys_urgent_dump(void)
 	out_write_array(urgetnt_dump_object, "backup.bin", cfg ? cfg->io_halt : NULL);
 }
 
-int phys_quit(data **object)
+int phys_quit(phys_obj **object)
 {
 	if (cfg) {
 		pprint_err("Physics threads were probably still running.\n");
@@ -235,7 +235,7 @@ int phys_quit(data **object)
 	return 0;
 }
 
-int phys_ctrl(int status, data** object)
+int phys_ctrl(int status, phys_obj **object)
 {
 	phys_algorithm *algo = NULL;
 	int retval = PHYS_CMD_NOT_FOUND;

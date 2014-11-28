@@ -49,7 +49,7 @@ void draw_obj_axis(float scale)
 	glDisableVertexAttribArray(objattr_color);
 }
 
-void draw_obj_sphere(data *object)
+void draw_obj_sphere(phys_obj *object)
 {
 	const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 	/* Decrease dj to get better spheres. */
@@ -86,7 +86,7 @@ void draw_obj_sphere(data *object)
 	glUniform4fv(objattr_color, 1, white);
 }
 
-void draw_obj_sprite(data *object)
+void draw_obj_sprite(phys_obj *object)
 {
 	float points[option->obj][3];
 	unsigned int size = 0;
@@ -123,7 +123,7 @@ void draw_obj_sprite(data *object)
 	glDisable(GL_POINT_SPRITE);
 }
 
-void draw_obj_points(data *object)
+void draw_obj_points(phys_obj *object)
 {
 	float points[option->obj][3];
 	unsigned int size = 0;
@@ -152,7 +152,7 @@ void draw_obj_points(data *object)
 	glDisableVertexAttribArray(objattr_color);
 }
 
-void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element)
+void draw_obj_packed_elements_draw(phys_obj *object, struct atomic_cont *element)
 {
 	float points[option->obj][3];
 	unsigned int size = 0;
@@ -193,14 +193,14 @@ void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element)
 	glDisableVertexAttribArray(objattr_color);
 }
 
-void draw_obj_col_points(data *object)
+void draw_obj_col_points(phys_obj *object)
 {
 	for (int i = 0; i < 120; i++) {
 		draw_obj_packed_elements_draw(object, &atom_prop[i]);
 	}
 }
 
-void draw_objs_mode(data *object, int mode)
+void draw_objs_mode(phys_obj *object, int mode)
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -243,10 +243,12 @@ GLuint graph_init_objects(void)
 	
 	int width, height;
 	if (option->custom_sprite_png)
-		texture_sprite = graph_load_png_texture(option->custom_sprite_png, &width, &height);
+		texture_sprite = graph_load_png_texture(option->custom_sprite_png,
+												&width, &height);
 	else
 		texture_sprite = graph_load_c_png_texture((void *)circle_png,
-												  sizeof(circle_png), &width, &height);
+												  sizeof(circle_png),
+												  &width, &height);
 	
 	GLuint obj_program = graph_compile_shader(object_vs, object_fs);
 	glBindAttribLocation(obj_program, objattr_mode, "draw_mode");

@@ -29,7 +29,7 @@
 #include "physics_ctrl.h"
 #include "main/msg_phys.h"
 
-struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, data *obj)
+struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, phys_obj *obj)
 {
 	struct glob_thread_config *cfg = calloc(1, sizeof(struct glob_thread_config));
 	
@@ -156,7 +156,7 @@ void *thread_ctrl(void *thread_setts)
 		
 		/* Lua function execution */
 		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
-			//lua_exec_funct(option->timestep_funct, t->obj, t->stats);
+			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
 		}
 		
 		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,

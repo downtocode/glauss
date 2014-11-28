@@ -21,11 +21,11 @@
 #include "physics/physics_aux.h"
 
 void draw_obj_axis(float scale);
-void draw_obj_sphere(data *object);
-void draw_obj_points(data *object);
-void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element);
-void draw_obj_col_points(data *object);
-void draw_objs_mode(data *object, int mode);
+void draw_obj_sphere(phys_obj *object);
+void draw_obj_points(phys_obj *object);
+void draw_obj_packed_elements_draw(phys_obj *object, struct atomic_cont *element);
+void draw_obj_col_points(phys_obj *object);
+void draw_objs_mode(phys_obj *object, int mode);
 GLuint graph_init_objects(void);
 
 #endif

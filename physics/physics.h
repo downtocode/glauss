@@ -55,7 +55,7 @@ typedef struct {
 	float radius;
 	int state;
 	bool ignore;
-} data;
+} phys_obj;
 
 /* Thread statistics structure */
 struct thread_statistics {
@@ -87,7 +87,7 @@ struct glob_thread_config {
 	pthread_mutex_t *io_halt;
 	struct global_statistics *stats;
 	struct parser_map *algo_opt_map;
-	data *obj;
+	phys_obj *obj;
 	
 	/* Thread-set variables */
 	void **threads_conf; /* Returned from thread_config */
@@ -146,10 +146,10 @@ extern const struct list_algorithms phys_algorithms[];
 void phys_list_algo(void);
 
 /* External functions for control */
-int phys_init(data** object);
+int phys_init(phys_obj **object);
 void phys_urgent_dump(void);
-int phys_quit(data **object);
+int phys_quit(phys_obj **object);
 int phys_set_sched_mode(char **mode);
-int phys_ctrl(int status, data** object);
+int phys_ctrl(int status, phys_obj **object);
 
 #endif
