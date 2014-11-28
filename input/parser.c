@@ -954,7 +954,8 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 const char *parse_file_to_str(const char* filename)
 {
 	FILE* input = fopen(filename, "r");
-	if (!input) return NULL;
+	if (!input)
+		return NULL;
 	
 	if (fseek(input, 0, SEEK_END) == -1)
 		return NULL;
@@ -966,10 +967,11 @@ const char *parse_file_to_str(const char* filename)
 	if (fseek(input, 0, SEEK_SET) == -1)
 		return NULL;
 	
-	char *content = malloc((size_t)size + 1);
-	if (!content) return NULL;
+	char *content = malloc(size + 1);
+	if (!content)
+		return NULL;
 	
-	fread(content, 1, (size_t)size, input);
+	fread(content, 1, size, input);
 	
 	if (ferror(input)) {
 		free(content);
