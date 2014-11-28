@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
 	phys_sleep_msec(37);
 	
 	/* free physics */
-	//phys_quit(&object);
+	phys_quit(&object);
 	
 	/* Free options */
 	free(option->spawn_funct);
