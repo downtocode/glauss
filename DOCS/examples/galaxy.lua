@@ -22,7 +22,7 @@ settings = {
 		--Name of function to read objects from
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
-		exec_funct_freq = 0, --Auto timestep_funct run frequency
+		exec_funct_freq = 100, --Auto timestep_funct run frequency
 		lua_expose_obj_array = false;
 		--Expose object array to the timestep_funct, slight performance decrease
 		reset_stats_freq = 1;
@@ -149,7 +149,7 @@ function run_on_timestep(t_stats, obj)
 	print("Current progress:", t_stats.progress)
 	
 	for i = 1, #t_stats, 1 do
-		--print("Thread", i, "Usage: ", t_stats[i].bh_heapsize/1048576, "MiB")
+		print("Thread", i, "Usage: ", t_stats[i].bh_heapsize/1048576, "MiB")
 	end
 	print("Total octree memory usage:", t_stats.bh_heapsize/1048576, "MiB")
 	
@@ -158,5 +158,6 @@ function run_on_timestep(t_stats, obj)
 	else
 		print("Velocity of object 1:", math.sqrt(obj[1].vel[0]^2 + obj[1].vel[1]^2 + obj[1].vel[2]^2) )
 	end
+	
 	return 1
 end

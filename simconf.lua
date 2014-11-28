@@ -60,7 +60,7 @@ function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
 	math.randomseed( settings.physics.rng_seed )
 	
-	local cube_size = 44
+	local cube_size = 10
 	local z = 1
 	local velocity = 10
 	
@@ -74,6 +74,11 @@ function spawn_objects(string_from_arg)
 						k-(cube_size/2),
 					},
 					vel = {
+						0,
+						0,
+						0,
+					},
+					acc = {
 						0,
 						0,
 						0,
@@ -101,6 +106,11 @@ function spawn_objects(string_from_arg)
 			0,
 			0,
 		},
+		acc = {
+			0,
+			0,
+			0,
+		},
 		charge = 0,
 		state = 0,
 		mass = 1,
@@ -112,7 +122,7 @@ function spawn_objects(string_from_arg)
 	return objects
 end
 
---Consult physics/physics.h for the format of struct thread_statistics and typedef data
+--Consult physics/physics.h for the format of struct thread_statistics and typedef phys_obj
 function run_on_timestep(t_stats, obj)
 	print("Current progress:", t_stats.progress)
 	print("Steps = ", t_stats.total_steps, "Time per step = ", t_stats.time_per_step)
@@ -121,25 +131,23 @@ function run_on_timestep(t_stats, obj)
 	local velocity = 10
 	
 	--if t_stats.progress > 0.2 then phys_pause() end
+	if obj == nil then return nil end
 	
 	local cube_size = 2
 	
-	for i = 4, 16, 1 do
-		copied_objs[i] = obj[i]
-		
+	for i = 1, 16, 1 do
+		copied_objs[i] = obj[i+300]
 		copied_objs[i].pos = {
 			(math.random()-0.5)*cube_size,
 			(math.random()-0.5)*cube_size,
 			(math.random()-0.5)*cube_size,
 		}
-		
 		copied_objs[i].vel = {
 			(math.random()-0.5)*velocity,
 			(math.random()-0.5)*velocity,
 			(math.random()-0.5)*velocity,
 		}
-		
 	end
 	
-	return nil
+	return copied_objs
 end

@@ -337,20 +337,23 @@ static void conf_lua_get_color(lua_State *L, float color[])
 static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
 {
 	/* Variables are read out of order so wait until we see the next object */
-	if(lua_istable(L, -1)) {
-		if(lua_type(L, -2) == LUA_TSTRING) {
-			if(!strcmp("pos", lua_tostring(L, -2))) {
+	if (lua_istable(L, -1)) {
+		if (lua_type(L, -2) == LUA_TSTRING) {
+			if (!strcmp("pos", lua_tostring(L, -2))) {
 				conf_lua_get_vector(L, &parser_state->buffer.pos);
 				return 0;
-			} else if(!strcmp("vel", lua_tostring(L, -2))) {
+			} else if (!strcmp("vel", lua_tostring(L, -2))) {
 				conf_lua_get_vector(L, &parser_state->buffer.vel);
 				return 0;
-			} else if(!strcmp("rot", lua_tostring(L, -2))) {
+			} else if (!strcmp("acc", lua_tostring(L, -2))) {
+					conf_lua_get_vector(L, &parser_state->buffer.acc);
+					return 0;
+			} else if (!strcmp("rot", lua_tostring(L, -2))) {
 				conf_lua_get_vector(L, &parser_state->file.rot);
 				return 0;
 			}
 		}
-		if(parser_state->fileset) {
+		if (parser_state->fileset) {
 			/* It's a file */
 			if(!access(parser_state->file.filename, R_OK)) {
 				pprintf(PRI_OK, "File %s found!\n", parser_state->file.filename);
@@ -366,9 +369,9 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 			}
 		} else {
 			/* It's just an object. */
-			if(parser_state->read_id) {
+			if (parser_state->read_id) {
 				/* Read changed object from Lua */
-				if(parser_state->buffer.id > option->obj) {
+				if (parser_state->buffer.id > option->obj) {
 					pprint_warn("Lua told us to change obj id = %i, but no such exists.\
 								\nCheck your Lua exec_funct code. Skipping.\n",
 								parser_state->buffer.id);
@@ -378,7 +381,7 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 					(parser_state->object)[parser_state->buffer.id] = parser_state->buffer;
 					parser_state->i++;
 				}
-			} else if(parser_state->nullswitch) {
+			} else if (parser_state->nullswitch) {
 				/* We're reading an object from an entire array(on init) */
 				parser_state->buffer.id = parser_state->i;
 				(parser_state->object)[parser_state->i] = parser_state->buffer;
@@ -480,7 +483,7 @@ static void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lu
 		raise(SIGINT);
 	}
 	lua_pushnil(L);
-	while (lua_next(L, -2) != 0) {
+	while (lua_next(L, -2)) {
 		if (rec_fn(L, parser_state)) {
 			/* Funtion pointer will return 1 if we need to go deeper */
 			conf_traverse_table(L, rec_fn, parser_state);
