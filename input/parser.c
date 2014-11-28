@@ -34,11 +34,12 @@ struct lua_parser_state {
 	bool read_id;
 	in_file file;
 	data buffer, *object;
+	struct atomic_cont buffer_ele;
 	struct parser_map *opt_map;
 };
 
 static bool lua_loaded = 0;
-static lua_State *L;
+static lua_State *Lp;
 struct parser_map *total_opt_map = NULL;
 
 void parser_print_generic(struct parser_map *var)
@@ -323,6 +324,16 @@ static void conf_lua_get_vector(lua_State *L, vec3 *vec)
 	}
 }
 
+static void conf_lua_get_color(lua_State *L, float color[])
+{
+	for (int i = 0; i < 4; i++) {
+		lua_pushinteger(L, i+1);
+		lua_gettable(L, -2);
+		color[i] = lua_tointeger(L, -1)/255.0;
+		lua_pop(L, 1);
+	}
+}
+
 static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
 {
 	/* Variables are read out of order so wait until we see the next object */
@@ -436,6 +447,31 @@ static int conf_lua_parse_files(lua_State *L, struct lua_parser_state *parser_st
 	return 0;
 }
 
+static int conf_lua_parse_elements(lua_State *L, struct lua_parser_state *parser_state)
+{
+	if (lua_istable(L, -1)) {
+		if (lua_type(L, -2) == LUA_TSTRING) {
+			if (!strcmp("color", lua_tostring(L, -2))) {
+				conf_lua_get_color(L, parser_state->buffer_ele.color);
+				return 0;
+			}
+		}
+		if (parser_state->nullswitch) {
+			parser_state->buffer_ele.number = parser_state->i;
+			atom_prop[parser_state->i++] = parser_state->buffer_ele;
+			parser_state->buffer_ele = (struct atomic_cont){0};
+		} else parser_state->nullswitch = 1;
+		return 1;
+	} else if (lua_isnumber(L, -1)) {
+		if(!strcmp("mass", lua_tostring(L, -2)))
+			parser_state->buffer_ele.mass = lua_tonumber(L, -1);
+	} else if (lua_isstring(L, -1)) {
+		if (!strcmp("name", lua_tostring(L, -2))) 
+			parser_state->buffer_ele.name = strdup(lua_tostring(L, -1));
+	}
+	return 0;
+}
+
 static void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)),
 								struct lua_parser_state *parser_state)
 {
@@ -482,18 +518,18 @@ int parse_lua_open_file(const char *filename)
 		pprintf(PRI_WARN, "Closing previous Lua context\n");
 		parse_lua_close();
 	}
-	L = luaL_newstate();
-	luaL_openlibs(L);
+	Lp = luaL_newstate();
+	luaL_openlibs(Lp);
 	
-	parse_lua_register_fn(L);
+	parse_lua_register_fn(Lp);
 	
 	/* Load file */
-	if(luaL_loadfile(L, filename)) {
+	if(luaL_loadfile(Lp, filename)) {
 		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
 		return 2;
 	}
 	/* Execute script */
-	lua_pcall(L, 0, 0, 0);
+	lua_pcall(Lp, 0, 0, 0);
 	
 	lua_loaded = 1;
 	
@@ -507,19 +543,19 @@ int parse_lua_open_string(const char *script)
 		parse_lua_close();
 	} else
 		lua_loaded = 1;
-	L = luaL_newstate();
-	luaL_openlibs(L);
+	Lp = luaL_newstate();
+	luaL_openlibs(Lp);
 	
-	parse_lua_register_fn(L);
+	parse_lua_register_fn(Lp);
 	
 	/* Load string */
-	if(luaL_loadstring(L, script)) {
+	if(luaL_loadstring(Lp, script)) {
 		pprintf(PRI_ERR, "Opening Lua script failed!\n");
 		return 2;
 	}
 	
 	/* Execute script */
-	lua_pcall(L, 0, 0, 0);
+	lua_pcall(Lp, 0, 0, 0);
 	
 	return 0;
 }
@@ -527,7 +563,7 @@ int parse_lua_open_string(const char *script)
 /* Close lua file */
 int parse_lua_close(void)
 {
-	lua_close(L);
+	lua_close(Lp);
 	lua_loaded = 0;
 	return 0;
 }
@@ -685,9 +721,9 @@ int parse_lua_simconf_options(struct parser_map *map)
 	};
 	
 	/* Read settings table */
-	lua_getglobal(L, "settings");
+	lua_getglobal(Lp, "settings");
 	
-	conf_traverse_table(L, &conf_lua_parse_opts, parser_state);
+	conf_traverse_table(Lp, &conf_lua_parse_opts, parser_state);
 	
 	if ((option->epsno == 0.0) || (option->elcharge == 0.0)) {
 		option->noele = 1;
@@ -706,23 +742,23 @@ int parse_lua_simconf_options(struct parser_map *map)
 /* Read objects */
 int parse_lua_simconf_objects(data **object, const char* sent_to_lua)
 {
-	lua_getglobal(L, option->spawn_funct);
+	lua_getglobal(Lp, option->spawn_funct);
 	/* Can send arguments here, currently unused. */
-	lua_pushstring(L, sent_to_lua);
+	lua_pushstring(Lp, sent_to_lua);
 	
-	lua_call(L, 1, 1);
+	lua_call(Lp, 1, 1);
 	
 	/* Lua table "arrays" are indexed from 1, so offset that */
-	option->obj = luaL_len(L, -1)-1;
+	option->obj = luaL_len(Lp, -1)-1;
 	
-	if(!lua_istable(L, -1)) {
+	if(!lua_istable(Lp, -1)) {
 		pprint_err("Lua f-n \"%s\" did not return a table of objects.\n",
 				   option->spawn_funct);
 		raise(SIGINT);
 	}
 	
 	/* We still need to find the molfiles */
-	conf_traverse_table(L, &conf_lua_parse_files, NULL);
+	conf_traverse_table(Lp, &conf_lua_parse_files, NULL);
 	phys_init(object);
 	/* Finally read the objects */
 	
@@ -736,7 +772,52 @@ int parse_lua_simconf_objects(data **object, const char* sent_to_lua)
 		.object = *object,
 	};
 	
-	conf_traverse_table(L, &conf_lua_parse_objs, parser_state);
+	conf_traverse_table(Lp, &conf_lua_parse_objs, parser_state);
+	
+	return 0;
+}
+
+int parse_lua_simconf_elements(const char *filepath)
+{
+	const char elements_internal[] =
+	// Generated from elements.lua
+	#include "resources/elements.h"
+	;
+	
+	atom_prop = calloc(120, sizeof(struct atomic_cont));
+	
+	lua_State *L = luaL_newstate();
+	luaL_openlibs(L);
+	
+	/* Load file */
+	if (filepath) {
+		if(luaL_loadfile(L, "./resources/elements.lua"))
+			pprintf(PRI_ERR, "Opening Lua file %s failed! Using internal DB.\n",
+					filepath);
+	} else {
+		if(luaL_loadstring(L, elements_internal)) {
+			pprintf(PRI_ERR, "Failed to open internal DB.\n");
+			return 2;
+		}
+	}
+	
+	/* Execute script */
+	lua_pcall(L, 0, 0, 0);
+	/* Read settings table */
+	lua_getglobal(L, "elements");
+	
+	struct lua_parser_state *parser_state = &(struct lua_parser_state){ 
+		.i = 0,
+		.nullswitch = 0,
+		.fileset = 0,
+		.read_id = 0,
+		.file = {0},
+		.buffer_ele = {0},
+	};
+	
+	conf_traverse_table(L, *conf_lua_parse_elements, parser_state);
+	
+	lua_close(L);
 	
 	return 0;
 }
@@ -822,19 +903,19 @@ unsigned int lua_exec_funct(const char *funct, data *object,
 	
 	int num_args = 0;
 	
-	lua_getglobal(L, funct);
+	lua_getglobal(Lp, funct);
 	
 	if (1) {
-		parser_push_stat_array(L, stats);
+		parser_push_stat_array(Lp, stats);
 		num_args++;
 	}
 	
 	if (option->lua_expose_obj_array) {
-		parser_push_object_array(L, object);
+		parser_push_object_array(Lp, object);
 		num_args++;
 	}
 	
-	lua_call(L, num_args, 1);
+	lua_call(Lp, num_args, 1);
 	
 	struct lua_parser_state *parser_state = &(struct lua_parser_state){ 
 		.i = 0,
@@ -846,9 +927,9 @@ unsigned int lua_exec_funct(const char *funct, data *object,
 		.object = object,
 	};
 	
-	if (!lua_isnil(L, -1) && !lua_isnil(L, -2)) {
-		if (lua_istable(L, -2)) {
-			conf_traverse_table(L, &conf_lua_parse_objs, parser_state);
+	if (!lua_isnil(Lp, -1) && !lua_isnil(Lp, -2)) {
+		if (lua_istable(Lp, -2)) {
+			conf_traverse_table(Lp, &conf_lua_parse_objs, parser_state);
 			pprint_verb("Updated objs = %i\n", parser_state->i);
 		} else {
 			pprint_warn("Lua f-n \"%s\" did not return a table as objects. Ignoring.\n",

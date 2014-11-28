@@ -37,6 +37,7 @@ static FT_Library library;
 static FT_Face face;
 static FT_GlyphSlot g;
 
+static GLuint font_tex;
 static GLuint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
 
 static int atlas_w;
@@ -130,7 +131,6 @@ unsigned int graph_init_freetype(const char *fontname)
 	}
 	
 	/* Create a seperate texture to hold altas, fill it with NULL */
-	GLuint font_tex;
 	glActiveTexture(GL_TEXTURE0);
 	glGenTextures(1, &font_tex);
 	glBindTexture(GL_TEXTURE_2D, font_tex);
@@ -178,7 +178,11 @@ void graph_display_text(const char *text, float x, float y, float s,
 	point coords[6*strlen(text)];
 	
 	glEnable(GL_BLEND);
+	glActiveTexture(GL_TEXTURE0);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBindTexture(GL_TEXTURE_2D, font_tex);
+	glEnable(GL_TEXTURE_2D);
+	
 	glVertexAttribPointer(textattr_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glUniform4fv(textattr_color, 1, col);
 	glVertexAttribPointer(textattr_color, 4, GL_FLOAT, GL_FALSE, 0, col);
@@ -232,6 +236,7 @@ void graph_display_text(const char *text, float x, float y, float s,
 	glDisableVertexAttribArray(textattr_coord);
 	glDisableVertexAttribArray(textattr_color);
 	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
 }
 
 void graph_display_object_info(data *object, unsigned int num)

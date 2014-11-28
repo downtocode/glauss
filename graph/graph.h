@@ -19,6 +19,7 @@
 #define PHYSENGINE_GRAPH
 
 enum draw_mode {
+	MODE_SPRITE,
 	MODE_SPHERE,
 	MODE_POINTS,
 	MODE_POINTS_COL,
@@ -31,10 +32,12 @@ void graph_init(void);
 void graph_quit(void);
 void graph_reset_viewport(void);
 void graph_set_view(graph_window *win);
-unsigned int graph_compile_shader(const char *src_vert_shader,
+GLuint graph_compile_shader(const char *src_vert_shader,
 								  const char *src_frag_shader);
 void graph_draw_scene(graph_window *win);
 int graph_set_draw_mode(graph_window *win, const char *mode);
+GLuint graph_load_c_png_texture(void *bin, size_t len, int *width, int *height);
+GLuint graph_load_png_texture(const char *filename, int *width, int *height);
 int graph_sshot(long double arg);
 
 #endif

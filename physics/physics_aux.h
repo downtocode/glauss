@@ -42,7 +42,6 @@ struct numbers_selection {
 };
 
 /* Elements system. Submit a NULL filepath to use compiled internal DB */
-int init_elements(const char *filepath);
 unsigned short int return_atom_num(const char *name);
 char *return_atom_str(unsigned int num);
 void free_elements();

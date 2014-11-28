@@ -60,29 +60,54 @@ function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
 	math.randomseed( settings.physics.rng_seed )
 	
-	local cube_size = 1
+	local cube_size = 10
+	local z = 1
 	local velocity = 10
 	
-	for i = #objects+1, #objects+1+15062, 1 do
-		objects[i] = {
-			pos = {
-				(math.random()-0.5)*cube_size,
-				(math.random()-0.5)*cube_size,
-				(math.random()-0.5)*cube_size,
-			},
-			vel = {
-				(math.random()-0.5)*velocity,
-				(math.random()-0.5)*velocity,
-				(math.random()-0.5)*velocity,
-			},
-			charge = 0,
-			state = 0,
-			mass = 10000000000,
-			radius = 0.2,
-			atomnumber = math.random(1,10),
-			ignore = false,
-		}
+	for i = 0, cube_size, 1 do
+		for j = 0, cube_size, 1 do
+			for k = 0, cube_size, 1 do
+				objects[z] = {
+					pos = {
+						i-(cube_size/2),
+						j-(cube_size/2),
+						k-(cube_size/2),
+					},
+					vel = {
+						0,
+						0,
+						0,
+					},
+					charge = 0,
+					state = 0,
+					mass = 1,
+					radius = 0.1,
+					atomnumber = math.random(1,2),
+					ignore = false,
+				}
+				z = z + 1
+			end
+		end
 	end
+	
+	objects[z] = {
+		pos = {
+			cube_size-(cube_size/2),
+			cube_size-(cube_size/2),
+			cube_size-(cube_size/2),
+		},
+		vel = {
+			0,
+			0,
+			0,
+		},
+		charge = 0,
+		state = 0,
+		mass = 1,
+		radius = 0.1,
+		atomnumber = math.random(1,2),
+		ignore = false,
+	}
 	
 	return objects
 end
@@ -116,5 +141,5 @@ function run_on_timestep(t_stats, obj)
 		
 	end
 	
-	return copied_objs
+	return nil
 end

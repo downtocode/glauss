@@ -421,18 +421,26 @@ void bhut_runtime_fn(void **threads)
 	}
 }
 
+/* Returns nearest larger even integer plus a little offset to dither stuff */
+static inline long double bh_even_round(double num)
+{
+	long double dither = ((rand() + 1) & ~1)/((RAND_MAX-1)*10000.0);
+	return (long double)(((unsigned int)(fabs(num) + 2)) & ~1)+dither;
+}
+
 /* INIT ONLY: Returns furthest object's furthest position from an octree. */
 double bh_init_max_displacement(data *object, bh_octree *octree)
 {
-	double maxdist = 0.0;
-	vec3 dist;
+	double dist = 0.0, maxdist = 0.0;
+	vec3 vecnorm = (vec3){0,0,0};
 	for (unsigned int i = 0; i < option->obj; i++) {
-		dist = object[i].pos - octree->origin;
-		for (unsigned short int j = 0; j < 3; j++) {
-			maxdist = fmax(dist[j], maxdist);
-		}
+		vecnorm = object[i].pos - octree->origin;
+		dist = sqrt(vecnorm[0]*vecnorm[0] +\
+					vecnorm[1]*vecnorm[1] +\
+					vecnorm[2]*vecnorm[2]);
+		maxdist = fmax(dist, maxdist);
 	}
-	return maxdist;
+	return bh_even_round(maxdist);
 }
 
 /* INIT ONLY: Will calculate and update an octree's center of mass */
@@ -510,6 +518,8 @@ static inline short bh_get_octant(vec3 *pos, bh_octree *octree)
 	return oct;
 }
 
+
+
 /* Inits a cell, in case it isn't, updates score and position */
 static void bh_init_cell(bh_octree *octree, short k)
 {
@@ -518,20 +528,29 @@ static void bh_init_cell(bh_octree *octree, short k)
 				"Possible errors: two objects sharing the same location,"
 				"check by calling phys_check_collisions!\n",
 				bh_heapsize_max);
+		phys_urgent_dump();
 		raise(9);
 	}
+	
+	/* Allocate cell */
 	if (!octree->cells[k]) {
 		octree->cells[k] = calloc(1, sizeof(bh_octree));
 		octree->cells[k]->depth = octree->depth+1;
-		octree->cells[k]->leaf = 1;
+		octree->cells[k]->leaf = true;
 		octree->cells[k]->score = bh_lifetime;
 		allocated_cells++;
 	}
+	
 	/* Scoring system: object is in therefore increase score */
-	octree->cells[k]->score++;
+	if (octree->cells[k]->score < bh_lifetime)
+		octree->cells[k]->score++;
+	
+	/* Update the positions and dimensions. Yes, it is the best place. */
 	octree->cells[k]->halfdim = octree->halfdim/2;
 	octree->cells[k]->origin = octree->origin + (double)octree->halfdim*0.5*\
 		(vec3){ (k&4 ? 1 : -1), (k&2 ? 1 : -1), (k&1 ? 1 : -1) };
+	
+	return;
 }
 
 /* Recursive function to insert object into an octree */
@@ -547,12 +566,18 @@ static void bh_insert_object(data *object, bh_octree *octree)
 		/* This cell has object but no subcells */
 		short oct_current_obj = bh_get_octant(&object->pos, octree);
 		short oct_octree_obj = bh_get_octant(&octree->data->pos, octree);
+		
+		/* Prep and transfer octee object */
 		bh_init_cell(octree, oct_octree_obj);
 		bh_insert_object(octree->data, octree->cells[oct_octree_obj]);
-		octree->data = NULL;
-		octree->leaf = 0;
+		
+		/* Insert current object */
 		bh_init_cell(octree, oct_current_obj);
 		bh_insert_object(object, octree->cells[oct_current_obj]);
+		
+		/* No longer leaf */
+		octree->data = NULL;
+		octree->leaf = false;
 	} else {
 		/* This cell has subcells with objects */
 		short oct_current_obj = bh_get_octant(&object->pos, octree);
@@ -612,7 +637,7 @@ bh_octree *bh_init_tree(void)
 {
 	bh_octree *octree = calloc(1, sizeof(bh_octree));
 	octree->score = USHRT_MAX;
-	octree->leaf = 0;
+	octree->leaf = true;
 	return octree;
 }
 
@@ -683,7 +708,7 @@ static void bh_cascade_mass(bh_octree *target, bh_octree *root,
 }
 
 /* Sets the root's position and dimensions, resets mass */
-static void bh_atomic_update_root(double dimension, bh_octree *root,
+static void bh_atomic_update_root(long double dimension, bh_octree *root,
 								  pthread_mutex_t *root_lock)
 {
 	if (!root)
@@ -726,7 +751,8 @@ void *thread_bhut(void *thread_setts)
 {
 	struct thread_config_bhut *t = thread_setts;
 	const double dt = option->dt;
-	vec3 accprev, dist;
+	vec3 accprev = (vec3){0,0,0}, vecnorm = (vec3){0,0,0};
+	double dist = 0.0;
 	
 	while (!*t->quit) {
 		unsigned int new_alloc = 0, new_cleaned = 0;
@@ -756,16 +782,18 @@ void *thread_bhut(void *thread_setts)
 			bh_calculate_force(&t->obj[i], t->root);
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 			/* Get updated maximum for root while we're at it. */
-			dist = t->obj[i].pos - t->root->origin;
-			for (unsigned short int j = 0; j < 3; j++)
-				maxdist = fmax(dist[j], maxdist);
+			vecnorm = t->obj[i].pos - t->root->origin;
+			dist = sqrt(vecnorm[0]*vecnorm[0] +\
+						vecnorm[1]*vecnorm[1] +\
+						vecnorm[2]*vecnorm[2]);
+			maxdist = fmax(dist, maxdist);
 		}
 		
 		/* Sync & wakeup control thread */
 		pthread_barrier_wait(t->ctrl);
 		
 		/* Insert updated halfdim into root */
-		bh_atomic_update_root(maxdist, t->root, t->root_lock);
+		bh_atomic_update_root(bh_even_round(maxdist), t->root, t->root_lock);
 		
 		/* Update the positions of octrees and their halfdims + cleanup */
 		for (unsigned short int s = 0; s < 8; s++) {

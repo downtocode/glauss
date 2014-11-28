@@ -52,6 +52,7 @@ enum commands {
 	VAR_PAUSE,
 	VAR_SAVE,
 	VAR_LOAD,
+	VAR_ELE_COLOR,
 	VAR_ENABLE_WINDOW,
 	VAR_DISABLE_WINDOW,
 	VAR_WIN_DRAW_MODE,
@@ -72,6 +73,7 @@ struct input_cfg {
 int input_thread_init(graph_window **win, data **object);
 void input_thread_quit(void);
 void input_thread_reset_term(void);
+int input_change_element_col(const char *name, const char *col, const char *value);
 int input_call_system(const char *cmd);
 int input_token_setall(char *line, struct input_cfg *t);
 void *input_thread(void *thread_setts);

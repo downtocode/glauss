@@ -19,8 +19,10 @@
 #include "graph/graph.h"
 #include "graph_objects.h"
 #include "main/options.h"
+#include "resources/sprite_img.h"
 
-static GLint objattr_pos, objattr_color, objattr_radius;
+static GLuint texture_sprite;
+static GLint objattr_mode, objattr_pos, objattr_color, objattr_radius, objattr_tex;
 
 /* Drawing points defaults to color = black, so we need white */
 static const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
@@ -55,6 +57,7 @@ void draw_obj_sphere(data *object)
 	int pointcount = 0;
 	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
 	
+	glUniform1i(objattr_mode, 0);
 	glUniform4fv(objattr_color, 1, atom_prop[object->atomnumber].color);
 	
 	for (float i = 0; i < pi; i+=dj) {
@@ -83,14 +86,52 @@ void draw_obj_sphere(data *object)
 	glUniform4fv(objattr_color, 1, white);
 }
 
+void draw_obj_sprite(data *object)
+{
+	float points[option->obj][3];
+	unsigned int size = 0;
+	
+	glEnable(GL_POINT_SPRITE);
+	
+	glUniform1i(objattr_mode, 1);
+	glUniform1f(objattr_radius, option->def_radius);
+	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
+	glUniform1i(objattr_tex, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glBindTexture(GL_TEXTURE_2D, texture_sprite);
+	glEnable(GL_TEXTURE_2D);
+	
+	glEnableVertexAttribArray(objattr_pos);
+	glEnableVertexAttribArray(objattr_color);
+	
+	for (unsigned int i = 0; i < option->obj; i++) {
+		points[size][0] = object[i].pos[0];
+		points[size][1] = object[i].pos[1];
+		points[size][2] = object[i].pos[2];
+		size++;
+	}
+	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_DYNAMIC_DRAW);
+	
+	glDrawArrays(GL_POINTS, 0, size);
+	
+	glDisable(GL_TEXTURE_2D);
+	glDisableVertexAttribArray(objattr_pos);
+	glDisable(GL_POINT_SPRITE);
+}
+
 void draw_obj_points(data *object)
 {
 	float points[option->obj][3];
 	unsigned int size = 0;
 	
-	glUniform4fv(objattr_color, 1, white);
+	glUniform1i(objattr_mode, 0);
+	glUniform4fv(objattr_color, 1, atom_prop[0].color);
 	glUniform1f(objattr_radius, option->def_radius);
-	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, white);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, atom_prop[0].color);
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
 	glEnableVertexAttribArray(objattr_pos);
@@ -123,6 +164,7 @@ void draw_obj_packed_elements_draw(data *object, struct atomic_cont *element)
 		col = element->color;
 	}
 	
+	glUniform1i(objattr_mode, 0);
 	glUniform4fv(objattr_color, 1, col);
 	glUniform1f(objattr_radius, option->def_radius);
 	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, col);
@@ -160,7 +202,12 @@ void draw_obj_col_points(data *object)
 
 void draw_objs_mode(data *object, int mode)
 {
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	switch(mode) {
+		case MODE_SPRITE:
+			draw_obj_sprite(object);
+			break;
 		case MODE_SPHERE:
 			for (unsigned int i = 0; i < option->obj; i++) {
 				draw_obj_sphere(&object[i]);
@@ -175,6 +222,7 @@ void draw_objs_mode(data *object, int mode)
 		default:
 			break;
 	}
+	glDisable(GL_BLEND);
 }
 
 static const char object_vs[] =
@@ -189,12 +237,27 @@ static const char object_fs[] =
 
 GLuint graph_init_objects(void)
 {
+	glEnable(GL_POINT_SPRITE);
+	glEnable(GL_POINT_SMOOTH);
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	
+	int width, height;
+	if (option->custom_sprite_png)
+		texture_sprite = graph_load_png_texture(option->custom_sprite_png, &width, &height);
+	else
+		texture_sprite = graph_load_c_png_texture((void *)circle_png,
+												  sizeof(circle_png), &width, &height);
+	
 	GLuint obj_program = graph_compile_shader(object_vs, object_fs);
+	glBindAttribLocation(obj_program, objattr_mode, "draw_mode");
+	glBindAttribLocation(obj_program, objattr_tex, "spriteTexture");
 	glBindAttribLocation(obj_program, objattr_pos, "pos");
 	glBindAttribLocation(obj_program, objattr_color, "objcolor");
 	glBindAttribLocation(obj_program, objattr_radius, "radius");
+	objattr_mode = glGetUniformLocation(obj_program, "draw_mode");
 	objattr_color = glGetUniformLocation(obj_program, "objcolor");
 	objattr_radius = glGetUniformLocation(obj_program, "radius");
+	objattr_tex = glGetUniformLocation(obj_program, "spriteTexture");
 	
 	return obj_program;
 }

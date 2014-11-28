@@ -40,7 +40,7 @@
 
 static const char ARGSTRING[] =
 // Generated from helpstring.txt
-#include "main/resources/helpstring.h"
+#include "resources/helpstring.h"
 ;
 
 struct option_struct *option;
@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
 			.width = 1280, .height = 720,
 			.fontsize = 38,
 			.fontname = strdup("Sans"),
+			.default_draw_mode = strdup("MODE_POINTS_COL"),
 			.spawn_funct = strdup("spawn_objects"),
 			.timestep_funct = NULL,
 			.exec_funct_freq = 0,
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
 			.noele = 1, .nogrv = 1,
 			.algorithm = strdup("none"),
 			.thread_schedule_mode = strdup("SCHED_RR"),
+			.custom_sprite_png = NULL,
 			
 			/* Physics - ctrl */
 			.dump_xyz = 0,
@@ -96,12 +98,15 @@ int main(int argc, char *argv[])
 			{"gconst",                 P_TYPE(option->gconst)                 },
 			{"verbosity",              P_TYPE(option->verbosity)              },
 			{"fontsize",               P_TYPE(option->fontsize)               },
+			{"def_radius",             P_TYPE(option->def_radius)             },
 			{"dump_xyz",               P_TYPE(option->dump_xyz)               },
 			{"dump_sshot",             P_TYPE(option->dump_sshot)             },
 			{"exec_funct_freq",        P_TYPE(option->exec_funct_freq)        },
+			{"default_draw_mode",      P_TYPE(option->default_draw_mode)      },
 			{"skip_model_vec",         P_TYPE(option->skip_model_vec)         },
 			{"algorithm",              P_TYPE(option->algorithm)              },
 			{"spawn_funct",            P_TYPE(option->spawn_funct)            },
+			{"custom_sprite_png",      P_TYPE(option->custom_sprite_png)      },
 			{"timestep_funct",         P_TYPE(option->timestep_funct)         },
 			{"file_template",          P_TYPE(option->xyz_temp)               },
 			{"screenshot_template",    P_TYPE(option->sshot_temp)             },
@@ -261,8 +266,8 @@ int main(int argc, char *argv[])
 		data* object = NULL;
 		
 		/* Init elements subsystem */
-		if (init_elements(NULL)) {
-			pprintf(PRI_OK, "Failed to init elements db!\n");
+		if (parse_lua_simconf_elements(NULL)) {
+			pprintf(PRI_ERR, "Failed to init elements db!\n");
 		}
 		
 		/* Read objects AND initialize physics(we need to know the count) */
@@ -323,7 +328,7 @@ int main(int argc, char *argv[])
 	phys_sleep_msec(37);
 	
 	/* free physics */
-	phys_quit(&object);
+	//phys_quit(&object);
 	
 	/* Free options */
 	free(option->spawn_funct);
@@ -331,6 +336,8 @@ int main(int argc, char *argv[])
 	free(option->timestep_funct);
 	free(option->algorithm);
 	free(option->thread_schedule_mode);
+	free(option->default_draw_mode);
+	free(option->custom_sprite_png);
 	free(option->xyz_temp);
 	free(option->sshot_temp);
 	free(option);

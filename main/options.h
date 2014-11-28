@@ -34,6 +34,8 @@ extern struct option_struct {
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
 	char *spawn_funct, *timestep_funct;
 	char *thread_schedule_mode;
+	char *custom_sprite_png;
+	char *default_draw_mode;
 	unsigned int exec_funct_freq, skip_model_vec;
 	bool lua_expose_obj_array;
 	bool input_thread_enable;

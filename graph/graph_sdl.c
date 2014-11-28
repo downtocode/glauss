@@ -44,31 +44,37 @@ const struct graph_cam_view def_cam = {
 graph_window *main_win = NULL;
 static bool sdl_initd = 0;
 
-graph_window *graph_sdl_init(data *object)
+int graph_sdl_init(void)
+{
+	if (!sdl_initd) {
+		SDL_Init(SDL_INIT_NOPARACHUTE);
+		SDL_Init(SDL_INIT_VIDEO);
+		
+		/* OGL settings */
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+							SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		/* OGL version */
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+		
+		sdl_initd = true;
+		return 0;
+	}
+	return 1;
+}
+
+graph_window *graph_win_create(data *object)
 {
 	graph_window *win = calloc(1, sizeof(graph_window));
 	win->event = calloc(1, sizeof(SDL_Event));
 	
-	if (!sdl_initd) {
-		return NULL;
-		SDL_Init(SDL_INIT_NOPARACHUTE);
-		SDL_Init(SDL_INIT_VIDEO);
-		sdl_initd = true;
-	}
-	
 	/* Default options */
 	win->camera = def_cam;
 	win->object = object;
-	win->draw_mode = MODE_POINTS;
+	graph_set_draw_mode(win, option->default_draw_mode);
 	strcpy(win->currentsel, "Select object:");
 	
-	/* OGL settings */
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-						SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	/* OGL version */
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	/* Spawn window */
 	win->window = SDL_CreateWindow(PACKAGE_STRING, \
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, option->width,
@@ -76,6 +82,10 @@ graph_window *graph_sdl_init(data *object)
 		SDL_WINDOW_ALLOW_HIGHDPI);
 	/* Create GL context */
 	win->context = SDL_GL_CreateContext(win->window);
+	
+	/* Init opengl finally */
+	graph_init();
+	
 	return win;
 }
 
@@ -137,7 +147,17 @@ void graph_sdl_swapwin(graph_window *win)
 	SDL_GL_SwapWindow(win->window);
 }
 
-void graph_sdl_deinit(graph_window *win) {
+int graph_sdl_deinit(void)
+{
+	if (sdl_initd) {
+		SDL_Quit();
+		sdl_initd = 0;
+		return 0;
+	}
+	return 1;
+}
+
+void graph_win_destroy(graph_window *win) {
 	if (!win)
 		return;
 	SDL_GL_DeleteContext(win->context);
@@ -145,6 +165,4 @@ void graph_sdl_deinit(graph_window *win) {
 	free(win->event);
 	free(win);
 	graph_quit();
-	SDL_Quit();
-	sdl_initd = 0;
 }

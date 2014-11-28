@@ -156,7 +156,7 @@ void *thread_ctrl(void *thread_setts)
 		
 		/* Lua function execution */
 		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
-			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
+			//lua_exec_funct(option->timestep_funct, t->obj, t->stats);
 		}
 		
 		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,

@@ -80,6 +80,9 @@ void parser_set_generic(struct parser_map *var, const char *val);
 void parser_push_generic(lua_State *L, struct parser_map *var);
 void parser_read_generic(lua_State *L, struct parser_map *var);
 
+/* Elements */
+int parse_lua_simconf_elements(const char *filepath);
+
 /* Parser abstractions */
 int parse_lua_simconf_options(struct parser_map *map);
 int parse_lua_simconf_objects(data **object, const char* sent_to_lua);

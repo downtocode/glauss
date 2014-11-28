@@ -27,6 +27,7 @@
 #include "physics.h"
 #include "physics_aux.h"
 #include "main/options.h"
+#include "main/output.h"
 #include "main/msg_phys.h"
 #include "input/parser.h"
 #include "input/sighandle.h"
@@ -56,6 +57,7 @@ static struct sched_param parameters;
 /* Thread statistics and primary struct */
 struct global_statistics *phys_stats;
 struct glob_thread_config *cfg;
+data *urgetnt_dump_object = NULL;
 
 /* Previous algorithm */
 static struct list_algorithms *prev_algorithm = NULL;
@@ -203,6 +205,12 @@ int phys_set_sched_mode(char **mode)
 	return found;
 }
 
+void phys_urgent_dump(void)
+{
+	pprint_warn("Backing up entire system in backup.bin!\n");
+	out_write_array(urgetnt_dump_object, "backup.bin", cfg ? cfg->io_halt : NULL);
+}
+
 int phys_quit(data **object)
 {
 	if (cfg) {
@@ -343,6 +351,7 @@ int phys_ctrl(int status, data** object)
 			
 			prev_algo_opts = cfg->algo_opt_map;
 			prev_algorithm = (struct list_algorithms *)algo;
+			urgetnt_dump_object = *object;
 			
 			retval = PHYS_STATUS_RUNNING;
 			
@@ -382,6 +391,7 @@ int phys_ctrl(int status, data** object)
 			ctrl_quit(cfg);
 			halt_objects = NULL;
 			cfg = NULL;
+			urgetnt_dump_object = NULL;
 			
 			retval = PHYS_STATUS_STOPPED;
 			

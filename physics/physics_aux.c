@@ -20,108 +20,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <tgmath.h>
-#include <lua5.2/lua.h>
-#include <lua5.2/lauxlib.h>
-#include <lua5.2/lualib.h>
 #include <sys/time.h>
 #include "physics_aux.h"
 #include "main/msg_phys.h"
 #include "main/options.h"
 
 struct atomic_cont *atom_prop;
-
-struct lua_parser_state {
-	int i;
-	bool nullswitch;
-};
-
-static const char elements_internal[] =
-// Generated from elements.lua
-#include "physics/resources/elements.h"
-;
-
-static void conf_lua_get_color(lua_State *L, float color[])
-{
-	/* Can be used for N dim tables, change 3 to N */
-	for (int i = 0; i < 4; i++) {
-		lua_pushinteger(L, i+1);
-		lua_gettable(L, -2);
-		color[i] = lua_tonumber(L, -1);
-		lua_pop(L, 1);
-	}
-	lua_pop(L, 1);
-}
-
-static void elements_traverse_table(lua_State *L, struct atomic_cont *buffer,
-									struct lua_parser_state *parser_state)
-{
-	lua_pushnil(L);
-	while (lua_next(L, -2) != 0) {
-		if (lua_istable(L, -1)) {
-			if (lua_type(L, -2) == LUA_TSTRING) {
-				if (!strcmp("color", lua_tostring(L, -2))) {
-					conf_lua_get_color(L, buffer->color);
-					continue;
-				}
-			}
-			if (parser_state->nullswitch) {
-				buffer->number = parser_state->i;
-				atom_prop[parser_state->i++] = *buffer;
-				buffer = &(struct atomic_cont){0};
-			} else parser_state->nullswitch = 1;
-			elements_traverse_table(L, buffer, parser_state);
-		} else if (lua_isnumber(L, -1)) {
-			if(!strcmp("mass", lua_tostring(L, -2)))
-				buffer->mass = lua_tonumber(L, -1);
-		} else if (lua_isstring(L, -1)) {
-			if (!strcmp("name", lua_tostring(L, -2))) 
-				buffer->name = strdup(lua_tostring(L, -1));
-		}
-		lua_pop(L, 1);
-	}
-}
-
-int init_elements(const char *filepath)
-{
-	atom_prop = calloc(120, sizeof(struct atomic_cont));
-	
-	lua_State *L = luaL_newstate();
-	luaL_openlibs(L);
-	
-	/* Load file */
-	if (filepath) {
-		if(luaL_loadfile(L, "./resources/elements.lua"))
-			pprintf(PRI_ERR, "Opening Lua file %s failed! Using internal DB.\n",
-					filepath);
-	} else {
-		if(luaL_loadstring(L, elements_internal)) {
-			pprintf(PRI_ERR, "Failed to open internal DB.\n");
-			return 2;
-		}
-	}
-	/* Execute script */
-	lua_pcall(L, 0, 0, 0);
-	/* Read settings table */
-	lua_getglobal(L, "elements");
-	
-	struct atomic_cont buffer = {0};
-	struct lua_parser_state parser_state = {1, 0};
-	
-	elements_traverse_table(L, &buffer, &parser_state);
-	
-	atom_prop[0].name = strdup("\0");
-	atom_prop[0].mass = 1.0;
-	atom_prop[0].charge = 0.0;
-	atom_prop[0].number = 0;
-	atom_prop[0].color[0] = 255;
-	atom_prop[0].color[1] = 255;
-	atom_prop[0].color[2] = 255;
-	atom_prop[0].color[3] = 255;
-	
-	lua_close(L);
-	
-	return 0;
-}
 
 unsigned short int return_atom_num(const char *name)
 {

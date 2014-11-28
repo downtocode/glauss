@@ -219,8 +219,8 @@ void graph_set_view(graph_window *win)
 	glUniformMatrix4fv(per_matrix, 1, GL_FALSE, pers);
 }
 
-unsigned int graph_compile_shader(const char *src_vert_shader,
-								  const char *src_frag_shader)
+GLuint graph_compile_shader(const char *src_vert_shader,
+							const char *src_frag_shader)
 {
 	GLint status_vert, status_frag;
 	GLuint program = glCreateProgram();
@@ -406,6 +406,7 @@ void graph_draw_scene(graph_window *win)
 int graph_set_draw_mode(graph_window *win, const char *mode)
 {
 	struct parser_map draw_modes[] = {
+		{"MODE_SPRITE",       NULL,   MODE_SPRITE,       LUA_TNUMBER   },
 		{"MODE_SPHERE",       NULL,   MODE_SPHERE,       LUA_TNUMBER   },
 		{"MODE_POINTS",       NULL,   MODE_POINTS,       LUA_TNUMBER   },
 		{"MODE_POINTS_COL",   NULL,   MODE_POINTS_COL,   LUA_TNUMBER   },
@@ -429,8 +430,8 @@ int graph_set_draw_mode(graph_window *win, const char *mode)
 		for (struct parser_map *i = draw_modes; i->name; i++) {
 			pprint("%s ", i->name);
 		}
-		pprint("\nSetting mode to default MODE_POINTS\n");
-		win->draw_mode = MODE_POINTS;
+		pprint("\nSetting mode to default MODE_POINTS_COL\n");
+		win->draw_mode = MODE_POINTS_COL;
 	
 	return 1;
 }
@@ -453,6 +454,7 @@ void graph_quit(void)
 void graph_init(void)
 {
 	GLenum err = glewInit();
+	
 	if (err != GLEW_OK) {
 		pprint_err("Error initializing GLEW\n");
 		exit(1);
@@ -488,9 +490,212 @@ void graph_init(void)
 	per_matrix = glGetUniformLocation(object_shader, "perspectiveMat");
 }
 
+struct raw_png_read {
+	/* PNG stands for Portable Network Graphics. Notice that "Network" word in
+	 * there. And guess what? The old greybeards decided anything "Network"
+	 * related must absolutely be big endian. We have to use png own type. */
+	png_bytep bin;
+	png_uint_32 pos;
+	png_uint_32 len;
+};
+
+static void graph_read_raw_stream(png_structp png, png_bytep output,
+								  png_size_t readsize)
+{
+	struct raw_png_read *data = (struct raw_png_read *)png_get_io_ptr(png);
+	if (!data)
+		return;
+	
+	if (readsize > data->len) {
+		png_error(png, "EOF");
+		return;
+	}
+	
+	memcpy(output, (data->bin+data->pos), readsize);
+	
+	data->pos += readsize;
+	data->len -= readsize;
+}
+
+GLuint graph_load_c_png_texture(void *bin, size_t len, int *width, int *height)
+{
+	int bit_depth, color_type;
+	size_t rowsize;
+	png_byte header[8];
+	png_uint_32 twidth, theight;
+	png_structp png = NULL;
+	png_infop info = NULL;
+	png_infop info_end = NULL;
+	GLuint texture = 0;
+	
+	/* Read header */
+	memcpy(header, bin, 8);
+	int is_png = !png_sig_cmp(header, 0, 8);
+	if (!is_png)
+		return 1;
+	
+	png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png)
+		return 1;
+	
+	info = png_create_info_struct(png);
+	if (!info)
+		goto clean;
+	
+	info_end = png_create_info_struct(png);
+	if (!info_end)
+		goto clean;
+	
+	if (setjmp(png_jmpbuf(png)))
+		goto clean;
+	
+	struct raw_png_read read_stuff = {
+		.bin = bin,
+		.pos = 0,          /* Don't put 8 byte header offset here, NOT A BUG. */
+		.len = len,
+	};
+	
+	/* Set custom input fn */
+	png_set_read_fn(png, &read_stuff, graph_read_raw_stream);
+	
+	/* Skip to actual image */
+	png_read_info(png, info);
+	
+	/* Get info */
+	png_get_IHDR(png, info, &twidth, &theight, &bit_depth, &color_type,
+				 NULL, NULL, NULL);
+	
+	/* Set width and height */
+	if (width)
+		*width = twidth;
+	if (height)
+		*height = theight;
+	
+	png_read_update_info(png, info);
+	
+	rowsize = png_get_rowbytes(png, info);
+	
+	/* Allocate */
+	png_byte *image = png_malloc(png, theight*rowsize);
+	
+	/* Allocate rows */
+	png_bytep *rows = png_malloc(png, sizeof(png_bytep)*theight);
+	
+	/* Set pointers */
+	for (int i = 0; i < theight; i++)
+		rows[theight - 1 - i] = image + i*rowsize;
+	
+	/* Actually read the image */
+	png_read_image(png, rows);
+	
+	/* Create texture */
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D,0, GL_RGBA, twidth, theight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	
+	clean:
+		if(png) {
+			png_free(png, rows);
+			png_free(png, image);
+			png_destroy_read_struct(&png, &info, &info_end);
+		}
+	
+	return texture;
+}
+
+GLuint graph_load_png_texture(const char *filename, int *width, int *height)
+{
+	int bit_depth, color_type;
+	size_t rowsize;
+	png_byte header[8];
+	png_uint_32 twidth, theight;
+	png_structp png = NULL;
+	png_infop info = NULL;
+	png_infop info_end = NULL;
+	GLuint texture = 0;
+	
+	/* Open file */
+	FILE *fp = fopen(filename, "rb");
+	if (!fp)
+		goto clean;
+	
+	/* Read header */
+	fread(header, 1, 8, fp);
+	int is_png = !png_sig_cmp(header, 0, 8);
+	if (!is_png)
+		goto clean;
+	
+	png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png)
+		goto clean;
+	
+	info = png_create_info_struct(png);
+	if (!info)
+		goto clean;
+	
+	info_end = png_create_info_struct(png);
+	if (!info_end)
+		goto clean;
+	
+	if (setjmp(png_jmpbuf(png)))
+		goto clean;
+	
+	/* Init IO */
+	png_init_io(png, fp);
+	
+	/* Move offset since header was read */
+	png_set_sig_bytes(png, 8);
+	
+	/* Skip to actual image */
+	png_read_info(png, info);
+	
+	/* Get info */
+	png_get_IHDR(png, info, &twidth, &theight, &bit_depth, &color_type,
+				 NULL, NULL, NULL);
+	
+	/* Set width and height */
+	if (width)
+		*width = twidth;
+	if (height)
+		*height = theight;
+	
+	png_read_update_info(png, info);
+	
+	rowsize = png_get_rowbytes(png, info);
+	
+	/* Allocate */
+	png_byte *image = png_malloc(png, theight*rowsize);
+	
+	/* Allocate rows */
+	png_bytep *rows = png_malloc(png, sizeof(png_bytep)*theight);
+
+	/* Set pointers */
+	for (int i = 0; i < theight; i++)
+		rows[theight - 1 - i] = image + i*rowsize;
+	
+	/* Actually read the image */
+	png_read_image(png, rows);
+	
+	/* Create texture */
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D,0, GL_RGBA, twidth, theight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	
+	clean:
+		if(png) {
+			png_free(png, rows);
+			png_free(png, image);
+			png_destroy_read_struct(&png, &info, &info_end);
+		}
+		fclose(fp);
+	
+	return texture;
+}
+
 int graph_sshot(long double arg)
 {
-#if HAS_PNG
 	/* Open file */
 	char filename[32];
 	int w = option->width, h = option->height;
@@ -548,6 +753,4 @@ int graph_sshot(long double arg)
 	
 	pprintf(PRI_MEDIUM, "Wrote screenshot %s\n", filename);
 	return 0;
-#endif
-	return 1;
 }

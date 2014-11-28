@@ -1,5 +1,6 @@
 elements = {
 	--color format = {R, G, B, A}, scale=0 to 255; Names MUST be in capitals, as per PDB file specs.
+	{ name = "0",  mass = 1.0000,    color = {255, 255, 255, 255} },
 	{ name = "H",  mass = 1.0079,    color = {255, 47,  0,   255} },
 	{ name = "HE", mass = 4.0026,    color = {197, 77,  208, 255} },
 	{ name = "LI", mass = 6.941,     color = {208, 77,  129, 255} },

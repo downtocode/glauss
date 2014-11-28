@@ -69,6 +69,7 @@ int input_thread_init(graph_window **win, data **object)
 		{"clear", NULL, VAR_CLEAR, VAR_CMD},
 		{"pause", NULL, VAR_PAUSE, VAR_CMD},
 		{"unpause", NULL, VAR_PAUSE, VAR_CMD},
+		{"element", NULL, VAR_ELE_COLOR, VAR_CMD},
 		{"win_create", NULL, VAR_ENABLE_WINDOW, VAR_CMD},
 		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
 		{"win_draw_mode", NULL, VAR_WIN_DRAW_MODE, VAR_CMD},
@@ -148,6 +149,60 @@ int input_call_system(const char *cmd)
 	int ret = system(cmd);
 	pprint_enable();
 	return ret;
+}
+
+int input_change_element_col(const char *name, const char *col, const char *value)
+{
+	const char *usage = "Syntax: element <Number/Name> <{R,G,B,A}> <value>\n";
+	if (!name) {
+		pprint("%s", usage);
+		return 1;
+	}
+	
+	int i = 0;
+	int res = sscanf(name, "%i", &i);
+	if (!res) {
+		for (i = 1; i<121; i++) {
+			if (!strncasecmp(name, atom_prop[i].name, strlen(atom_prop[i].name))) {
+				break;
+			}
+		}
+	}
+	if (!i) {
+		pprint("%s", usage);
+		return 1;
+	}
+	
+	const char code_col = col ? col[0] : '\0';
+	unsigned int val = value ? strtol(value, NULL, 10) : 256;
+	
+	if (code_col != '\0' && val < 256) {
+		switch(code_col) {
+			case 'R':
+				atom_prop[i].color[0] = val/255.0;
+				break;
+			case 'G':
+				atom_prop[i].color[1] = val/255.0;
+				break;
+			case 'B':
+				atom_prop[i].color[2] = val/255.0;
+				break;
+			case 'A':
+				atom_prop[i].color[3] = val/255.0;
+				break;
+			default:
+				return 1;
+				break;
+		}
+	}
+	
+	pprint("Element %s = {%i, %i, %i, %i}\n", atom_prop[i].name,
+		   (int)(atom_prop[i].color[0]*255.0),
+		   (int)(atom_prop[i].color[1]*255.0),
+		   (int)(atom_prop[i].color[2]*255.0),
+		   (int)(atom_prop[i].color[3]*255.0));
+	
+	return 0;
 }
 
 int input_token_setall(char *line, struct input_cfg *t)
@@ -263,11 +318,10 @@ int input_token_setall(char *line, struct input_cfg *t)
 					case VAR_WIN_DRAW_MODE:
 						if (!t->win || !*t->win)
 							break;
-						if (num_tok < 2) {
-							graph_set_draw_mode(*t->win, NULL);
-						} else {
-							graph_set_draw_mode(*t->win, token[1]);
-						}
+						graph_set_draw_mode(*t->win, token[1]);
+						break;
+					case VAR_ELE_COLOR:
+						input_change_element_col(token[1], token[2], token[3]);
 						break;
 					case VAR_ENABLE_WINDOW:
 						if (*t->win)

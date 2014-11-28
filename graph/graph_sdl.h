@@ -58,11 +58,13 @@ typedef struct {
 /* Default camera position and scale */
 extern const struct graph_cam_view def_cam;
 
-graph_window *graph_sdl_init(data *object);
+int graph_sdl_init(void);
+int graph_sdl_deinit(void);
+graph_window *graph_win_create(data *object);
 float graph_sdl_resize_wind(graph_window *win);
 int graph_sdl_toggle_fullscreen(graph_window *win);
 void graph_sdl_move_cam(graph_window *win);
 void graph_sdl_swapwin(graph_window *win);
-void graph_sdl_deinit(graph_window *win);
+void graph_win_destroy(graph_window *win);
 
 #endif

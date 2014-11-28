@@ -47,6 +47,8 @@ graph_window **graph_thread_init(data *object)
 	cfg->status = true;
 	cfg->selfquit = false;
 	
+	graph_sdl_init();
+	
 	pthread_create(&cfg->graph, NULL, graph_thread, cfg);
 	
 	global_cfg = cfg;
@@ -64,7 +66,7 @@ void graph_thread_quit(void)
 	
 	pthread_join(global_cfg->graph, NULL);
 	
-	//graph_sdl_deinit(global_cfg->win);
+	graph_sdl_deinit();
 	
 	/*void *res = PTHREAD_CANCELED;
 	
@@ -95,12 +97,9 @@ void *graph_thread(void *thread_setts)
 	struct graph_cfg *t = thread_setts;
 	
 	/* SDL */
-	t->win = graph_sdl_init(t->obj);
+	t->win = graph_win_create(t->obj);
 	
 	graph_sdl_resize_wind(t->win);
-	
-	/* OpenGL */
-	graph_init();
 	
 	/* Cancel policy */
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -162,7 +161,7 @@ void *graph_thread(void *thread_setts)
 		graph_sdl_swapwin(t->win);
 	}
 	
-	graph_sdl_deinit(t->win);
+	graph_win_destroy(t->win);
 	
 	if (t->selfquit)
 		raise(SIGINT);

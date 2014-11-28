@@ -16,6 +16,7 @@ def try_git_version():
 		print e
 	return version
 
+#Custom transformation functions
 def __file2string_cmd__(ctx):
 	return "${{BIN_PERL}} {0}/TOOLS/file2string.pl ${{SRC}} > ${{TGT}}" \
 				.format(ctx.srcnode.abspath())
@@ -26,6 +27,17 @@ def __file2string__(ctx, **kwargs):
 		name   = os.path.basename(kwargs['target']),
 		**kwargs
 	)
+def __png2c_cmd__(ctx):
+	return "${{BIN_PYTHON}} {0}/TOOLS/png2c.py ${{SRC}} > ${{TGT}}" \
+				.format(ctx.srcnode.abspath())
+def __png2c__(ctx, **kwargs):
+	ctx(
+		rule   = __png2c_cmd__(ctx),
+		before = ("c",),
+		name   = os.path.basename(kwargs['target']),
+		**kwargs
+	)
+BuildContext.png2c                = __png2c__
 BuildContext.file2string          = __file2string__
 	
 def options(ctx):
@@ -100,6 +112,10 @@ def build(ctx):
 			rule = '${RST2MAN} ${SRC} ${TGT}',
 		)
 	#Generate included files.
+	ctx.png2c(
+		source = "resources/circle.png",
+		target = "resources/sprite_img.h",
+		features = 'c')
 	ctx.file2string(
 		source = "resources/shaders/object_vs.glsl",
 		target = "graph/shaders/object_vs.h")
@@ -114,10 +130,10 @@ def build(ctx):
 		target = "graph/shaders/text_fs.h")
 	ctx.file2string(
 		source = "resources/elements.lua",
-		target = "physics/resources/elements.h")
+		target = "resources/elements.h")
 	ctx.file2string(
 		source = "resources/helpstring.txt",
-		target = "main/resources/helpstring.h")
+		target = "resources/helpstring.h")
 	ctx(name='msg_phys',
 		path=ctx.path,
 		target='msg_phys',

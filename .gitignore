@@ -1,5 +1,6 @@
 *.xyz
 *.log
+*.bin
 .waf*
 .lock*
 waf
