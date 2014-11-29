@@ -219,6 +219,7 @@ int phys_quit(phys_obj **object)
 		cfg = NULL;
 		return 1;
 	}
+	
 	/* Elements */
 	free_elements();
 	
@@ -253,16 +254,21 @@ int phys_ctrl(int status, phys_obj **object)
 			} else if (!cfg->pause) {
 				retval = PHYS_STATUS_INIT;
 			} else {
-				retval = *cfg->pause ? PHYS_STATUS_PAUSED : PHYS_STATUS_RUNNING;
+				retval = cfg->paused ? PHYS_STATUS_PAUSED : PHYS_STATUS_RUNNING;
 			}
 			break;
 		case PHYS_PAUSESTART:
 			if (!cfg) {
 				retval = PHYS_STATUS_STOPPED;
-				break;
+			} else if (cfg->paused) {
+				pthread_mutex_unlock(cfg->pause);
+				cfg->paused = false;
+				retval = PHYS_STATUS_RUNNING;
+			} else {
+				cfg->paused = true;
+				pthread_mutex_lock(cfg->pause);
+				retval = PHYS_STATUS_PAUSED;
 			}
-			*cfg->pause = !*cfg->pause;
-			retval = *cfg->pause ? PHYS_STATUS_RUNNING : PHYS_STATUS_PAUSED;
 			break;
 		case PHYS_START:
 			algo = phys_find_algorithm(option->algorithm);
@@ -334,7 +340,7 @@ int phys_ctrl(int status, phys_obj **object)
 			
 			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
-			*cfg->pause = true;
+			phys_ctrl(PHYS_PAUSESTART, NULL);
 			for (unsigned int k = 0; k < option->threads; k++) {
 				if (pthread_create(&cfg->threads[k], &thread_attribs,
 								  algo->thread_location, cfg->threads_conf[k])) {
@@ -352,7 +358,7 @@ int phys_ctrl(int status, phys_obj **object)
 			} else {
 				pprintf(PRI_ESSENTIAL, "C...");
 			}
-			*cfg->pause = false;
+			phys_ctrl(PHYS_PAUSESTART, NULL);
 			pprintf(PRI_OK, "\n");
 			/* Start threads */
 			
@@ -375,10 +381,11 @@ int phys_ctrl(int status, phys_obj **object)
 			}
 			
 			/* Stop threads */
-			*cfg->pause = false;
-			*cfg->quit = true;
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
-			void *res = PTHREAD_CANCELED; /* Can be any pointer */
+			*cfg->quit = true;
+			if (cfg->paused)
+				phys_ctrl(PHYS_PAUSESTART, NULL);
+			void *res = PTHREAD_CANCELED; /* Can be any !null pointer */
 			for (unsigned int k = 0; k < option->threads; k++) {
 				while (res) {
 					pthread_join(cfg->threads[k], &res);
@@ -386,11 +393,9 @@ int phys_ctrl(int status, phys_obj **object)
 				res = PTHREAD_CANCELED;
 				pprintf(PRI_ESSENTIAL, "%u...", k);
 			}
-			
 			while (res) {
 				pthread_join(cfg->control_thread, &res);
 			}
-			
 			pprintf(PRI_ESSENTIAL, "C...");
 			pprintf(PRI_OK, "\n");
 			/* Stop threads */

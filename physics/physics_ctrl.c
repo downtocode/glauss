@@ -77,8 +77,10 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 	cfg->io_halt = calloc(1, sizeof(pthread_spinlock_t));
 	pthread_spin_init(cfg->io_halt, PTHREAD_PROCESS_PRIVATE);
 	
+	cfg->pause = calloc(1, sizeof(pthread_mutex_t));
+	pthread_mutex_init(cfg->pause, NULL);
+	
 	cfg->quit = calloc(1, sizeof(bool));
-	cfg->pause = calloc(1, sizeof(bool));
 	
 	return cfg;
 }
@@ -109,9 +111,12 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	pthread_spin_destroy(cfg->io_halt);
 	free((void *)cfg->io_halt);
 	
+	/* Free pause mutex */
+	pthread_mutex_destroy(cfg->pause);
+	free(cfg->pause);
+	
 	/* Free anything else */
 	free((void *)cfg->quit);
-	free((void *)cfg->pause);
 	free(cfg);
 	return;
 }
@@ -132,9 +137,8 @@ void *thread_ctrl(void *thread_setts)
 		pthread_spin_unlock(t->io_halt);
 		
 		/* Pause all threads by stalling unlocking t->ctrl */
-		while (*t->pause) {
-			phys_sleep_msec(50);
-		}
+		pthread_mutex_lock(t->pause);
+		pthread_mutex_unlock(t->pause);
 		
 		/* Update progress */
 		t->stats->total_steps++;

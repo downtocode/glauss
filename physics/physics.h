@@ -80,9 +80,11 @@ struct global_statistics {
 
 /* Struct sent to threads' init functions */
 struct glob_thread_config {
-	volatile bool *quit, *pause;
+	bool paused;
+	volatile bool *quit;
 	unsigned int total_syncd_threads;
 	pthread_t *threads, control_thread;
+	pthread_mutex_t *pause;
 	pthread_barrier_t *ctrl;
 	pthread_spinlock_t *io_halt;
 	struct global_statistics *stats;
