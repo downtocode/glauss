@@ -243,10 +243,10 @@ void phys_ctrl_wait(pthread_barrier_t *barr)
 	pthread_barrier_wait(barr);
 }
 
-int phys_ctrl(int status, phys_obj **object)
+enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 {
 	phys_algorithm *algo = NULL;
-	int retval = PHYS_CMD_NOT_FOUND;
+	enum phys_status retval = PHYS_CMD_NOT_FOUND;
 	switch(status) {
 		case PHYS_STATUS:
 			if (!cfg) {

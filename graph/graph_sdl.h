@@ -52,7 +52,6 @@ typedef struct {
 	
 	/* Physics */
 	phys_obj *object;
-	pthread_mutex_t *io_halt;
 } graph_window;
 
 /* Default camera position and scale */

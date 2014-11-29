@@ -25,7 +25,7 @@ void draw_obj_sphere(phys_obj *object);
 void draw_obj_points(phys_obj *object);
 void draw_obj_packed_elements_draw(phys_obj *object, struct atomic_cont *element);
 void draw_obj_col_points(phys_obj *object);
-void draw_objs_mode(phys_obj *object, int mode);
+void draw_objs_mode(phys_obj *object, enum draw_mode mode);
 GLuint graph_init_objects(void);
 
 #endif

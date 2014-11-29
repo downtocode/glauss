@@ -200,7 +200,7 @@ void draw_obj_col_points(phys_obj *object)
 	}
 }
 
-void draw_objs_mode(phys_obj *object, int mode)
+void draw_objs_mode(phys_obj *object, enum draw_mode mode)
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

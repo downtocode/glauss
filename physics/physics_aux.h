@@ -28,7 +28,7 @@ extern struct atomic_cont {
 	float color[4];
 } *atom_prop;
 
-enum {
+enum num_cmd {
 	NUM_ANOTHER,
 	NUM_GIVEME,
 	NUM_REMOVE,
@@ -51,7 +51,8 @@ void phys_shuffle_algorithms(void);
 
 /* Function to turn individual numbers into a single number. See graph_input
  * for example of how to use */
-int getnumber(struct numbers_selection *numbers, int currentdigit, int status);
+int getnumber(struct numbers_selection *numbers, int currentdigit,
+			  enum num_cmd status);
 
 /* Rotate vector by angles specified in rot1 */
 void rotate_vec(vec3 *vec, vec3 *rot1);

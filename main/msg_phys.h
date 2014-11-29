@@ -18,7 +18,7 @@
 #ifndef PHYSENGINE_MSG
 #define PHYSENGINE_MSG
 
-enum PRIORITIY {
+enum MSG_PRIORITIY {
 	 PRI_ESSENTIAL = 1,
 	 PRI_VERYHIGH = 2,
 	 PRI_HIGH = 3,
@@ -35,7 +35,7 @@ enum PRIORITIY {
 
 void pprint_enable(void);
 void pprint_disable(void);
-void pprintf(int priority, const char *format, ...);
+void pprintf(enum MSG_PRIORITIY priority, const char *format, ...);
 
 #define pprint_ok(...)     pprintf(PRI_OK, __VA_ARGS__)
 #define pprint_warn(...)   pprintf(PRI_WARN, __VA_ARGS__)

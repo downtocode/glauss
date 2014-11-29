@@ -205,9 +205,10 @@ int input_change_element_col(const char *name, const char *col, const char *valu
 	return 0;
 }
 
-int input_token_setall(char *line, struct input_cfg *t)
+enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 {
-	int num_tok = 0, retval = CMD_ALL_FINE;
+	enum setall_ret retval = CMD_ALL_FINE;
+	int num_tok = 0;
 	bool match = 0;
 	char *tokstr = strdup(line);
 	char *token[CMD_MAX_TOKENS] = {NULL}, *freestr = tokstr;

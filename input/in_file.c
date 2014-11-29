@@ -24,15 +24,9 @@
 #include "main/msg_phys.h"
 #include "physics/physics_aux.h"
 
-int in_probe_file(const char *filename)
+enum ext_file in_file_ext(const char *filename)
 {
-	char str[500];
-	int counter = 0;
-	FILE *inprep = fopen(filename, "r");
-	
-	int filetype = 0;
-	
-	/* Put format specific quirks here. */
+	enum ext_file filetype = MOL_UNKNOWN;
 	if (strstr(filename, "xyz")!=NULL) {
 		filetype = MOL_XYZ;
 	} else if (strstr(filename, "pdb")!=NULL) {
@@ -40,32 +34,45 @@ int in_probe_file(const char *filename)
 	} else if (strstr(filename, "obj")!=NULL) {
 		filetype = MOL_OBJ;
 	} else {
-		fprintf(stderr, "[IN] Filetype of %s not recognized!\n", filename);
+		pprint_err("[IN] Filetype of %s not recognized!\n", filename);
 		exit(1);
 	}
-	
+	return filetype;
+}
+
+int in_probe_file(const char *filename)
+{
+	char str[500];
+	int counter = 0;
+	FILE *inprep = fopen(filename, "r");
 	/* 
 	 * XYZ files have total number of atoms in their first line.
 	 * PDB files contain an incrementing index, but I'd like to avoid sscanf.
 	 */
-	if (filetype == MOL_XYZ) {
-		fgets(str, sizeof(str), inprep);
-		fclose(inprep);
-		sscanf(str, "%i", &counter);
-	} else if (filetype == MOL_PDB) {
-		while (fgets(str, sizeof(str), inprep)) {
-			if (!strstr(str, "#")) {
-				if (!strncmp(str, "ATOM", 4))
-					counter++;
+	switch(in_file_ext(filename)) {
+		case MOL_XYZ:
+			fgets(str, sizeof(str), inprep);
+			fclose(inprep);
+			sscanf(str, "%i", &counter);
+			break;
+		case MOL_OBJ:
+			while (fgets (str, sizeof(str), inprep)!= NULL) {
+				if (!strstr(str, "#")) {
+					if (!strncmp(str, "v ", 2))
+						counter++;
+				}
 			}
-		}
-	} else if (filetype == MOL_OBJ) {
-		while (fgets (str, sizeof(str), inprep)!= NULL) {
-			if (!strstr(str, "#")) {
-				if (!strncmp(str, "v ", 2))
-					counter++;
+			break;
+		case MOL_PDB:
+			while (fgets(str, sizeof(str), inprep)) {
+				if (!strstr(str, "#")) {
+					if (!strncmp(str, "ATOM", 4))
+						counter++;
+				}
 			}
-		}
+			break;
+		default:
+			break;
 	}
 	if (option->skip_model_vec) {
 		counter/=option->skip_model_vec;
@@ -77,24 +84,29 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 {
 	char str[500] = {0}, atom[2] = {0}, pdbtype[10], pdbatomname[10], pdbresidue[10];
 	char pdbreschain;
-	int filetype, pdbatomindex, pdbresidueseq, vec_counter = 0;
+	int pdbatomindex, pdbresidueseq, vec_counter = 0;
 	float xpos, ypos, zpos, pdboccupy, pdbtemp, pdboffset;
 	vec3 pos;
 	FILE *inpars = fopen(file->filename, "r");
 	
-	/* Put format specific quirks here. */
-	if (strstr(file->filename, "xyz")) {
-		filetype = MOL_XYZ;
-		/* Skip first two lines of XYZ files. */
-		fgets(str, sizeof(str), inpars);
-		fgets(str, sizeof(str), inpars);
-	} else if (strstr(file->filename, "pdb")) {
-		filetype = MOL_PDB;
-	} else if (strstr(file->filename, "obj")) {
-		filetype = MOL_OBJ;
-	} else {
-		fprintf(stderr, "Error! Filetype of %s not recognized!\n", file->filename);
-		exit(1);
+	enum ext_file filetype = in_file_ext(file->filename);
+	
+	switch(filetype) {
+		case MOL_XYZ:
+			filetype = MOL_XYZ;
+			/* Skip first two lines of XYZ files. */
+			fgets(str, sizeof(str), inpars);
+			fgets(str, sizeof(str), inpars);
+			break;
+		case MOL_OBJ:
+			filetype = MOL_OBJ;
+			break;
+		case MOL_PDB:
+			filetype = MOL_PDB;
+			break;
+		default:
+			pprint_err("Filetype of %s not recognized!\n", file->filename);
+			break;
 	}
 	
 	/* TODO: use something less primitive   */
@@ -107,21 +119,28 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 			vec_counter = 0;
 		}
 		if (!strstr(str, "#")) {
-			if (filetype == MOL_XYZ) {
-				sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos,
-					   &zpos);
-			} else if (filetype == MOL_PDB) {
-				if (!strncmp(str, "ATOM", 4)) {
-					sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",\
-							pdbtype, &pdbatomindex, pdbatomname, pdbresidue,
-							&pdbreschain, &pdbresidueseq,\
-							&xpos, &ypos, &zpos, &pdboccupy, &pdbtemp,
-							atom, &pdboffset);
-				} else continue;
-			} else if (filetype == MOL_OBJ) {
-				if (!strncmp(str, "v ", 2)) {
-					sscanf(str, "v  %f %f %f", &xpos, &ypos, &zpos);
-				} else continue;
+			switch(filetype) {
+				case MOL_XYZ:
+					sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos, &zpos);
+					break;
+				case MOL_PDB:
+					if (!strncmp(str, "ATOM", 4)) {
+						sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",
+							   pdbtype, &pdbatomindex, pdbatomname, pdbresidue,
+							   &pdbreschain, &pdbresidueseq, &xpos, &ypos,
+							   &zpos, &pdboccupy, &pdbtemp, atom, &pdboffset);
+					}
+					break;
+				case MOL_OBJ:
+					if (!strncmp(str, "v ", 2)) {
+						sscanf(str, "v  %f %f %f", &xpos, &ypos, &zpos);
+					} else {
+						continue;
+					}
+					break;
+				default:
+					continue;
+					break;
 			}
 			object[*i].atomnumber = return_atom_num(atom);
 			object[*i].id = *i;

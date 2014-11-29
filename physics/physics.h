@@ -33,8 +33,7 @@ typedef double vec3 __attribute__ ((vector_size (32)));
 #include <time.h>
 
 /* Status enum */
-enum returned_phys_status {
-	PHYS_STATUS,
+enum phys_status {
 	PHYS_STATUS_RUNNING,
 	PHYS_STATUS_STOPPED,
 	PHYS_STATUS_PAUSED,
@@ -42,6 +41,10 @@ enum returned_phys_status {
 	PHYS_STATUS_INIT, /* Somewhere in between initializaion */
 	PHYS_CMD_NOT_FOUND,
 	PHYS_INVALID_ALGORITHM,
+};
+
+enum phys_set_status {
+	PHYS_STATUS,
 	PHYS_PAUSESTART,
 	PHYS_START,
 	PHYS_SHUTDOWN,
@@ -155,6 +158,6 @@ int phys_init(phys_obj **object);
 void phys_urgent_dump(void);
 int phys_quit(phys_obj **object);
 int phys_set_sched_mode(char **mode);
-int phys_ctrl(int status, phys_obj **object);
+enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object);
 
 #endif

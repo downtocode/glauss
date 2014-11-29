@@ -96,7 +96,7 @@ void graph_stop_fontconfig(void)
 	//FcFini();
 }
 
-unsigned int graph_init_freetype(const char *fontname)
+GLuint graph_init_freetype(const char *fontname)
 {
 	/* Initialize OpenGL */
 	GLuint text_program = graph_compile_shader(text_vs, text_fs);

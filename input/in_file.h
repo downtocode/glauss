@@ -20,10 +20,11 @@
 
 #include "physics/physics.h"
 
-enum {
+enum ext_file {
 	MOL_XYZ,
 	MOL_PDB,
 	MOL_OBJ,
+	MOL_UNKNOWN,
 };
 
 typedef struct {
@@ -33,6 +34,7 @@ typedef struct {
 	double scale;
 } in_file;
 
+enum ext_file in_file_ext(const char *filename);
 int in_probe_file(const char *filename);
 int in_read_file(phys_obj *object, int *i, in_file *file);
 

@@ -24,7 +24,7 @@
 #include "physics/physics.h"
 #include "in_file.h"
 
-enum vars_and_cmds {
+enum parser_var_type {
 	/* Variables */
 	VAR_FLOAT,
 	VAR_DOUBLE,

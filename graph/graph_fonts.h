@@ -22,7 +22,7 @@
 
 const char *graph_init_fontconfig(void);
 void graph_stop_fontconfig(void);
-unsigned int graph_init_freetype(const char *fontname);
+GLuint graph_init_freetype(const char *fontname);
 void graph_stop_freetype(void);
 void graph_display_text(const char *text, float x, float y, float s,
 						const GLfloat *col);

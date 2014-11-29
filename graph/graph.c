@@ -570,7 +570,7 @@ GLuint graph_load_c_png_texture(void *bin, size_t len, int *width, int *height)
 	/* Set custom input fn */
 	png_set_read_fn(png, &read_stuff, graph_read_raw_stream);
 	
-	/* Skip to actual image */
+	/* Skip to actual image. Yes, it will skip the 8 byte header. */
 	png_read_info(png, info);
 	
 	/* Get info */

@@ -28,7 +28,7 @@
 #define CMD_PROMPT_DOT "•"
 #define CMD_PROMPT_SPACE " "
 
-enum intercommunication {
+enum setall_ret {
 	CMD_SYS_RET_ERR,
 	CMD_ALL_FINE,
 	CMD_EXIT,
@@ -75,7 +75,7 @@ void input_thread_quit(void);
 void input_thread_reset_term(void);
 int input_change_element_col(const char *name, const char *col, const char *value);
 int input_call_system(const char *cmd);
-int input_token_setall(char *line, struct input_cfg *t);
+enum setall_ret input_token_setall(char *line, struct input_cfg *t);
 void *input_thread(void *thread_setts);
 
 #endif

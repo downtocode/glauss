@@ -44,15 +44,17 @@ Run the program with the argument `-f (filename)`, with an appropriate file. A d
 
 Input file
 ----------
-The filepath/name specified through the `-f` flag determines the system to simulate. It's a Lua script, so make sure to follow the syntax. All Lua libraries(including math) are included and initialized, feel free to use them. Error handling is done by Lua interpreter.
+The filepath/name specified through the `-f` flag determines the system to simulate. It's a Lua script, so make sure to follow the syntax. All Lua libraries(including math) are included and initialized, feel free to use them. Error handling is done by Lua interpreter. You'll probably want this to be the first argument, as any option put before will get overwritten if it exists in the file.
 
-Physengine reads the settings table first, reads the global objects table and then calls the spawn_objects function, which returns its own local objects table along with a counter how many objects exist in it. Usually the global table contains any molecule files(in pdb or xyz formats) and any standalone objects. The function spawn_objects is for having your own distribution of objects.
+Physengine reads the settings table first, then calls the spawn_objects function, which returns the objects table. That table is then read, counted and scanned for any files that need importing. Once the final count is known, memory is allocated and the table is read again, importing all objects.
+
+A function to be called on every timestep can be defined, with its frequency adjusted. The statistics and optionally, all objects will be sent as arguments. A non-nil table of objects returned by this function will be read back and will overwrite the internal objects. Use it to program your own algorithm entirely in Lua.
 
 For a list of all variables look in the appropriate section of the [manual](DOCS/physengine.rst#configuration-files).
 
 Contacts
 --------
-Want to chat? Life counselling? Psychology? Classical/wooden philosophy? Metaphysics? Pataphysics? Perfect. Though try to stay on topic. In between sessions.
+Want to chat? Life counselling? Psychology? Classical/wooden philosophy? Metaphysics? Pataphysics? Perfect. Though try to stay on topic.
 
  * **IRC Channel**: `#physengine` on `chat.freenode.net`
  * **Email**: `atomnuker@gmail.com`

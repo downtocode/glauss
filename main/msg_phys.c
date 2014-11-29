@@ -39,7 +39,7 @@ void pprint_disable(void)
 }
 
 /* pprintf - a priority printing function. */
-void pprintf(int priority, const char *format, ...)
+void pprintf(enum MSG_PRIORITIY priority, const char *format, ...)
 {
 	va_list args;
 	if (option->logenable) {
@@ -53,6 +53,7 @@ void pprintf(int priority, const char *format, ...)
 		vfprintf(stderr, format, args);
 		va_end(args);
 	} else if (priority <= option->verbosity || priority == PRI_OK || priority == PRI_WARN) {
+		/* Ugly but works */
 		if (disable_print)
 			return;
 		else if(priority == PRI_OK)

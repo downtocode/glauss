@@ -58,25 +58,30 @@ void free_elements()
 
 /* Function to input numbers in an array and later extract a single number out.
  * Used in selecting objects. */
-int getnumber(struct numbers_selection *numbers, int currentdigit, int status)
+int getnumber(struct numbers_selection *numbers, int currentdigit,
+			  enum num_cmd status)
 {
-	if (status == NUM_ANOTHER) {
-		numbers->digits[numbers->final_digit] = currentdigit;
-		numbers->final_digit+=1;
-		return 0;
-	} else if (status == NUM_GIVEME) {
-		unsigned int result = 0;
-		for(int i=0; i < numbers->final_digit; i++) {
-			result*=10;
-			result+=numbers->digits[i];
-		}
-		numbers->final_digit = 0;
-		return result;
-	} else if (status == NUM_REMOVE) {
-		numbers->final_digit-=1;
-		return 0;
+	int retval = 0, result = 0;;
+	switch (status) {
+		case NUM_ANOTHER:
+			numbers->digits[numbers->final_digit] = currentdigit;
+			numbers->final_digit+=1;
+			break;
+		case NUM_GIVEME:
+			for(int i=0; i < numbers->final_digit; i++) {
+				result*=10;
+				result+=numbers->digits[i];
+			}
+			numbers->final_digit = 0;
+			retval = result;
+			break;
+		case NUM_REMOVE:
+			numbers->final_digit-=1;
+			break;
+		default:
+			break;
 	}
-	return 0;
+	return retval;
 }
 
 /* Change algorithms */
