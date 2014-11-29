@@ -108,7 +108,7 @@ int graph_scan_keypress(graph_window *win)
 		graph_sdl_scan_selection(win);
 	}
 	/* Scan hotkeys */
-	switch(win->event->key.keysym.sym) {
+	switch (win->event->key.keysym.sym) {
 		case SDLK_RETURN:
 			win->start_selection = 1;
 			break;

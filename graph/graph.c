@@ -130,8 +130,8 @@ static void mul_matrix(GLfloat *prod, const GLfloat *a, const GLfloat *b)
 
 static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 {
-	float c = cos(angle * acos(-1) / 180.0);
-	float s = sin(angle * acos(-1) / 180.0);
+	GLfloat c = cos(angle * acos(-1) / 180.0);
+	GLfloat s = sin(angle * acos(-1) / 180.0);
 	m[10] = m[15] = 1;
 	m[0] = c;
 	m[1] = s;
@@ -141,8 +141,8 @@ static void make_z_rot_matrix(GLfloat angle, GLfloat *m)
 
 static void make_x_rot_matrix(GLfloat angle, GLfloat *m)
 {
-	float c = cos(angle * acos(-1) / 180.0);
-	float s = sin(angle * acos(-1) / 180.0);
+	GLfloat c = cos(angle * acos(-1) / 180.0);
+	GLfloat s = sin(angle * acos(-1) / 180.0);
 	m[0] = m[15] = 1;
 	m[5] = c;
 	m[6] = s;
@@ -152,8 +152,8 @@ static void make_x_rot_matrix(GLfloat angle, GLfloat *m)
 
 static void make_y_rot_matrix(GLfloat angle, GLfloat *m)
 {
-	float c = cos(angle * acos(-1) / 180.0);
-	float s = sin(angle * acos(-1) / 180.0);
+	GLfloat c = cos(angle * acos(-1) / 180.0);
+	GLfloat s = sin(angle * acos(-1) / 180.0);
 	m[5] = m[15] = 1;
 	m[0] = c;
 	m[2] = -s;
@@ -183,10 +183,10 @@ static void make_scale_matrix(GLfloat xs, GLfloat ys, GLfloat zs, GLfloat *m)
 
 static void make_pers_matrix(GLfloat fov, GLfloat aspect, GLfloat near,
 							 GLfloat far, GLfloat *m) {
-	float D2R = acos(-1)/180.0;
-	float yScale = 1.0/tan(D2R * fov / 2);
-	float xScale = yScale/aspect;
-	float nearmfar = near - far;
+	GLfloat D2R = acos(-1)/180.0;
+	GLfloat yScale = 1.0/tan(D2R * fov / 2);
+	GLfloat xScale = yScale/aspect;
+	GLfloat nearmfar = near - far;
 	m[0] = xScale;
 	m[5] = yScale;
 	m[11] = (far + near) / nearmfar;
@@ -235,8 +235,10 @@ GLuint graph_compile_shader(const char *src_vert_shader,
 	glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &status_vert);
 	glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &status_frag);
 	if(!status_vert || !status_frag) {
-		if(!status_vert) pprintf(PRI_ERR, "[GL] VS did not compile.\n");
-		if(!status_frag) pprintf(PRI_ERR, "[GL] FS did not compile.\n");
+		if(!status_vert)
+			pprintf(PRI_ERR, "[GL] VS did not compile.\n");
+		if(!status_frag)
+			pprintf(PRI_ERR, "[GL] FS did not compile.\n");
 		exit(1);
 	}
 	
@@ -245,7 +247,7 @@ GLuint graph_compile_shader(const char *src_vert_shader,
 	glLinkProgram(program);
 	
 	glGetProgramiv(program, GL_LINK_STATUS, &status_vert);
-	if(!status_vert) {
+	if (!status_vert) {
 		char log[1000];
 		GLsizei len;
 		glGetProgramInfoLog(program, 1000, &len, log);
@@ -260,7 +262,8 @@ GLuint graph_compile_shader(const char *src_vert_shader,
 
 void graph_draw_scene(graph_window *win)
 {
-	if(!win) return;
+	if(!win)
+		return;
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	char osdtext[OSD_BUFFER];
 	struct timespec ts;
@@ -529,7 +532,7 @@ static void graph_read_raw_stream(png_structp png, png_bytep output,
 	data->len -= readsize;
 }
 
-GLuint graph_load_c_png_texture(void *bin, size_t len, int *width, int *height)
+GLuint graph_load_c_png_texture(void *bin, size_t len, GLint *width, GLint *height)
 {
 	int bit_depth, color_type;
 	size_t rowsize;
@@ -617,7 +620,7 @@ GLuint graph_load_c_png_texture(void *bin, size_t len, int *width, int *height)
 	return texture;
 }
 
-GLuint graph_load_png_texture(const char *filename, int *width, int *height)
+GLuint graph_load_png_texture(const char *filename, GLint *width, GLint *height)
 {
 	int bit_depth, color_type;
 	size_t rowsize;
@@ -635,8 +638,7 @@ GLuint graph_load_png_texture(const char *filename, int *width, int *height)
 	
 	/* Read header */
 	fread(header, 1, 8, fp);
-	int is_png = !png_sig_cmp(header, 0, 8);
-	if (!is_png)
+	if (png_sig_cmp(header, 0, 8))
 		goto clean;
 	
 	png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -767,5 +769,6 @@ int graph_sshot(long double arg)
 	free(pixels);
 	
 	pprintf(PRI_MEDIUM, "Wrote screenshot %s\n", filename);
+	
 	return 0;
 }

@@ -49,7 +49,7 @@ int in_probe_file(const char *filename)
 	 * XYZ files have total number of atoms in their first line.
 	 * PDB files contain an incrementing index, but I'd like to avoid sscanf.
 	 */
-	switch(in_file_ext(filename)) {
+	switch (in_file_ext(filename)) {
 		case MOL_XYZ:
 			fgets(str, sizeof(str), inprep);
 			fclose(inprep);
@@ -91,7 +91,7 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 	
 	enum ext_file filetype = in_file_ext(file->filename);
 	
-	switch(filetype) {
+	switch (filetype) {
 		case MOL_XYZ:
 			filetype = MOL_XYZ;
 			/* Skip first two lines of XYZ files. */
@@ -119,7 +119,7 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 			vec_counter = 0;
 		}
 		if (!strstr(str, "#")) {
-			switch(filetype) {
+			switch (filetype) {
 				case MOL_XYZ:
 					sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos, &zpos);
 					break;

@@ -68,22 +68,6 @@ void graph_thread_quit(void)
 	
 	graph_sdl_deinit();
 	
-	/*void *res = PTHREAD_CANCELED;
-	
-	if (!global_cfg->selfquit) {
-		res = NULL;
-		while (res != PTHREAD_CANCELED) {
-			pthread_cancel(global_cfg->graph);
-			pthread_join(global_cfg->graph, &res);
-		}
-		graph_sdl_deinit(global_cfg->win);
-	} else {
-		res = PTHREAD_CANCELED;
-		while (res) {
-			pthread_join(global_cfg->graph, &res);
-		}
-	}*/
-	
 	/* Free resources */
 	free(global_cfg);
 	

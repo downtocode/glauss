@@ -39,9 +39,8 @@ static FT_GlyphSlot g;
 
 static GLuint font_tex;
 static GLuint textattr_coord, textattr_texcoord, textattr_tex, textattr_color;
-
-static int atlas_w;
-static int atlas_h;
+static GLint atlas_w;
+static GLint atlas_h;
 
 /* Generic white if NULL pointer to color */
 static const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
@@ -109,11 +108,11 @@ GLuint graph_init_freetype(const char *fontname)
 	glUniform1i(textattr_tex, 0);
 	
 	/* Init Freetype and generate texture atlas */
-	if(FT_Init_FreeType(&library)) {
+	if (FT_Init_FreeType(&library)) {
 		pprintf(PRI_ERR, "Could not init freetype library.\n");
 		exit(1);
 	}
-	if(FT_New_Face(library, fontname, 0, &face)) {
+	if (FT_New_Face(library, fontname, 0, &face)) {
 		pprintf(PRI_ERR, "Freetype could not open font.\n");
 		exit(1);
 	}
@@ -121,13 +120,14 @@ GLuint graph_init_freetype(const char *fontname)
 	g = face->glyph;
 	
 	/* Load glyphs and get maximum height and width */
-	for(int i = 32; i < 128; i++) {
+	for (int i = 32; i < 128; i++) {
 		if(FT_Load_Char(face, i, FT_LOAD_RENDER)) {
 			fprintf(stderr, "Loading character %c failed!\n", i);
 			continue;
 		}
 		atlas_w += g->bitmap.width + 1;
-		if(g->bitmap.rows > atlas_h) atlas_h = g->bitmap.rows;
+		if (g->bitmap.rows > atlas_h)
+			atlas_h = g->bitmap.rows;
 	}
 	
 	/* Create a seperate texture to hold altas, fill it with NULL */
@@ -143,9 +143,10 @@ GLuint graph_init_freetype(const char *fontname)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	/* Fill texture and save locations(offsets) for every char */
-	int x = 0;
-	for(short i = 32; i < 128; i++) {
-		if(FT_Load_Char(face, i, FT_LOAD_RENDER)) continue;
+	GLint x = 0;
+	for (short i = 32; i < 128; i++) {
+		if (FT_Load_Char(face, i, FT_LOAD_RENDER))
+			continue;
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, g->bitmap.width, g->bitmap.rows,
 						GL_ALPHA, GL_UNSIGNED_BYTE, g->bitmap.buffer);
 		ft_chr[i].ax = g->advance.x >> 6;
@@ -154,7 +155,7 @@ GLuint graph_init_freetype(const char *fontname)
 		ft_chr[i].bh = g->bitmap.rows;
 		ft_chr[i].bl = g->bitmap_left;
 		ft_chr[i].bt = g->bitmap_top;
-		ft_chr[i].tx = (float)x/atlas_w;
+		ft_chr[i].tx = (GLfloat)x/atlas_w;
 		x += g->bitmap.width;
 	}
 	
@@ -170,11 +171,12 @@ void graph_stop_freetype(void)
 	FT_Done_FreeType(library);
 }
 
-void graph_display_text(const char *text, float x, float y, float s,
+void graph_display_text(const char *text, GLfloat x, GLfloat y, GLfloat s,
 						const GLfloat *col)
 {
-	if(!col) col = white;
-	float sx = s/option->width, sy = s/option->height;
+	if (!col)
+		col = white;
+	GLfloat sx = s/option->width, sy = s/option->height;
 	point coords[6*strlen(text)];
 	
 	glEnable(GL_BLEND);
@@ -194,12 +196,12 @@ void graph_display_text(const char *text, float x, float y, float s,
 	/* Convert to short to prevent compiler from complaining "INDEX IS CHAR!" */
 	short d = 0;
 	
-	for(const char *p = text; *p; p++) { 
+	for (const char *p = text; *p; p++) { 
 		d = (short)*p;
-		float x2 =  x + ft_chr[d].bl * sx;
-		float y2 = -y - ft_chr[d].bt * sy;
-		float w = ft_chr[d].bw * sx;
-		float h = ft_chr[d].bh * sy;
+		GLfloat x2 =  x + ft_chr[d].bl * sx;
+		GLfloat y2 = -y - ft_chr[d].bt * sy;
+		GLfloat w = ft_chr[d].bw * sx;
+		GLfloat h = ft_chr[d].bh * sy;
 		
 		/* Advance */
 		x += ft_chr[d].ax * sx;

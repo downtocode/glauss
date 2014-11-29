@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 			/* Detect the end of the options. */
 			if (c == -1)
 				break;
-			switch(c) {
+			switch (c) {
 				case 0:
 					/* If this option set a flag, do nothing else now. */
 					if(long_options[option_index].flag != 0)

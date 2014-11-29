@@ -318,7 +318,7 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 static void conf_lua_get_vector(lua_State *L, vec3 *vec)
 {
 	/* Can be used for N dim tables, change 3 to N */
-	for(int i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		lua_pushinteger(L, i+1);
 		lua_gettable(L, -2);
 		(*vec)[i] = lua_tonumber(L, -1);
@@ -409,32 +409,32 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 		/* Object/file finished, go to next */
 		return 1;
 	} else if(lua_isnumber(L, -1)) {
-		if(!strcmp("charge", lua_tostring(L, -2)))
+		if (!strcmp("charge", lua_tostring(L, -2)))
 			parser_state->buffer.charge = lua_tonumber(L, -1)*option->elcharge;
-		if(!strcmp("mass", lua_tostring(L, -2)))
+		if (!strcmp("mass", lua_tostring(L, -2)))
 			parser_state->buffer.mass = lua_tonumber(L, -1);
-		if(!strcmp("radius", lua_tostring(L, -2)))
+		if (!strcmp("radius", lua_tostring(L, -2)))
 			parser_state->buffer.radius = lua_tonumber(L, -1);
-		if(!strcmp("atomnumber", lua_tostring(L, -2)))
+		if (!strcmp("atomnumber", lua_tostring(L, -2)))
 			parser_state->buffer.atomnumber = lua_tointeger(L, -1);
-		if(!strcmp("scale", lua_tostring(L, -2)))
+		if (!strcmp("scale", lua_tostring(L, -2)))
 			parser_state->file.scale = lua_tonumber(L, -1);
-		if(!strcmp("state", lua_tostring(L, -2)))
+		if (!strcmp("state", lua_tostring(L, -2)))
 			parser_state->buffer.state = lua_tointeger(L, -1);
-		if(!strcmp("id", lua_tostring(L, -2))) {
+		if (!strcmp("id", lua_tostring(L, -2))) {
 			parser_state->buffer.id = lua_tointeger(L, -1);
 		}
-	} else if(lua_isstring(L, -1)) {
+	} else if (lua_isstring(L, -1)) {
 		/* It's a file to import, so we set the flag */
-		if(!strcmp("import", lua_tostring(L, -2))) {
+		if (!strcmp("import", lua_tostring(L, -2))) {
 			strcpy(parser_state->file.filename, lua_tostring(L, -1));
 			parser_state->fileset = 1;
 		}
-		if(!strcmp("atom", lua_tostring(L, -2))) {
+		if (!strcmp("atom", lua_tostring(L, -2))) {
 			parser_state->buffer.atomnumber = return_atom_num(lua_tostring(L, -1));
 		}
-	} else if(lua_isboolean(L, -1)) {
-		if(!strcmp("ignore", lua_tostring(L, -2)))
+	} else if (lua_isboolean(L, -1)) {
+		if (!strcmp("ignore", lua_tostring(L, -2)))
 			parser_state->buffer.ignore = lua_toboolean(L, -1);
 	}
 	return 0;

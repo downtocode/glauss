@@ -18,15 +18,15 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
+#include <GL/glew.h>
+#include "graph_sdl.h"
+
 enum draw_mode {
 	MODE_SPRITE,
 	MODE_SPHERE,
 	MODE_POINTS,
 	MODE_POINTS_COL,
 };
-
-#include <GL/glew.h>
-#include "graph_sdl.h"
 
 void graph_init(void);
 void graph_quit(void);
@@ -36,8 +36,8 @@ GLuint graph_compile_shader(const char *src_vert_shader,
 								  const char *src_frag_shader);
 void graph_draw_scene(graph_window *win);
 int graph_set_draw_mode(graph_window *win, const char *mode);
-GLuint graph_load_c_png_texture(void *bin, size_t len, int *width, int *height);
-GLuint graph_load_png_texture(const char *filename, int *width, int *height);
+GLuint graph_load_c_png_texture(void *bin, size_t len, GLint *width, GLint *height);
+GLuint graph_load_png_texture(const char *filename, GLint *width, GLint *height);
 int graph_sshot(long double arg);
 
 #endif

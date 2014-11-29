@@ -20,7 +20,7 @@
 #include "physics/physics.h"
 #include "physics/physics_aux.h"
 
-void draw_obj_axis(float scale);
+void draw_obj_axis(GLfloat scale);
 void draw_obj_sphere(phys_obj *object);
 void draw_obj_points(phys_obj *object);
 void draw_obj_packed_elements_draw(phys_obj *object, struct atomic_cont *element);

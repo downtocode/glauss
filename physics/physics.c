@@ -247,7 +247,7 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 {
 	phys_algorithm *algo = NULL;
 	enum phys_status retval = PHYS_CMD_NOT_FOUND;
-	switch(status) {
+	switch (status) {
 		case PHYS_STATUS:
 			if (!cfg) {
 				retval = PHYS_STATUS_STOPPED;

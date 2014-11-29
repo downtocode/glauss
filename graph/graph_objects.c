@@ -27,7 +27,7 @@ static GLint objattr_mode, objattr_pos, objattr_color, objattr_radius, objattr_t
 /* Drawing points defaults to color = black, so we need white */
 static const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 
-void draw_obj_axis(float scale)
+void draw_obj_axis(GLfloat scale)
 {
 	GLfloat axis[6][3] = {
 		{0    ,0    ,0    },
@@ -53,15 +53,15 @@ void draw_obj_sphere(phys_obj *object)
 {
 	const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 	/* Decrease dj to get better spheres. */
-	float dj = 0.5, pi=acos(-1);
+	GLfloat dj = 0.5, pi=acos(-1);
 	int pointcount = 0;
-	float points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
+	GLfloat points[(int)((pi/dj)*((2*pi/dj)+1)+30)][3];
 	
 	glUniform1i(objattr_mode, 0);
 	glUniform4fv(objattr_color, 1, atom_prop[object->atomnumber].color);
 	
-	for (float i = 0; i < pi; i+=dj) {
-		for (float j = 0; j < 2*pi; j+=dj) {
+	for (GLfloat i = 0; i < pi; i+=dj) {
+		for (GLfloat j = 0; j < 2*pi; j+=dj) {
 			points[pointcount][0] = object->pos[0] +\
 												   object->radius*sin(i)*cos(j);
 			points[pointcount][1] = object->pos[1] +\
@@ -88,7 +88,7 @@ void draw_obj_sphere(phys_obj *object)
 
 void draw_obj_sprite(phys_obj *object)
 {
-	float points[option->obj][3];
+	GLfloat points[option->obj][3];
 	unsigned int size = 0;
 	
 	glEnable(GL_POINT_SPRITE);
@@ -125,8 +125,8 @@ void draw_obj_sprite(phys_obj *object)
 
 void draw_obj_points(phys_obj *object)
 {
-	float points[option->obj][3];
-	unsigned int size = 0;
+	GLfloat points[option->obj][3];
+	GLuint size = 0;
 	
 	glUniform1i(objattr_mode, 0);
 	glUniform4fv(objattr_color, 1, atom_prop[0].color);
@@ -154,15 +154,9 @@ void draw_obj_points(phys_obj *object)
 
 void draw_obj_packed_elements_draw(phys_obj *object, struct atomic_cont *element)
 {
-	float points[option->obj][3];
-	unsigned int size = 0;
-	const float *col;
-	
-	if (!element) {
-		col = white;
-	} else {
-		col = element->color;
-	}
+	GLfloat points[option->obj][3];
+	GLuint size = 0;
+	GLfloat *col = element ? element->color : atom_prop[0].color;
 	
 	glUniform1i(objattr_mode, 0);
 	glUniform4fv(objattr_color, 1, col);
@@ -204,7 +198,7 @@ void draw_objs_mode(phys_obj *object, enum draw_mode mode)
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	switch(mode) {
+	switch (mode) {
 		case MODE_SPRITE:
 			draw_obj_sprite(object);
 			break;
@@ -241,7 +235,7 @@ GLuint graph_init_objects(void)
 	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	
-	int width, height;
+	GLint width, height;
 	if (option->custom_sprite_png)
 		texture_sprite = graph_load_png_texture(option->custom_sprite_png,
 												&width, &height);
