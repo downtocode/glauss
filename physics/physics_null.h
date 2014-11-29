@@ -61,7 +61,7 @@ void *null_preinit(struct glob_thread_config *cfg);
 void *thread_null(void *thread_setts);
 
 void *stats_preinit(struct glob_thread_config *cfg);
-void stats_runtime_fn(void **threads);
+void stats_runtime_fn(struct glob_thread_config *cfg);
 void *thread_stats(void *thread_setts);
 
 void null_quit(struct glob_thread_config *cfg);

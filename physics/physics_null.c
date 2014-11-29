@@ -29,7 +29,7 @@
 void *null_preinit(struct glob_thread_config *cfg)
 {
 	cfg->total_syncd_threads = 1;
-	cfg->algo_thread_stats_raw = calloc(option->threads, sizeof(struct null_statistics *));
+	cfg->algo_thread_stats_raw = calloc(cfg->algo_threads, sizeof(struct null_statistics *));
 	return NULL;
 }
 
@@ -46,8 +46,8 @@ void *stats_preinit(struct glob_thread_config *cfg)
 	});
 	cfg->algo_global_stats_raw = global_stats;
 
-	struct null_statistics **thread_stats = calloc(option->threads, sizeof(struct null_statistics *));
-	for (int i = 0; i < option->threads; i++) {
+	struct null_statistics **thread_stats = calloc(cfg->algo_threads, sizeof(struct null_statistics *));
+	for (int i = 0; i < cfg->algo_threads; i++) {
 		thread_stats[i] = calloc(1, sizeof(struct null_statistics));
 		cfg->algo_thread_stats_map[i] = allocate_parser_map((struct parser_map []){
 			{"null_avg_dist",   P_TYPE(thread_stats[i]->null_avg_dist)   },
@@ -62,9 +62,9 @@ void *stats_preinit(struct glob_thread_config *cfg)
 
 void **null_init(struct glob_thread_config *cfg)
 {
-	struct thread_config_null **thread_config = calloc(option->threads,
+	struct thread_config_null **thread_config = calloc(cfg->algo_threads,
 		sizeof(struct thread_config_nbody*));
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_null));
 	}
 	
@@ -72,9 +72,9 @@ void **null_init(struct glob_thread_config *cfg)
 	pthread_mutex_t *mute = calloc(1, sizeof(pthread_mutex_t));
 	pthread_mutex_init(mute, NULL);
 	
-	int totcore = (int)((float)option->obj/option->threads);
+	int totcore = (int)((float)option->obj/cfg->algo_threads);
 	
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k]->glob_stats = cfg->algo_global_stats_raw;
 		thread_config[k]->stats = cfg->algo_thread_stats_raw[k];
 		thread_config[k]->ctrl = cfg->ctrl;
@@ -84,7 +84,7 @@ void **null_init(struct glob_thread_config *cfg)
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->objs_low = !k ? 0 : thread_config[k-1]->objs_high;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
-		if (k == option->threads - 1) {
+		if (k == cfg->algo_threads - 1) {
 			/*	Takes care of rounding problems with odd numbers.	*/
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
@@ -108,25 +108,25 @@ void null_quit(struct glob_thread_config *cfg)
 	free(t[0]->mute);
 	
 	/* Thread cfg */
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		free(t[k]);
 	}
 	free(t);
 	return;
 }
 
-void stats_runtime_fn(void **threads)
+void stats_runtime_fn(struct glob_thread_config *cfg)
 {
-	struct thread_config_null **t = (struct thread_config_null **)threads;
+	struct thread_config_null **t = (struct thread_config_null **)cfg->threads_conf;
 	
 	double null_avg_dist = 0, null_max_dist = 0;
 	
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		null_avg_dist += t[k]->stats->null_avg_dist+null_avg_dist;
 		null_max_dist = fmax(t[k]->stats->null_max_dist, null_max_dist);
 	}
 	
-	t[0]->glob_stats->null_avg_dist  = null_avg_dist/option->threads;
+	t[0]->glob_stats->null_avg_dist  = null_avg_dist/cfg->algo_threads;
 	t[0]->glob_stats->null_max_dist  = null_max_dist;
 }
 

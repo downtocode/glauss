@@ -59,8 +59,8 @@ struct bh_statistics {
 /* Thread configuration struct */
 struct thread_config_bhut {
 	phys_obj *obj;
-	struct phys_barnes_hut_octree *root, *octrees[8];
-	unsigned int id, objs_low, objs_high;
+	bh_octree *root, *octrees[8];
+	unsigned int id, objs_low, objs_high, tot_octs, balance_timeout;
 	struct bh_statistics *glob_stats;
 	struct bh_statistics *stats;
 	pthread_barrier_t *ctrl, *barrier;
@@ -83,15 +83,18 @@ void bh_depth_print(bh_octree *octree);
 double bh_init_max_displacement(phys_obj *object, bh_octree *octree);
 void bh_init_center_of_mass(phys_obj *object, bh_octree *octree);
 
+/* Synchs positions */
+void bh_cascade_position(bh_octree *target, bh_octree *root,
+						 pthread_mutex_t *root_lock);
+
 /* Init a tree(start of one - NOT A SUBCELL) */
 bh_octree *bh_init_tree(void);
 
 /* Functions */
-void bhut_runtime_fn(void **threads);
+void bhut_runtime_fn(struct glob_thread_config *cfg);
 void *bhut_preinit(struct glob_thread_config *cfg);
 void **bhut_init(struct glob_thread_config *cfg);
 void *thread_bhut(void *thread_setts);
-void *thread_bhut_rk4(void *thread_setts);
 void bhut_quit(struct glob_thread_config *cfg);
 
 #endif

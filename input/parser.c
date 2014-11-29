@@ -867,7 +867,7 @@ static void parser_push_stat_array(lua_State *L, struct global_statistics *stats
 	}
 	
 	/* Variables for each thread */
-	for (unsigned int i = 0; i < option->threads; i++) {
+	for (unsigned int i = 0; i < phys_stats->threads; i++) {
 		/* Create a table inside that to hold everything */
 		lua_newtable(L);
 		

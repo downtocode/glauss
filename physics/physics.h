@@ -38,7 +38,7 @@ enum phys_status {
 	PHYS_STATUS_STOPPED,
 	PHYS_STATUS_PAUSED,
 	PHYS_STATUS_ERROR,
-	PHYS_STATUS_INIT, /* Somewhere in between initializaion */
+	PHYS_STATUS_INIT,                   /* Somewhere in between initializaion */
 	PHYS_CMD_NOT_FOUND,
 	PHYS_INVALID_ALGORITHM,
 };
@@ -71,7 +71,7 @@ struct thread_statistics {
 
 /* Global statistics structure */
 struct global_statistics {
-	unsigned int rng_seed;
+	unsigned int rng_seed, threads;
 	long double progress, time_running, time_per_step;
 	unsigned long long int total_steps;
 	
@@ -85,7 +85,8 @@ struct global_statistics {
 struct glob_thread_config {
 	bool paused;
 	volatile bool *quit;
-	unsigned int total_syncd_threads;
+	unsigned int algo_threads, total_syncd_threads;
+	/* algo_threads is just the number of them at the time of start, excluding ctrl */
 	pthread_t *threads, control_thread;
 	pthread_mutex_t *pause;
 	pthread_barrier_t *ctrl;
@@ -102,7 +103,7 @@ struct glob_thread_config {
 	void *algo_global_stats_raw;                  /* Preinit->init */
 	struct parser_map **algo_thread_stats_map;    /* Preinit->ctrl_init */
 	void **algo_thread_stats_raw;                 /* Preinit->init */
-	void (*thread_sched_fn)(void **);
+	void (*thread_sched_fn)(struct glob_thread_config *);
 	unsigned int thread_sched_fn_freq;
 };
 
@@ -123,19 +124,19 @@ typedef const struct list_algorithms {
 	void **(*thread_configuration)(struct glob_thread_config *);
 	void *(*thread_location)(void *);
 	void (*thread_destruction)(struct glob_thread_config *);
-	void (*thread_sched_fn)(void **);
+	void (*thread_sched_fn)(struct glob_thread_config *);
 } phys_algorithm;
 
 typedef void  *(*thread_preconfiguration)(struct glob_thread_config *);
 typedef void **(*thread_configuration)(struct glob_thread_config *);
 typedef void  *(*thread_function)(void *);
-typedef void   (*thread_sched_fn)(void **);
+typedef void   (*thread_sched_fn)(struct glob_thread_config *);
 typedef void   (*thread_destruction)(struct glob_thread_config *);
 
 /* Returns struct */
 phys_algorithm *phys_find_algorithm(const char *name);
 
-/* Lock this and wait for PHYS_STATUS to return paused to freeze objects */
+/* Lock this to freeze everything */
 extern pthread_spinlock_t *halt_objects;
 
 /* Default thread attributes, inheritence and scheduling, init'd by phys_init() */

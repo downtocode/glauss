@@ -61,7 +61,6 @@ void rotate_vec(vec3 *vec, vec3 *rot1);
 unsigned int phys_check_collisions(phys_obj *object,
 								   unsigned int low, unsigned int high);
 
-
 /* Counter, will reset the counter variable once it ticks over */
 bool phys_timer_exec(unsigned int freq, unsigned int *counter);
 
@@ -69,7 +68,7 @@ bool phys_timer_exec(unsigned int freq, unsigned int *counter);
 bool phys_check_coords(vec3 *vec, phys_obj *object,
 					   unsigned int low, unsigned int high);
 
-/* Return the CLOCK_MONOTONIC time in microseconds */
+/* Return the CLOCK_MONOTONIC(RAW) time in microseconds */
 unsigned long long int phys_gettime_us(void);
 
 /* Miliseconds sleep, uses nanosleep(will also this), will carry over a second */

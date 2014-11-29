@@ -47,7 +47,7 @@
         .thread_destruction = NULL,               \
     }
 
-/*	Default threads to use when system != linux.	*/
+/* Default threads to use when system != linux. */
 #define AUTO_UNAVAIL_THREADS 1
 
 pthread_spinlock_t *halt_objects = NULL;
@@ -57,7 +57,7 @@ static struct sched_param parameters;
 /* Thread statistics and primary struct */
 struct global_statistics *phys_stats;
 struct glob_thread_config *cfg;
-phys_obj *urgetnt_dump_object = NULL;
+phys_obj **urgetnt_dump_object = NULL;
 
 /* Previous algorithm */
 static struct list_algorithms *prev_algorithm = NULL;
@@ -102,10 +102,8 @@ int phys_init(phys_obj **object)
 		return 1;
 	}
 	/* Check if physics algorithm is valid */
-	if (phys_find_algorithm(option->algorithm) == NULL) {
-		pprintf(PRI_ERR,
-				"Algorithm \"%s\" not found!\n",
-				option->algorithm);
+	if (!phys_find_algorithm(option->algorithm)) {
+		pprintf(PRI_ERR, "Algorithm \"%s\" not found!\n", option->algorithm);
 		phys_list_algo();
 		exit(1);
 	}
@@ -119,6 +117,9 @@ int phys_init(phys_obj **object)
 	} else {
 		return 3; /* Impossible, should never ever happen. */
 	}
+	
+	/* Set urgent dump object pointer */
+	urgetnt_dump_object = object;
 	
 	/* Seed RNG even though it's only used when option->bh_random_assign */
 	srand(time(NULL));
@@ -170,16 +171,13 @@ int phys_init(phys_obj **object)
 	parameters.sched_priority = 50;
 	pthread_attr_init(&thread_attribs);
 	pthread_attr_setinheritsched(&thread_attribs, PTHREAD_INHERIT_SCHED);
-	
-	
-	
 	pthread_attr_setschedparam(&thread_attribs, &parameters);
 	return 0;
 }
 
 int phys_set_sched_mode(char **mode)
 {
-	bool found = 0;
+	bool found = false;
 	struct parser_map sched_modes[] = {
 		{"SCHED_RR",      NULL,   SCHED_RR,      LUA_TNUMBER   },
 		{"SCHED_FIFO",    NULL,   SCHED_FIFO,    LUA_TNUMBER   },
@@ -189,7 +187,7 @@ int phys_set_sched_mode(char **mode)
 	for (struct parser_map *i = sched_modes; i->name; i++) {
 		if (!strcmp(i->name, *mode)) {
 			pthread_attr_setschedpolicy(&thread_attribs, i->type);
-			found = 1;
+			found = true;
 		}
 	}
 	if (!found) {
@@ -208,7 +206,7 @@ int phys_set_sched_mode(char **mode)
 void phys_urgent_dump(void)
 {
 	pprint_warn("Backing up entire system in backup.bin!\n");
-	out_write_array(urgetnt_dump_object, "backup.bin", cfg ? cfg->io_halt : NULL);
+	out_write_array(*urgetnt_dump_object, "backup.bin", NULL);
 }
 
 int phys_quit(phys_obj **object)
@@ -341,7 +339,7 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
 			phys_ctrl(PHYS_PAUSESTART, NULL);
-			for (unsigned int k = 0; k < option->threads; k++) {
+			for (unsigned int k = 0; k < cfg->algo_threads; k++) {
 				if (pthread_create(&cfg->threads[k], &thread_attribs,
 								  algo->thread_location, cfg->threads_conf[k])) {
 					pprintf(PRI_ERR, "Creating thread %u failed!\n", k);
@@ -364,7 +362,6 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			
 			prev_algo_opts = cfg->algo_opt_map;
 			prev_algorithm = (struct list_algorithms *)algo;
-			urgetnt_dump_object = *object;
 			
 			retval = PHYS_STATUS_RUNNING;
 			
@@ -386,7 +383,7 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			if (cfg->paused)
 				phys_ctrl(PHYS_PAUSESTART, NULL);
 			void *res = PTHREAD_CANCELED; /* Can be any !null pointer */
-			for (unsigned int k = 0; k < option->threads; k++) {
+			for (unsigned int k = 0; k < cfg->algo_threads; k++) {
 				while (res) {
 					pthread_join(cfg->threads[k], &res);
 				}
@@ -405,10 +402,11 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			ctrl_quit(cfg);
 			halt_objects = NULL;
 			cfg = NULL;
-			urgetnt_dump_object = NULL;
 			
 			retval = PHYS_STATUS_STOPPED;
 			
+			break;
+		default:
 			break;
 	}
 	return retval;

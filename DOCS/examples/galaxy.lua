@@ -148,7 +148,7 @@ end
 function run_on_timestep(t_stats, obj)
 	print("Current progress:", t_stats.progress)
 	
-	for i = 1, #t_stats, 1 do
+	for i = 0, #t_stats, 1 do
 		print("Thread", i, "Usage: ", t_stats[i].bh_heapsize/1048576, "MiB")
 	end
 	print("Total octree memory usage:", t_stats.bh_heapsize/1048576, "MiB")

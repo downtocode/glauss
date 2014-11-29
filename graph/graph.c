@@ -316,7 +316,7 @@ void graph_draw_scene(graph_window *win)
 			unsigned int len = 0;
 			char res[15] = {0};
 			/* Stats */
-			for (unsigned int j = 0; j < option->threads; j++) {
+			for (unsigned int j = 0; j <  phys_stats->threads; j++) {
 				len = 0;
 				for (struct parser_map *i = phys_stats->t_stats[j].thread_stats_map;
 					 i->name; i++) {
@@ -341,7 +341,7 @@ void graph_draw_scene(graph_window *win)
 								   COL_WHITE);
 				
 				/* Numbers */
-				for (unsigned int j = 0; j < option->threads; j++) {
+				for (unsigned int j = 0; j <  phys_stats->threads; j++) {
 					snprintf(res, sizeof(res), "%i.\n", j);
 					graph_display_text(res, THREAD_MAPx-((float)len/65)-0.04,
 									   THREAD_MAPy-0.07-((float)j/14),
@@ -350,7 +350,7 @@ void graph_draw_scene(graph_window *win)
 			}
 			
 			/* Thread time stats */
-			for (unsigned int i = 0; i < option->threads; i++) {
+			for (unsigned int i = 0; i <  phys_stats->threads; i++) {
 				if (phys_stats->t_stats) {
 					clock_gettime(phys_stats->t_stats[i].clockid, &ts);
 				} else {

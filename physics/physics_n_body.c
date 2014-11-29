@@ -26,19 +26,19 @@
 
 void **nbody_init(struct glob_thread_config *cfg)
 {
-	struct thread_config_nbody **thread_config = calloc(option->threads,
+	struct thread_config_nbody **thread_config = calloc(cfg->algo_threads,
 		sizeof(struct thread_config_nbody*));
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_nbody));
 	}
 	
 	/* Init barrier */
 	pthread_barrier_t *barrier = calloc(1, sizeof(pthread_barrier_t));
-	pthread_barrier_init(barrier, NULL, option->threads);
+	pthread_barrier_init(barrier, NULL, cfg->algo_threads);
 	
-	int totcore = (int)((float)option->obj/option->threads);
+	int totcore = (int)((float)option->obj/cfg->algo_threads);
 	
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k]->glob_stats = cfg->stats;
 		thread_config[k]->stats = &cfg->stats->t_stats[k];
 		thread_config[k]->obj = cfg->obj;
@@ -48,7 +48,7 @@ void **nbody_init(struct glob_thread_config *cfg)
 		thread_config[k]->quit = cfg->quit;
 		thread_config[k]->objs_low = !k ? 0 : thread_config[k-1]->objs_high;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
-		if (k == option->threads - 1) {
+		if (k == cfg->algo_threads - 1) {
 			/*	Takes care of rounding problems with odd numbers.	*/
 			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
 		}
@@ -66,7 +66,7 @@ void nbody_quit(struct glob_thread_config *cfg)
 	free(t[0]->barrier);
 	
 	/* Config */
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		free(t[k]);
 	}
 	free(t);

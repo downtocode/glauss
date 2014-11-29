@@ -41,6 +41,5 @@ struct thread_config_nbody {
 void **nbody_init(struct glob_thread_config *cfg);
 void nbody_quit(struct glob_thread_config *cfg);
 void *thread_nbody(void *thread_setts);
-void *thread_nbody_rk4(void *thread_setts);
 
 #endif

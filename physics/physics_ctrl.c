@@ -33,16 +33,18 @@ struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, phys_ob
 {
 	struct glob_thread_config *cfg = calloc(1, sizeof(struct glob_thread_config));
 	
-	cfg->total_syncd_threads = option->threads + 1;
+	cfg->algo_threads = option->threads;
+	cfg->total_syncd_threads = cfg->algo_threads + 1;
 	cfg->obj = obj;
 	cfg->stats = stats;
 	
-	cfg->algo_thread_stats_map = calloc(option->threads+1, sizeof(struct parser_map *));
+	cfg->algo_thread_stats_map = calloc(cfg->algo_threads+1, sizeof(struct parser_map *));
 	
 	/* Reinit stats */
-	cfg->stats->t_stats = calloc(option->threads+1, sizeof(struct thread_statistics));
+	cfg->stats->threads = cfg->algo_threads;
+	cfg->stats->t_stats = calloc(cfg->algo_threads+1, sizeof(struct thread_statistics));
 	
-	for (int k = 0; k < option->threads; k++) {
+	for (int k = 0; k < cfg->algo_threads; k++) {
 		cfg->stats->t_stats[k].thread_stats_map = \
 			allocate_parser_map((struct parser_map []){
 				{"clockid",   P_TYPE(cfg->stats->t_stats[k].clockid)   },
@@ -63,13 +65,13 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 	
 	/* Transfer thread stat map */
 	if (cfg->algo_thread_stats_map) {
-		for (int k = 0; k < option->threads; k++) {
+		for (int k = 0; k < cfg->algo_threads; k++) {
 			register_parser_map(cfg->algo_thread_stats_map[k],
 								&cfg->stats->t_stats[k].thread_stats_map);
 		}
 	}
 	
-	cfg->threads = calloc(option->threads, sizeof(pthread_t));
+	cfg->threads = calloc(cfg->algo_threads, sizeof(pthread_t));
 	
 	cfg->ctrl = calloc(1, sizeof(pthread_barrier_t));
 	pthread_barrier_init(cfg->ctrl, NULL, cfg->total_syncd_threads);
@@ -94,7 +96,7 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	}
 	
 	if (cfg->algo_thread_stats_map) {
-		for (int k = 0; k < option->threads; k++) {
+		for (int k = 0; k < cfg->algo_threads; k++) {
 			free(cfg->algo_thread_stats_map[k]);
 			free(cfg->stats->t_stats[k].thread_stats_map);
 		}
@@ -102,6 +104,7 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	}
 	free(cfg->stats->t_stats);
 	cfg->stats->t_stats = NULL;
+	cfg->stats->threads = 0;
 	
 	/* Free global sync barrier */
 	pthread_barrier_destroy(cfg->ctrl);
@@ -167,7 +170,7 @@ void *thread_ctrl(void *thread_setts)
 		
 		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,
 												  &thread_fn_counter)) {
-			t->thread_sched_fn(t->threads_conf);
+			t->thread_sched_fn(t);
 		}
 		
 		/* Unblock and hope the other threads follow */
