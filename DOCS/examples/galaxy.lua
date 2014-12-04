@@ -3,7 +3,7 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 1,
-		dt = 0.001,
+		dt = 0.00016,
 		algorithm = "barnes-hut",
 		bh_ratio = 0.5,
 		--Lifetime of a cell before it's freed.
@@ -85,7 +85,7 @@ arm_width = 69.0
 arm_number = 3
 disk_radius = 20.0
 disk_width = 1.0
-disk_stars = 2000
+disk_stars = 25000
 hub_radius = 10.0
 hub_stars = disk_stars/2
 hub_width = 4.0

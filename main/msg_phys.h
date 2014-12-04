@@ -31,8 +31,11 @@ enum MSG_PRIORITIY {
 	 PRI_OK = 10,
 	 PRI_WARN = 11,
 	 PRI_ERR = 12,
+	 PRI_INPUT = 13,
 };
 
+void pprint_enable_redraw(void);
+void pprint_disable_redraw(void);
 void pprint_enable(void);
 void pprint_disable(void);
 void pprintf(enum MSG_PRIORITIY priority, const char *format, ...);
@@ -43,5 +46,6 @@ void pprintf(enum MSG_PRIORITIY priority, const char *format, ...);
 #define pprint(...)        pprintf(PRI_ESSENTIAL, __VA_ARGS__)
 #define pprint_verb(...)   pprintf(PRI_LOWMED, __VA_ARGS__)
 #define pprint_deb(...)    pprintf(PRI_VERYLOW, __VA_ARGS__)
+#define pprint_input(...)  pprintf(PRI_INPUT, __VA_ARGS__)
 
 #endif

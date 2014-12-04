@@ -48,8 +48,7 @@ struct option_struct *option;
 int main(int argc, char *argv[])
 {
 	/*	Default settings.	*/
-		option = calloc(1, sizeof(*option));
-		*option = (struct option_struct){
+		option = &(struct option_struct ){
 			/* Visuals */
 			.def_radius = 1.0,
 			.width = 1280, .height = 720,
@@ -65,8 +64,16 @@ int main(int argc, char *argv[])
 			.novid = 0,
 			.rng_seed = 0,
 			
+			/* Graph */
+			.bgcolor[0] = 0.06,
+			.bgcolor[1] = 0.06,
+			.bgcolor[2] = 0.06,
+			.bgcolor[3] = 1.0,
+			//.bgcolor = (float[]){ 0.06, 0.06, 0.06, 1.00 },
+			
 			/* Input */
 			.input_thread_enable = 1,
+			.elements_file = NULL,
 			
 			/* Physics */
 			.threads = 0,
@@ -110,7 +117,9 @@ int main(int argc, char *argv[])
 			{"timestep_funct",         P_TYPE(option->timestep_funct)         },
 			{"file_template",          P_TYPE(option->xyz_temp)               },
 			{"screenshot_template",    P_TYPE(option->sshot_temp)             },
+			{"bgcolor",                P_TYPE(option->bgcolor)                },
 			{"fontname",               P_TYPE(option->fontname)               },
+			{"elements_file",          P_TYPE(option->elements_file)          },
 			{"lua_expose_obj_array",   P_TYPE(option->lua_expose_obj_array)   },
 			{"input_thread_enable",    P_TYPE(option->input_thread_enable)    },
 			{"thread_schedule_mode",   P_TYPE(option->thread_schedule_mode)   },
@@ -266,7 +275,7 @@ int main(int argc, char *argv[])
 		phys_obj *object = NULL;
 		
 		/* Init elements subsystem */
-		if (parse_lua_simconf_elements(NULL)) {
+		if (parse_lua_simconf_elements(option->elements_file)) {
 			pprintf(PRI_ERR, "Failed to init elements db!\n");
 		}
 		
@@ -340,7 +349,6 @@ int main(int argc, char *argv[])
 	free(option->custom_sprite_png);
 	free(option->xyz_temp);
 	free(option->sshot_temp);
-	free(option);
 	
 	pprint("Done!\n");
 	

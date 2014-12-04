@@ -18,7 +18,7 @@
 #ifndef PHYSENGINE_GRAPH
 #define PHYSENGINE_GRAPH
 
-#include <GL/glew.h>
+#include <GLES2/gl2.h>
 #include "graph_sdl.h"
 
 enum draw_mode {

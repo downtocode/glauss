@@ -38,6 +38,7 @@ enum parser_var_type {
 	VAR_LONGINT,
 	VAR_LONGUINT,
 	VAR_LONGLONGUINT,
+	VAR_COLOR,
 	VAR_NO_IDEA,
 };
 
@@ -48,8 +49,9 @@ enum parser_var_type {
     bool: VAR_BOOL,                   short int: VAR_SHORT,                    \
     char *: VAR_STRING,               long int: VAR_LONGINT,                   \
     unsigned long int: VAR_LONGUINT,  long long unsigned int: VAR_LONGLONGUINT,\
-    default: VAR_NO_IDEA                                                       \
-), _Generic((x), bool: LUA_TBOOLEAN, char *: LUA_TSTRING, default: LUA_TNUMBER)
+    float*: VAR_COLOR, default: VAR_NO_IDEA                                  \
+), _Generic((x), bool: LUA_TBOOLEAN, char *: LUA_TSTRING,                      \
+    float*: LUA_TTABLE, default: LUA_TNUMBER)
 
 struct parser_map {
 	const char *name;

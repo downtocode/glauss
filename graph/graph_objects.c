@@ -91,16 +91,12 @@ void draw_obj_sprite(phys_obj *object)
 	GLfloat points[option->obj][3];
 	unsigned int size = 0;
 	
-	glEnable(GL_POINT_SPRITE);
-	
 	glUniform1i(objattr_mode, 1);
 	glUniform1f(objattr_radius, option->def_radius);
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
 	glUniform1i(objattr_tex, 0);
 	glActiveTexture(GL_TEXTURE0);
-	glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glBindTexture(GL_TEXTURE_2D, texture_sprite);
 	glEnable(GL_TEXTURE_2D);
 	
@@ -120,7 +116,6 @@ void draw_obj_sprite(phys_obj *object)
 	
 	glDisable(GL_TEXTURE_2D);
 	glDisableVertexAttribArray(objattr_pos);
-	glDisable(GL_POINT_SPRITE);
 }
 
 void draw_obj_points(phys_obj *object)
@@ -231,10 +226,6 @@ static const char object_fs[] =
 
 GLuint graph_init_objects(void)
 {
-	glEnable(GL_POINT_SPRITE);
-	glEnable(GL_POINT_SMOOTH);
-	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-	
 	GLint width, height;
 	if (option->custom_sprite_png)
 		texture_sprite = graph_load_png_texture(option->custom_sprite_png,

@@ -72,6 +72,7 @@ struct input_cfg {
 
 int input_thread_init(graph_window **win, phys_obj **object);
 void input_thread_quit(void);
+void input_repos_prompt(void);
 void input_thread_reset_term(void);
 int input_change_element_col(const char *name, const char *col, const char *value);
 int input_call_system(const char *cmd);

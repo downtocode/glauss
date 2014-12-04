@@ -114,6 +114,8 @@ void input_thread_quit(void)
 	free(global_cfg->cmd_map);
 	free(global_cfg);
 	
+	global_cfg = NULL;
+	
 	return;
 }
 
@@ -126,21 +128,31 @@ void input_thread_reset_term(void)
 	cleanup = true;
 }
 
+void input_repos_prompt(void)
+{
+	if (!global_cfg)
+		return;
+	rl_on_new_line();
+	rl_redisplay();
+}
+
 static void input_cmd_printall(struct parser_map *cmd_map, struct parser_map *opt_map)
 {
-	pprintf(PRI_ESSENTIAL, "Implemented variables:\n");
+	pprint_disable_redraw();
+	pprint_input("Implemented variables:\n");
 	for (struct parser_map *i = opt_map; i->name; i++) {
 		parser_print_generic(i);
 	}
 	
-	pprintf(PRI_ESSENTIAL, "Implemented commands:\n");
+	pprint_input("Implemented commands:\n");
 	for (struct parser_map *i = cmd_map; i->name; i++) {
 		if (i->cmd_or_lua_type == VAR_CMD) {
-			pprintf(PRI_ESSENTIAL, "%s\n", i->name);
+			pprint_input("%s\n", i->name);
 		} else {
 			parser_print_generic(i);
 		}
 	}
+	pprint_enable_redraw();
 }
 
 int input_call_system(const char *cmd)
@@ -155,7 +167,7 @@ int input_change_element_col(const char *name, const char *col, const char *valu
 {
 	const char *usage = "Syntax: element <Number/Name> <{R,G,B,A}> <value>\n";
 	if (!name) {
-		pprint("%s", usage);
+		pprint_input("%s", usage);
 		return 1;
 	}
 	
@@ -169,7 +181,7 @@ int input_change_element_col(const char *name, const char *col, const char *valu
 		}
 	}
 	if (i < 0 || i > 119) {
-		pprint("%s", usage);
+		pprint_input("%s", usage);
 		return 1;
 	}
 	
@@ -196,7 +208,7 @@ int input_change_element_col(const char *name, const char *col, const char *valu
 		}
 	}
 	
-	pprint("Element %s = {%i, %i, %i, %i}\n", atom_prop[i].name,
+	pprint_input("Element %s = {%i, %i, %i, %i}\n", atom_prop[i].name,
 		   (int)(atom_prop[i].color[0]*255.0),
 		   (int)(atom_prop[i].color[1]*255.0),
 		   (int)(atom_prop[i].color[2]*255.0),
@@ -302,7 +314,8 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 						raise(SIGUSR1);
 						break;
 					case VAR_CLEAR:
-						for (int c = 0; c < CMD_CLEAR_REPS; c++) pprintf(PRI_ESSENTIAL, "\n");
+						for (int c = 0; c < CMD_CLEAR_REPS; c++)
+							pprint_input("\n");
 						break;
 					case VAR_LUA_READOPTS:
 						if (num_tok < 2) {
@@ -435,7 +448,7 @@ void *input_thread(void *thread_setts)
 			add_history(t->line);
 			switch(input_token_setall(t->line, t)) {
 				case CMD_SYS_RET_ERR:
-					pprint_err("System command error\n");
+					pprint_input("System command error\n");
 					break;
 				case CMD_ALL_FINE:
 					break;
@@ -444,10 +457,10 @@ void *input_thread(void *thread_setts)
 					t->status = 0;
 					break;
 				case CMD_NOT_FOUND:
-					pprintf(PRI_ERR, "Command not found\n");
+					pprint_input("Command not found\n");
 					break;
 				case CMD_INVALID_ASSIGN:
-					pprintf(PRI_ERR, "Correct assignment syntax is \"variable value\"\n");
+					pprint_input("Correct assignment syntax is \"variable value\"\n");
 					break;
 				default:
 					break;

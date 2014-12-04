@@ -19,12 +19,24 @@
 #include <stdarg.h>
 #include "msg_phys.h"
 #include "options.h"
+#include "input/input_thread.h"
 
 static const char *okmsg = "[\033[032m Ok! \033[0m] ";
 static const char *warnmsg = "[\033[033m Warning! \033[0m] ";
 static const char *errmsg = "[\033[031m Error! \033[0m] ";
 
+static bool disable_redraw = 0;
 static bool disable_print = 0;
+
+void pprint_enable_redraw(void)
+{
+	disable_redraw = false;
+}
+
+void pprint_disable_redraw(void)
+{
+	disable_redraw = true;
+}
 
 void pprint_enable(void)
 {
@@ -64,4 +76,7 @@ void pprintf(enum MSG_PRIORITIY priority, const char *format, ...)
 		vprintf(format, args);
 		va_end(args);
 	}
+	size_t len = strlen(format);
+	if (!disable_redraw && priority != PRI_INPUT && priority < 8 && format[len-1] == '\n')
+		input_repos_prompt();
 }

@@ -83,12 +83,6 @@
 /* Axis scale */
 #define AXISs 0.25
 
-/* Background color */
-#define BACKr 0.06
-#define BACKg 0.06
-#define BACKb 0.06
-#define BACKa 1.00
-
 /* OSD Buffer size */
 #define OSD_BUFFER 25
 
@@ -465,18 +459,6 @@ void graph_quit(void)
 
 void graph_init(void)
 {
-	GLenum err = glewInit();
-	
-	if (err != GLEW_OK) {
-		pprint_err("Error initializing GLEW\n");
-		exit(1);
-	}
-		
-	if (!GLEW_VERSION_3_0) {
-		pprint_err("GL implementation does not support the 3.0 API\n");
-		exit(1);
-	}
-	
 	mat       =  calloc(16, sizeof(GLfloat));
 	rotx      =  calloc(16, sizeof(GLfloat));
 	roty      =  calloc(16, sizeof(GLfloat));
@@ -493,7 +475,8 @@ void graph_init(void)
 	glActiveTexture(GL_TEXTURE0);
 	glGenBuffers(1, &pointvbo);
 	glGenBuffers(1, &textvbo);
-	glClearColor(BACKr, BACKg, BACKb, BACKa);
+	glClearColor(option->bgcolor[0], option->bgcolor[1],
+				 option->bgcolor[2], option->bgcolor[3]);
 	pprintf(PRI_SPAM, "[GL] OpenGL Version %s\n", glGetString(GL_VERSION));
 	
 	trn_matrix = glGetUniformLocation(object_shader, "translMat");

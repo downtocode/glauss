@@ -23,7 +23,7 @@ settings = {
 		--Name of function to read objects from
 		timestep_funct = "run_on_timestep",
 		--Function to execute upon timestep completion
-		exec_funct_freq = 50, --Auto timestep_funct run frequency
+		exec_funct_freq = 1, --Auto timestep_funct run frequency
 		lua_expose_obj_array = true,
 		--Expose object array to the timestep_funct, slight performance decrease
 	},
@@ -32,8 +32,10 @@ settings = {
 		--Disable command line interface
 	},
 	visual = {
-		width = 1024,
-		height = 600,
+		bgcolor = {32, 32, 32, 255},
+		default_draw_mode = "MODE_SPHERE",
+		width = 1280,
+		height = 720,
 		screenshot_template = "sshot_%3.3Lf.png",
 		file_template = "system_%0.2Lf.xyz",
 		fontname = "Liberation Sans",
@@ -60,7 +62,7 @@ function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
 	math.randomseed( settings.physics.rng_seed )
 	
-	local cube_size = 10
+	local cube_size = 5
 	local z = 1
 	local velocity = 10
 	
@@ -122,35 +124,63 @@ function spawn_objects(string_from_arg)
 	return objects
 end
 
+function vector_sub(lhs, rhs) return { lhs[1]-rhs[1], lhs[2]-rhs[2], lhs[3]-rhs[3] } end
+function vector_add(lhs, rhs) return { lhs[1]+rhs[1], lhs[2]+rhs[2], lhs[3]+rhs[3] } end
+function vector_mul(lhs, rhs) return { lhs[1]+rhs[1], lhs[2]+rhs[2], lhs[3]+rhs[3] } end
+function vector_det(lhs) return lhs[1] + lhs[2] + lhs[3] end
+
+function measure_energy(obj)
+	energy = 0.0
+	
+	local dist_vec = {}
+	local dist = 0.0
+	
+	for i = 1, #obj, 1 do
+		for j = 1, #obj, 1 do
+			dist_vec = vector_sub(obj[j].pos, obj[i].pos)
+			dist = math.sqrt(vector_det(vector_mul(dist_vec, dist_vec)))
+			if dist > 2.0 then goto continue end
+			energy = energy + 1
+			::continue::
+		end
+	end
+	
+	return energy
+end
+
 --Consult physics/physics.h for the format of struct thread_statistics and typedef phys_obj
 function run_on_timestep(t_stats, obj)
-	print("Current progress:", t_stats.progress)
-	print("Steps = ", t_stats.total_steps, "Time per step = ", t_stats.time_per_step)
-	
-	local copied_objs = {}
-	local velocity = 10
+	--print("Current progress:", t_stats.progress)
+	--print("Steps = ", t_stats.total_steps, "Time per step = ", t_stats.time_per_step)
 	
 	--if t_stats.progress > 0.0 then phys_pause() end
 	if obj == nil then return nil end
 	
-	--set_option("threads", 3)
+	local old_energy = measure_energy(obj)
 	
-	local cube_size = 2
+	local src_index = 0
+	local dest_index = 0
 	
-	for i = 231, 600, 1 do
-		copied_objs[i] = obj[i]
-		--print("Dix = ", obj[i].id)
-		copied_objs[i].pos = {
-			(math.random()-0.5)*cube_size,
-			(math.random()-0.5)*cube_size,
-			(math.random()-0.5)*cube_size,
-		}
-		copied_objs[i].vel = {
-			(math.random()-0.5)*velocity,
-			(math.random()-0.5)*velocity,
-			(math.random()-0.5)*velocity,
-		}
+	while src_index == dest_index do
+		src_index = math.random(1, #obj)
+		dest_index = math.random(1, #obj)
 	end
 	
-	return copied_objs
+	--Remember, Lua arrays are indexed from 1(by default, but it doesn't care)
+	--however our internal objects are indexed from 0. We send lua stuff indexed from 1
+	--but we read the IDs of the objects, not the order in which the objects arrive.
+	--Since ids are indexed from 0 and if no objects are imported follow the index
+	--of the array offset the obj count such that we match the internal db.
+	
+	local cp_obj = obj[src_index].pos
+	obj[src_index].pos = obj[dest_index].pos
+	obj[dest_index].pos = cp_obj
+	
+	if measure_energy(obj) > 0 then
+		print("Move accepted, src =", src_index, "dest =", dest_index)
+		return {obj[src_index], obj[dest_index]}
+	else
+		print("Move rejected")
+		return nil
+	end
 end

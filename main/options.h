@@ -30,8 +30,12 @@ extern struct option_struct {
 	FILE *logfile; //--
 	bool novid;
 	
+	/* Graph */
+	float bgcolor[4];
+	
 	/* Input */
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
+	char *elements_file;
 	char *spawn_funct, *timestep_funct;
 	char *thread_schedule_mode;
 	char *custom_sprite_png;

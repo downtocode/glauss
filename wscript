@@ -67,7 +67,7 @@ def configure(ctx):
 	ctx.check(features='c cprogram', lib=['pthread'], cflags='-pthread', uselib_store='PTHRD')
 	ctx.check(features='c cprogram', lib=['readline'], uselib_store='READLN')
 	ctx.check_cfg(package='sdl2', args='--cflags --libs', uselib_store='SDL')
-	ctx.check_cfg(package='glew', args='--cflags --libs', uselib_store='GL')
+	ctx.check_cfg(package='glesv2', args='--cflags --libs', uselib_store='GL')
 	ctx.check_cfg(package='libpng12', args='--cflags --libs', mandatory=False, uselib_store='PNG')
 	ctx.check_cfg(package='freetype2', args='--cflags --libs', uselib_store='FT')
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')

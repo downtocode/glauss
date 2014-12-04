@@ -42,6 +42,27 @@ static bool lua_loaded = 0;
 static lua_State *Lp;
 struct parser_map *total_opt_map = NULL;
 
+static void conf_lua_get_vector(lua_State *L, vec3 *vec)
+{
+	/* Can be used for N dim tables, change 3 to N */
+	for (int i = 0; i < 3; i++) {
+		lua_pushinteger(L, i+1);
+		lua_gettable(L, -2);
+		(*vec)[i] = lua_tonumber(L, -1);
+		lua_pop(L, 1);
+	}
+}
+
+static void conf_lua_get_color(lua_State *L, float color[4])
+{
+	for (int i = 0; i < 4; i++) {
+		lua_pushinteger(L, i+1);
+		lua_gettable(L, -2);
+		color[i] = lua_tointeger(L, -1)/255.0;
+		lua_pop(L, 1);
+	}
+}
+
 void parser_print_generic(struct parser_map *var)
 {
 	switch(var->type) {
@@ -284,6 +305,8 @@ void parser_read_generic(lua_State *L, struct parser_map *var)
 		case VAR_LONGLONGUINT:
 			*(long long unsigned int *)var->val = lua_tointeger(L, -1);
 			break;
+		case VAR_COLOR:
+			conf_lua_get_color(L, (float *)var->val);
 		case VAR_STRING:
 			free(*(char **)var->val);
 			*(char **)var->val = strdup(lua_tostring(L, -1));
@@ -300,11 +323,22 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 		return 0;
 	}
 	if (lua_istable(L, -1)) {
+		if (lua_type(L, -2) == LUA_TSTRING) {
+			const char *name = lua_tostring(L, -2);
+			for (struct parser_map *i = parser_state->opt_map; i->name; i++) {
+				if (!strcmp(i->name, name)) {
+					conf_lua_get_color(L, (float *)i->val);
+					return 0;
+				}
+			}
+		}
 		/* Tell conf_traverse_table() to traverse */
 		return 1;
 	} else {
+		if (lua_type(L, -2) != LUA_TSTRING)
+			return 0;
 		/* Should remain on stack for a few microseconds, right? */
-		const char *name = strdup(lua_tostring(L, -2));
+		const char *name = lua_tostring(L, -2);
 		for (struct parser_map *i = parser_state->opt_map; i->name; i++) {
 			if (!strcmp(i->name, name)) {
 				parser_read_generic(L, i);
@@ -315,42 +349,22 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 	return 0;
 }
 
-static void conf_lua_get_vector(lua_State *L, vec3 *vec)
-{
-	/* Can be used for N dim tables, change 3 to N */
-	for (int i = 0; i < 3; i++) {
-		lua_pushinteger(L, i+1);
-		lua_gettable(L, -2);
-		(*vec)[i] = lua_tonumber(L, -1);
-		lua_pop(L, 1);
-	}
-}
-
-static void conf_lua_get_color(lua_State *L, float color[])
-{
-	for (int i = 0; i < 4; i++) {
-		lua_pushinteger(L, i+1);
-		lua_gettable(L, -2);
-		color[i] = lua_tointeger(L, -1)/255.0;
-		lua_pop(L, 1);
-	}
-}
-
 static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
 {
 	/* Variables are read out of order so wait until we see the next object */
 	if (lua_istable(L, -1)) {
 		if (lua_type(L, -2) == LUA_TSTRING) {
-			if (!strcmp("pos", lua_tostring(L, -2))) {
+			const char *name = lua_tostring(L, -2);
+			if (!strcmp("pos", name)) {
 				conf_lua_get_vector(L, &parser_state->buffer.pos);
 				return 0;
-			} else if (!strcmp("vel", lua_tostring(L, -2))) {
+			} else if (!strcmp("vel", name)) {
 				conf_lua_get_vector(L, &parser_state->buffer.vel);
 				return 0;
-			} else if (!strcmp("acc", lua_tostring(L, -2))) {
-					conf_lua_get_vector(L, &parser_state->buffer.acc);
-					return 0;
-			} else if (!strcmp("rot", lua_tostring(L, -2))) {
+			} else if (!strcmp("acc", name)) {
+				conf_lua_get_vector(L, &parser_state->buffer.acc);
+				return 0;
+			} else if (!strcmp("rot", name)) {
 				conf_lua_get_vector(L, &parser_state->file.rot);
 				return 0;
 			}
@@ -393,14 +407,14 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 				return 1;
 			}
 			
-			/*printf("Old %i = %lf %lf %lf\n", arr_num,
+			printf("Old %i = %lf %lf %lf\n", arr_num,
 				   (parser_state->object)[arr_num].pos[0],
 				   (parser_state->object)[arr_num].pos[1],
 				   (parser_state->object)[arr_num].pos[2]);
 			printf("New %i = %lf %lf %lf\n", arr_num,
 				   parser_state->buffer.pos[0],
 				   parser_state->buffer.pos[1],
-				   parser_state->buffer.pos[2]);*/
+				   parser_state->buffer.pos[2]);
 			
 			/* Set object */
 			(parser_state->object)[arr_num] = parser_state->buffer;
@@ -821,7 +835,7 @@ int parse_lua_simconf_elements(const char *filepath)
 	
 	/* Load file */
 	if (filepath) {
-		if(luaL_loadfile(L, "./resources/elements.lua"))
+		if(luaL_loadfile(L, filepath))
 			pprintf(PRI_ERR, "Opening Lua file %s failed! Using internal DB.\n",
 					filepath);
 	} else {
@@ -893,7 +907,7 @@ static void parser_push_object_array(lua_State *L, phys_obj *obj)
 		lua_newtable(L);
 		for (int j = 0; j < 3; j++) {
 			lua_pushnumber(L, obj[i].pos[j]);
-			lua_rawseti(L, -2, j);
+			lua_rawseti(L, -2, j+1);
 		}
 		lua_setfield(L, -2, "pos");
 		
@@ -901,7 +915,7 @@ static void parser_push_object_array(lua_State *L, phys_obj *obj)
 		lua_newtable(L);
 		for (int j = 0; j < 3; j++) {
 			lua_pushnumber(L, obj[i].vel[j]);
-			lua_rawseti(L, -2, j);
+			lua_rawseti(L, -2, j+1);
 		}
 		lua_setfield(L, -2, "vel");
 		
@@ -909,7 +923,7 @@ static void parser_push_object_array(lua_State *L, phys_obj *obj)
 		lua_newtable(L);
 		for (int j = 0; j < 3; j++) {
 			lua_pushnumber(L, obj[i].acc[j]);
-			lua_rawseti(L, -2, j);
+			lua_rawseti(L, -2, j+1);
 		}
 		lua_setfield(L, -2, "acc");
 		
@@ -929,7 +943,7 @@ static void parser_push_object_array(lua_State *L, phys_obj *obj)
 		lua_pushboolean(L, obj[i].ignore);
 		lua_setfield(L, -2, "ignore");
 		
-		lua_rawseti(L, -2, i);
+		lua_rawseti(L, -2, i+1);
 	}
 }
 
