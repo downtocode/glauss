@@ -31,6 +31,7 @@ extern struct option_struct {
 	bool novid;
 	
 	/* Graph */
+	char *lua_print;
 	float bgcolor[4];
 	
 	/* Input */

@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
 			.bgcolor[1] = 0.06,
 			.bgcolor[2] = 0.06,
 			.bgcolor[3] = 1.0,
+			.lua_print = NULL,
 			//.bgcolor = (float[]){ 0.06, 0.06, 0.06, 1.00 },
 			
 			/* Input */
@@ -349,6 +350,7 @@ int main(int argc, char *argv[])
 	free(option->custom_sprite_png);
 	free(option->xyz_temp);
 	free(option->sshot_temp);
+	free(option->lua_print);
 	
 	pprint("Done!\n");
 	

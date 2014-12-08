@@ -407,14 +407,14 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 				return 1;
 			}
 			
-			printf("Old %i = %lf %lf %lf\n", arr_num,
+			/*printf("Old %i = %lf %lf %lf\n", arr_num,
 				   (parser_state->object)[arr_num].pos[0],
 				   (parser_state->object)[arr_num].pos[1],
 				   (parser_state->object)[arr_num].pos[2]);
 			printf("New %i = %lf %lf %lf\n", arr_num,
 				   parser_state->buffer.pos[0],
 				   parser_state->buffer.pos[1],
-				   parser_state->buffer.pos[2]);
+				   parser_state->buffer.pos[2]);*/
 			
 			/* Set object */
 			(parser_state->object)[arr_num] = parser_state->buffer;
@@ -547,12 +547,24 @@ static int input_lua_setopt(lua_State *L)
 	return 1;
 }
 
+static int input_lua_render(lua_State *L)
+{
+	free(option->lua_print);
+	option->lua_print = NULL;
+	if (!lua_isnil(L, -1)) {
+		/* Garbage collector will probably sweep this away upon f-n return */
+		option->lua_print = strdup(lua_tostring(L, -1));
+	}
+	return 0;
+}
+
 static int parse_lua_register_fn(lua_State *L)
 {
 	/* Register own function to quit */
 	lua_register(L, "raise", input_lua_raise);
 	lua_register(L, "phys_pause", input_lua_stop_physics);
 	lua_register(L, "set_option", input_lua_setopt);
+	lua_register(L, "print_text", input_lua_render);
 	return 0;
 }
 
@@ -969,7 +981,12 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 	
 	lua_call(Lp, num_args, 1);
 	
-	struct lua_parser_state *parser_state = &(struct lua_parser_state){ 
+	unsigned int len = 0;
+	if (!lua_isnil(Lp, -1)) {
+		len = luaL_len(Lp, -1);
+	}
+	
+	struct lua_parser_state *parser_state = &(struct lua_parser_state){
 		.i = 0,
 		.nullswitch = 0,
 		.fileset = 0,
@@ -979,10 +996,9 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 		.object = object,
 	};
 	
-	if (!lua_isnil(Lp, -1) && !lua_isnil(Lp, -2)) {
+	if (len) {
 		if (lua_istable(Lp, -1)) {
 			conf_traverse_table(Lp, &conf_lua_parse_objs, parser_state);
-			pprint_verb("Updated objs = %i\n", parser_state->i);
 		} else {
 			pprint_warn("Lua f-n \"%s\" did not return a table as objects. Ignoring.\n",
 					   funct);

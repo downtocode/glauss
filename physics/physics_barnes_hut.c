@@ -182,6 +182,7 @@ void *bhut_preinit(struct glob_thread_config *cfg)
 	mallopt(M_MXFAST, sizeof(bh_octree));
 #endif
 	
+	/* Global stats. You are responsible for updating them. Use the exec f-n */
 	struct bh_statistics *global_stats = calloc(1, sizeof(struct bh_statistics));
 	cfg->algo_global_stats_map = \
 		allocate_parser_map((struct parser_map []){
@@ -193,6 +194,8 @@ void *bhut_preinit(struct glob_thread_config *cfg)
 		});
 	cfg->algo_global_stats_raw = global_stats;
 	
+	/* Thread stats. Just stash their pointer in cfg->algo_thread_stats_raw
+	 * and allocate cfg->algo_thread_stats_map */
 	struct bh_statistics **thread_stats = calloc(cfg->algo_threads, sizeof(struct bh_statistics *));
 	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_stats[k] = calloc(1, sizeof(struct bh_statistics));
@@ -207,7 +210,7 @@ void *bhut_preinit(struct glob_thread_config *cfg)
 	}
 	cfg->algo_thread_stats_raw = (void **)thread_stats;
 	
-	/* Call parser and read options */
+	/* physics_ctrl will call parser and read them, just submit them now */
 	cfg->algo_opt_map = \
 		allocate_parser_map((struct parser_map []){
 			/* C can be a beautiful language sometimes too            */
@@ -365,6 +368,8 @@ void bhut_runtime_fn(struct glob_thread_config *cfg)
 		bh_heapsize += t[k]->stats->bh_heapsize;
 	}
 	
+	/* Update global stats. Could use cfg->algo_global_stats_raw but we'd need
+	 * to cast that pointer. */
 	t[0]->glob_stats->bh_total_alloc  = bh_total_alloc;
 	t[0]->glob_stats->bh_new_alloc    = bh_new_alloc;
 	t[0]->glob_stats->bh_new_cleaned  = bh_new_cleaned;

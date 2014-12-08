@@ -80,6 +80,11 @@
 #define THREAD_MAPy -0.55
 #define THREAD_MAPs 0.70
 
+/* Lua printed */
+#define LUAx -0.95
+#define LUAy -0.90
+#define LUAs 1.0
+
 /* Axis scale */
 #define AXISs 0.25
 
@@ -377,6 +382,10 @@ void graph_draw_scene(graph_window *win)
 			graph_display_text(res, STATSx+.25,
 							   STATSy-((float)count++/18)-.10, STATSs, COL_YELLOW);
 		}
+		
+		/* Lua print */
+		if (option->lua_print)
+			graph_display_text(option->lua_print, LUAx, LUAy, LUAs, COL_WHITE);
 		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}

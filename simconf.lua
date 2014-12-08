@@ -47,16 +47,9 @@ settings = {
 	},
 }
 
-objects = {
--- 		{
--- 			import = "../SpaceBattleShipYAMATO-MG.obj",
--- 			scale = 999999999,
--- 			pos = {0,-200,0},
--- 			vel = {0,0,0},
--- 			rot = {0,math.pi/2,math.pi/2},
--- 			ignore = false,
--- 		}
-}
+--Generally useful, returns a STRING
+inspect = require('TOOLS/inspect')
+--Useage: print(inspect(table))
 
 function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
@@ -66,9 +59,18 @@ function spawn_objects(string_from_arg)
 	local z = 1
 	local velocity = 10
 	
+	local objects = {}
 	for i = 0, cube_size, 1 do
 		for j = 0, cube_size, 1 do
 			for k = 0, cube_size, 1 do
+				local atomno = math.random(1,100)
+				if atomno < 60 then
+					atomno = 1
+				elseif atomno < 87 then
+					atomno = 2
+				else
+					atomno = 3
+				end
 				objects[z] = {
 					pos = {
 						i-(cube_size/2),
@@ -89,7 +91,7 @@ function spawn_objects(string_from_arg)
 					state = 0,
 					mass = 1,
 					radius = 0.1,
-					atomnumber = math.random(1,2),
+					atomnumber = atomno,
 					ignore = false,
 				}
 				z = z + 1
@@ -124,10 +126,12 @@ function spawn_objects(string_from_arg)
 	return objects
 end
 
+--Reason why the vectors we send are indexed from 1:
 function vector_sub(lhs, rhs) return { lhs[1]-rhs[1], lhs[2]-rhs[2], lhs[3]-rhs[3] } end
 function vector_add(lhs, rhs) return { lhs[1]+rhs[1], lhs[2]+rhs[2], lhs[3]+rhs[3] } end
 function vector_mul(lhs, rhs) return { lhs[1]+rhs[1], lhs[2]+rhs[2], lhs[3]+rhs[3] } end
 function vector_det(lhs) return lhs[1] + lhs[2] + lhs[3] end
+--Lua's automatic indexing will start at 1. Helps keep functions short.
 
 function measure_energy(obj)
 	energy = 0.0
@@ -135,18 +139,55 @@ function measure_energy(obj)
 	local dist_vec = {}
 	local dist = 0.0
 	
+	 local epsilon11 = 1.0
+	 local epsilon12 = 1.0
+	 local epsilon22 = 1.2
+	 local alpha11 = 1.0
+	 local alpha12 = 0.5
+	 local alpha22 = 0.1
+	 local sigma11 = 1.0
+	 local sigma12 = 1.0
+	 local sigma22 = 1.0
+	
+	local sigma = 0.0
+	local epsilon = 0.0
+	local alpha = 0.0
+	local sum = 0
+	
 	for i = 1, #obj, 1 do
 		for j = 1, #obj, 1 do
 			dist_vec = vector_sub(obj[j].pos, obj[i].pos)
 			dist = math.sqrt(vector_det(vector_mul(dist_vec, dist_vec)))
-			if dist > 2.0 then goto continue end
-			energy = energy + 1
+			if dist > 2.9 then goto continue end
+			sum = obj[i].atomnumber + obj[j].atomnumber
+			if sum < 4 then
+				--Empty
+				goto continue
+			elseif sum == 4 then
+				epsilon = epsilon11;
+				alpha = alpha11;
+				sigma = sigma11;
+			elseif sum == 5 then
+				if obj[i].atomnumber == 1 or obj[j].atomnumber == 1 then
+					goto continue
+				end
+				epsilon = epsilon22;
+				alpha = alpha22;
+				sigma = sigma22;
+			end
+			energy = energy + 4*epsilon*( sigma^12 - alpha*(sigma^6) );
 			::continue::
 		end
 	end
 	
 	return energy
 end
+
+temperature = 2.7
+
+rejects = 0
+accepts = 0
+rand_accepts = 0
 
 --Consult physics/physics.h for the format of struct thread_statistics and typedef phys_obj
 function run_on_timestep(t_stats, obj)
@@ -158,12 +199,14 @@ function run_on_timestep(t_stats, obj)
 	
 	local old_energy = measure_energy(obj)
 	
-	local src_index = 0
-	local dest_index = 0
+	local src_index = 1
+	local dest_index = 1
 	
 	while src_index == dest_index do
-		src_index = math.random(1, #obj)
-		dest_index = math.random(1, #obj)
+		while obj[src_index].atomnumber == obj[dest_index].atomnumber do
+			src_index = math.random(1, #obj)
+			dest_index = math.random(1, #obj)
+		end
 	end
 	
 	--Remember, Lua arrays are indexed from 1(by default, but it doesn't care)
@@ -172,15 +215,29 @@ function run_on_timestep(t_stats, obj)
 	--Since ids are indexed from 0 and if no objects are imported follow the index
 	--of the array offset the obj count such that we match the internal db.
 	
-	local cp_obj = obj[src_index].pos
-	obj[src_index].pos = obj[dest_index].pos
-	obj[dest_index].pos = cp_obj
+	local temp_type = obj[src_index].atomnumber
+	obj[src_index].atomnumber = obj[dest_index].atomnumber
+	obj[dest_index].atomnumber = temp_type
 	
-	if measure_energy(obj) > 0 then
-		print("Move accepted, src =", src_index, "dest =", dest_index)
-		return {obj[src_index], obj[dest_index]}
+	local newenergy = measure_energy(obj)
+	local diff = newenergy-old_energy
+	
+	local text = "Accepts = " .. accepts .. "    Accepts(rand) = " .. rand_accepts .. "    Rejects = " .. rejects .. "    Ediff = " .. diff
+	print_text(text)
+	
+	local rettable = {obj[src_index], obj[dest_index], obj[src_index]}
+	
+	if newenergy < old_energy then
+		accepts = accepts + 1
+		return rettable
 	else
-		print("Move rejected")
-		return nil
+		local wtrans = math.exp(-(diff/temperature));
+		if math.random() < wtrans then
+			rand_accepts = rand_accepts + 1
+			return rettable
+		else
+			rejects = rejects + 1
+			return nil
+		end
 	end
 end

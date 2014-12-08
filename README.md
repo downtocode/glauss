@@ -1,8 +1,6 @@
 physengine
 ==========
 
-[![WIP video](http://i.imgur.com/msokMAR.png)](https://www.youtube.com/watch?v=qL0gOHs5-2k)
-
 Overview
 --------
 This program aims to implement a physics simulation engine capable of doing simulations on various scales, from molecular dynamics to planetary motion, all whilst maintaining maximum performance. Implemented using the SDL2, Freetype 2, Lua 5.2 and the OpenGL ES 2.0 libraries. Uses POSIX threads to implement multi-threading. Written in standard C and released under the GPLv3 License.
