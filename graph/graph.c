@@ -629,7 +629,7 @@ GLuint graph_load_png_texture(const char *filename, GLint *width, GLint *height)
 		goto clean;
 	
 	/* Read header */
-	fread(header, 1, 8, fp);
+	(void)fread(header, 1, 8, fp);
 	if (png_sig_cmp(header, 0, 8))
 		goto clean;
 	

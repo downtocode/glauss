@@ -1028,7 +1028,7 @@ const char *parse_file_to_str(const char* filename)
 	if (!content)
 		return NULL;
 	
-	fread(content, 1, size, input);
+	(void)fread(content, 1, size, input);
 	
 	if (ferror(input)) {
 		free(content);

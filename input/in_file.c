@@ -51,7 +51,7 @@ int in_probe_file(const char *filename)
 	 */
 	switch (in_file_ext(filename)) {
 		case MOL_XYZ:
-			fgets(str, sizeof(str), inprep);
+			(void)fgets(str, sizeof(str), inprep);
 			fclose(inprep);
 			sscanf(str, "%i", &counter);
 			break;
@@ -95,8 +95,8 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 		case MOL_XYZ:
 			filetype = MOL_XYZ;
 			/* Skip first two lines of XYZ files. */
-			fgets(str, sizeof(str), inpars);
-			fgets(str, sizeof(str), inpars);
+			(void)fgets(str, sizeof(str), inpars);
+			(void)fgets(str, sizeof(str), inpars);
 			break;
 		case MOL_OBJ:
 			filetype = MOL_OBJ;
