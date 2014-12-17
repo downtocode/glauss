@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
 			{"rng_seed",               P_TYPE(option->rng_seed)               },
 			{"width",                  P_TYPE(option->width)                  },
 			{"height",                 P_TYPE(option->height)                 },
-			{"elcharge",               P_TYPE(option->elcharge)               },
 			{"epsno",                  P_TYPE(option->epsno)                  },
 			{"elcharge",               P_TYPE(option->elcharge)               },
 			{"gconst",                 P_TYPE(option->gconst)                 },
