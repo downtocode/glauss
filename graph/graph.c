@@ -432,7 +432,7 @@ int graph_set_draw_mode(graph_window *win, const char *mode)
 			free(option->default_draw_mode);
 			option->default_draw_mode = strdup(i->name);
 			win->draw_mode = i->type;
-			pprint("Draw mode set to %s\n", i->name);
+			pprint_deb("Draw mode set to %s\n", option->default_draw_mode);
 			return 0;
 		}
 	}

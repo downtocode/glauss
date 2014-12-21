@@ -57,6 +57,7 @@ static void bh_add_thread(bh_thread *root,
 {
 	/* Not the easiest code to understand without comments. */
 	for (short int i = 0; i < 8; i++) {
+		/* Init thread subdivs and octree cells if not done already */
 		if (!root->subdiv[i])
 			root->subdiv[i] = calloc(1, sizeof(bh_thread));
 		if (!octree->cells[i]) {
