@@ -16,6 +16,16 @@ def try_git_version():
 		print e
 	return version
 
+def try_pkg_path(name):
+	path = ''
+	cmd = 'pkg-config --cflags-only-I ' + name
+	try:
+		path = os.popen(cmd).read().strip()
+		path = os.path.basename(path)
+	except Exception as e:
+		print e
+	return path
+
 #Custom transformation functions
 def __file2string_cmd__(ctx):
 	return "${{BIN_PYTHON}} {0}/TOOLS/file2string.py ${{SRC}} > ${{TGT}}" \
@@ -50,6 +60,8 @@ def options(ctx):
 				help='Unsets debug compilation flags.')
 	ctx.add_option('--enable-manual', dest='enable_manual', action='store_true', default=False,
 				help='Compile and install the manual(requires rst2man)')
+	ctx.add_option('--lua', action='store', default='lua5.2',
+				help='Specify Lua version to link against(lua5.1, luajit, lua5.2)', dest='lua_ver')
 	
 def configure(ctx):
 	ctx.load('compiler_c')
@@ -71,7 +83,7 @@ def configure(ctx):
 	ctx.check_cfg(package='libpng12', args='--cflags --libs', mandatory=False, uselib_store='PNG')
 	ctx.check_cfg(package='freetype2', args='--cflags --libs', uselib_store='FT')
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')
-	ctx.check_cfg(package='lua5.2', args='--cflags --libs', uselib_store='LUA')
+	ctx.check_cfg(package=ctx.options.lua_ver, args='--cflags --libs', uselib_store='LUA')
 	
 	if (ctx.options.ver):
 		package_ver = ctx.options.ver
@@ -91,6 +103,15 @@ def configure(ctx):
 		ctx.define('HAS_PNG', 1)
 	if (ctx.env.SDL):
 		ctx.define('HAS_SDL', 1)
+	
+	lua_path = try_pkg_path(ctx.options.lua_ver)
+	
+	ctx.define('LINKED_LUA_VER', ctx.options.lua_ver)
+	ctx.define('LUA_MAINHEAD', lua_path + '/lua.h')
+	ctx.define('LUA_AUXLIB', lua_path + '/lauxlib.h')
+	ctx.define('LUA_LIB', lua_path + '/lualib.h')
+	ctx.define('LUA_HAS_NEW_LEN', ctx.options.lua_ver == 'lua5.2')
+	
 	ctx.write_config_header('config.h')
 	
 	if (ctx.options.enable_manual):
@@ -101,7 +122,8 @@ def configure(ctx):
 		ctx.env.LDFLAGS += ['-flto']
 	
 	print '\nCompiling: ', FULL_PACKAGE_NAME
-	print '	CFLAGS:  ', ctx.env.CFLAGS
+	print '	Lua version:	', ctx.options.lua_ver
+	print '	CFLAGS:  	', ctx.env.CFLAGS
 	
 def build(ctx):
 	#Generate manual page
@@ -143,8 +165,8 @@ def build(ctx):
 	)
 	ctx(name='parser',
 		path=ctx.path,
-		uselib='LUA',
 		target='parser',
+		uselib='LUA',
 		source='input/parser.c',
 		features  = ['c'],
 		includes='. .. ../../',
@@ -158,6 +180,7 @@ def build(ctx):
 	)
 	ctx(name='graph_input',
 		path=ctx.path,
+		uselib='SDL',
 		target='graph_input',
 		source='input/graph_input.c',
 		features  = ['c'],
@@ -165,6 +188,7 @@ def build(ctx):
 	)
 	ctx(name='input_thread',
 		path=ctx.path,
+		uselib='READLN',
 		target='input_thread',
 		source='input/input_thread.c',
 		features  = ['c'],
@@ -172,7 +196,7 @@ def build(ctx):
 	)
 	ctx(name='physics',
 		path=ctx.path,
-		uselib='MATH',
+		uselib=[ 'MATH', 'PTHRD'],
 		target='physics',
 		source='physics/physics.c',
 		features  = ['c'],
@@ -180,7 +204,7 @@ def build(ctx):
 	)
 	ctx(name='physics_aux',
 		path=ctx.path,
-		uselib='LUA',
+		uselib='MATH',
 		target='physics_aux',
 		source='physics/physics_aux.c',
 		features  = ['c'],
@@ -188,6 +212,7 @@ def build(ctx):
 	)
 	ctx(name='physics_ctrl',
 		path=ctx.path,
+		uselib=[ 'MATH', 'PTHRD'],
 		target='physics_ctrl',
 		source='physics/physics_ctrl.c',
 		features  = ['c'],
@@ -195,6 +220,7 @@ def build(ctx):
 	)
 	ctx(name='physics_null',
 		path=ctx.path,
+		uselib=['PTHRD'],
 		target='physics_null',
 		source='physics/physics_null.c',
 		features  = ['c'],
@@ -202,7 +228,7 @@ def build(ctx):
 	)
 	ctx(name='physics_n_body',
 		path=ctx.path,
-		uselib='PTHRD',
+		uselib=[ 'MATH', 'PTHRD'],
 		target='physics_n_body',
 		source='physics/physics_n_body.c',
 		features  = ['c'],
@@ -210,7 +236,7 @@ def build(ctx):
 	)
 	ctx(name='physics_barnes_hut',
 		path=ctx.path,
-		uselib='PTHRD',
+		uselib=[ 'MATH', 'PTHRD'],
 		target='physics_barnes_hut',
 		source='physics/physics_barnes_hut.c',
 		features  = ['c'],
@@ -218,7 +244,6 @@ def build(ctx):
 	)
 	ctx(name='in_file',
 		path=ctx.path,
-		uselib='MATH',
 		target='in_file',
 		source='input/in_file.c',
 		features  = ['c'],
@@ -226,7 +251,6 @@ def build(ctx):
 	)
 	ctx(name='output',
 		path=ctx.path,
-		uselib='MATH',
 		target='output',
 		source='main/output.c',
 		features  = ['c'],
@@ -234,7 +258,7 @@ def build(ctx):
 	)
 	ctx(name='graph',
 		path=ctx.path,
-		uselib='GL, PNG',
+		uselib=[ 'GL', 'PNG' ],
 		target='graph',
 		source='graph/graph.c',
 		features  = ['c'],
@@ -242,7 +266,7 @@ def build(ctx):
 	)
 	ctx(name='graph_thread',
 		path=ctx.path,
-		uselib='GL, PNG',
+		uselib=[ 'GL', 'PNG' ],
 		target='graph_thread',
 		source='graph/graph_thread.c',
 		features  = ['c'],
@@ -250,7 +274,7 @@ def build(ctx):
 	)
 	ctx(name='graph_sdl',
 		path=ctx.path,
-		uselib='GL, PNG, SDL',
+		uselib=[ 'GL', 'PNG', 'SDL' ],
 		target='graph_sdl',
 		source='graph/graph_sdl.c',
 		features  = ['c'],
@@ -258,7 +282,7 @@ def build(ctx):
 	)
 	ctx(name='graph_objects',
 		path=ctx.path,
-		uselib='GL',
+		uselib=[ 'GL', 'MATH', 'PNG' ],
 		target='graph_objects',
 		source='graph/graph_objects.c',
 		features  = ['c'],
@@ -266,7 +290,7 @@ def build(ctx):
 	)
 	ctx(name='graph_fonts',
 		path=ctx.path,
-		uselib='GL, FT, FC',
+		uselib=[ 'GL', 'PNG', 'FC', 'FT' ],
 		target='graph_fonts',
 		source='graph/graph_fonts.c',
 		features  = ['c'],
@@ -274,7 +298,8 @@ def build(ctx):
 	)
 	ctx(name='main',
 		path=ctx.path,
-		use=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT', 'in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		uselib=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
+		use=['in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
 		target='physengine',
 		source='main/main.c',
 		features  = ['c', 'cprogram'],

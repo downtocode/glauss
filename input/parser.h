@@ -18,9 +18,12 @@
 #ifndef PHYSENGINE_PARS
 #define PHYSENGINE_PARS
 
-#include <lua5.2/lua.h>
-#include <lua5.2/lauxlib.h>
-#include <lua5.2/lualib.h>
+#include "config.h"
+
+#include LUA_MAINHEAD
+#include LUA_AUXLIB
+#include LUA_LIB
+
 #include "physics/physics.h"
 #include "in_file.h"
 

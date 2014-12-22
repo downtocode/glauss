@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <signal.h>
 #include "parser.h"
-#include "physics/physics.h"
 #include "physics/physics_aux.h"
 #include "main/options.h"
 #include "main/msg_phys.h"
@@ -41,6 +40,18 @@ struct lua_parser_state {
 static bool lua_loaded = 0;
 static lua_State *Lp;
 struct parser_map *total_opt_map = NULL;
+
+inline static unsigned long int conf_lua_getlen(lua_State *L, int pos)
+{
+	unsigned long int len = 0;
+#if LUA_HAS_NEW_LEN == 1
+	/* I prefer this, down with the JIT and 51ers */
+	len = luaL_len(L, pos);
+#else
+	len = lua_objlen(L, pos);
+#endif
+	return len;
+}
 
 static void conf_lua_get_vector(lua_State *L, vec3 *vec)
 {
@@ -805,7 +816,7 @@ int parse_lua_simconf_objects(phys_obj **object, const char* sent_to_lua)
 	lua_call(Lp, 1, 1);
 	
 	/* Lua table "arrays" are indexed from 1, so offset that */
-	option->obj = luaL_len(Lp, -1)-1;
+	option->obj = conf_lua_getlen(Lp, -1)-1;
 	
 	if(!lua_istable(Lp, -1)) {
 		pprint_err("Lua f-n \"%s\" did not return a table of objects.\n",
@@ -983,7 +994,7 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 	
 	unsigned int len = 0;
 	if (!lua_isnil(Lp, -1)) {
-		len = luaL_len(Lp, -1);
+		len = conf_lua_getlen(Lp, -1);
 	}
 	
 	struct lua_parser_state *parser_state = &(struct lua_parser_state){
