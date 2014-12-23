@@ -14,7 +14,7 @@ Complete list of dependencies:
  * Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2)
  * Fontconfig development library(Debian: libfontconfig1-dev, Arch: fontconfig)
  * SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)
- * Lua 5.2 (Debian: liblua5.2-dev, Arch: lua)
+ * Lua (Luajit recommended, Lua 5.2 supported, Lua 5.1 not recommended)
 
 All are available on any up-to-date Linux distribution's package repositories. To compile and install:
 

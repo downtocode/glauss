@@ -36,6 +36,8 @@
 #include "input/parser.h"
 #include "msg_phys.h"
 
+#include "physics/physics_barnes_hut.h"
+
 #define WATCHDOG_OFFSET_SEC 20
 
 static const char ARGSTRING[] =

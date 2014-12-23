@@ -32,12 +32,12 @@
 
 /* Octree structure */
 typedef struct phys_barnes_hut_octree {
-	unsigned short score, depth;
-	vec3 origin;
-	long double halfdim;
-	bool leaf;
-	phys_obj *data, cellsum;
+	vec3 origin, avg_obj_pos;
+	long double mass, halfdim;
 	struct phys_barnes_hut_octree *cells[8];
+	phys_obj *data;
+	unsigned long int score, depth;
+	bool leaf;
 } bh_octree;
 
 /* Thread assignment tree structure */

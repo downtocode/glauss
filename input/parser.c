@@ -215,6 +215,7 @@ int parser_get_value_str(struct parser_map var, char *str, size_t len)
 			snprintf(str, len, "%u", *(unsigned int *)var.val);
 			break;
 		case VAR_LONGUINT:
+			/* Since the f-n's pretty much only used in the OSD */
 			snprintf(str, len, "%0.3lf MiB", *(long unsigned int *)var.val/(double)1048576);
 			break;
 		case VAR_LONGLONGUINT:

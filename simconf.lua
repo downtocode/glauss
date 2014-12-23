@@ -139,15 +139,15 @@ function measure_energy(obj)
 	local dist_vec = {}
 	local dist = 0.0
 	
-	 local epsilon11 = 1.0
-	 local epsilon12 = 1.0
-	 local epsilon22 = 1.2
-	 local alpha11 = 1.0
-	 local alpha12 = 0.5
-	 local alpha22 = 0.1
-	 local sigma11 = 1.0
-	 local sigma12 = 1.0
-	 local sigma22 = 1.0
+	local epsilon11 = 1.0
+	local epsilon12 = 1.0
+	local epsilon22 = 1.2
+	local alpha11 = 1.0
+	local alpha12 = 0.5
+	local alpha22 = 0.1
+	local sigma11 = 1.0
+	local sigma12 = 1.0
+	local sigma22 = 1.0
 	
 	local sigma = 0.0
 	local epsilon = 0.0

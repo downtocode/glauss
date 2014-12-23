@@ -56,7 +56,7 @@ static void bh_add_thread(bh_thread *root,
 						  bh_octree *octree, struct thread_config_bhut *thread)
 {
 	/* Not the easiest code to understand without comments. */
-	for (short int i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 8; i++) {
 		/* Init thread subdivs and octree cells if not done already */
 		if (!root->subdiv[i])
 			root->subdiv[i] = calloc(1, sizeof(bh_thread));
@@ -74,28 +74,28 @@ static void bh_add_thread(bh_thread *root,
 	/* Assign the thread to the root octree */
 	root->assign[root->assigned] = thread;
 	/* Wipe other threads' previous octree assignments */
-	for (short int v = 0; v < root->assigned + 1; v++) {
+	for (uint8_t v = 0; v < root->assigned + 1; v++) {
 		if (root->assign[v]) {
-			for (short int d = 0; d < 8; d++) {
+			for (uint8_t d = 0; d < 8; d++) {
 				root->assign[v]->octrees[d] = NULL;
 			}
 		}
 	}
 	/* Split the octree and assign the threads */
-	short int distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
+	uint8_t distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
 	bool oct_assignments[8] = {false};
 	
-	for (int k = 1; k < root->assigned + 1; k++) {
+	for (uint8_t k = 1; k < root->assigned + 1; k++) {
 		/* Calculate the threads' share. Add the calculated remain to the first ones. */
-		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
+		uint8_t thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
 		
 		root->assign[k]->tot_octs = thread_conts;
 		
-		for (int l = 0; l < thread_conts; l++) {
+		for (uint8_t l = 0; l < thread_conts; l++) {
 			if (bh_random_assign) {
 				/* Map threads to random subtrees */
 				while (1) {
-					oct = (short unsigned int)(8*((float)rand()/RAND_MAX));
+					oct = (uint8_t)(8*((float)rand()/RAND_MAX));
 					if (oct_assignments[oct])
 						continue;
 					/* Map the octrees to the real BH octree */
@@ -130,14 +130,14 @@ static void bh_assign_thread(bh_thread *root,
 		/* Create backup to prevent qsort from scrambling them.
 		 * Otherwise we'd have to recursively update their origins. Not fun. */
 		struct thread_alloc_tree *keep[8];
-		for (short i=0; i < 8; i++)
+		for (uint8_t i = 0; i < 8; i++)
 			keep[i] = root->subdiv[i];
 		
 		/* Sort: lowest to highest, [0]'s always the least assigned one. */
 		qsort(keep, 8, sizeof(bh_thread *), thread_cmp_assigned);
 		
 		/* Find the lowest occupied subcell's original octree subcell */
-		for (short i=0; i < 8; i++) {
+		for (uint8_t i = 0; i < 8; i++) {
 			if (root->subdiv[i] == keep[0]) {
 				/* Insert the thread into it */
 				bh_assign_thread(root->subdiv[i], root->subdiv[i]->mapped, thread);
@@ -150,7 +150,7 @@ static void bh_assign_thread(bh_thread *root,
 
 static void bh_decimate_assignment_tree(bh_thread *root)
 {
-	for (short i=0; i < 8; i++) {
+	for (uint8_t i=0; i < 8; i++) {
 		if (root->subdiv[i])
 			bh_decimate_assignment_tree(root->subdiv[i]);
 	}
@@ -162,7 +162,7 @@ static void bh_print_thread_tree(struct thread_config_bhut **thread,
 {
 	for (unsigned int m = 0; m < threads; m++) {
 		pprintf(PRI_HIGH, "   %02i   | ", m);
-		for (short h=0; h < 8; h++) {
+		for (uint8_t h=0; h < 8; h++) {
 			if (thread[m]->octrees[h]) {
 				pprintf(PRI_HIGH, "%i(%u) ", h, thread[m]->octrees[h]->depth);
 			}
@@ -307,7 +307,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 	
 	/* When operating on 1 thread */
 	if (cfg->algo_threads == 1 && bh_single_assign) {
-		for (short h = 0; h < 8; h++) {
+		for (uint8_t h = 0; h < 8; h++) {
 			thread_config[0]->octrees[h] = NULL;
 		}
 		thread_config[0]->octrees[0] = root_octree;
@@ -387,7 +387,7 @@ void bhut_runtime_fn(struct glob_thread_config *cfg)
 	
 	for (int k = 0; k < cfg->algo_threads; k++) {
 		count_oct[k] = alloc_oct[k] = 0;
-		for (int i = 0; i < 8; i++) {
+		for (uint8_t i = 0; i < 8; i++) {
 			if (t[k]->octrees[i]) {
 				count_oct[k]++;
 			}
@@ -427,7 +427,7 @@ void bhut_runtime_fn(struct glob_thread_config *cfg)
 	bh_octree **dest = NULL;
 	bh_octree **temp = NULL;
 	
-	short unsigned int i;
+	uint8_t i;
 	for (i = 0; i < 8; i++) {
 		src = &t[t_index_max]->octrees[i];
 		if (src)
@@ -442,13 +442,13 @@ void bhut_runtime_fn(struct glob_thread_config *cfg)
 	printf("[BH] Balance = %lf => ", bal_ratio);
 	if (*temp) {
 		*src = *temp;
-		printf("Swap octrees: threads %hu(%i)<->%u(%i)\n",
+		printf("Swap octrees: threads %i(%i)<->%u(%i)\n",
 			   t_index_min, rand_index, t_index_max, i);
 	} else {
 		*src = NULL;
 		t[t_index_min]->tot_octs++;
 		t[t_index_max]->tot_octs--;
-		printf("Move octree: threads %hu(%i)->%u(%i)\n",
+		printf("Move octree: threads %i(%i)->%u(%i)\n",
 			   t_index_min, rand_index, t_index_max, i);
 	}
 	
@@ -485,13 +485,13 @@ void bh_init_center_of_mass(phys_obj *object, bh_octree *octree)
 	for (unsigned int i = 0; i < option->obj; i++) {
 		center = (center + object[i].pos)/2;
 	}
-	octree->origin = octree->cellsum.pos = center;
+	octree->origin = octree->avg_obj_pos = center;
 }
 
 /* Completely free an octree */
 void bh_decimate_octree(bh_octree *octree)
 {
-	for (short i=0; i < 8; i++) {
+	for (uint8_t i=0; i < 8; i++) {
 		if (octree->cells[i]) {
 			bh_decimate_octree(octree->cells[i]);
 		}
@@ -502,7 +502,7 @@ void bh_decimate_octree(bh_octree *octree)
 /* Recursive function to scrub off all objects, update scores and reset mass. */
 static bool bh_clean_octree(bh_octree *octree)
 {
-	octree->cellsum.mass = 0;
+	octree->mass = 0;
 	if (octree->data) {
 		/* Object was here, chances are cell will be used, do not free yet */
 		octree->data = NULL;
@@ -512,8 +512,8 @@ static bool bh_clean_octree(bh_octree *octree)
 		if (octree->leaf)
 			return !octree->score-- ? 1 : 0;
 		/* Not end node, recursively check non-empty cells */
-		unsigned short filled_cells = 8;
-		for (unsigned short i = 0; i < 8; i++) {
+		uint8_t filled_cells = 8;
+		for (uint8_t i = 0; i < 8; i++) {
 			if (octree->cells[i]) {
 				if (bh_clean_octree(octree->cells[i])) {
 					/* Since cell is empty, free it */
@@ -544,17 +544,20 @@ unsigned int bh_cleanup_octree(bh_octree *octree)
 }
 
 /* Returns the octant of an octree a position is in */
-static inline short bh_get_octant(vec3 *pos, bh_octree *octree)
+static inline uint8_t bh_get_octant(vec3 *pos, bh_octree *octree)
 {
-	short oct = 0;
-	if ((*pos)[0] >= octree->origin[0]) oct |= 4;
-	if ((*pos)[1] >= octree->origin[1]) oct |= 2;
-	if ((*pos)[2] >= octree->origin[2]) oct |= 1;
+	uint8_t oct = 0;
+	if ((*pos)[0] >= octree->origin[0])
+		oct |= 4;
+	if ((*pos)[1] >= octree->origin[1])
+		oct |= 2;
+	if ((*pos)[2] >= octree->origin[2])
+		oct |= 1;
 	return oct;
 }
 
 /* Inits a cell, in case it isn't, updates score and position */
-static void bh_init_cell(bh_octree *octree, short k)
+static void bh_init_cell(bh_octree *octree, uint8_t k)
 {
 	if (allocated_cells > bh_octrees_max) {
 		pprint_err("Reached maximum octree heapsize of %lu bytes!\n"
@@ -590,15 +593,15 @@ static void bh_init_cell(bh_octree *octree, short k)
 static void bh_insert_object(phys_obj *object, bh_octree *octree)
 {
 	/* Update octree mass/center of mass. */
-	octree->cellsum.pos = (octree->cellsum.pos+object->pos)/2;
-	octree->cellsum.mass += object->mass;
+	octree->avg_obj_pos = (octree->avg_obj_pos+object->pos)/2;
+	octree->mass += object->mass;
 	if (!octree->data && octree->leaf) {
 		/* This cell has no object or subcells */
 		octree->data = object;
 	} else if (octree->data && octree->leaf) {
 		/* This cell has object but no subcells */
-		short oct_current_obj = bh_get_octant(&object->pos, octree);
-		short oct_octree_obj = bh_get_octant(&octree->data->pos, octree);
+		uint8_t oct_current_obj = bh_get_octant(&object->pos, octree);
+		uint8_t oct_octree_obj = bh_get_octant(&octree->data->pos, octree);
 		
 		/* Prep and transfer octee object */
 		bh_init_cell(octree, oct_octree_obj);
@@ -613,7 +616,7 @@ static void bh_insert_object(phys_obj *object, bh_octree *octree)
 		octree->leaf = false;
 	} else {
 		/* This cell has subcells with objects */
-		short oct_current_obj = bh_get_octant(&object->pos, octree);
+		uint8_t oct_current_obj = bh_get_octant(&object->pos, octree);
 		bh_init_cell(octree, oct_current_obj);
 		bh_insert_object(object, octree->cells[oct_current_obj]);
 	}
@@ -627,7 +630,7 @@ void bh_print_octree(bh_octree *octree)
 				octree->data->id, octree->data->pos[0], octree->data->pos[1],
 				octree->data->pos[2], octree->depth);
 	} else {
-		for (short i = 0; i < 8; i++) {
+		for (uint8_t i = 0; i < 8; i++) {
 			if (octree->cells[i]) {
 				for (int i = 0; i < octree->depth; i++)
 					pprintf(PRI_SPAM, INDENT);
@@ -637,10 +640,10 @@ void bh_print_octree(bh_octree *octree)
 						mass = %lf) contents:\n", octree->cells[i]->origin[0],
 						octree->cells[i]->origin[1],
 						octree->cells[i]->origin[2],
-						octree->cells[i]->cellsum.pos[0],
-						octree->cells[i]->cellsum.pos[1],
-						octree->cells[i]->cellsum.pos[2],
-						octree->cells[i]->cellsum.mass);
+						octree->cells[i]->avg_obj_pos[0],
+						octree->cells[i]->avg_obj_pos[1],
+						octree->cells[i]->avg_obj_pos[2],
+						octree->cells[i]->mass);
 				bh_print_octree(octree->cells[i]);
 			} else {
 				for (int i = 0; i < octree->depth; i++)
@@ -659,7 +662,7 @@ void bh_depth_print(bh_octree *octree)
 		return;
 	pprintf(PRI_ESSENTIAL, "Oct depth = %i, halfdim = %0.100Lf\n",
 			octree->depth, octree->halfdim);
-	for (short i=0; i < 8; i++) {
+	for (uint8_t i=0; i < 8; i++) {
 		if (octree->cells[i])
 			bh_depth_print(octree->cells[i]);
 	}
@@ -700,9 +703,9 @@ static void bh_calculate_force(phys_obj *object, bh_octree *octree)
 		(option->gconst*octree->data->mass)/(dist*dist);
 	} else if ((octree->halfdim/dist) < bh_ratio) {
 		object->acc += -vecnorm*\
-		(option->gconst*octree->cellsum.mass)/(dist*dist);
+		(option->gconst*octree->mass)/(dist*dist);
 	} else {
-		for (short i=0; i < 8; i++) {
+		for (uint8_t i=0; i < 8; i++) {
 			if (octree->cells[i]) {
 				bh_calculate_force(object, octree->cells[i]);
 			}
@@ -733,8 +736,8 @@ static void bh_cascade_mass(bh_octree *target, bh_octree *root,
 	if (target->depth >= root->depth)
 		return;
 	pthread_mutex_lock(root_lock);
-		root->cellsum.pos = (root->cellsum.pos+target->cellsum.pos)/2;
-		root->cellsum.mass += target->cellsum.mass;
+		root->avg_obj_pos = (root->avg_obj_pos+target->avg_obj_pos)/2;
+		root->mass += target->mass;
 	pthread_mutex_unlock(root_lock);
 	bh_cascade_mass(target, root->cells[bh_get_octant(&target->origin, root)],
 					root_lock);
@@ -747,8 +750,8 @@ static void bh_atomic_update_root(long double dimension, bh_octree *root,
 	if (!root)
 		return;
 	pthread_mutex_lock(root_lock);
-		root->cellsum.mass = 0;
-		root->origin = root->cellsum.pos;
+		root->mass = 0;
+		root->origin = root->avg_obj_pos;
 		root->halfdim = dimension;
 	pthread_mutex_unlock(root_lock);
 }
@@ -763,12 +766,12 @@ void bh_cascade_position(bh_octree *target, bh_octree *root,
 	if (!target->depth)
 		return;
 	
-	short oct = bh_get_octant(&target->origin, root);
+	uint8_t oct = bh_get_octant(&target->origin, root);
 	if (!root->cells[oct])
 		return;
 	
 	pthread_mutex_lock(root_lock);
-		root->cellsum.mass = 0;
+		root->mass = 0;
 		root->cells[oct]->halfdim = root->halfdim/2;
 		root->cells[oct]->origin = root->origin + ((double)root->halfdim)*0.5*\
 			(vec3){ (oct&4 ? 1 : -1), (oct&2 ? 1 : -1), (oct&1 ? 1 : -1) };
@@ -800,7 +803,7 @@ void *thread_bhut(void *thread_setts)
 		pthread_barrier_wait(t->barrier);
 		
 		/* Build octree */
-		for (unsigned short s=0; s < 8; s++) {
+		for (uint8_t s=0; s < 8; s++) {
 			new_alloc += bh_build_octree(t->obj, t->octrees[s], t->root);
 			/* Sync mass and center of mass with any higher trees */
 			bh_cascade_mass(t->octrees[s], t->root, t->root_lock);
@@ -825,7 +828,7 @@ void *thread_bhut(void *thread_setts)
 		bh_atomic_update_root(bh_even_round(maxdist), t->root, t->root_lock);
 		
 		/* Update the positions of octrees and their halfdims + cleanup */
-		for (unsigned short int s = 0; s < 8; s++) {
+		for (uint8_t s = 0; s < 8; s++) {
 			new_cleaned += bh_cleanup_octree(t->octrees[s]);
 			bh_cascade_position(t->octrees[s], t->root, t->root_lock);
 		}

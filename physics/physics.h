@@ -30,6 +30,7 @@ typedef double vec3 __attribute__ ((vector_size (32)));
 
 #include <pthread.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 
 /* Status enum */
@@ -50,14 +51,14 @@ enum phys_set_status {
 	PHYS_SHUTDOWN,
 };
 
-/* Object structure */
+/* Object structure - should be exactly 128 bytes */
 typedef struct {
 	vec3 pos, vel, acc;
 	double mass, charge;
-	unsigned short int atomnumber, id;
+	long unsigned int id;
 	float radius;
-	int state;
 	bool ignore;
+	uint8_t state, atomnumber;
 } phys_obj;
 
 /* Thread statistics structure */

@@ -1,3 +1,4 @@
+#this script is horrible.
 import sys, os, re
 from waflib.Build import BuildContext
 
@@ -6,7 +7,6 @@ VERSION=''
 
 top = '.'
 out = 'build'
-manual_true = 0
 
 def try_git_version():
 	version = VERSION
@@ -58,9 +58,7 @@ def options(ctx):
 				help='Sets package version.')
 	ctx.add_option('--no-debug', dest='no_deb', action='store_true', default=False,
 				help='Unsets debug compilation flags.')
-	ctx.add_option('--enable-manual', dest='enable_manual', action='store_true', default=False,
-				help='Compile and install the manual(requires rst2man)')
-	ctx.add_option('--lua', action='store', default='lua5.2',
+	ctx.add_option('--lua', action='store', default='luajit',
 				help='Specify Lua version to link against(lua5.1, luajit, lua5.2)', dest='lua_ver')
 	
 def configure(ctx):
@@ -83,7 +81,7 @@ def configure(ctx):
 	ctx.check_cfg(package='libpng12', args='--cflags --libs', mandatory=False, uselib_store='PNG')
 	ctx.check_cfg(package='freetype2', args='--cflags --libs', uselib_store='FT')
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')
-	ctx.check_cfg(package=ctx.options.lua_ver, args='--cflags --libs', uselib_store='LUA')
+	ctx.check_cfg(package=ctx.options.lua_ver, args='--cflags --libs', mandatory=False, uselib_store='LUA')
 	
 	if (ctx.options.ver):
 		package_ver = ctx.options.ver
@@ -114,9 +112,6 @@ def configure(ctx):
 	
 	ctx.write_config_header('config.h')
 	
-	if (ctx.options.enable_manual):
-		manual_true = 1
-	
 	if (ctx.options.lto):
 		ctx.env.CFLAGS += ['-flto']
 		ctx.env.LDFLAGS += ['-flto']
@@ -124,6 +119,9 @@ def configure(ctx):
 	print '\nCompiling: ', FULL_PACKAGE_NAME
 	print '	Lua version:	', ctx.options.lua_ver
 	print '	CFLAGS:  	', ctx.env.CFLAGS
+	
+	if (ctx.options.lua_ver != 'luajit'):
+		print 'Keep in mind performance might be affected with anything else other than luajit.'
 	
 def build(ctx):
 	#Generate manual page

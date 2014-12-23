@@ -19,7 +19,8 @@ DESCRIPTION
 
 **physengine** is a physics simulations engine written in C, capable of being
 used in a variety of situations, from n-body simulations on planetary orbits
-to barnes-hut galactical simulations.
+to barnes-hut galactical simulations. Configured and controlled using a Lua
+script. An API to create algorithms entirely in Lua is available.
 
 CONTROLS
 ========
@@ -156,6 +157,8 @@ All of the variables below are settable via the command line interpreter.
     Specify the font type to be used. Example: "Liberation Sans".
 ``fontsize`` - *Unsigned Integer*
     Fontsize adjustment.
+``elements_file`` - *String*
+    Specify the path to external db for elements. See resources/elements.lua for example.
 ``dump_sshot`` - *Unsigned Integer*
     Specify the frequency of screenshots taken. 1 - every step, 2 - every two steps, 3...
 ``dump_xyz`` - *Unsigned Integer*

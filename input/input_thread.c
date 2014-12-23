@@ -190,16 +190,16 @@ int input_change_element_col(const char *name, const char *col, const char *valu
 	
 	if (code_col != '\0' && val < 256) {
 		switch(code_col) {
-			case 'R':
+			case 'R': case 'r':
 				atom_prop[i].color[0] = val/255.0;
 				break;
-			case 'G':
+			case 'G': case 'g':
 				atom_prop[i].color[1] = val/255.0;
 				break;
-			case 'B':
+			case 'B': case 'b':
 				atom_prop[i].color[2] = val/255.0;
 				break;
-			case 'A':
+			case 'A': case 'a':
 				atom_prop[i].color[3] = val/255.0;
 				break;
 			default:
