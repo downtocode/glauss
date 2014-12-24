@@ -75,6 +75,7 @@ struct global_statistics {
 	unsigned int rng_seed, threads;
 	long double progress, time_running, time_per_step;
 	unsigned long long int total_steps;
+	size_t lua_gc_mem;
 	
 	/* Algorithm statistics */
 	struct parser_map *global_stats_map;

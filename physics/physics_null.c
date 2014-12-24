@@ -63,7 +63,7 @@ void *stats_preinit(struct glob_thread_config *cfg)
 void **null_init(struct glob_thread_config *cfg)
 {
 	struct thread_config_null **thread_config = calloc(cfg->algo_threads,
-		sizeof(struct thread_config_nbody*));
+		sizeof(struct thread_config_null*));
 	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k] = calloc(1, sizeof(struct thread_config_null));
 	}

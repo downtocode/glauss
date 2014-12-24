@@ -25,6 +25,7 @@
 #include LUA_LIB
 
 #include "physics/physics.h"
+#include "physics/physics_aux.h"
 #include "in_file.h"
 
 enum parser_var_type {
@@ -65,6 +66,17 @@ struct parser_map {
 
 extern struct parser_map *total_opt_map;
 
+struct lua_parser_state {
+	int i;
+	bool nullswitch;
+	bool fileset;
+	bool read_id;
+	in_file file;
+	phys_obj buffer, *object;
+	struct atomic_cont buffer_ele;
+	struct parser_map *opt_map;
+};
+
 /* General */
 int parse_lua_open_file(const char *filename);
 int parse_lua_open_string(const char *script);
@@ -88,9 +100,24 @@ void parser_read_generic(lua_State *L, struct parser_map *var);
 /* Elements */
 int parse_lua_simconf_elements(const char *filepath);
 
+/* Misc lua */
+unsigned long int conf_lua_getlen(lua_State *L, int pos);
+size_t parser_lua_current_gc_mem(lua_State *L);
+
+/* Parsing f-ns */
+int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state);
+int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state);
+int conf_lua_parse_files(lua_State *L, struct lua_parser_state *parser_state);
+int conf_lua_parse_elements(lua_State *L, struct lua_parser_state *parser_state);
+void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)),
+						 struct lua_parser_state *parser_state);
+
 /* Parser abstractions */
 int parse_lua_simconf_options(struct parser_map *map);
 int parse_lua_simconf_objects(phys_obj **object, const char* sent_to_lua);
+void parser_push_stat_array(lua_State *L, struct global_statistics *stats);
+void parser_push_object_array(lua_State *L, phys_obj *obj,
+							  struct parser_map *range_ind);
 
 /* Returns number of changed objects(returned from Lua) */
 unsigned int lua_exec_funct(const char *funct, phys_obj *object,

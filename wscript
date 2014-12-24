@@ -240,6 +240,14 @@ def build(ctx):
 		features  = ['c'],
 		includes='. .. ../../',
 	)
+	ctx(name='physics_lua_threading',
+		path=ctx.path,
+		uselib=[ 'MATH', 'PTHRD', 'LUA'],
+		target='physics_lua_threading',
+		source='physics/physics_lua_threading.c',
+		features  = ['c'],
+		includes='. .. ../../',
+	)
 	ctx(name='in_file',
 		path=ctx.path,
 		target='in_file',
@@ -297,7 +305,7 @@ def build(ctx):
 	ctx(name='main',
 		path=ctx.path,
 		uselib=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
-		use=['in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut'],
+		use=['in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
 		target='physengine',
 		source='main/main.c',
 		features  = ['c', 'cprogram'],

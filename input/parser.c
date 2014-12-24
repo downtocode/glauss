@@ -26,22 +26,11 @@
 #include "main/options.h"
 #include "main/msg_phys.h"
 
-struct lua_parser_state {
-	int i;
-	bool nullswitch;
-	bool fileset;
-	bool read_id;
-	in_file file;
-	phys_obj buffer, *object;
-	struct atomic_cont buffer_ele;
-	struct parser_map *opt_map;
-};
-
 static bool lua_loaded = 0;
 static lua_State *Lp;
 struct parser_map *total_opt_map = NULL;
 
-inline static unsigned long int conf_lua_getlen(lua_State *L, int pos)
+unsigned long int conf_lua_getlen(lua_State *L, int pos)
 {
 	unsigned long int len = 0;
 #if LUA_HAS_NEW_LEN == 1
@@ -51,6 +40,19 @@ inline static unsigned long int conf_lua_getlen(lua_State *L, int pos)
 	len = lua_objlen(L, pos);
 #endif
 	return len;
+}
+
+size_t parser_lua_current_gc_mem(lua_State *L)
+{
+	if (!L) {
+		if (lua_loaded)
+			L = Lp;
+		else
+			return 0;
+	}
+	int sizekb = lua_gc(L, LUA_GCCOUNT, 0);
+	int remsizeb = lua_gc(L, LUA_GCCOUNTB, 0);
+	return 1024*sizekb + remsizeb;
 }
 
 static void conf_lua_get_vector(lua_State *L, vec3 *vec)
@@ -328,7 +330,7 @@ void parser_read_generic(lua_State *L, struct parser_map *var)
 	}
 }
 
-static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state)
+int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state)
 {
 	if (!parser_state->opt_map) {
 		pprint_err("Cannot read empty map.\n");
@@ -361,7 +363,7 @@ static int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_sta
 	return 0;
 }
 
-static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
+int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
 {
 	/* Variables are read out of order so wait until we see the next object */
 	if (lua_istable(L, -1)) {
@@ -467,7 +469,7 @@ static int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_sta
 }
 
 /* We have to know the exact amount of objects we need memory for so we scan. */
-static int conf_lua_parse_files(lua_State *L, struct lua_parser_state *parser_state)
+int conf_lua_parse_files(lua_State *L, struct lua_parser_state *parser_state)
 {
 	if (lua_istable(L, -1)) {
 		if(lua_type(L, -2) != LUA_TSTRING) {
@@ -489,7 +491,7 @@ static int conf_lua_parse_files(lua_State *L, struct lua_parser_state *parser_st
 	return 0;
 }
 
-static int conf_lua_parse_elements(lua_State *L, struct lua_parser_state *parser_state)
+int conf_lua_parse_elements(lua_State *L, struct lua_parser_state *parser_state)
 {
 	if (lua_istable(L, -1)) {
 		if (lua_type(L, -2) == LUA_TSTRING) {
@@ -515,8 +517,8 @@ static int conf_lua_parse_elements(lua_State *L, struct lua_parser_state *parser
 	return 0;
 }
 
-static void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)),
-								struct lua_parser_state *parser_state)
+void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)),
+						 struct lua_parser_state *parser_state)
 {
 	if (!lua_loaded) {
 		pprintf(PRI_ERR, "Lua context not loaded, no file/string to read!\n");
@@ -890,7 +892,7 @@ int parse_lua_simconf_elements(const char *filepath)
 	return 0;
 }
 
-static void parser_push_stat_array(lua_State *L, struct global_statistics *stats)
+void parser_push_stat_array(lua_State *L, struct global_statistics *stats)
 {
 	/* Create "array" table. */
 	lua_newtable(L);
@@ -918,10 +920,18 @@ static void parser_push_stat_array(lua_State *L, struct global_statistics *stats
 	}
 }
 
-static void parser_push_object_array(lua_State *L, phys_obj *obj)
+void parser_push_object_array(lua_State *L, phys_obj *obj,
+							  struct parser_map *range_ind)
 {
 	/* Create "array" table. */
 	lua_newtable(L);
+	
+	if (range_ind) {
+		for (struct parser_map *i = range_ind; i->name; i++) {
+			parser_push_generic(L, i);
+		}
+	}
+	
 	for (int i = 0; i < option->obj; i++) {
 		/* Create a table inside that to hold everything */
 		lua_newtable(L);
@@ -987,7 +997,14 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 	}
 	
 	if (option->lua_expose_obj_array) {
-		parser_push_object_array(Lp, object);
+		/* Not really needed, but seems like a good idea here too */
+		unsigned int range_low = 1, range_high = option->obj+1;
+		struct parser_map range[] = {
+			{"range_low",      P_TYPE(range_low)                      },
+			{"range_high",     P_TYPE(range_high)                     },
+			{0},
+		};
+		parser_push_object_array(Lp, object, range);
 		num_args++;
 	}
 	
@@ -1012,10 +1029,13 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 		if (lua_istable(Lp, -1)) {
 			conf_traverse_table(Lp, &conf_lua_parse_objs, parser_state);
 		} else {
-			pprint_warn("Lua f-n \"%s\" did not return a table as objects. Ignoring.\n",
+			pprint_warn("Lua f-n \"%s\" did not return a table of objects. Ignoring.\n",
 					   funct);
 		}
 	}
+	
+	/* Update parser lua gc memory allocation stats */
+	phys_stats->lua_gc_mem = parser_lua_current_gc_mem(NULL);
 	
 	return parser_state->i;
 }

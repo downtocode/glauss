@@ -32,9 +32,12 @@
 #include "input/parser.h"
 #include "input/sighandle.h"
 #include "physics_ctrl.h"
+
+/* Algorithms */
 #include "physics_null.h"
 #include "physics_n_body.h"
 #include "physics_barnes_hut.h"
+#include "physics_lua_threading.h"
 
 /* "none" algorithm description */
 #define PHYS_NONE {                               \
@@ -66,6 +69,7 @@ static struct parser_map *prev_algo_opts = NULL;
 /* Populate structure with names and function pointers */
 phys_algorithm phys_algorithms[] = {
 	PHYS_NONE,
+	PHYS_LUA,
 	PHYS_NULL,
 	PHYS_NULL_STATS,
 	PHYS_NBODY,
@@ -115,7 +119,7 @@ int phys_init(phys_obj **object)
 		pprintf(PRI_OK, "Allocated %lu bytes(%u objects) to object array at %p.\n",
 				option->obj*sizeof(phys_obj), option->obj, *object);
 	} else {
-		return 3; /* Impossible, should never ever happen. */
+		return 3; /* Impossible, should never ever happen(glibc). */
 	}
 	
 	/* Set urgent dump object pointer */
@@ -159,11 +163,12 @@ int phys_init(phys_obj **object)
 	
 	phys_stats = calloc(1, sizeof(struct global_statistics));
 	phys_stats->global_stats_map = allocate_parser_map((struct parser_map []){
-			{"total_steps",     P_TYPE(phys_stats->total_steps)     },
-			{"rng_seed",        P_TYPE(phys_stats->rng_seed)        },
-			{"progress",        P_TYPE(phys_stats->progress)        },
-			{"time_running",    P_TYPE(phys_stats->time_running)    },
-			{"time_per_step",   P_TYPE(phys_stats->time_per_step)   },
+			{"total_steps",        P_TYPE(phys_stats->total_steps)        },
+			{"rng_seed",           P_TYPE(phys_stats->rng_seed)           },
+			{"progress",           P_TYPE(phys_stats->progress)           },
+			{"time_running",       P_TYPE(phys_stats->time_running)       },
+			{"time_per_step",      P_TYPE(phys_stats->time_per_step)      },
+			{"lua_gc_mem",         P_TYPE(phys_stats->lua_gc_mem)         },
 			{0},
 		});
 	

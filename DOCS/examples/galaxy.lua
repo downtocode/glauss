@@ -141,7 +141,7 @@ function spawn_objects(string_from_arg)
 		}
 	end
 	
-	return objects, #objects
+	return objects
 end
 
 --Consult physics/physics.h for the format of struct thread_statistics and typedef data
