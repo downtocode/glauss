@@ -69,9 +69,9 @@ static struct parser_map *prev_algo_opts = NULL;
 /* Populate structure with names and function pointers */
 phys_algorithm phys_algorithms[] = {
 	PHYS_NONE,
-	PHYS_LUA,
 	PHYS_NULL,
 	PHYS_NULL_STATS,
+	PHYS_LUA,
 	PHYS_NBODY,
 	PHYS_BARNES_HUT,
 	{0}

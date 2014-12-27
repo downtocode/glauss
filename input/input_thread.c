@@ -74,6 +74,7 @@ int input_thread_init(graph_window **win, phys_obj **object)
 		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
 		{"win_draw_mode", NULL, VAR_WIN_DRAW_MODE, VAR_CMD},
 		{"lua_readopts", NULL, VAR_LUA_READOPTS, VAR_CMD},
+		{"lua_run_gc", NULL, VAR_LUA_RUN_GC, VAR_CMD},
 		{"#command (runs a system command)", NULL, VAR_CMD_SYS, VAR_CMD},
 		{0}
 	});
@@ -328,6 +329,9 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 							}
 							parse_lua_simconf_options(total_opt_map);
 						}
+						break;
+					case VAR_LUA_RUN_GC:
+						parser_lua_gc_sweep(NULL);
 						break;
 					case VAR_WIN_DRAW_MODE:
 						if (!t->win || !*t->win)

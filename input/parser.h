@@ -53,7 +53,7 @@ enum parser_var_type {
     bool: VAR_BOOL,                   short int: VAR_SHORT,                    \
     char *: VAR_STRING,               long int: VAR_LONGINT,                   \
     unsigned long int: VAR_LONGUINT,  long long unsigned int: VAR_LONGLONGUINT,\
-    float*: VAR_COLOR, default: VAR_NO_IDEA                                  \
+    float*: VAR_COLOR, default: VAR_NO_IDEA                                    \
 ), _Generic((x), bool: LUA_TBOOLEAN, char *: LUA_TSTRING,                      \
     float*: LUA_TTABLE, default: LUA_TNUMBER)
 
@@ -103,12 +103,14 @@ int parse_lua_simconf_elements(const char *filepath);
 /* Misc lua */
 unsigned long int conf_lua_getlen(lua_State *L, int pos);
 size_t parser_lua_current_gc_mem(lua_State *L);
+size_t parser_lua_gc_sweep(lua_State *L);
 
 /* Parsing f-ns */
 int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state);
 int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state);
 int conf_lua_parse_files(lua_State *L, struct lua_parser_state *parser_state);
 int conf_lua_parse_elements(lua_State *L, struct lua_parser_state *parser_state);
+/* Insert any of the functions above to parse it in */
 void conf_traverse_table(lua_State *L, int (rec_fn(lua_State *, struct lua_parser_state *)),
 						 struct lua_parser_state *parser_state);
 
@@ -123,6 +125,7 @@ void parser_push_object_array(lua_State *L, phys_obj *obj,
 unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 							struct global_statistics *stats);
 
+/* Misc parsing */
 const char *parse_file_to_str(const char *filename);
 
 #endif

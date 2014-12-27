@@ -41,7 +41,7 @@ extern struct option_struct {
 	char *thread_schedule_mode;
 	char *custom_sprite_png;
 	char *default_draw_mode;
-	unsigned int exec_funct_freq, skip_model_vec;
+	unsigned int exec_funct_freq, skip_model_vec, lua_gc_sweep_freq;
 	bool lua_expose_obj_array;
 	bool input_thread_enable;
 	

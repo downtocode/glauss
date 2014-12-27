@@ -21,7 +21,7 @@
 #include "input/parser.h"
 
 #define PHYS_LUA {                                                             \
-        .name = "lua_threading",                                               \
+        .name = "lua_threads",                                                 \
         .version = PACKAGE_VERSION,                                            \
         .desc = "Multiple Lua threads, not recommended",                       \
         .author = "Rostislav Pehlivanov",                                      \

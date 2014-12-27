@@ -56,7 +56,6 @@ void *t_lua_preinit(struct glob_thread_config *cfg)
 	
 	cfg->algo_opt_map = \
 		allocate_parser_map((struct parser_map []){
-			/* C can be a beautiful language sometimes too            */
 			{"t_lua_gc_freq",       P_TYPE(t_lua_gc_freq)       },
 			{0},
 		});

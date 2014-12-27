@@ -129,7 +129,7 @@ void *thread_ctrl(void *thread_setts)
 	struct glob_thread_config *t = thread_setts;
 	const double dt = option->dt;
 	unsigned int xyz_counter = 0, sshot_counter = 0, funct_counter = 0;
-	unsigned int thread_fn_counter = 0;
+	unsigned int thread_fn_counter = 0, gc_count = 0;
 	long long unsigned int t1 = phys_gettime_us(), t2 = 0;
 	
 	while (!*t->quit) {
@@ -166,11 +166,18 @@ void *thread_ctrl(void *thread_setts)
 		/* Lua function execution */
 		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
 			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
+			/* Update parser lua gc memory allocation stats */
+			phys_stats->lua_gc_mem = parser_lua_current_gc_mem(NULL);
 		}
 		
 		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,
 												  &thread_fn_counter)) {
 			t->thread_sched_fn(t);
+		}
+		
+		if (phys_timer_exec(option->lua_gc_sweep_freq, &gc_count)) {
+			size_t mem_sweep = parser_lua_gc_sweep(NULL);
+			pprint_ok("Ran full garbage collector sweep on the parser Lua context, freed %lu bytes\n", mem_sweep);
 		}
 		
 		/* Unblock and hope the other threads follow */

@@ -55,6 +55,19 @@ size_t parser_lua_current_gc_mem(lua_State *L)
 	return 1024*sizekb + remsizeb;
 }
 
+size_t parser_lua_gc_sweep(lua_State *L)
+{
+	if (!L) {
+		if (lua_loaded)
+			L = Lp;
+		else
+			return 0;
+	}
+	size_t mem = parser_lua_current_gc_mem(L);
+	lua_gc(L, LUA_GCCOLLECT, 0);
+	return mem - parser_lua_current_gc_mem(L);
+}
+
 static void conf_lua_get_vector(lua_State *L, vec3 *vec)
 {
 	/* Can be used for N dim tables, change 3 to N */
@@ -1033,9 +1046,6 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 					   funct);
 		}
 	}
-	
-	/* Update parser lua gc memory allocation stats */
-	phys_stats->lua_gc_mem = parser_lua_current_gc_mem(NULL);
 	
 	return parser_state->i;
 }

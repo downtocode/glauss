@@ -72,11 +72,11 @@ int main(int argc, char *argv[])
 			.bgcolor[2] = 0.06,
 			.bgcolor[3] = 1.0,
 			.lua_print = NULL,
-			//.bgcolor = (float[]){ 0.06, 0.06, 0.06, 1.00 },
 			
 			/* Input */
 			.input_thread_enable = 1,
 			.elements_file = NULL,
+			.lua_gc_sweep_freq = 1000,
 			
 			/* Physics */
 			.threads = 0,
