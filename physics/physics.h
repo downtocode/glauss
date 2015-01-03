@@ -47,6 +47,7 @@ enum phys_status {
 enum phys_set_status {
 	PHYS_STATUS,
 	PHYS_PAUSESTART,
+	PHYS_STEP_FWD,
 	PHYS_START,
 	PHYS_SHUTDOWN,
 };
@@ -85,13 +86,14 @@ struct global_statistics {
 
 /* Struct sent to threads' init functions */
 struct glob_thread_config {
-	bool paused;
+	bool paused, step_end;
 	volatile bool *quit;
-	unsigned int algo_threads, total_syncd_threads;
+	unsigned int algo_threads, total_syncd_threads, steps_fwd;
 	/* algo_threads is just the number of them at the time of start, excluding ctrl */
 	pthread_t *threads, control_thread;
-	pthread_mutex_t *pause;
+	pthread_mutex_t *pause, *step_pause;
 	pthread_barrier_t *ctrl;
+	pthread_cond_t *step_cond, *pause_cond;
 	pthread_spinlock_t *io_halt;
 	struct global_statistics *stats;
 	struct parser_map *algo_opt_map;

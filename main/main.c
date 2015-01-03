@@ -35,6 +35,7 @@
 #include "input/sighandle.h"
 #include "input/parser.h"
 #include "msg_phys.h"
+#include "mpcomms/mpcomms.h"
 
 #include "physics/physics_barnes_hut.h"
 
@@ -255,6 +256,13 @@ int main(int argc, char *argv[])
 				timer = 30.0f;
 		}
 	/*	Arguments	*/
+	
+	/* Message passing */
+		if (phys_mpcomms_init()) {
+			pprint_err("Unable to init message passing and communications interface\n");
+			return 1;
+		}
+	/* Message passing */
 	
 	/* Signal handling */
 		if (signal(SIGINT, on_quit_signal) == SIG_ERR) {

@@ -263,15 +263,38 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 		case PHYS_PAUSESTART:
 			if (!cfg) {
 				retval = PHYS_STATUS_STOPPED;
-			} else if (cfg->paused) {
-				pthread_mutex_unlock(cfg->pause);
+			}
+			if (cfg->step_end) {
+				pthread_cond_signal(cfg->step_cond);
+				cfg->step_end = false;
+				cfg->steps_fwd = 0;
+				cfg->paused = false;
+				retval = PHYS_STATUS_RUNNING;
+				break;
+			}
+			if (cfg->paused) {
+				pthread_cond_signal(cfg->pause_cond);
 				cfg->paused = false;
 				retval = PHYS_STATUS_RUNNING;
 			} else {
 				cfg->paused = true;
-				pthread_mutex_lock(cfg->pause);
 				retval = PHYS_STATUS_PAUSED;
 			}
+			break;
+		case PHYS_STEP_FWD:
+			if (!cfg) {
+				retval = PHYS_STATUS_STOPPED;
+				break;
+			}
+			if (cfg->step_end) {
+				pthread_cond_signal(cfg->step_cond);
+				cfg->step_end = false;
+			}
+			cfg->steps_fwd++;
+			if (cfg->paused) {
+				pthread_cond_signal(cfg->pause_cond);
+			}
+			retval = PHYS_STATUS_PAUSED;
 			break;
 		case PHYS_START:
 			algo = phys_find_algorithm(option->algorithm);
@@ -343,7 +366,6 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			
 			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
-			phys_ctrl(PHYS_PAUSESTART, NULL);
 			for (unsigned int k = 0; k < cfg->algo_threads; k++) {
 				if (pthread_create(&cfg->threads[k], &thread_attribs,
 								  algo->thread_location, cfg->threads_conf[k])) {
@@ -361,7 +383,6 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			} else {
 				pprintf(PRI_ESSENTIAL, "C...");
 			}
-			phys_ctrl(PHYS_PAUSESTART, NULL);
 			pprintf(PRI_OK, "\n");
 			/* Start threads */
 			

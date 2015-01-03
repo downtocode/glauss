@@ -224,9 +224,9 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 	int num_tok = 0;
 	bool match = 0;
 	char *tokstr = strdup(line);
-	char *token[CMD_MAX_TOKENS] = {NULL}, *freestr = tokstr;
+	char *recstr = NULL, *token[CMD_MAX_TOKENS] = {NULL}, *freestr = tokstr;
 	
-	tokstr = strtok(tokstr, " ");
+	tokstr = strtok_r(tokstr, " ", &recstr);
 	while (tokstr) {
 		if (num_tok > CMD_MAX_TOKENS) {
 			retval = CMD_TOO_MANY_TOKENS;
@@ -237,7 +237,7 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 			goto cleanall;
 		}
 		token[num_tok++] = strdup(tokstr);
-		tokstr = strtok (NULL, " ");
+		tokstr = strtok_r(NULL, " ", &recstr);
 	}
 	
 	if (token[0][0] == '#') {

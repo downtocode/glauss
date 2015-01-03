@@ -82,6 +82,15 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 	cfg->pause = calloc(1, sizeof(pthread_mutex_t));
 	pthread_mutex_init(cfg->pause, NULL);
 	
+	cfg->pause_cond = calloc(1, sizeof(pthread_cond_t));
+	pthread_cond_init(cfg->pause_cond, NULL);
+	
+	cfg->step_pause = calloc(1, sizeof(pthread_mutex_t));
+	pthread_mutex_init(cfg->step_pause, NULL);
+	
+	cfg->step_cond = calloc(1, sizeof(pthread_cond_t));
+	pthread_cond_init(cfg->step_cond, NULL);
+	
 	cfg->quit = calloc(1, sizeof(bool));
 	
 	return cfg;
@@ -118,6 +127,18 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	pthread_mutex_destroy(cfg->pause);
 	free(cfg->pause);
 	
+	/* Free pause cond */
+	pthread_cond_destroy(cfg->pause_cond);
+	free(cfg->pause_cond);
+	
+	/* Free step pause mutex */
+	pthread_mutex_destroy(cfg->step_pause);
+	free(cfg->step_pause);
+	
+	/* Free step pause cond */
+	pthread_cond_destroy(cfg->step_cond);
+	free(cfg->step_cond);
+	
 	/* Free anything else */
 	free((void *)cfg->quit);
 	free(cfg);
@@ -129,8 +150,11 @@ void *thread_ctrl(void *thread_setts)
 	struct glob_thread_config *t = thread_setts;
 	const double dt = option->dt;
 	unsigned int xyz_counter = 0, sshot_counter = 0, funct_counter = 0;
-	unsigned int thread_fn_counter = 0, gc_count = 0;
+	unsigned int thread_fn_counter = 0, gc_count = 0, steps_count = 0;
 	long long unsigned int t1 = phys_gettime_us(), t2 = 0;
+	
+	pthread_mutex_lock(t->pause);
+	pthread_mutex_lock(t->step_pause);
 	
 	while (!*t->quit) {
 		/* Block all threads */
@@ -140,8 +164,9 @@ void *thread_ctrl(void *thread_setts)
 		pthread_spin_unlock(t->io_halt);
 		
 		/* Pause all threads by stalling unlocking t->ctrl */
-		pthread_mutex_lock(t->pause);
-		pthread_mutex_unlock(t->pause);
+		if (t->paused) {
+			pthread_cond_wait(t->pause_cond, t->step_pause);
+		}
 		
 		/* Update progress */
 		t->stats->total_steps++;
@@ -180,9 +205,18 @@ void *thread_ctrl(void *thread_setts)
 			pprint_ok("Ran full garbage collector sweep on the parser Lua context, freed %lu bytes\n", mem_sweep);
 		}
 		
+		if (t->steps_fwd && phys_timer_exec(t->steps_fwd, &steps_count)) {
+			t->step_end = true;
+			t->steps_fwd = 0;
+			pthread_cond_wait(t->step_cond, t->step_pause);
+		}
+		
 		/* Unblock and hope the other threads follow */
 		pthread_barrier_wait(t->ctrl);
 	}
+	
+	pthread_mutex_unlock(t->step_pause);
+	pthread_mutex_unlock(t->pause);
 	
 	return 0;
 }

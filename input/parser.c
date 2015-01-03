@@ -89,6 +89,48 @@ static void conf_lua_get_color(lua_State *L, float color[4])
 	}
 }
 
+/* Look header file to see why it's needed */
+int parser_lua_fill_table_hack(lua_State *L, unsigned int arr_size)
+{
+	lua_newtable(L); /* Object */
+	lua_newtable(L); /* Pos */
+	for (int j = 0; j < 3; j++) {
+		lua_pushnumber(L, 0);
+		lua_rawseti(L, -2, j+1);
+	}
+	lua_setfield(L, -2, "pos");
+	lua_newtable(L); /* Vel */
+	for (int j = 0; j < 3; j++) {
+		lua_pushnumber(L, 0);
+		lua_rawseti(L, -2, j+1);
+	}
+	lua_setfield(L, -2, "vel");
+	lua_newtable(L); /* Acc */
+	for (int j = 0; j < 3; j++) {
+		lua_pushnumber(L, 0);
+		lua_rawseti(L, -2, j+1);
+	}
+	lua_setfield(L, -2, "acc");
+	lua_pushnumber(L, 1);
+	lua_setfield(L, -2, "mass");
+	lua_pushnumber(L, 0);
+	lua_setfield(L, -2, "charge");
+	lua_pushnumber(L, 0);
+	lua_setfield(L, -2, "radius");
+	lua_pushinteger(L, 0);
+	lua_setfield(L, -2, "atomnumber");
+	lua_pushinteger(L, arr_size+1);
+	lua_setfield(L, -2, "id");
+	lua_pushinteger(L, 0);
+	lua_setfield(L, -2, "state");
+	lua_pushboolean(L, true);
+	lua_setfield(L, -2, "ignore");
+	
+	lua_rawseti(L, -2, arr_size+1);
+	
+	return 0;
+}
+
 void parser_print_generic(struct parser_map *var)
 {
 	switch(var->type) {
@@ -1040,6 +1082,10 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 	
 	if (len) {
 		if (lua_istable(Lp, -1)) {
+			
+			/* Read about it in the header */
+			parser_lua_fill_table_hack(Lp, len);
+			
 			conf_traverse_table(Lp, &conf_lua_parse_objs, parser_state);
 		} else {
 			pprint_warn("Lua f-n \"%s\" did not return a table of objects. Ignoring.\n",

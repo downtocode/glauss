@@ -302,10 +302,17 @@ def build(ctx):
 		features  = ['c'],
 		includes='. .. ../../',
 	)
+	ctx(name='mpcomms',
+		path=ctx.path,
+		target='mpcomms',
+		source='mpcomms/mpcomms.c',
+		features  = ['c'],
+		includes='. .. ../../',
+	)
 	ctx(name='main',
 		path=ctx.path,
 		uselib=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
-		use=['in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
+		use=['in_file', 'msg_phys', 'sighandle', 'mpcomms', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
 		target='physengine',
 		source='main/main.c',
 		features  = ['c', 'cprogram'],

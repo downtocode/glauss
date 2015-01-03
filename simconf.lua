@@ -158,7 +158,7 @@ function measure_energy(obj)
 		for j = 1, #obj, 1 do
 			dist_vec = vector_sub(obj[j].pos, obj[i].pos)
 			dist = math.sqrt(vector_det(vector_mul(dist_vec, dist_vec)))
-			if dist > 2.9 then goto continue end
+			if dist > 5.9 then goto continue end
 			sum = obj[i].atomnumber + obj[j].atomnumber
 			if sum < 4 then
 				--Empty
@@ -225,7 +225,7 @@ function run_on_timestep(t_stats, obj)
 	local text = "Accepts = " .. accepts .. "    Accepts(rand) = " .. rand_accepts .. "    Rejects = " .. rejects .. "    Ediff = " .. diff
 	print_text(text)
 	
-	local rettable = {obj[src_index], obj[dest_index], obj[src_index]}
+	local rettable = {obj[src_index], obj[dest_index]}
 	
 	if newenergy < old_energy then
 		accepts = accepts + 1

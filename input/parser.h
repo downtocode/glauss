@@ -105,6 +105,16 @@ unsigned long int conf_lua_getlen(lua_State *L, int pos);
 size_t parser_lua_current_gc_mem(lua_State *L);
 size_t parser_lua_gc_sweep(lua_State *L);
 
+/* When we parse a Lua table in the exec function we need to add one last
+ * dummy object at the end so that the final last actual object doesn't get
+ * cut off. Why: Lua lua_next returns there's nothing next when there actually
+ * IS SOMETHING NEXT. So we don't get to update the object in our array.
+ * The dummy object doesn't get updated into the array because we offset
+ * Lua's retarded behaviour by one. Deja vu? Yes indeed, the very first object
+ * we get from Lua when parsing is always some gibberish, hence we have a bool
+ * check to skip inputting that object into our array(see nullswitch). Fuck. */
+int parser_lua_fill_table_hack(lua_State *L, unsigned int arr_size);
+
 /* Parsing f-ns */
 int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state);
 int conf_lua_parse_opts(lua_State *L, struct lua_parser_state *parser_state);

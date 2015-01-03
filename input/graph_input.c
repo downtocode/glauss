@@ -139,6 +139,9 @@ int graph_scan_keypress(graph_window *win)
 			if (win->chosen < option->obj)
 				win->chosen++;
 			break;
+		case SDLK_d:
+			phys_ctrl(PHYS_STEP_FWD, NULL);
+			break;
 		case SDLK_COMMA:
 			if(win->chosen > 0)
 				win->chosen--;
