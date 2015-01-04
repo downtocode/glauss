@@ -246,6 +246,21 @@ void phys_ctrl_wait(pthread_barrier_t *barr)
 	pthread_barrier_wait(barr);
 }
 
+unsigned int phys_fwd_steps(unsigned int steps)
+{
+	if (!cfg)
+		return 0;
+	if (cfg->step_end) {
+		pthread_cond_signal(cfg->step_cond);
+		cfg->step_end = false;
+	}
+	cfg->steps_fwd += steps;
+	if (cfg->paused) {
+		pthread_cond_signal(cfg->pause_cond);
+	}
+	return cfg->steps_fwd;
+}
+
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 {
 	phys_algorithm *algo = NULL;
@@ -280,18 +295,7 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			}
 			break;
 		case PHYS_STEP_FWD:
-			if (!cfg) {
-				retval = PHYS_STATUS_STOPPED;
-				break;
-			}
-			if (cfg->step_end) {
-				pthread_cond_signal(cfg->step_cond);
-				cfg->step_end = false;
-			}
-			cfg->steps_fwd++;
-			if (cfg->paused) {
-				pthread_cond_signal(cfg->pause_cond);
-			}
+			phys_fwd_steps(1);
 			retval = PHYS_STATUS_PAUSED;
 			break;
 		case PHYS_START:

@@ -59,6 +59,7 @@ enum commands {
 	VAR_LUA_READOPTS,
 	VAR_LUA_RUN_GC,
 	VAR_CHECK_COLLISIONS,
+	VAR_STEP_FWD,
 };
 
 /* Sent to input thread */

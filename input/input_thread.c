@@ -69,6 +69,7 @@ int input_thread_init(graph_window **win, phys_obj **object)
 		{"clear", NULL, VAR_CLEAR, VAR_CMD},
 		{"pause", NULL, VAR_PAUSE, VAR_CMD},
 		{"unpause", NULL, VAR_PAUSE, VAR_CMD},
+		{"step_fwd", NULL, VAR_STEP_FWD},
 		{"element", NULL, VAR_ELE_COLOR, VAR_CMD},
 		{"win_create", NULL, VAR_ENABLE_WINDOW, VAR_CMD},
 		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
@@ -304,6 +305,14 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 						break;
 					case VAR_PAUSE:
 						phys_ctrl(PHYS_PAUSESTART, NULL);
+						break;
+					case VAR_STEP_FWD:
+						if (num_tok < 2) {
+							printf("Usage: \"step_fwd <number>\"\n");
+						} else {
+							unsigned int steps = strtoul(token[1], NULL, 10);
+							phys_fwd_steps(steps);
+						}
 						break;
 					case VAR_QUIT:
 						retval = CMD_EXIT;

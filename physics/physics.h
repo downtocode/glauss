@@ -163,6 +163,8 @@ int phys_init(phys_obj **object);
 void phys_urgent_dump(void);
 int phys_quit(phys_obj **object);
 int phys_set_sched_mode(char **mode);
+
+unsigned int phys_fwd_steps(unsigned int steps);
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object);
 
 #endif
