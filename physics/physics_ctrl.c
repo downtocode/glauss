@@ -163,11 +163,6 @@ void *thread_ctrl(void *thread_setts)
 		/* Unlock IO */
 		pthread_spin_unlock(t->io_halt);
 		
-		/* Pause all threads by stalling unlocking t->ctrl */
-		if (t->paused) {
-			pthread_cond_wait(t->pause_cond, t->step_pause);
-		}
-		
 		/* Update progress */
 		t->stats->total_steps++;
 		t2 = phys_gettime_us();
@@ -209,6 +204,11 @@ void *thread_ctrl(void *thread_setts)
 			t->step_end = true;
 			t->steps_fwd = 0;
 			pthread_cond_wait(t->step_cond, t->step_pause);
+		}
+		
+		/* Pause all threads by stalling unlocking t->ctrl */
+		if (t->paused) {
+			pthread_cond_wait(t->pause_cond, t->step_pause);
 		}
 		
 		/* Unblock and hope the other threads follow */

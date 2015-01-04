@@ -268,8 +268,6 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 				pthread_cond_signal(cfg->step_cond);
 				cfg->step_end = false;
 				cfg->steps_fwd = 0;
-				cfg->paused = false;
-				retval = PHYS_STATUS_RUNNING;
 				break;
 			}
 			if (cfg->paused) {
@@ -406,7 +404,7 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			/* Stop threads */
 			pprintf(PRI_ESSENTIAL, "Stopping threads...");
 			*cfg->quit = true;
-			if (cfg->paused)
+			if (cfg->paused || cfg->step_end)
 				phys_ctrl(PHYS_PAUSESTART, NULL);
 			void *res = PTHREAD_CANCELED; /* Can be any !null pointer */
 			for (unsigned int k = 0; k < cfg->algo_threads; k++) {
