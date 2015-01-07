@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <libgen.h>
 #include <tgmath.h>
 #include <getopt.h>
 #include <signal.h>
@@ -218,6 +219,9 @@ int main(int argc, char *argv[])
 						return 0;
 					} else {
 						parse_lua_simconf_options(opts_map);
+						if (!option->simconf_id) {
+							option->simconf_id = strdup(basename(optarg));
+						}
 					}
 					break;
 				case 'h':
@@ -347,16 +351,7 @@ int main(int argc, char *argv[])
 	phys_quit(&object);
 	
 	/* Free options */
-	free(option->spawn_funct);
-	free(option->fontname);
-	free(option->timestep_funct);
-	free(option->algorithm);
-	free(option->thread_schedule_mode);
-	free(option->default_draw_mode);
-	free(option->custom_sprite_png);
-	free(option->xyz_temp);
-	free(option->sshot_temp);
-	free(option->lua_print);
+	parser_map_free_strings(opts_map);
 	
 	pprint("Done!\n");
 	

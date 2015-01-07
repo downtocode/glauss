@@ -206,11 +206,10 @@ void *thread_ctrl(void *thread_setts)
 			}
 			/* Rotate the pointers in the new array */
 			for (int i = 0; i < t->step_back_buffer_size + 1; i++) {
-				t->step_back_buffer[i] = old_buffer[t->step_back_buffer_size - i];
+				t->step_back_buffer[i] = old_buffer[i < 1 ? t->step_back_buffer_size : i - 1];
 			}
 			/* Write to the oldest buffer */
-			memcpy(t->step_back_buffer[0], t->obj, t->obj_num);
-			/* Such a simple, obvious and beautiful algorithm */
+			memcpy(t->step_back_buffer[0], t->obj, t->obj_num*sizeof(phys_obj));
 		}
 		
 		/* Unlock IO */

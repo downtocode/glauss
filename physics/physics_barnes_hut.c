@@ -82,16 +82,16 @@ static void bh_add_thread(bh_thread *root,
 		}
 	}
 	/* Split the octree and assign the threads */
-	uint8_t distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
+	short int distrb = 8/root->assigned, remain = 8%root->assigned, oct = 0;
 	bool oct_assignments[8] = {false};
 	
-	for (uint8_t k = 1; k < root->assigned + 1; k++) {
+	for (int k = 1; k < root->assigned + 1; k++) {
 		/* Calculate the threads' share. Add the calculated remain to the first ones. */
-		uint8_t thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
+		int thread_conts = distrb + ((remain-- > 0) ? 1 : 0);
 		
 		root->assign[k]->tot_octs = thread_conts;
 		
-		for (uint8_t l = 0; l < thread_conts; l++) {
+		for (int l = 0; l < thread_conts; l++) {
 			if (bh_random_assign) {
 				/* Map threads to random subtrees */
 				while (1) {

@@ -289,11 +289,36 @@ unsigned int phys_bwd_steps(unsigned int steps)
 	
 	pthread_spin_lock(cfg->io_halt);
 	
-	memcpy(cfg->obj, cfg->step_back_buffer[steps], cfg->obj_num);
+	memcpy(cfg->obj, cfg->step_back_buffer[steps], cfg->obj_num*sizeof(phys_obj));
 	
 	pthread_spin_unlock(cfg->io_halt);
 	
 	return steps;
+}
+
+int phys_revert_single_step(void)
+{
+	if (!cfg || !cfg->paused || !cfg->step_back_buffer[0])
+		return 1;
+	if (cfg->step_back_buffer_size > cfg->stats->total_steps)
+		return 1;
+	
+	pthread_spin_lock(cfg->io_halt);
+	
+	/* Basically undoes the control thread's actions */
+	phys_obj *old_buffer[cfg->step_back_buffer_size];
+	for (unsigned int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
+		old_buffer[i] = cfg->step_back_buffer[i];
+	}
+	for (int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
+		cfg->step_back_buffer[i] = old_buffer[i >= cfg->step_back_buffer_size ? 0 : i + 1];
+	}
+	
+	memcpy(cfg->obj, cfg->step_back_buffer[0], cfg->obj_num*sizeof(phys_obj));
+	
+	pthread_spin_unlock(cfg->io_halt);
+	
+	return 0;
 }
 
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)

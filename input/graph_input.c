@@ -139,7 +139,10 @@ int graph_scan_keypress(graph_window *win)
 			if (win->chosen < option->obj)
 				win->chosen++;
 			break;
-		case SDLK_d:
+		case SDLK_c:
+			phys_revert_single_step();
+			break;
+		case SDLK_v:
 			phys_ctrl(PHYS_STEP_FWD, NULL);
 			break;
 		case SDLK_COMMA:

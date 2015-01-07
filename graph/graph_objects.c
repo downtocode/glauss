@@ -121,12 +121,13 @@ void draw_obj_sprite(phys_obj *object)
 void draw_obj_points(phys_obj *object)
 {
 	GLfloat points[option->obj][3];
+	
 	GLuint size = 0;
 	
 	glUniform1i(objattr_mode, 0);
-	glUniform4fv(objattr_color, 1, atom_prop[0].color);
+	glUniform4fv(objattr_color, 1, white);
 	glUniform1f(objattr_radius, option->def_radius);
-	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, atom_prop[0].color);
+	glVertexAttribPointer(objattr_color, 4, GL_FLOAT, GL_FALSE, 0, white);
 	glVertexAttribPointer(objattr_pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
 	glEnableVertexAttribArray(objattr_pos);
@@ -227,13 +228,14 @@ static const char object_fs[] =
 GLuint graph_init_objects(void)
 {
 	GLint width, height;
-	if (option->custom_sprite_png)
+	if (option->custom_sprite_png) {
 		texture_sprite = graph_load_png_texture(option->custom_sprite_png,
 												&width, &height);
-	else
+	} else {
 		texture_sprite = graph_load_c_png_texture((void *)circle_png,
 												  sizeof(circle_png),
 												  &width, &height);
+	}
 	
 	GLuint obj_program = graph_compile_shader(object_vs, object_fs);
 	glBindAttribLocation(obj_program, objattr_mode, "draw_mode");

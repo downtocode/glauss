@@ -27,6 +27,7 @@ settings = {
 		--Expose object array to the timestep_funct, slight performance decrease
 		reset_stats_freq = 1;
 		--Disable any averaging and reset global stats every cycle
+		step_back_buffer = 20,
 	},
 	visual = {
 		width = 1024,
@@ -39,6 +40,7 @@ settings = {
 		dump_sshot = 0, --Auto screenshot dump frequency
 		dump_xyz = 0, --Auto xyz dump frequency
 		skip_model_vec = 200,
+		default_draw_mode = "MODE_POINTS",
 	},
 	constants = {
 		--elcharge = 1.602176565*10^-2,

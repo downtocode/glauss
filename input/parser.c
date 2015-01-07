@@ -693,6 +693,18 @@ int parse_lua_close(void)
 	return 0;
 }
 
+void parser_map_free_strings(struct parser_map *map)
+{
+	for (struct parser_map *i = map; i->name; i++) {
+		if (i->type == VAR_STRING) {
+			if (i->val) {
+				free(*((char **)i->val));
+				*((char **)i->val) = NULL;
+			}
+		}
+	}
+}
+
 void print_parser_map(struct parser_map *map)
 {
 	if (!map) {

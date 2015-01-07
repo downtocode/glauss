@@ -92,6 +92,7 @@ int unregister_parser_map(struct parser_map *map, struct parser_map **dest);
 
 /* Maps I/O */
 int parser_get_value_str(struct parser_map var, char *str, size_t len);
+void parser_map_free_strings(struct parser_map *map);
 void parser_print_generic(struct parser_map *var);
 void parser_set_generic(struct parser_map *var, const char *val);
 void parser_push_generic(lua_State *L, struct parser_map *var);

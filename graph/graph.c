@@ -62,7 +62,7 @@
 
 /* Algorithm stats */
 #define STATSx -0.95
-#define STATSy -0.41
+#define STATSy -0.30
 #define STATSs  0.75
 
 /* Object selection */

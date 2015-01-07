@@ -192,6 +192,7 @@ int phys_set_sched_mode(char **mode);
 
 unsigned int phys_fwd_steps(unsigned int steps);
 unsigned int phys_bwd_steps(unsigned int steps);
+int phys_revert_single_step(void);
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object);
 
 #endif
