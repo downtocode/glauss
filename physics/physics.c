@@ -87,6 +87,14 @@ phys_algorithm *phys_find_algorithm(const char *name)
 	return NULL;
 }
 
+struct glob_thread_config *phys_get_config()
+{
+	if (!cfg)
+		return NULL;
+	else
+		return cfg;
+}
+
 void phys_list_algo(void)
 {
 	pprintf(PRI_ESSENTIAL, "Implemented algorithms:\n");
@@ -246,6 +254,15 @@ void phys_ctrl_wait(pthread_barrier_t *barr)
 	pthread_barrier_wait(barr);
 }
 
+phys_obj *phys_history(unsigned int steps)
+{
+	if (!cfg)
+		return NULL;
+	steps = steps > cfg->step_back_buffer_size ? cfg->step_back_buffer_size : steps;
+	steps = steps > cfg->stats->total_steps ? cfg->stats->total_steps : steps;
+	return cfg->step_back_buffer[steps];
+}
+
 unsigned int phys_fwd_steps(unsigned int steps)
 {
 	if (!cfg)
@@ -259,6 +276,24 @@ unsigned int phys_fwd_steps(unsigned int steps)
 		pthread_cond_signal(cfg->pause_cond);
 	}
 	return cfg->steps_fwd;
+}
+
+unsigned int phys_bwd_steps(unsigned int steps)
+{
+	if (!cfg || !steps)
+		return 0;
+	
+	/* Checks */
+	steps = steps > cfg->step_back_buffer_size ? cfg->step_back_buffer_size : steps;
+	steps = steps > cfg->stats->total_steps ? cfg->stats->total_steps : steps;
+	
+	pthread_spin_lock(cfg->io_halt);
+	
+	memcpy(cfg->obj, cfg->step_back_buffer[steps], cfg->obj_num);
+	
+	pthread_spin_unlock(cfg->io_halt);
+	
+	return steps;
 }
 
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
@@ -335,6 +370,8 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 			/* Create configuration */
 			cfg = ctrl_preinit(phys_stats, *object);
 			cfg->thread_sched_fn = algo->thread_sched_fn;
+			cfg->algorithm = strdup(algo->name);
+			cfg->simconf_id = strdup(option->simconf_id);
 			
 			/* Algorithms should register options here */
 			if (algo->thread_preconfiguration) {

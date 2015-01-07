@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
 			.algorithm = strdup("none"),
 			.thread_schedule_mode = strdup("SCHED_RR"),
 			.custom_sprite_png = NULL,
+			.step_back_buffer = 0,
 			
 			/* Physics - ctrl */
 			.dump_xyz = 0,
@@ -108,6 +109,7 @@ int main(int argc, char *argv[])
 			{"gconst",                 P_TYPE(option->gconst)                 },
 			{"verbosity",              P_TYPE(option->verbosity)              },
 			{"fontsize",               P_TYPE(option->fontsize)               },
+			{"step_back_buffer",       P_TYPE(option->step_back_buffer)       },
 			{"def_radius",             P_TYPE(option->def_radius)             },
 			{"dump_xyz",               P_TYPE(option->dump_xyz)               },
 			{"dump_sshot",             P_TYPE(option->dump_sshot)             },
@@ -123,6 +125,7 @@ int main(int argc, char *argv[])
 			{"bgcolor",                P_TYPE(option->bgcolor)                },
 			{"fontname",               P_TYPE(option->fontname)               },
 			{"elements_file",          P_TYPE(option->elements_file)          },
+			{"simconf_id",             P_TYPE(option->simconf_id)             },
 			{"lua_expose_obj_array",   P_TYPE(option->lua_expose_obj_array)   },
 			{"input_thread_enable",    P_TYPE(option->input_thread_enable)    },
 			{"thread_schedule_mode",   P_TYPE(option->thread_schedule_mode)   },
@@ -256,13 +259,6 @@ int main(int argc, char *argv[])
 				timer = 30.0f;
 		}
 	/*	Arguments	*/
-	
-	/* Message passing */
-		if (phys_mpcomms_init()) {
-			pprint_err("Unable to init message passing and communications interface\n");
-			return 1;
-		}
-	/* Message passing */
 	
 	/* Signal handling */
 		if (signal(SIGINT, on_quit_signal) == SIG_ERR) {

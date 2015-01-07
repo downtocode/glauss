@@ -70,6 +70,7 @@ int input_thread_init(graph_window **win, phys_obj **object)
 		{"pause", NULL, VAR_PAUSE, VAR_CMD},
 		{"unpause", NULL, VAR_PAUSE, VAR_CMD},
 		{"step_fwd", NULL, VAR_STEP_FWD},
+		{"step_bwd", NULL, VAR_STEP_BWD},
 		{"element", NULL, VAR_ELE_COLOR, VAR_CMD},
 		{"win_create", NULL, VAR_ENABLE_WINDOW, VAR_CMD},
 		{"win_destroy", NULL, VAR_DISABLE_WINDOW, VAR_CMD},
@@ -140,7 +141,6 @@ void input_repos_prompt(void)
 
 static void input_cmd_printall(struct parser_map *cmd_map, struct parser_map *opt_map)
 {
-	pprint_disable_redraw();
 	pprint_input("Implemented variables:\n");
 	for (struct parser_map *i = opt_map; i->name; i++) {
 		parser_print_generic(i);
@@ -154,7 +154,6 @@ static void input_cmd_printall(struct parser_map *cmd_map, struct parser_map *op
 			parser_print_generic(i);
 		}
 	}
-	pprint_enable_redraw();
 }
 
 int input_call_system(const char *cmd)
@@ -314,6 +313,14 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 							phys_fwd_steps(steps);
 						}
 						break;
+					case VAR_STEP_BWD:
+						if (num_tok < 2) {
+							printf("Usage: \"step_bwd <number>\"\n");
+						} else {
+							unsigned int steps = strtoul(token[1], NULL, 10);
+							phys_bwd_steps(steps);
+						}
+						break;
 					case VAR_QUIT:
 						retval = CMD_EXIT;
 						break;
@@ -324,8 +331,8 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 						raise(SIGUSR1);
 						break;
 					case VAR_CLEAR:
-						for (int c = 0; c < CMD_CLEAR_REPS; c++)
-							pprint_input("\n");
+						for (int c = 0; c < t->lines; c++)
+							printf("\n");
 						break;
 					case VAR_LUA_READOPTS:
 						if (num_tok < 2) {
@@ -383,7 +390,8 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 
 char *input_cmd_generator(const char *line, int state)
 {
-	/* Readline is fussy as fuck about every single word. Here be dragons */
+	/* Readline examples were BAD as fuck. They didn't say if variables
+	 * were supposed to be global. FUCK YOU. I seriously thought that I was haunted */
 	char *name = NULL;
 	if (!state) {
 		list_index_cmd = 0;
@@ -399,7 +407,6 @@ char *input_cmd_generator(const char *line, int state)
 
 char *input_opt_generator(const char *line, int state)
 {
-	/* Readline is fussy as fuck about every single... we did this already */
 	char *name = NULL;
 	if (!state) {
 		list_index_opt = 0;
@@ -439,6 +446,9 @@ void *input_thread(void *thread_setts)
 	 * tries to do that, DESPITE having to make us call SDL_Quit(). It's retarded */
 	rl_catch_signals = false;
 	rl_attempted_completion_function = input_completion;
+	
+	unsigned int lines = 0; /* TODO: find terminal size WITHOUT an ioctl call */
+	t->lines = lines ? lines : CMD_CLEAR_REPS;
 	
 	rl_prep_terminal(0);
 	

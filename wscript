@@ -110,6 +110,9 @@ def configure(ctx):
 	ctx.define('LUA_LIB', lua_path + '/lualib.h')
 	ctx.define('LUA_HAS_NEW_LEN', ctx.options.lua_ver == 'lua5.2')
 	
+	ctx.define('COMMS_VER_MAJOR', 0)
+	ctx.define('COMMS_VER_MINOR', 3)
+	
 	ctx.write_config_header('config.h')
 	
 	if (ctx.options.lto):

@@ -36,7 +36,7 @@ extern struct option_struct {
 	
 	/* Input */
 	char *fontname, *filename, *algorithm, *sshot_temp, *xyz_temp;
-	char *elements_file;
+	char *elements_file, *simconf_id;
 	char *spawn_funct, *timestep_funct;
 	char *thread_schedule_mode;
 	char *custom_sprite_png;
@@ -51,6 +51,7 @@ extern struct option_struct {
 	unsigned short threads;
 	unsigned int rng_seed;
 	double elcharge, gconst, epsno;
+	unsigned int step_back_buffer;
 	
 	/* Physics - ctrl */
 	unsigned int dump_xyz, dump_sshot;

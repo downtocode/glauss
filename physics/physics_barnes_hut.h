@@ -61,7 +61,7 @@ struct bh_statistics {
 struct thread_config_bhut {
 	phys_obj *obj;
 	bh_octree *root, *octrees[8];
-	unsigned int id, objs_low, objs_high, tot_octs, balance_timeout;
+	unsigned int id, objs_low, objs_high, obj_num, tot_octs, balance_timeout;
 	struct bh_statistics *glob_stats;
 	struct bh_statistics *stats;
 	pthread_barrier_t *ctrl, *barrier;

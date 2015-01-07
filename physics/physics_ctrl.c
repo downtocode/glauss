@@ -36,6 +36,7 @@ struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, phys_ob
 	cfg->algo_threads = option->threads;
 	cfg->total_syncd_threads = cfg->algo_threads + 1;
 	cfg->obj = obj;
+	cfg->obj_num = option->obj;
 	cfg->stats = stats;
 	
 	cfg->algo_thread_stats_map = calloc(cfg->algo_threads+1, sizeof(struct parser_map *));
@@ -51,7 +52,6 @@ struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, phys_ob
 				{0},
 			});
 	}
-	
 	return cfg;
 }
 
@@ -92,6 +92,16 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 	pthread_cond_init(cfg->step_cond, NULL);
 	
 	cfg->quit = calloc(1, sizeof(bool));
+	
+	/* Back buffer allocation */
+	cfg->step_back_buffer_size = option->step_back_buffer;
+	
+	if (cfg->step_back_buffer_size) {
+		cfg->step_back_buffer = calloc(option->step_back_buffer, sizeof(phys_obj *));
+		for (unsigned int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
+			cfg->step_back_buffer[i] = calloc(cfg->obj_num + 1, sizeof(phys_obj));
+		}
+	}
 	
 	return cfg;
 }
@@ -139,8 +149,18 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	pthread_cond_destroy(cfg->step_cond);
 	free(cfg->step_cond);
 	
+	/* Free step_back_buffer */
+	if (cfg->step_back_buffer_size) {
+		for (unsigned int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
+			free(cfg->step_back_buffer[i]);
+		}
+		free(cfg->step_back_buffer);
+	}
+	
 	/* Free anything else */
 	free((void *)cfg->quit);
+	free(cfg->algorithm);
+	free(cfg->simconf_id);
 	free(cfg);
 	return;
 }
@@ -159,6 +179,39 @@ void *thread_ctrl(void *thread_setts)
 	while (!*t->quit) {
 		/* Block all threads */
 		pthread_barrier_wait(t->ctrl);
+		
+		/* Lua function execution */
+		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
+			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
+			/* Update parser lua gc memory allocation stats */
+			phys_stats->lua_gc_mem = parser_lua_current_gc_mem(NULL);
+		}
+		
+		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,
+												  &thread_fn_counter)) {
+			t->thread_sched_fn(t);
+		}
+		
+		if (phys_timer_exec(option->lua_gc_sweep_freq, &gc_count)) {
+			size_t mem_sweep = parser_lua_gc_sweep(NULL);
+			pprint_ok("Ran full garbage collector sweep on the parser Lua context, freed %lu bytes\n", mem_sweep);
+		}
+		
+		/* Fill back buffer if needed */
+		if (t->step_back_buffer_size) {
+			/* Copy the old pointer order */
+			phys_obj *old_buffer[t->step_back_buffer_size];
+			for (unsigned int i = 0; i < t->step_back_buffer_size + 1; i++) {
+				old_buffer[i] = t->step_back_buffer[i];
+			}
+			/* Rotate the pointers in the new array */
+			for (int i = 0; i < t->step_back_buffer_size + 1; i++) {
+				t->step_back_buffer[i] = old_buffer[t->step_back_buffer_size - i];
+			}
+			/* Write to the oldest buffer */
+			memcpy(t->step_back_buffer[0], t->obj, t->obj_num);
+			/* Such a simple, obvious and beautiful algorithm */
+		}
 		
 		/* Unlock IO */
 		pthread_spin_unlock(t->io_halt);
@@ -180,26 +233,7 @@ void *thread_ctrl(void *thread_setts)
 			option->write_sshot_now = true;
 		}
 		
-		/* Lock back the IO */
-		pthread_spin_lock(t->io_halt);
-		
-		/* Lua function execution */
-		if (phys_timer_exec(option->exec_funct_freq, &funct_counter)) {
-			lua_exec_funct(option->timestep_funct, t->obj, t->stats);
-			/* Update parser lua gc memory allocation stats */
-			phys_stats->lua_gc_mem = parser_lua_current_gc_mem(NULL);
-		}
-		
-		if (t->thread_sched_fn && phys_timer_exec(t->thread_sched_fn_freq,
-												  &thread_fn_counter)) {
-			t->thread_sched_fn(t);
-		}
-		
-		if (phys_timer_exec(option->lua_gc_sweep_freq, &gc_count)) {
-			size_t mem_sweep = parser_lua_gc_sweep(NULL);
-			pprint_ok("Ran full garbage collector sweep on the parser Lua context, freed %lu bytes\n", mem_sweep);
-		}
-		
+		/* Step forward block */
 		if (t->steps_fwd && phys_timer_exec(t->steps_fwd, &steps_count)) {
 			t->step_end = true;
 			t->steps_fwd = 0;
@@ -210,6 +244,9 @@ void *thread_ctrl(void *thread_setts)
 		if (t->paused) {
 			pthread_cond_wait(t->pause_cond, t->step_pause);
 		}
+		
+		/* Lock back the IO */
+		pthread_spin_lock(t->io_halt);
 		
 		/* Unblock and hope the other threads follow */
 		pthread_barrier_wait(t->ctrl);

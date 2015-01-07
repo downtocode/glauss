@@ -18,6 +18,39 @@
 #ifndef PHYSENGINE_MPCOMMS
 #define PHYSENGINE_MPCOMMS
 
-int phys_mpcomms_init();
+#include "physics/physics.h"
+
+enum MPCOMMS_METHOD {
+	METHOD_NULL,
+	METHOD_SOCKET
+};
+
+enum MPCOMMS_MODE {
+	MODE_CLIENT,
+	MODE_SERVER,
+	MODE_LISTEN
+};
+
+/* server - the server handling and distributing everything, ID is always 1
+ * worker - subworkers, worker_num in total, random order
+ * id - unique identifier
+ * threads - server: the total amount, worker: the amount for that machine
+ * hostname - local machine's hostname
+ * algo - name of algorithm, guaranteed to exist
+ * obj - the entire set of objects
+ * stats - statistics */
+
+struct phys_interface {
+	struct phys_interface *server, **worker;
+	unsigned int id, threads, worker_num, ver_major, ver_minor;
+	const char *hostname, *simconf_id, *algorithm;
+	phys_obj *obj;
+	bool *quit;
+	pthread_barrier_t *iface_sync;
+	struct global_statistics *stats;
+};
+
+int mpcomms_fetch_unique_client_id(unsigned int *id);
+int mpcomms_init(struct glob_thread_config *cfg, enum MPCOMMS_MODE mode, enum MPCOMMS_METHOD method);
 
 #endif

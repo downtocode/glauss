@@ -41,7 +41,7 @@ struct thread_config_lua {
 	phys_obj *obj;
 	struct t_lua_statistics *glob_stats;
 	struct t_lua_statistics *stats;
-	unsigned int id, objs_low, objs_high;
+	unsigned int id, objs_low, objs_high, obj_num;
 	char *lua_exec_fn;
 	lua_State *L;
 	pthread_barrier_t *ctrl;

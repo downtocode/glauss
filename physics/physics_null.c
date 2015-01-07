@@ -72,7 +72,7 @@ void **null_init(struct glob_thread_config *cfg)
 	pthread_mutex_t *mute = calloc(1, sizeof(pthread_mutex_t));
 	pthread_mutex_init(mute, NULL);
 	
-	int totcore = (int)((float)option->obj/cfg->algo_threads);
+	int totcore = (int)((float)cfg->obj_num/cfg->algo_threads);
 	
 	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k]->glob_stats = cfg->algo_global_stats_raw;
@@ -82,11 +82,12 @@ void **null_init(struct glob_thread_config *cfg)
 		thread_config[k]->id = k;
 		thread_config[k]->quit = cfg->quit;
 		thread_config[k]->obj = cfg->obj;
+		thread_config[k]->obj_num = cfg->obj_num;
 		thread_config[k]->objs_low = !k ? 0 : thread_config[k-1]->objs_high;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
 		if (k == cfg->algo_threads - 1) {
 			/*	Takes care of rounding problems with odd numbers.	*/
-			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
+			thread_config[k]->objs_high += cfg->obj_num - thread_config[k]->objs_high;
 		}
 	}
 	
@@ -138,7 +139,7 @@ void *thread_stats(void *thread_setts)
 		vec3 vecnorm = (vec3){0};
 		double dist = 0.0, avg_dist = 0.0, max_dist = 0.0;
 		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
-			for (unsigned int j = 0; j < option->obj; j++) {
+			for (unsigned int j = 0; j < t->obj_num; j++) {
 				if (i==j)
 					continue;
 				vecnorm = t->obj[j].pos - t->obj[i].pos;

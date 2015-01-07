@@ -91,7 +91,7 @@ void **t_lua_init(struct glob_thread_config *cfg)
 	pthread_mutex_t *mute = calloc(1, sizeof(pthread_mutex_t));
 	pthread_mutex_init(mute, NULL);
 	
-	int totcore = (int)((float)option->obj/cfg->algo_threads);
+	int totcore = (int)((float)cfg->obj_num/cfg->algo_threads);
 	
 	for (int k = 0; k < cfg->algo_threads; k++) {
 		/* Yeah, it's slow, USE THE DAMN C API if you want proper multithreading! */
@@ -103,12 +103,13 @@ void **t_lua_init(struct glob_thread_config *cfg)
 		thread_config[k]->id = k;
 		thread_config[k]->quit = cfg->quit;
 		thread_config[k]->obj = cfg->obj;
+		thread_config[k]->obj_num = cfg->obj_num;
 		thread_config[k]->lua_exec_fn = strdup(option->timestep_funct);
 		thread_config[k]->objs_low = !k ? 0 : thread_config[k-1]->objs_high;
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
 		if (k == cfg->algo_threads - 1) {
 			/*	Takes care of rounding problems with odd numbers.	*/
-			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
+			thread_config[k]->objs_high += cfg->obj_num - thread_config[k]->objs_high;
 		}
 	}
 	

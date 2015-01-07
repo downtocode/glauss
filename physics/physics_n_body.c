@@ -36,12 +36,13 @@ void **nbody_init(struct glob_thread_config *cfg)
 	pthread_barrier_t *barrier = calloc(1, sizeof(pthread_barrier_t));
 	pthread_barrier_init(barrier, NULL, cfg->algo_threads);
 	
-	int totcore = (int)((float)option->obj/cfg->algo_threads);
+	int totcore = (int)((float)cfg->obj_num/cfg->algo_threads);
 	
 	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k]->glob_stats = cfg->stats;
 		thread_config[k]->stats = &cfg->stats->t_stats[k];
 		thread_config[k]->obj = cfg->obj;
+		thread_config[k]->obj_num = cfg->obj_num;
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->barrier = barrier;
 		thread_config[k]->id = k;
@@ -50,7 +51,7 @@ void **nbody_init(struct glob_thread_config *cfg)
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
 		if (k == cfg->algo_threads - 1) {
 			/*	Takes care of rounding problems with odd numbers.	*/
-			thread_config[k]->objs_high += option->obj - thread_config[k]->objs_high;
+			thread_config[k]->objs_high += cfg->obj_num - thread_config[k]->objs_high;
 		}
 	}
 	
@@ -95,7 +96,7 @@ void *thread_nbody(void *thread_setts)
 		
 		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;
-			for (unsigned int j = 0; j < option->obj; j++) {
+			for (unsigned int j = 0; j < t->obj_num; j++) {
 				if (i==j)
 					continue;
 				vecnorm = t->obj[j].pos - t->obj[i].pos;

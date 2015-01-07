@@ -282,7 +282,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 	/* Create temporary assignment tree for threads */
 	bh_thread *thread_tree = calloc(1, sizeof(bh_thread));
 	
-	int totcore = (int)((float)option->obj/cfg->algo_threads);
+	int totcore = (int)((float)cfg->obj_num/cfg->algo_threads);
 	for (int k = 0; k < cfg->algo_threads; k++) {
 		thread_config[k]->root = root_octree;
 		/* Recursively insert the threads into assignment octree and map it to
@@ -291,6 +291,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 		thread_config[k]->glob_stats = cfg->algo_global_stats_raw;
 		thread_config[k]->stats = cfg->algo_thread_stats_raw[k];
 		thread_config[k]->obj = cfg->obj;
+		thread_config[k]->obj_num = cfg->obj_num;
 		thread_config[k]->ctrl = cfg->ctrl;
 		thread_config[k]->barrier = barrier;
 		thread_config[k]->mute = mute;
@@ -301,7 +302,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 		thread_config[k]->objs_high = thread_config[k]->objs_low + totcore - 1;
 		if (k == cfg->algo_threads - 1) {
 			/*	Takes care of rounding problems with odd numbers.	*/
-			thread_config[k]->objs_high+=option->obj-thread_config[k]->objs_high;
+			thread_config[k]->objs_high+=cfg->obj_num-thread_config[k]->objs_high;
 		}
 	}
 	

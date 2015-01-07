@@ -38,6 +38,7 @@ enum setall_ret {
 };
 
 enum commands {
+	/* VAR prefix because historic reasons... should just run sed */
 	VAR_CMD,
 	VAR_CMD_SYS,
 	VAR_QUIT,
@@ -60,6 +61,7 @@ enum commands {
 	VAR_LUA_RUN_GC,
 	VAR_CHECK_COLLISIONS,
 	VAR_STEP_FWD,
+	VAR_STEP_BWD,
 };
 
 /* Sent to input thread */
@@ -68,6 +70,7 @@ struct input_cfg {
 	phys_obj **obj;
 	graph_window **win;
 	char *line;
+	unsigned int lines;
 	struct parser_map *cmd_map;
 	volatile bool status, selfquit;
 };

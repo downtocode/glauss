@@ -86,18 +86,38 @@ struct global_statistics {
 
 /* Struct sent to threads' init functions */
 struct glob_thread_config {
+	/* Signalling */
 	bool paused, step_end;
 	volatile bool *quit;
-	unsigned int algo_threads, total_syncd_threads, steps_fwd;
+	unsigned int steps_fwd;
+	
+	/* Threads quantity info */
+	unsigned int algo_threads, total_syncd_threads;
 	/* algo_threads is just the number of them at the time of start, excluding ctrl */
+	
+	/* Current allocated objects */
+	phys_obj *obj;
+	unsigned int obj_num;
+	
+	/* Algorithm && simulation identification */
+	char *algorithm, *simconf_id;
+	
+	/* Control thread resources */
 	pthread_t *threads, control_thread;
 	pthread_mutex_t *pause, *step_pause;
-	pthread_barrier_t *ctrl;
 	pthread_cond_t *step_cond, *pause_cond;
 	pthread_spinlock_t *io_halt;
-	struct global_statistics *stats;
 	struct parser_map *algo_opt_map;
-	phys_obj *obj;
+	
+	/* Shared barrier used for all threads */
+	pthread_barrier_t *ctrl;
+	
+	/* Shared global statistics */
+	struct global_statistics *stats;
+	
+	/* Step back buffer */
+	phys_obj **step_back_buffer; /* index 0 is always the newest */
+	unsigned int step_back_buffer_size, step_back_buffer_last_ind;
 	
 	/* Thread-set variables */
 	void **threads_conf; /* Returned from thread_config */
@@ -137,8 +157,9 @@ typedef void  *(*thread_function)(void *);
 typedef void   (*thread_sched_fn)(struct glob_thread_config *);
 typedef void   (*thread_destruction)(struct glob_thread_config *);
 
-/* Returns struct */
+/* Self-explanatory */
 phys_algorithm *phys_find_algorithm(const char *name);
+struct glob_thread_config *phys_get_config();
 
 /* Lock this to freeze everything */
 extern pthread_spinlock_t *halt_objects;
@@ -158,13 +179,19 @@ void phys_ctrl_wait(pthread_barrier_t *barr);
 /* Function to print all avail algorithms */
 void phys_list_algo(void);
 
+/* Called by thread to do an emergency save */
+void phys_urgent_dump(void);
+
+/* Returns pointer to allocated buffer of every object's state */
+phys_obj *phys_history(unsigned int steps);
+
 /* External functions for control */
 int phys_init(phys_obj **object);
-void phys_urgent_dump(void);
 int phys_quit(phys_obj **object);
 int phys_set_sched_mode(char **mode);
 
 unsigned int phys_fwd_steps(unsigned int steps);
+unsigned int phys_bwd_steps(unsigned int steps);
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object);
 
 #endif

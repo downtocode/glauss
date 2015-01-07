@@ -30,6 +30,7 @@ settings = {
 	input = {
 		input_thread_enable = true,
 		--Disable command line interface
+		step_back_buffer = 10,
 	},
 	visual = {
 		bgcolor = {32, 32, 32, 255},
