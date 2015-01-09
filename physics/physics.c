@@ -329,6 +329,9 @@ int phys_buffer_forward_single_step(void)
 	
 	memcpy(cfg->obj, cfg->step_back_buffer[0], cfg->obj_num*sizeof(phys_obj));
 	
+	pprint_verb("Buffer position - %i out of %i\n",
+				cfg->step_back_buffer_pos, cfg->step_back_buffer_size);
+	
 	pthread_spin_unlock(cfg->io_halt);
 	
 	return 0;
@@ -364,6 +367,9 @@ int phys_buffer_revert_single_step(void)
 	}
 	
 	memcpy(cfg->obj, cfg->step_back_buffer[0], cfg->obj_num*sizeof(phys_obj));
+	
+	pprint_verb("Buffer position - %i out of %i\n",
+				cfg->step_back_buffer_pos, cfg->step_back_buffer_size);
 	
 	pthread_spin_unlock(cfg->io_halt);
 	
