@@ -49,7 +49,7 @@ enum phys_set_status {
 	PHYS_PAUSESTART,
 	PHYS_STEP_FWD,
 	PHYS_START,
-	PHYS_SHUTDOWN,
+	PHYS_SHUTDOWN,            /* Will call the algorithm destruction function */
 };
 
 /* Object structure - should be exactly 128 bytes */
@@ -114,10 +114,13 @@ struct glob_thread_config {
 	
 	/* Shared global statistics */
 	struct global_statistics *stats;
+	/* The actual steps the threads have executed without a pause */
+	unsigned long long int total_steps;
 	
 	/* Step back buffer */
 	phys_obj **step_back_buffer; /* index 0 is always the newest */
-	unsigned int step_back_buffer_size, step_back_buffer_last_ind;
+	unsigned int step_back_buffer_size;
+	int step_back_buffer_pos; /* Could be a uint but it makes less sense */
 	
 	/* Thread-set variables */
 	void **threads_conf; /* Returned from thread_config */
@@ -179,20 +182,25 @@ void phys_ctrl_wait(pthread_barrier_t *barr);
 /* Function to print all avail algorithms */
 void phys_list_algo(void);
 
-/* Called by thread to do an emergency save */
+/* Called by thread to do an emergency save to file */
 void phys_urgent_dump(void);
 
-/* Returns pointer to allocated buffer of every object's state */
+/* Returns pointer to allocated buffer of every object's state, <steps> ago */
 phys_obj *phys_history(unsigned int steps);
 
 /* External functions for control */
 int phys_init(phys_obj **object);
-int phys_quit(phys_obj **object);
+int phys_quit(phys_obj **object); /* Frees statistics, elements, etc. */
 int phys_set_sched_mode(char **mode);
 
-unsigned int phys_fwd_steps(unsigned int steps);
+/* Cached */
 unsigned int phys_bwd_steps(unsigned int steps);
-int phys_revert_single_step(void);
+int phys_buffer_revert_single_step(void);
+int phys_buffer_forward_single_step(void);
+
+/* Will make the algorithm threads run for a single step */
+unsigned int phys_fwd_steps(unsigned int steps);
+
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object);
 
 #endif

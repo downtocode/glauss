@@ -199,6 +199,8 @@ void *thread_ctrl(void *thread_setts)
 		
 		/* Fill back buffer if needed */
 		if (t->step_back_buffer_size) {
+			/* Reset buffer position */
+			t->step_back_buffer_pos = 0;
 			/* Copy the old pointer order */
 			phys_obj *old_buffer[t->step_back_buffer_size];
 			for (unsigned int i = 0; i < t->step_back_buffer_size + 1; i++) {
@@ -216,6 +218,7 @@ void *thread_ctrl(void *thread_setts)
 		pthread_spin_unlock(t->io_halt);
 		
 		/* Update progress */
+		t->total_steps++;
 		t->stats->total_steps++;
 		t2 = phys_gettime_us();
 		t->stats->time_per_step = (t2 - t1)*1.0e-6;

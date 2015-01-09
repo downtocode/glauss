@@ -140,9 +140,12 @@ int graph_scan_keypress(graph_window *win)
 				win->chosen++;
 			break;
 		case SDLK_c:
-			phys_revert_single_step();
+			phys_buffer_revert_single_step();
 			break;
 		case SDLK_v:
+			phys_buffer_forward_single_step();
+			break;
+		case SDLK_d:
 			phys_ctrl(PHYS_STEP_FWD, NULL);
 			break;
 		case SDLK_COMMA:

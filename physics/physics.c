@@ -296,12 +296,61 @@ unsigned int phys_bwd_steps(unsigned int steps)
 	return steps;
 }
 
-int phys_revert_single_step(void)
+int phys_buffer_forward_single_step(void)
 {
-	if (!cfg || !cfg->paused || !cfg->step_back_buffer[0])
+	if (!cfg || !cfg->paused || !cfg->step_back_buffer[cfg->step_back_buffer_size])
 		return 1;
-	if (cfg->step_back_buffer_size > cfg->stats->total_steps)
+	
+	cfg->step_back_buffer_pos--;
+	
+	/* Code so hard to write I can't even comment it */
+	if (cfg->step_back_buffer_size > cfg->total_steps) {
+		pprint_err("Incomplete buffer, cannot advance!\n");
+		/* Technically it's possible to shuffle the pointers enough so that
+		 * the very first is at the top, but nah, this is enough for now */
+		cfg->step_back_buffer_pos++;
 		return 1;
+	} else if (cfg->step_back_buffer_pos < 0) {
+		cfg->stats->total_steps -= cfg->step_back_buffer_size + 1;
+		cfg->step_back_buffer_pos = cfg->step_back_buffer_size;
+	}
+	
+	cfg->stats->total_steps++;
+	
+	pthread_spin_lock(cfg->io_halt);
+	
+	phys_obj *old_buffer[cfg->step_back_buffer_size];
+	for (unsigned int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
+		old_buffer[i] = cfg->step_back_buffer[i];
+	}
+	for (int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
+		cfg->step_back_buffer[i] = old_buffer[i < 1 ? cfg->step_back_buffer_size : i - 1];
+	}
+	
+	memcpy(cfg->obj, cfg->step_back_buffer[0], cfg->obj_num*sizeof(phys_obj));
+	
+	pthread_spin_unlock(cfg->io_halt);
+	
+	return 0;
+}
+
+int phys_buffer_revert_single_step(void)
+{
+	if (!cfg || !cfg->paused)
+		return 1;
+	
+	cfg->step_back_buffer_pos++;
+	
+	/* Yep, largely the result of trial, rewriting and error */
+	if (cfg->step_back_buffer_pos >= cfg->total_steps) {
+		pprint_err("Incomplete buffer, unable to rewind!\n");
+		cfg->step_back_buffer_pos--;
+		return 1;
+	} else if (cfg->step_back_buffer_pos > cfg->step_back_buffer_size) {
+		cfg->stats->total_steps += cfg->step_back_buffer_pos;
+		cfg->step_back_buffer_pos = 0;
+	}
+	cfg->stats->total_steps--;
 	
 	pthread_spin_lock(cfg->io_halt);
 	
