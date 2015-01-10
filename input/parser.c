@@ -650,7 +650,8 @@ int parse_lua_open_file(const char *filename)
 	
 	/* Load file */
 	if(luaL_loadfile(Lp, filename)) {
-		pprintf(PRI_ERR, "Opening Lua file %s failed!\n", filename);
+		pprintf(PRI_ERR, "Opening Lua file %s failed!\nError log: %s\n",
+				filename, lua_tostring(Lp, -1));
 		return 2;
 	}
 	/* Execute script */
@@ -675,7 +676,8 @@ int parse_lua_open_string(const char *script)
 	
 	/* Load string */
 	if(luaL_loadstring(Lp, script)) {
-		pprintf(PRI_ERR, "Opening Lua script failed!\n");
+		pprintf(PRI_ERR, "Opening Lua script failed!\nError log: %s\n",
+				lua_tostring(Lp, -1));
 		return 2;
 	}
 	
