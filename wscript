@@ -3,7 +3,7 @@ import sys, os, re
 from waflib.Build import BuildContext
 
 APPNAME='physengine'
-VERSION=''
+VERSION='0.3'
 
 top = '.'
 out = 'build'
