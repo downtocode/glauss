@@ -24,8 +24,10 @@
 typedef double vec3 __attribute__((ext_vector_type(3)));
 #elif (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 9)
 typedef double vec3 __attribute__ ((vector_size (32)));
+#elif (__GNUC__ >= 5) && (__GNUC_MINOR__ >= 0)
+typedef double vec3 __attribute__ ((vector_size (32)));
 #else
-#error "Can't compile, compiler doesn't support _Generics and vectors. GCC 4.9(and NOT above, GCC 5.0 doesn't work) or Clang 3.4(and above) will work fine."
+#error "Can't compile, compiler doesn't support _Generics and vectors. GCC 4.9(and above) or Clang 3.4(and above) will work fine."
 #endif
 
 #include <pthread.h>
