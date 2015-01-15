@@ -58,6 +58,20 @@ Bug reports
 -----------
 Use either the Github Issues section of this project or the contact section below.
 
+FAQ
+---
+>I've imported an object and now every ID has an offset and doesn't match the index!
+
+The `timestep_funct` is executed once on physics startup, just before the threads are online. Use this to get the internal IDs of the objects. Nothing will have moved, so by comparing the positions of all objects with the initial positions you can know which object is which.
+
+>The program has crashes once physics is started with imported objects!
+
+Are you importing an `.obj` file? We interpret the vertices as points so you might get objects sharing the same coordinates. Use the Lua function `phys_check_coords` to get a table of the IDs of the matching positions of objects(check DOCS/physengine.rst for info on function) upon initialization and move them before the threads start.
+
+>I'd like to spawn objects while the simulation is running, is that possible?
+
+Work in progress on that feature. For now, you can just put the objects far far away, set the `ignore` flag to True, set their mass to close to 0 and bring them in action when their time comes.
+
 Contacts
 --------
 Want to chat? Life counselling? Psychology? Classical/wooden philosophy? Need a partner to rob a bank? Metaphysics? Pataphysics?

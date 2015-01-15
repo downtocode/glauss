@@ -465,7 +465,7 @@ int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
 			
 			if (parser_state->read_id) {
 				arr_num = parser_state->buffer.id;
-			} else {
+			} else if (!parser_state->preserve_id) {
 				parser_state->buffer.id = parser_state->i;
 			}
 			
@@ -613,7 +613,7 @@ static int input_lua_setopt(lua_State *L)
 			return 0;
 		}
 	}
-	return 1;
+	return 0;
 }
 
 static int input_lua_render(lua_State *L)
@@ -627,11 +627,90 @@ static int input_lua_render(lua_State *L)
 	return 0;
 }
 
+static int input_lua_check_coords(lua_State *L)
+{
+	if (lua_isnil(L, -1)) {
+		return 0;
+	}
+	
+	struct lua_parser_state *parser_state = &(struct lua_parser_state){
+		.i = 0,
+		.nullswitch = 0,
+		.fileset = 0,
+		.preserve_id = 1,
+		.read_id = 0,
+		.file = {0},
+		.buffer = {{0}},
+		.object = NULL,
+	};
+	
+	unsigned int len = conf_lua_getlen(L, -1);
+	
+	if (len) {
+		if (lua_istable(L, -1)) {
+			
+			/* Read about it in the header */
+			parser_lua_fill_table_hack(L, len);
+			
+			parser_state->object = calloc(len+1, sizeof(phys_obj));
+			
+			conf_traverse_table(L, &conf_lua_parse_objs, parser_state);
+		} else {
+			pprint_warn("No table of objects to check for collisions\n");
+			return 0;
+		}
+	}
+	
+	struct phys_obj_collisions *colls = phys_return_collisions(parser_state->object, len);
+	
+	/* No collisions */
+	if (!colls) {
+		free(parser_state->object);
+		lua_pushnil(L);
+		return 0;
+	}
+	
+	int colls_tot = 0;
+	while (colls[colls_tot++].tot_coll_local) { ; };
+	colls_tot--; /* The last one isn't included */
+	
+	/* Push table of results */
+	lua_newtable(L);
+	for (int i = 0; i < colls_tot; i++) {
+		lua_newtable(L);
+		
+		lua_newtable(L);
+		for (int j = 0; j < 3; j++) {
+			lua_pushnumber(L, colls[i].pos[j]);
+			lua_rawseti(L, -2, j+1);
+		}
+		lua_setfield(L, -2, "pos");
+		
+		lua_newtable(L);
+		for (int j = 0; j < colls[i].tot_coll_local; j++) {
+			lua_pushinteger(L, colls[i].obj_ids[j]);
+			lua_rawseti(L, -2, j+1);
+		}
+		lua_setfield(L, -2, "id");
+		
+		lua_rawseti(L, -2, i+1);
+		
+		free(colls[i].obj_ids);
+	}
+	
+	free(colls); /*  Free results */
+	free(parser_state->object); /* Free received objects */
+	
+	return 1;
+	/* なるほど, you need to return a 1 to indicate to Lua you return something */
+}
+
 static int parse_lua_register_fn(lua_State *L)
 {
 	/* Register own function to quit */
 	lua_register(L, "raise", input_lua_raise);
 	lua_register(L, "phys_pause", input_lua_stop_physics);
+	lua_register(L, "phys_check_coords", input_lua_check_coords);
 	lua_register(L, "set_option", input_lua_setopt);
 	lua_register(L, "print_text", input_lua_render);
 	return 0;
@@ -852,6 +931,7 @@ int parse_lua_simconf_options(struct parser_map *map)
 		.i = 0,
 		.nullswitch = 0,
 		.fileset = 0,
+		.preserve_id = 0,
 		.read_id = 0,
 		.file = {0},
 		.buffer = {{0}},
@@ -906,6 +986,7 @@ int parse_lua_simconf_objects(phys_obj **object, const char* sent_to_lua)
 		.nullswitch = 0,
 		.fileset = 0,
 		.read_id = 0,
+		.preserve_id = 0,
 		.file = {0},
 		.buffer = {{0}},
 		.object = *object,
@@ -951,6 +1032,7 @@ int parse_lua_simconf_elements(const char *filepath)
 		.fileset = 0,
 		.read_id = 0,
 		.file = {0},
+		.preserve_id = 0,
 		.buffer_ele = {0},
 	};
 	
@@ -1089,6 +1171,7 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 		.nullswitch = 0,
 		.fileset = 0,
 		.read_id = 1,
+		.preserve_id = 0,
 		.file = {0},
 		.buffer = {{0}},
 		.object = object,

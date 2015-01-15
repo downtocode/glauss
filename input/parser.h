@@ -71,6 +71,7 @@ struct lua_parser_state {
 	bool nullswitch;
 	bool fileset;
 	bool read_id;
+	bool preserve_id;
 	in_file file;
 	phys_obj buffer, *object;
 	struct atomic_cont buffer_ele;

@@ -134,6 +134,60 @@ unsigned int phys_check_collisions(phys_obj *object,
 	return collisions;
 }
 
+struct phys_obj_collisions *phys_return_collisions(phys_obj *object, unsigned int count)
+{
+	vec3 vecnorm = {0};
+	double dist = 0.0;
+	
+	struct phys_obj_collisions *all_colls = NULL;
+	unsigned int colls_num = 0;
+	
+	for (unsigned int i = 0; i < count; i++) {
+		/* Check mass */
+		if (!object[i].mass) {
+			pprint_err("Object %i has no mass!\n", i);
+		}
+		
+		/* Structure holding info */
+		struct phys_obj_collisions coll = {{0}};
+		coll.pos = object[i].pos;
+		
+		/* Check for collisions */
+		for (unsigned int j = 0; j < count; j++) {
+			if (i==j)
+				continue;
+			vecnorm = object[j].pos - object[i].pos;
+			dist = sqrt(vecnorm[0]*vecnorm[0] +\
+			vecnorm[1]*vecnorm[1] +\
+			vecnorm[2]*vecnorm[2]);
+			if (dist == 0.0 && i > j) {
+				if (!coll.tot_coll_local) {
+					coll.obj_ids = malloc(sizeof(unsigned int));
+					coll.obj_ids[0] = object[i].id;
+					coll.tot_coll_local++;
+				}
+				coll.obj_ids = realloc(coll.obj_ids, coll.tot_coll_local*sizeof(unsigned int));
+				coll.obj_ids[coll.tot_coll_local++] = object[j].id;
+			}
+		}
+		
+		/* Add to array */
+		if (coll.tot_coll_local) {
+			all_colls = realloc(all_colls, sizeof(struct phys_obj_collisions)*(colls_num+1));
+			all_colls[colls_num] = coll;
+			colls_num++;
+		}
+	}
+	
+	if (colls_num) {
+		struct phys_obj_collisions coll_final = {{0}};
+		all_colls = realloc(all_colls, sizeof(struct phys_obj_collisions)*(colls_num+1));
+		all_colls[colls_num] = coll_final;
+	}
+	
+	return all_colls;
+}
+
 bool phys_check_coords(vec3 *vec, phys_obj *object,
 					   unsigned int low, unsigned int high)
 {

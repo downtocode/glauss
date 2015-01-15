@@ -41,6 +41,13 @@ struct numbers_selection {
 	unsigned short int final_digit;
 };
 
+struct phys_obj_collisions {
+	vec3 pos;
+	unsigned int *obj_ids, tot_coll_local;
+	/* Example: tot_coll_local = 1; => obj_ids[0] and obj_ids[1] exist */
+	/* The last collision will have tot_coll_local = 0 */
+};
+
 /* Elements system. Submit a NULL filepath to use compiled internal DB */
 unsigned short int return_atom_num(const char *name);
 char *return_atom_str(unsigned int num);
@@ -67,6 +74,9 @@ bool phys_timer_exec(unsigned int freq, unsigned int *counter);
 /* Check coords for any collisions */
 bool phys_check_coords(vec3 *vec, phys_obj *object,
 					   unsigned int low, unsigned int high);
+
+/* Structured collision checking */
+struct phys_obj_collisions *phys_return_collisions(phys_obj *object, unsigned int count);
 
 /* Return the CLOCK_MONOTONIC(RAW) time in microseconds */
 unsigned long long int phys_gettime_us(void);
