@@ -299,9 +299,6 @@ int main(int argc, char *argv[])
 		}
 		
 		pprintf(PRI_ESSENTIAL, "Objects: %i\n", option->obj);
-		pprintf(PRI_ESSENTIAL,
-		"Constants: elcharge=%E C, gconst=%E m^3 kg^-1 s^-2, epsno=%E F m^-1\n", 
-							   option->elcharge, option->gconst, option->epsno);
 		
 		phys_ctrl(PHYS_START, &object);
 	/*	Physics.	*/

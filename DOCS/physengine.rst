@@ -239,10 +239,12 @@ each object.
     spawning objects(because there are no guarantees this will be the actual ID if the user imports a model).
 ``import`` - *String*
     Will import from a file. Currently, Waveform 3D *Obj*, *XYZ* and *PDB* files are supported.
+``scale`` - *Float*
+    Scale for imported object.
 ``ignore`` - *Bool*
     Set this flag to prevent the object from being moved. Will still affect others.
 
-*Object specific variables*
+*Lua functions*
 ---------------------------
 There exist several functions which you can call from Lua:
 

@@ -148,17 +148,9 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 			object[*i].vel = file->inf->vel;
 			object[*i].ignore = file->inf->ignore;
 			object[*i].charge = file->inf->charge*option->elcharge;
-			if (object[*i].atomnumber == 1) {
-				object[*i].mass = 1.0;
-				object[*i].radius = 0.05;
-			} else if (object[*i].atomnumber == 6) {
-				object[*i].mass = 12.0;
-				object[*i].radius = 0.1;
-			} else {
-				object[*i].atomnumber = 1;
-				object[*i].mass = 12.0;
-				object[*i].radius = 0.1;
-			}
+			object[*i].atomnumber = file->inf->atomnumber;
+			object[*i].radius = file->inf->radius ? file->inf->radius : 1;
+			object[*i].mass = file->inf->mass ? file->inf->mass : 1.0;
 			pprintf(PRI_SPAM, "%s atom %i here = {%lf, %lf, %lf}\n", 
 					file->filename, *i, 
 					object[*i].pos[0], object[*i].pos[1], object[*i].pos[2]);

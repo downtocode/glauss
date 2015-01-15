@@ -50,13 +50,14 @@ settings = {
 
 --Generally useful, returns a STRING
 inspect = require('TOOLS/inspect')
---Useage: print(inspect(table))
+--Useage: print
+vector = require('TOOLS/vector')
 
 function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
 	math.randomseed( settings.physics.rng_seed )
 	
-	local cube_size = 5
+	local cube_size = 7
 	local z = 1
 	local velocity = 10
 	
@@ -127,13 +128,6 @@ function spawn_objects(string_from_arg)
 	return objects
 end
 
---Reason why the vectors we send are indexed from 1:
-function vector_sub(lhs, rhs) return { lhs[1]-rhs[1], lhs[2]-rhs[2], lhs[3]-rhs[3] } end
-function vector_add(lhs, rhs) return { lhs[1]+rhs[1], lhs[2]+rhs[2], lhs[3]+rhs[3] } end
-function vector_mul(lhs, rhs) return { lhs[1]+rhs[1], lhs[2]+rhs[2], lhs[3]+rhs[3] } end
-function vector_det(lhs) return lhs[1] + lhs[2] + lhs[3] end
---Lua's automatic indexing will start at 1. Helps keep functions short.
-
 function measure_energy(obj)
 	energy = 0.0
 	
@@ -159,7 +153,7 @@ function measure_energy(obj)
 		for j = 1, #obj, 1 do
 			dist_vec = vector_sub(obj[j].pos, obj[i].pos)
 			dist = math.sqrt(vector_det(vector_mul(dist_vec, dist_vec)))
-			if dist > 5.9 then goto continue end
+			if dist > 2.9 then goto continue end
 			sum = obj[i].atomnumber + obj[j].atomnumber
 			if sum < 4 then
 				--Empty

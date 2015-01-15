@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+/* I'm surprised this works */
 #include LUA_MAINHEAD
 #include LUA_AUXLIB
 #include LUA_LIB
