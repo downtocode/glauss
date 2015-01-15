@@ -116,6 +116,7 @@ int main(int argc, char *argv[])
 			{"dump_sshot",             P_TYPE(option->dump_sshot)             },
 			{"exec_funct_freq",        P_TYPE(option->exec_funct_freq)        },
 			{"default_draw_mode",      P_TYPE(option->default_draw_mode)      },
+			{"lua_gc_sweep_freq",      P_TYPE(option->lua_gc_sweep_freq)      },
 			{"skip_model_vec",         P_TYPE(option->skip_model_vec)         },
 			{"algorithm",              P_TYPE(option->algorithm)              },
 			{"spawn_funct",            P_TYPE(option->spawn_funct)            },

@@ -51,6 +51,15 @@ S
 F
     Switch between fullscreen and windowed mode.
 
+D
+    Advance one step forward.
+
+C
+    Reverse back one step(buffered).
+
+V
+    Forward one step(buffered).
+
 SPACEBAR
     Pause/unpause.
 
@@ -165,6 +174,10 @@ All of the variables below are settable via the command line interpreter.
     Specify the frequency of state dumps created. 1 - every step, 2 - every two steps, 3...
 ``reset_stats_freq`` - *Unsigned Integer*
     Specify how often to reset global stats. 0 disables, 1 will reset stats every cycle.
+``lua_gc_sweep_freq`` - *Unsigned Integer*
+    Specify how often to ask Lua to run a full garbage cleaning sweep(default: 1000 cycles).
+``step_back_buffer`` - *Unsigned Integer*
+    Adjusts the step back buffer size.
 ``width`` - *Integer*
     Set window width in pixels.
 ``height`` - *Integer*
@@ -229,6 +242,27 @@ each object.
 ``ignore`` - *Bool*
     Set this flag to prevent the object from being moved. Will still affect others.
 
+*Object specific variables*
+---------------------------
+There exist several functions which you can call from Lua:
+
+``raise(*Unsigned Integer*)``
+    Sends a signal to the main program. Use Lua's system IO interface rather than this.
+``phys_pause(*nil*)``
+    Pauses the simulation.
+``phys_check_coords(*Table of objects as specified above*)``
+    Checks the coordinates of every object for conflicts. Returns the following:
+    ::
+    
+    { { pos = *Table of 3 doubles*, id = {ID1, ID2, ID3, ...} },
+    { pos = *Table of 3 doubles*, id = {ID4, ID5, ...} }, ...} --and so on
+    
+    It's up to you where to move them, but not moving them will possibly cause problems.
+``set_option()``
+    Sets an option.
+``print_text(*String*)``
+    Prints a text line on the SDL2 GUI.
+
 *Tables sent to exec_funct in Lua*
 ----------------------------------
 The maps of each algorithm and all global stats are exposed via the first argument as a table.
@@ -263,10 +297,9 @@ SIGNAL HANDLING
 ===============
 The following signal functions have been implemented:
 
-``SIGINT``
-    Will stop the threads, close all files, free all memory and quit.
-``SIGUSR1``
-    Will report the current status of the simulation.
+``SIGINT`` -- Will stop the threads, close all files, free all memory and quit.
+
+``SIGUSR1`` -- Will report the current status of the simulation.
 
 EXIT CODES
 ==========

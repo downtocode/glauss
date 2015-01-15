@@ -198,22 +198,6 @@ function run_on_timestep(t_stats, obj)
 	--if t_stats.progress > 0.0 then phys_pause() end
 	if obj == nil then return nil end
 	
-	objalt1 = obj[40]
-	objalt2 = obj[44]
-	
-	objalt1.pos = objalt2.pos
-	
-	objalt3 = obj[12]
-	objalt4 = obj[88]
-	
-	objalt3.pos = objalt4.pos;
-	
-	dasdasd = {objalt1, objalt3, objalt4, obj[4], obj[11], objalt2, obj[41]}
-	
-	res = phys_check_coords(dasdasd)
-	
-	print("Jongo bongo = ", inspect(res))
-	
 	local old_energy = measure_energy(obj)
 	
 	local src_index = 1

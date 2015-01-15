@@ -98,7 +98,7 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg)
 	
 	if (cfg->step_back_buffer_size) {
 		cfg->step_back_buffer = calloc(option->step_back_buffer, sizeof(phys_obj *));
-		for (unsigned int i = 0; i < cfg->step_back_buffer_size; i++) {
+		for (unsigned int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
 			cfg->step_back_buffer[i] = calloc(cfg->obj_num + 1, sizeof(phys_obj));
 		}
 	}
@@ -151,7 +151,7 @@ void ctrl_quit(struct glob_thread_config *cfg)
 	
 	/* Free step_back_buffer */
 	if (cfg->step_back_buffer_size) {
-		for (unsigned int i = 0; i < cfg->step_back_buffer_size; i++) {
+		for (unsigned int i = 0; i < cfg->step_back_buffer_size + 1; i++) {
 			free(cfg->step_back_buffer[i]);
 		}
 		free(cfg->step_back_buffer);
@@ -208,7 +208,9 @@ void *thread_ctrl(void *thread_setts)
 			}
 			/* Rotate the pointers in the new array */
 			for (int i = 0; i < t->step_back_buffer_size + 1; i++) {
-				t->step_back_buffer[i] = old_buffer[i < 1 ? t->step_back_buffer_size - 1 : i - 1];
+				/* Why does Clang crash if we do it directly? A big mystery. */
+				volatile int old_ind = i < 1 ? t->step_back_buffer_size : i - 1;
+				t->step_back_buffer[i] = old_buffer[old_ind];
 			}
 			/* Write to the oldest buffer */
 			memcpy(t->step_back_buffer[0], t->obj, t->obj_num*sizeof(phys_obj));

@@ -483,6 +483,9 @@ enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object)
 				return 1;
 			}
 			
+			/* Run Lua exec function */
+			lua_exec_funct(option->timestep_funct, *object, cfg->stats);
+			
 			/* Start threads */
 			pprintf(PRI_ESSENTIAL, "Starting threads...");
 			for (unsigned int k = 0; k < cfg->algo_threads; k++) {
