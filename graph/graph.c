@@ -709,7 +709,7 @@ int graph_sshot(long double arg)
 	int w = option->width, h = option->height;
 	
 	/* Open file */
-	snprintf(filename, sizeof(filename), option->sshot_temp, arg);
+	snprintf(filename, sizeof(filename), option->sshot_temp, phys_stats->total_steps);
 	if (!access(filename, R_OK))
 		return 2;
 	

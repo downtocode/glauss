@@ -5,7 +5,7 @@ settings = {
 		threads = 1,
 		dt = 0.00016,
 		algorithm = "barnes-hut",
-		bh_ratio = 0.5,
+		bh_ratio = 0.8,
 		--Lifetime of a cell before it's freed.
 		bh_lifetime = 20,
 		--Units are size_t(bytes)! PER THREAD!
@@ -87,7 +87,7 @@ arm_width = 69.0
 arm_number = 3
 disk_radius = 20.0
 disk_width = 1.0
-disk_stars = 4
+disk_stars = 40000
 hub_radius = 10.0
 hub_stars = disk_stars/2
 hub_width = 4.0
