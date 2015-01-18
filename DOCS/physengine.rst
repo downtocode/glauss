@@ -125,6 +125,55 @@ The following flags can be used:
 These flags will always override anything set inside the configuration input file.
 
 
+COMMAND LINE INTERFACE
+======================
+
+Syntax
+------
+
+To get the current value of a variable:
+    ``<variable name>``
+
+To set a variable, use:
+    ``<variable name> <value>``
+
+To print all variables and their values:
+    ``help``
+
+To list all commands available:
+    ``list_cmd``
+
+Commands
+--------
+
+``save``
+    Saves the system to a file.
+
+``load <file>``
+    Loads the system from a file. Must still use a valid configuration file!
+
+``element <ID> <R,G,B,A> <VAL>``
+    Sets the color for a single element.
+
+``set_view <X,Y,Z> <VAL>``
+    Rotates the camera around.
+
+``quit, restart, stop, start, pause, etc.``
+    Self explanatory.
+
+``win_draw_mode <MODE>``
+    Sets drawing mode. Call with incorrect arguments to list all.
+
+``win_create, win_destroy``
+    Self explanatory.
+
+``clear``
+    Clears the command line window. Arguably the most used/useful command.
+
+``phys_check_collisions``
+    Checks for identical positions among objects. Use the Lua API instead.
+
+
 CONFIGURATION FILES
 ===================
 

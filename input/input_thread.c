@@ -77,6 +77,8 @@ int input_thread_init(graph_window **win, phys_obj **object)
 		{"win_draw_mode", NULL, VAR_WIN_DRAW_MODE, VAR_CMD},
 		{"lua_readopts", NULL, VAR_LUA_READOPTS, VAR_CMD},
 		{"lua_run_gc", NULL, VAR_LUA_RUN_GC, VAR_CMD},
+		{"set_view", NULL, VAR_SET_VIEW, VAR_CMD},
+		{"list_cmd", NULL, VAR_LIST_CMD, VAR_CMD},
 		{"#command (runs a system command)", NULL, VAR_CMD_SYS, VAR_CMD},
 		{0}
 	});
@@ -162,6 +164,29 @@ int input_call_system(const char *cmd)
 	int ret = system(cmd);
 	pprint_enable();
 	return ret;
+}
+
+int input_change_cam_angle(graph_window *win, char mat, float val)
+{
+	const char *usage = "Syntax: set_view <{X,Y,Z}> <value>\n";
+	
+	switch(mat) {
+		case 'X': case 'x':
+			win->camera.view_rotx = val;
+			break;
+		case 'Y': case 'y':
+			win->camera.view_roty = val;
+			break;
+		case 'Z': case 'z':
+			win->camera.view_rotz = val;
+			break;
+		default:
+			pprint_input("%s", usage);
+			return 1;
+			break;
+	}
+	
+	return 0;
 }
 
 int input_change_element_col(const char *name, const char *col, const char *value)
@@ -349,10 +374,25 @@ enum setall_ret input_token_setall(char *line, struct input_cfg *t)
 					case VAR_LUA_RUN_GC:
 						parser_lua_gc_sweep(NULL);
 						break;
+					case VAR_LIST_CMD:
+						for (struct parser_map *i = t->cmd_map; i->name; i++) {
+							printf("%s\n", i->name);
+						}
+						break;
 					case VAR_WIN_DRAW_MODE:
 						if (!t->win || !*t->win)
 							break;
 						graph_set_draw_mode(*t->win, token[1]);
+						break;
+					case VAR_SET_VIEW:
+						if (!t->win || !*t->win || num_tok < 2)
+							break;
+						float val = 0;
+						if (token[2])
+							val = strtof(token[2], NULL);
+						else
+							break;
+						input_change_cam_angle(*(t->win), token[1][0], val);
 						break;
 					case VAR_ELE_COLOR:
 						input_change_element_col(token[1], token[2], token[3]);

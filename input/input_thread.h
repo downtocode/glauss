@@ -62,6 +62,8 @@ enum commands {
 	VAR_CHECK_COLLISIONS,
 	VAR_STEP_FWD,
 	VAR_STEP_BWD,
+	VAR_LIST_CMD,
+	VAR_SET_VIEW,
 };
 
 /* Sent to input thread */
@@ -79,6 +81,7 @@ int input_thread_init(graph_window **win, phys_obj **object);
 void input_thread_quit(void);
 void input_repos_prompt(void);
 void input_thread_reset_term(void);
+//int input_change_cam_angle(graph_window *win, char *mat, float val);
 int input_change_element_col(const char *name, const char *col, const char *value);
 int input_call_system(const char *cmd);
 enum setall_ret input_token_setall(char *line, struct input_cfg *t);
