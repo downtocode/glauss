@@ -226,8 +226,8 @@ int main(int argc, char *argv[])
 					}
 					break;
 				case 'h':
-					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s\n", PACKAGE_STRING,
-						   __DATE__, __TIME__);
+					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s by %s\n",
+							PACKAGE_STRING, __DATE__, __TIME__, PHYS_COMPILER);
 					pprintf(PRI_ESSENTIAL, "Linked Lua version: %s\n", LINKED_LUA_VER);
 					pprintf(PRI_ESSENTIAL, "%s", ARGSTRING);
 					exit(0);
