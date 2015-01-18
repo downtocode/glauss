@@ -156,7 +156,7 @@ int graph_scan_keypress(graph_window *win)
 			graph_sdl_toggle_fullscreen(win);
 			break;
 		case SDLK_s:
-			graph_sshot(phys_stats->progress);
+			graph_sshot(phys_stats->total_steps);
 			break;
 		case SDLK_ESCAPE:
 			return 1;

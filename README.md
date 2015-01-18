@@ -64,6 +64,10 @@ FAQ
 
 The `timestep_funct` is executed once on physics startup, just before the threads are online. Use this to get the internal IDs of the objects. Nothing will have moved, so by comparing the positions of all objects with the initial positions you can know which object is which.
 
+>The Barnes-Hut algorithm has a bug! When having more than 8 threads, there's a thread with absolutely no octrees in it!
+
+That's a hindsight of the way the threading works here. We subdivide octrees and give them out once a layer gets filled. But if the slices are empty(for instance when simulating a galaxy we randomly give the upper part of the upper octree where there are no objects) then it's logical there would be no octrees since there are no objects. Bottomline is, to have every thread have octrees you need a uniform distribution of objects geometrically(e.g. in a cube). Or you can just wait patiently so that objects eventually creep up in the empty space and the thread gets a job. Don't like it? Turn off random slice allocation(look in options) or better yet, create an algorithm to better distribute the threads. Or better yet, turn on the EXPERIMENTAL auto-balancer which moves the octrees in threads above a certain ratio.
+
 >The program has crashes once physics is started with imported objects!
 
 Are you importing an `.obj` file? We interpret the vertices as points so you might get objects sharing the same coordinates. Use the Lua function `phys_check_coords` to get a table of the IDs of the matching positions of objects(check DOCS/physengine.rst for info on function) upon initialization and move them before the threads start.

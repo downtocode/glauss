@@ -38,6 +38,6 @@ void graph_draw_scene(graph_window *win);
 int graph_set_draw_mode(graph_window *win, const char *mode);
 GLuint graph_load_c_png_texture(void *bin, size_t len, GLint *width, GLint *height);
 GLuint graph_load_png_texture(const char *filename, GLint *width, GLint *height);
-int graph_sshot(long double arg);
+int graph_sshot(unsigned long long int total_steps);
 
 #endif

@@ -209,6 +209,12 @@ All of the variables below are settable via the command line interpreter.
     Algorithm specific. Sets limit on threads per octree. Increase to spread distribution.
 ``bh_single_assign`` - *Boolean*
     If only a single thread is used will still split the octree normally. Debugging.
+``bh_random_assign`` - *Boolean*
+    Will split the octrees randomly once a layer of octrees is filled. (lvl1 -> 8, lvl2 -> 64, etc.)
+``bh_balance_threshold`` - *Float*
+    Sets the balance difference(most vs least populated) before an octree is considered out of balance. [0,1]. 0 = off.
+``bh_balance_timeout`` - *Unsigned Integer*
+    Sets the timeout on an octree after it has been balanced. Unit is steps. Balancer will not touch it.
 
 *Object specific variables*
 ---------------------------

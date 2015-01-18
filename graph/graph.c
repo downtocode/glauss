@@ -67,7 +67,7 @@
 
 /* Object selection */
 #define OSLx  0.70
-#define OSLy -0.25
+#define OSLy -0.15
 #define OSLs  1.00
 
 /* Thread time counters */
@@ -77,7 +77,7 @@
 
 /* Thread stats */
 #define THREAD_MAPx 0.96
-#define THREAD_MAPy -0.55
+#define THREAD_MAPy -0.35
 #define THREAD_MAPs 0.70
 
 /* Lua printed */
@@ -408,7 +408,7 @@ void graph_draw_scene(graph_window *win)
 	
 	/* Take screenshot if signaled by physics ctrl thread */
 	if (option->write_sshot_now) {
-		graph_sshot(phys_stats->progress);
+		graph_sshot(phys_stats->total_steps);
 		option->write_sshot_now = false;
 	}
 	/*	Dynamic drawing	*/
@@ -702,14 +702,14 @@ GLuint graph_load_png_texture(const char *filename, GLint *width, GLint *height)
 	return texture;
 }
 
-int graph_sshot(long double arg)
+int graph_sshot(unsigned long long int total_steps)
 {
 	/* Open file */
 	char filename[32];
 	int w = option->width, h = option->height;
 	
 	/* Open file */
-	snprintf(filename, sizeof(filename), option->sshot_temp, phys_stats->total_steps);
+	snprintf(filename, sizeof(filename), option->sshot_temp, total_steps);
 	if (!access(filename, R_OK))
 		return 2;
 	
