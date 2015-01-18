@@ -6,17 +6,6 @@ settings = {
 		dt = 0.012322312,
 		--algorithm = "barnes-hut",
 		rng_seed = os.time(),
-		bh_ratio = 0.4,
-		--Lifetime of a cell before it's freed.
-		bh_lifetime = 20,
-		--Units are size_t(bytes)! PER THREAD!
-		bh_heapsize_max = 336870912,
-		--Maximum threads per octree. Reduce this to spread threads more.
-		bh_tree_limit = 8, --Range is [2,8(default)]
-		--If only a single thread is available, assign the entire root to it.
-		bh_single_assign = true,
-		--Assign the octrees of the threads randomly.
-		bh_random_assign = true,
 	},
 	lua = {
 		spawn_funct = "spawn_objects",
@@ -26,11 +15,6 @@ settings = {
 		exec_funct_freq = 1, --Auto timestep_funct run frequency
 		lua_expose_obj_array = true,
 		--Expose object array to the timestep_funct, slight performance decrease
-	},
-	input = {
-		input_thread_enable = true,
-		--Disable command line interface
-		step_back_buffer = 10,
 	},
 	visual = {
 		bgcolor = {32, 32, 32, 255},

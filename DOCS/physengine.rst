@@ -215,6 +215,8 @@ All of the variables below are settable via the command line interpreter.
     Specify the font type to be used. Example: "Liberation Sans".
 ``fontsize`` - *Unsigned Integer*
     Fontsize adjustment.
+``bgcolor`` - *Table of 4 integers*
+    Sets the background color.
 ``elements_file`` - *String*
     Specify the path to external db for elements. See resources/elements.lua for example.
 ``dump_sshot`` - *Unsigned Integer*
@@ -244,7 +246,7 @@ All of the variables below are settable via the command line interpreter.
 ``default_draw_mode`` - *String*
     Specify the default draw mode. Type in "win_draw_mode" in cmd line to get all posttible.
 ``custom_sprite_png`` - *String*
-    Path to texture to load when using **MODE_SPRITE** in default_draw_mode.s
+    Path to texture to load when using **MODE_SPRITE** in default_draw_mode/win_draw_mode.
 
 *Built-in algorithms options*
 -----------------------------
@@ -378,7 +380,10 @@ EXAMPLES
     ``physengine -f simconf.lua -a none``
 
 *Only the control thread running, Lua-only algorithm:*
-    ``physengine -f simconf.lua -a none``
+    ``physengine -f simconf.lua -a null``
+
+*Same as above, but pass an argument to the spawn function*
+    ``physengine -f simconf.lua -a null -u lua_custom_option=0.412``
 
 *Dummy load sim, will use the n-body algorithm to display stats:*
     ``physengine -f simconf.lua -a null_stats``
