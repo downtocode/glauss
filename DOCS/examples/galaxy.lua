@@ -39,7 +39,7 @@ settings = {
 		verbosity = 8,
 		dump_sshot = 0, --Auto screenshot dump frequency
 		dump_xyz = 0, --Auto xyz dump frequency
-		skip_model_vec = 0,
+		skip_model_vec = 2,
 		default_draw_mode = "MODE_POINTS",
 	},
 	constants = {
@@ -55,9 +55,9 @@ settings = {
 --Add molecules or any additional objects here
 objects = {
 -- 	{
--- 		import = "../SpaceBattleShipYAMATO-MG.obj",
--- 		scale = 0.0001,
--- 		pos = {0,-200,0},
+-- 		import = "./molecules/1UAO.pdb",
+-- 		scale = 1,
+-- 		pos = {0,0,0},
 -- 		vel = {0,0,0},
 -- 		rot = {0,math.pi/2,math.pi/2},
 -- 		ignore = false,

@@ -119,11 +119,11 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 		if (!strstr(str, "#")) {
 			switch (filetype) {
 				case MOL_XYZ:
-					sscanf(str, " %s  %f         %f         %f", atom, &xpos, &ypos, &zpos);
+					sscanf(str, " %s %f %f %f", atom, &xpos, &ypos, &zpos);
 					break;
 				case MOL_PDB:
-					if (!strncmp(str, "ATOM", 4)) {
-						sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f",
+					if(strncmp(str, "ATOM", 4)==0) {
+						sscanf(str, "%s %i %s %s %c %i %f %f %f %f %f %s %f\n",
 							   pdbtype, &pdbatomindex, pdbatomname, pdbresidue,
 							   &pdbreschain, &pdbresidueseq, &xpos, &ypos,
 							   &zpos, &pdboccupy, &pdbtemp, atom, &pdboffset);

@@ -32,6 +32,8 @@ unsigned short int return_atom_num(const char *name)
 	if (!name || name[0] == '\0')
 		return 0;
 	for (int i = 1; i < 121; i++) {
+		if (!atom_prop[i].name)
+			continue;
 		if (!strncasecmp(name, atom_prop[i].name, strlen(name))) {
 			return i;
 		}
