@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tgmath.h>
+#include <unistd.h>
 #include <png.h>
 #include "graph.h"
 #include "graph_sdl.h"
