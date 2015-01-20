@@ -62,6 +62,12 @@ def options(ctx):
 				help='Enables the \"-march=native\" compiler flag.')
 	ctx.add_option('--lua', action='store', default='luajit',
 				help='Specify Lua version to link against(lua5.1, luajit, lua5.2)', dest='lua_ver')
+	ctx.add_option('--lua-dir', action='store', default='default',
+				help='Override Lua files location, work only for version less than 5.2', dest='lua_dir')
+	ctx.add_option('--lua-cflags', action='store', default='',
+				help='For overridden Lua directory, use this flag to specify the CFLAGS', dest='lua_cflags')
+	ctx.add_option('--lua-ldflags', action='store', default='',
+				help='For overridden Lua directory, use this flag to specify the LDFLAGS', dest='lua_ldflags')
 	
 def configure(ctx):
 	ctx.load('compiler_c')
@@ -86,7 +92,8 @@ def configure(ctx):
 	ctx.check_cfg(package='libpng12', args='--cflags --libs', mandatory=False, uselib_store='PNG')
 	ctx.check_cfg(package='freetype2', args='--cflags --libs', uselib_store='FT')
 	ctx.check_cfg(package='fontconfig', args='--cflags --libs', uselib_store='FC')
-	ctx.check_cfg(package=ctx.options.lua_ver, args='--cflags --libs', mandatory=False, uselib_store='LUA')
+	if (ctx.options.lua_dir == 'default'):
+		ctx.check_cfg(package=ctx.options.lua_ver, args='--cflags --libs', mandatory=False, uselib_store='LUA')
 	
 	if (ctx.options.ver):
 		package_ver = ctx.options.ver
@@ -107,7 +114,13 @@ def configure(ctx):
 	if (ctx.env.SDL):
 		ctx.define('HAS_SDL', 1)
 	
-	lua_path = try_pkg_path(ctx.options.lua_ver)
+	if (ctx.options.lua_dir == 'default'):
+		lua_path = try_pkg_path(ctx.options.lua_ver)
+	else:
+		lua_path = ctx.options.lua_dir
+		ctx.options.lua_ver = 'lua5.1'
+		ctx.parse_flags(ctx.options.lua_cflags, uselib_store='LUA')
+		ctx.parse_flags(ctx.options.lua_ldflags, uselib_store='LUA')
 	
 	ctx.define('LINKED_LUA_VER', ctx.options.lua_ver)
 	ctx.define('LUA_MAINHEAD', lua_path + '/lua.h')
