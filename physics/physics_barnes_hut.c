@@ -46,6 +46,8 @@ static size_t          bh_heapsize_max = 336870912;
 static unsigned int    bh_balance_timeout = 175;
 static bool            bh_single_assign = true;
 static bool            bh_random_assign = true;
+static bool            bh_periodic_boundary = false;
+static double          bh_boundary_size = 10.0;
 
 /* Used in qsort to assign threads in octrees */
 static int thread_cmp_assigned(const void *a, const void *b)
@@ -223,6 +225,8 @@ void *bhut_preinit(struct glob_thread_config *cfg)
 			{"bh_heapsize_max",        P_TYPE(bh_heapsize_max)        },
 			{"bh_tree_limit",          P_TYPE(bh_tree_limit)          },
 			{"bh_balance_threshold",   P_TYPE(bh_balance_threshold)   },
+			{"bh_periodic_boundary",   P_TYPE(bh_periodic_boundary)   },
+			{"bh_boundary_size",       P_TYPE(bh_boundary_size)       },
 			{0},
 		});
 	
@@ -799,6 +803,14 @@ void *thread_bhut(void *thread_setts)
 			if (t->obj[i].ignore)
 				continue;
 			t->obj[i].pos += (t->obj[i].vel*dt) + (t->obj[i].acc)*((dt*dt)/2);
+			if (bh_periodic_boundary) {
+				for (uint8_t j = 0; j < 3; j++) {
+					if (fabs(t->obj[i].pos[j]) > bh_boundary_size) {
+						t->obj[i].pos[j] = (t->obj[i].pos[j] > 0 ? -1 : 1)*\
+								(2*bh_boundary_size - fabs(t->obj[i].pos[j]));
+					}
+				}
+			}
 		}
 		
 		pthread_barrier_wait(t->barrier);

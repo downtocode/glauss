@@ -5,7 +5,7 @@ settings = {
 		threads = 1,
 		dt = 0.00016,
 		algorithm = "barnes-hut",
-		bh_ratio = 0.8,
+		bh_ratio = 0.5,
 		--Lifetime of a cell before it's freed.
 		bh_lifetime = 20,
 		--Units are size_t(bytes)! PER THREAD!
@@ -16,6 +16,8 @@ settings = {
 		bh_single_assign = true,
 		--Assign the octrees of the threads randomly.
 		bh_random_assign = true,
+		bh_periodic_boundary = true,
+		bh_boundary_size = 500,
 	},
 	lua_settings = {
 		spawn_funct = "spawn_objects",
@@ -87,7 +89,7 @@ arm_width = 69.0
 arm_number = 3
 disk_radius = 20.0
 disk_width = 1.0
-disk_stars = 40000
+disk_stars = 4000
 hub_radius = 10.0
 hub_stars = disk_stars/2
 hub_width = 4.0
@@ -142,6 +144,16 @@ function spawn_objects(string_from_arg)
 			ignore = false,
 		}
 	end
+	
+	objects[#objects+1] = {
+		pos = { 0,0,0 },
+		vel = { 0, 100, 0 },
+		charge = 100,
+		mass = 100,
+		radius = 0.2,
+		atomnumber = math.random(1,10),
+		ignore = false,
+	}
 	
 	return objects
 end

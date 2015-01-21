@@ -3,9 +3,11 @@ settings = {
 	--Only the names of the variables are used. Tables are just for organization(except settings), feel free to drop them.
 	physics = {
 		threads = 1,
-		dt = 0.012322312,
+		dt = 0.002322312,
 		algorithm = "null",
 		rng_seed = os.time(),
+		bh_periodic_boundary = true,
+		bh_boundary_size = 10.0,
 	},
 	lua = {
 		spawn_funct = "spawn_objects",
@@ -41,7 +43,7 @@ function spawn_objects(string_from_arg)
 	print("Sent value", string_from_arg)
 	math.randomseed( settings.physics.rng_seed )
 	
-	local cube_size = 7
+	local cube_size = 4
 	local z = 1
 	local velocity = 10
 	
@@ -64,7 +66,7 @@ function spawn_objects(string_from_arg)
 						k-(cube_size/2),
 					},
 					vel = {
-						0,
+						10,
 						0,
 						0,
 					},
