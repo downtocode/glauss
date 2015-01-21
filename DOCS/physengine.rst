@@ -266,6 +266,10 @@ All of the variables below are settable via the command line interpreter.
     Sets the balance difference(most vs least populated) before an octree is considered out of balance. [0,1]. 0 = off.
 ``bh_balance_timeout`` - *Unsigned Integer*
     Sets the timeout on an octree after it has been balanced. Unit is steps. Balancer will not touch it.
+``bh_periodic_boundary`` - *Boolean*
+    Turns on periodic boundaries.
+``bh_boundary_size`` - *Double*
+    Sets the cube size for periodicity.
 
 *Object specific variables*
 ---------------------------
