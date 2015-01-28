@@ -579,6 +579,7 @@ static void bh_init_cell(bh_octree *octree, uint8_t k)
 		octree->cells[k]->depth = octree->depth+1;
 		octree->cells[k]->leaf = true;
 		octree->cells[k]->score = bh_lifetime;
+		octree->cells[k]->parent = octree;
 		allocated_cells++;
 	}
 	
@@ -679,6 +680,7 @@ bh_octree *bh_init_tree(void)
 	bh_octree *octree = calloc(1, sizeof(bh_octree));
 	octree->score = USHRT_MAX;
 	octree->leaf = true;
+	octree->parent = NULL;
 	return octree;
 }
 

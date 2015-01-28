@@ -35,7 +35,7 @@ typedef struct phys_barnes_hut_octree {
 	vec3 origin, avg_obj_pos;
 	double mass;
 	long double halfdim;
-	struct phys_barnes_hut_octree *cells[8];
+	struct phys_barnes_hut_octree *cells[8], *parent;
 	phys_obj *data;
 	unsigned long int score, depth;
 	bool leaf;
