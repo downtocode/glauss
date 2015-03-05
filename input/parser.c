@@ -492,8 +492,10 @@ int conf_lua_parse_objs(lua_State *L, struct lua_parser_state *parser_state)
 		/* Object/file finished, go to next */
 		return 1;
 	} else if(lua_isnumber(L, -1)) {
-		if (!strcmp("charge", lua_tostring(L, -2)))
-			parser_state->buffer.charge = lua_tonumber(L, -1)*option->elcharge;
+		if (!strcmp("param1", lua_tostring(L, -2)))
+			parser_state->buffer.param1 = lua_tonumber(L, -1);
+		if (!strcmp("param2", lua_tostring(L, -2)))
+			parser_state->buffer.param2 = lua_tonumber(L, -1);
 		if (!strcmp("mass", lua_tostring(L, -2)))
 			parser_state->buffer.mass = lua_tonumber(L, -1);
 		if (!strcmp("radius", lua_tostring(L, -2)))
@@ -944,17 +946,6 @@ int parse_lua_simconf_options(struct parser_map *map)
 	
 	conf_traverse_table(Lp, &conf_lua_parse_opts, parser_state);
 	
-	if ((option->epsno == 0.0) || (option->elcharge == 0.0)) {
-		option->noele = 1;
-	} else {
-		option->noele = 0;
-	}
-	if (option->gconst == 0.0) {
-		option->nogrv = 1;
-	} else {
-		option->nogrv = 0;
-	}
-	
 	return 0;
 }
 
@@ -1115,8 +1106,10 @@ void parser_push_object_array(lua_State *L, phys_obj *obj,
 		/* Everything else */
 		lua_pushnumber(L, obj[i].mass);
 		lua_setfield(L, -2, "mass");
-		lua_pushnumber(L, obj[i].charge);
-		lua_setfield(L, -2, "charge");
+		lua_pushnumber(L, obj[i].param1);
+		lua_setfield(L, -2, "param1");
+		lua_pushnumber(L, obj[i].param2);
+		lua_setfield(L, -2, "param2");
 		lua_pushnumber(L, obj[i].radius);
 		lua_setfield(L, -2, "radius");
 		lua_pushinteger(L, obj[i].atomnumber);

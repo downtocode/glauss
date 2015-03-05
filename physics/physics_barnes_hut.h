@@ -35,7 +35,7 @@ typedef struct phys_barnes_hut_octree {
 	vec3 origin, avg_obj_pos;
 	double mass;
 	long double halfdim;
-	struct phys_barnes_hut_octree *cells[8], *parent;
+	struct phys_barnes_hut_octree *parent, *cells[8];
 	phys_obj *data;
 	unsigned long int score, depth;
 	bool leaf;
@@ -60,7 +60,7 @@ struct bh_statistics {
 /* Thread configuration struct */
 struct thread_config_bhut {
 	phys_obj *obj;
-	bh_octree *root, *octrees[8];
+	bh_octree *root, *octrees[8], **endpoints;
 	unsigned int id, objs_low, objs_high, obj_num, tot_octs, balance_timeout;
 	struct bh_statistics *glob_stats;
 	struct bh_statistics *stats;

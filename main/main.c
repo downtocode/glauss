@@ -83,8 +83,7 @@ int main(int argc, char *argv[])
 			/* Physics */
 			.threads = 0,
 			.dt = 0.008, .verbosity = 5,
-			.gconst = 0, .epsno = 0, .elcharge = 0,
-			.noele = 1, .nogrv = 1,
+			.gconst = 0,
 			.algorithm = strdup("none"),
 			.thread_schedule_mode = strdup("SCHED_RR"),
 			.custom_sprite_png = NULL,
@@ -105,8 +104,6 @@ int main(int argc, char *argv[])
 			{"rng_seed",               P_TYPE(option->rng_seed)               },
 			{"width",                  P_TYPE(option->width)                  },
 			{"height",                 P_TYPE(option->height)                 },
-			{"epsno",                  P_TYPE(option->epsno)                  },
-			{"elcharge",               P_TYPE(option->elcharge)               },
 			{"gconst",                 P_TYPE(option->gconst)                 },
 			{"verbosity",              P_TYPE(option->verbosity)              },
 			{"fontsize",               P_TYPE(option->fontsize)               },
@@ -158,14 +155,14 @@ int main(int argc, char *argv[])
 				{"verb",		required_argument,		0, 'v'},
 				{"version",		no_argument,			0, 'V'},
 				{"file",		required_argument,		0, 'f'},
-				{"help",		no_argument,			0, 'h'},
+				{"help",		optional_argument,		0, 'h'},
 				{"lua_val",		required_argument,		0, 'u'},
 				{0}
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "a:f:l:t:r:u:v:Vh", long_options,
+			c = getopt_long(argc, argv, "a:f:l:t:r:u:v:h::V", long_options,
 							&option_index);
 			
 			/* Detect the end of the options. */
@@ -229,7 +226,11 @@ int main(int argc, char *argv[])
 					pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s by %s\n",
 							PACKAGE_STRING, __DATE__, __TIME__, PHYS_COMPILER);
 					pprintf(PRI_ESSENTIAL, "Linked Lua version: %s\n", LINKED_LUA_VER);
-					pprintf(PRI_ESSENTIAL, "%s", ARGSTRING);
+					if (!optarg) {
+						pprintf(PRI_ESSENTIAL, "%s", ARGSTRING);
+					} else {
+						phys_list_opts(optarg);
+					}
 					exit(0);
 					break;
 				case '?':

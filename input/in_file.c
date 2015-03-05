@@ -147,7 +147,6 @@ int in_read_file(phys_obj *object, int *i, in_file *file)
 			object[*i].pos = file->scale*pos + file->inf->pos;
 			object[*i].vel = file->inf->vel;
 			object[*i].ignore = file->inf->ignore;
-			object[*i].charge = file->inf->charge*option->elcharge;
 			object[*i].atomnumber = file->inf->atomnumber;
 			object[*i].radius = file->inf->radius ? file->inf->radius : 1;
 			object[*i].mass = file->inf->mass ? file->inf->mass : 1.0;

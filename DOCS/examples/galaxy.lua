@@ -18,6 +18,8 @@ settings = {
 		bh_random_assign = true,
 		bh_periodic_boundary = true,
 		bh_boundary_size = 500,
+		bh_viscosity = true,
+		bh_viscosity_cutoff = 3,
 	},
 	lua_settings = {
 		spawn_funct = "spawn_objects",
@@ -45,12 +47,7 @@ settings = {
 		default_draw_mode = "MODE_POINTS",
 	},
 	constants = {
-		--elcharge = 1.602176565*10^-2,
 		gconst = 6.67384*10^-8,
-		--epsno = 8.854187817*10^-4,
-		elcharge = 0,
-		--gconst = 0,
-		epsno = 0,
 	},
 }
 
@@ -115,7 +112,6 @@ function spawn_objects(string_from_arg)
 				0,
 				-math.cos(theta*math.pi/180.0)*dist,
 			},
-			charge = 100,
 			mass = 100000,
 			radius = 0.2,
 			atomnumber = math.random(1,10),
@@ -137,7 +133,6 @@ function spawn_objects(string_from_arg)
 				0,
 				-math.cos(theta*math.pi/180.0)*dist,
 			},
-			charge = 100,
 			mass = 100000,
 			radius = 0.2,
 			atomnumber = math.random(1,10),
@@ -148,7 +143,6 @@ function spawn_objects(string_from_arg)
 	objects[#objects+1] = {
 		pos = { 0,0,0 },
 		vel = { 0, 100, 0 },
-		charge = 100,
 		mass = 100,
 		radius = 0.2,
 		atomnumber = math.random(1,10),
@@ -161,17 +155,6 @@ end
 --Consult physics/physics.h for the format of struct thread_statistics and typedef data
 function run_on_timestep(t_stats, obj)
 	print("Current progress:", t_stats.progress)
-	
-	for i = 0, #t_stats, 1 do
-		print("Thread", i, "Usage: ", t_stats[i].bh_heapsize/1048576, "MiB")
-	end
-	print("Total octree memory usage:", t_stats.bh_heapsize/1048576, "MiB")
-	
-	if obj == nil then
-		return nil
-	else
-		print("Velocity of object 1:", math.sqrt(obj[1].vel[0]^2 + obj[1].vel[1]^2 + obj[1].vel[2]^2) )
-	end
 	
 	return nil
 end

@@ -60,7 +60,8 @@ enum phys_set_status {
 /* Object structure - should be exactly 128 bytes */
 typedef struct {
 	vec3 pos, vel, acc;
-	double mass, charge;
+	double mass;
+	float param1, param2;
 	long unsigned int id;
 	float radius;
 	bool ignore;
@@ -186,6 +187,7 @@ void phys_ctrl_wait(pthread_barrier_t *barr);
 
 /* Function to print all avail algorithms */
 void phys_list_algo(void);
+void phys_list_opts(const char *algo);
 
 /* Called by thread to do an emergency save to file */
 void phys_urgent_dump(void);

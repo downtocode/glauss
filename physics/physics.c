@@ -216,6 +216,41 @@ int phys_set_sched_mode(char **mode)
 	return found;
 }
 
+void phys_list_opts(const char *algo)
+{
+	phys_algorithm *temp_algo = phys_find_algorithm(algo);
+	if (!temp_algo) {
+		pprintf(PRI_ERR, "Algorithm %s not found!\n", algo);
+		return;
+	}
+	
+	struct glob_thread_config *temp_cfg = cfg = ctrl_preinit(NULL, NULL);
+	
+	if (temp_algo->thread_preconfiguration) {
+		temp_algo->thread_preconfiguration(temp_cfg);
+	}
+	
+	if (!temp_cfg->algo_opt_map) {
+		printf("\nAlgorithm %s has no options\n", temp_algo->name);
+		goto close;
+	}
+	
+	char str[25];
+	printf("\nAlgorithm %s has the following options:\n", temp_algo->name);
+	for (struct parser_map *i = temp_cfg->algo_opt_map; i->name; i++) {
+		parser_get_value_str(*i, str, sizeof(str));
+		printf("	%s = %s\n", i->name, str);
+	}
+	
+	/* YES, IT STILL LEAKS. I KNOW, RIGHT? THEN DONT RUN THIS 10^6 TIMES! */
+	
+	close:
+		free(temp_cfg->algo_opt_map);
+		free(temp_cfg->algo_global_stats_map);
+		free(temp_cfg->algo_thread_stats_map);
+		free(temp_cfg);
+}
+
 void phys_urgent_dump(void)
 {
 	pprint_warn("Backing up entire system in backup.bin!\n");

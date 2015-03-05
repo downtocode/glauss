@@ -26,7 +26,7 @@ extern struct option_struct {
 	unsigned short verbosity;
 	float def_radius;
 	int width, height, fontsize;
-	bool nogrv, noele, logenable;
+	bool logenable;
 	FILE *logfile; //--
 	bool novid;
 	
@@ -50,7 +50,7 @@ extern struct option_struct {
 	unsigned int obj; //--
 	unsigned short threads;
 	unsigned int rng_seed;
-	double elcharge, gconst, epsno;
+	double gconst;
 	unsigned int step_back_buffer;
 	
 	/* Physics - ctrl */

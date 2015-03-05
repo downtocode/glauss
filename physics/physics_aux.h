@@ -48,6 +48,10 @@ struct phys_obj_collisions {
 	/* The last collision will have tot_coll_local = 0 */
 };
 
+#define VEC3_DET(x) (x)[0]+(x)[1]+(x)[2]
+#define VEC3_NORM(x) x/sqrt(VEC3_DET(x*x))
+#define VEC3_NORM_DIV_DIST2(x) x/pow(VEC3_DET(x*x), 3/2)
+
 /* Elements system. Submit a NULL filepath to use compiled internal DB */
 unsigned short int return_atom_num(const char *name);
 char *return_atom_str(unsigned int num);

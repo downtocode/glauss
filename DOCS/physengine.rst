@@ -97,8 +97,9 @@ The following flags can be used:
 ``--version``, ``-V`` - No argument
     Will report version as well as compile time and date.
 
-``--help``, ``-h`` - No argument
+``--help``, ``-h`` - *String* (Optional)
     Will report on flags and usage and try to convince the user to read this manual.
+    If supplied with an argument (like ``--help=<algorithm>``) will list the algorithm's options and default values.
 
 ``--file``, ``-f`` - *String*
     Input file. See the section below for more information.

@@ -41,6 +41,9 @@ struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, phys_ob
 	
 	cfg->algo_thread_stats_map = calloc(cfg->algo_threads+1, sizeof(struct parser_map *));
 	
+	if (!stats)
+		return cfg;
+	
 	/* Reinit stats */
 	cfg->stats->threads = cfg->algo_threads;
 	cfg->stats->t_stats = calloc(cfg->algo_threads+1, sizeof(struct thread_statistics));

@@ -38,7 +38,7 @@ static _Thread_local unsigned int allocated_cells = 0;
 static unsigned int bh_octrees_max = 0;
 
 /* Algorithm specific options */
-static double          bh_ratio = 0.1;
+static double          bh_ratio = 0.5;
 static double          bh_balance_threshold = 0.0;
 static unsigned short  bh_tree_limit = 8;
 static unsigned short  bh_lifetime = 24;
@@ -47,6 +47,9 @@ static unsigned int    bh_balance_timeout = 175;
 static bool            bh_single_assign = true;
 static bool            bh_random_assign = true;
 static bool            bh_periodic_boundary = false;
+static bool            bh_viscosity = false;
+static unsigned short  bh_viscosity_cutoff = 1;
+static double          bh_viscosity_ratio = 0.5;
 static double          bh_boundary_size = 10.0;
 
 /* Used in qsort to assign threads in octrees */
@@ -227,6 +230,9 @@ void *bhut_preinit(struct glob_thread_config *cfg)
 			{"bh_balance_threshold",   P_TYPE(bh_balance_threshold)   },
 			{"bh_periodic_boundary",   P_TYPE(bh_periodic_boundary)   },
 			{"bh_boundary_size",       P_TYPE(bh_boundary_size)       },
+			{"bh_viscosity",           P_TYPE(bh_viscosity)           },
+			{"bh_viscosity_cutoff",    P_TYPE(bh_viscosity_cutoff)    },
+			{"bh_viscosity_ratio",     P_TYPE(bh_viscosity_ratio)     },
 			{0},
 		});
 	
@@ -283,6 +289,9 @@ void **bhut_init(struct glob_thread_config *cfg)
 	bh_init_center_of_mass(cfg->obj, root_octree);
 	root_octree->halfdim = bh_init_max_displacement(cfg->obj, root_octree);
 	
+	/* Create endpoints array pointing at the octree an object is in */
+	bh_octree **endpoints = calloc(cfg->obj_num, sizeof(bh_octree *));
+	
 	/* Create temporary assignment tree for threads */
 	bh_thread *thread_tree = calloc(1, sizeof(bh_thread));
 	
@@ -297,6 +306,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 		thread_config[k]->obj = cfg->obj;
 		thread_config[k]->obj_num = cfg->obj_num;
 		thread_config[k]->ctrl = cfg->ctrl;
+		thread_config[k]->endpoints = endpoints;
 		thread_config[k]->barrier = barrier;
 		thread_config[k]->mute = mute;
 		thread_config[k]->root_lock = root_lock;
@@ -596,7 +606,7 @@ static void bh_init_cell(bh_octree *octree, uint8_t k)
 }
 
 /* Recursive function to insert object into an octree */
-static void bh_insert_object(phys_obj *object, bh_octree *octree)
+static bh_octree *bh_insert_object(phys_obj *object, bh_octree *octree)
 {
 	/* Update octree mass/center of mass. */
 	octree->avg_obj_pos = (octree->avg_obj_pos+object->pos)/2;
@@ -604,6 +614,7 @@ static void bh_insert_object(phys_obj *object, bh_octree *octree)
 	if (!octree->data && octree->leaf) {
 		/* This cell has no object or subcells */
 		octree->data = object;
+		return octree; /* Cascade octree location */
 	} else if (octree->data && octree->leaf) {
 		/* This cell has object but no subcells */
 		uint8_t oct_current_obj = bh_get_octant(&object->pos, octree);
@@ -615,16 +626,18 @@ static void bh_insert_object(phys_obj *object, bh_octree *octree)
 		
 		/* Insert current object */
 		bh_init_cell(octree, oct_current_obj);
-		bh_insert_object(object, octree->cells[oct_current_obj]);
 		
 		/* No longer leaf */
 		octree->data = NULL;
 		octree->leaf = false;
+		
+		/* Recurse and cascade */
+		return bh_insert_object(object, octree->cells[oct_current_obj]);
 	} else {
 		/* This cell has subcells with objects */
 		uint8_t oct_current_obj = bh_get_octant(&object->pos, octree);
 		bh_init_cell(octree, oct_current_obj);
-		bh_insert_object(object, octree->cells[oct_current_obj]);
+		return bh_insert_object(object, octree->cells[oct_current_obj]);
 	}
 }
 
@@ -720,14 +733,15 @@ static void bh_calculate_force(phys_obj *object, bh_octree *octree)
 	}
 }
 
-static inline unsigned int bh_build_octree(phys_obj *object, bh_octree *octree, bh_octree *root)
+static inline unsigned int bh_build_octree(phys_obj *object, bh_octree *octree,
+										   bh_octree *root, bh_octree **endpoints)
 {
 	unsigned int prev_allocated_cells = allocated_cells;
 	if (!octree || !root || !object)
 		return 0;
 	for (unsigned int i = 0; i < option->obj; i++) {
 		if (bh_recurse_check_obj(&object[i], octree, root)) {
-			bh_insert_object(&object[i], octree);
+			endpoints[i] = bh_insert_object(&object[i], octree);
 		}
 	}
 	return allocated_cells - prev_allocated_cells;
@@ -762,6 +776,58 @@ static void bh_atomic_update_root(long double dimension, bh_octree *root,
 		root->halfdim = dimension;
 	pthread_mutex_unlock(root_lock);
 }
+
+static void bh_force_periodic_bound(phys_obj *obj, bh_octree *root)
+{
+	return;
+	if (!root)
+		return;
+	vec3 vecnorm = VEC3_NORM_DIV_DIST2(obj->pos - root->origin);
+	obj->acc += vecnorm*(option->gconst*root->mass);
+}
+
+void phys_lennard_jones_force(phys_obj *obj_local, phys_obj *obj_away)
+{
+	vec3 vecnorm = obj_local->pos - obj_away->pos;
+	
+	double dist = VEC3_DET(vecnorm*vecnorm);
+	
+	return;
+	//vecnorm /= dist;
+	
+	//vecnorm *= 24*obj_local->param1*(2*(pow(obj_local->param2/dist, 12)) - (pow(obj_local->param2/dist, 6)))/dist*dist;
+	
+	//obj_local->acc += vecnorm/obj_local->mass;
+}
+
+/* Scan nearby trees and apply a LJ force to emulate viscosity/bonds */
+static void bh_neighbour_viscosity(void *prev, bh_octree *oct, phys_obj *obj, int i)
+{
+	if (!oct)
+		return;
+	
+	for (uint8_t s = 0; s < 8; s++) {
+		if (oct->cells[s]) {
+			if (oct->cells[s]->data && prev != oct->cells[s]->data) {
+				/* Object */
+				phys_lennard_jones_force(obj, oct->cells[s]->data);
+			}
+		}
+	}
+	
+	if (++i > bh_viscosity_cutoff) /* Limit */
+		return; /* We went up too much */
+	else /* We can keep going up */
+		bh_neighbour_viscosity(oct, oct->parent, obj, i);
+}
+
+/*else if(prev != oct->cells[s]) {
+	if (1) {
+		bh_neighbour_viscosity(oct, oct->cells[s], obj, -abs(i-1));
+	} else {
+		phys_lennard_jones_force(obj, &oct->cells[s]->avg_obj_pos);
+	}
+}*/
 
 /* Sets the origins and dimensions of any thread octrees and in between root. */
 void bh_cascade_position(bh_octree *target, bh_octree *root,
@@ -819,7 +885,7 @@ void *thread_bhut(void *thread_setts)
 		
 		/* Build octree */
 		for (uint8_t s=0; s < 8; s++) {
-			new_alloc += bh_build_octree(t->obj, t->octrees[s], t->root);
+			new_alloc += bh_build_octree(t->obj, t->octrees[s], t->root, t->endpoints);
 			/* Sync mass and center of mass with any higher trees */
 			bh_cascade_mass(t->octrees[s], t->root, t->root_lock);
 		}
@@ -830,6 +896,12 @@ void *thread_bhut(void *thread_setts)
 		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;
 			bh_calculate_force(&t->obj[i], t->root);
+			if (bh_periodic_boundary) { /* Periodic boundary */
+				bh_force_periodic_bound(&t->obj[i], t->root);
+			}
+			if (bh_viscosity) { /* Viscosity */
+				bh_neighbour_viscosity(&t->obj[i], t->endpoints[i]->parent, &t->obj[i], 1);
+			}
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 			/* Get updated maximum for root while we're at it. */
 			vecnorm = t->obj[i].pos - t->root->origin;

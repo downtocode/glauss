@@ -80,9 +80,7 @@ void *thread_nbody(void *thread_setts)
 	vec3 vecnorm, accprev;
 	double dist;
 	const double dt = option->dt;
-	const double pi = acos(-1);
-	const double gconst = option->gconst, epsno = option->epsno;
-	const bool nogrv = option->nogrv, noele = option->noele;
+	const double gconst = option->gconst;
 	
 	while (!*t->quit) {
 		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
@@ -94,6 +92,8 @@ void *thread_nbody(void *thread_setts)
 		
 		pthread_barrier_wait(t->barrier);
 		
+		printf("debi = %i, %i = %lf\n", option->obj, t->objs_high, t->obj[t->objs_high].mass);
+		
 		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			accprev = t->obj[i].acc;
 			for (unsigned int j = 0; j < t->obj_num; j++) {
@@ -104,14 +104,7 @@ void *thread_nbody(void *thread_setts)
 							vecnorm[1]*vecnorm[1] +\
 							vecnorm[2]*vecnorm[2]);
 				vecnorm /= dist;
-				
-				if (!nogrv)
-					t->obj[i].acc += vecnorm*\
-									   (gconst*t->obj[j].mass)/(dist*dist);
-				if (!noele)
-					t->obj[i].acc += -vecnorm*\
-								((t->obj[i].charge*t->obj[j].charge)/\
-									(4*pi*epsno*dist*dist*t->obj[i].mass));
+				t->obj[i].acc += vecnorm*(gconst*t->obj[j].mass)/(dist*dist);
 			}
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 		}
