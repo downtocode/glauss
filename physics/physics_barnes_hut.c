@@ -481,14 +481,9 @@ static inline long double bh_even_round(double num)
 /* INIT ONLY: Returns furthest object's furthest position from an octree. */
 double bh_init_max_displacement(phys_obj *object, bh_octree *octree)
 {
-	double dist = 0.0, maxdist = 0.0;
-	vec3 vecnorm = (vec3){0,0,0};
+	double maxdist = 0.0;
 	for (unsigned int i = 0; i < option->obj; i++) {
-		vecnorm = object[i].pos - octree->origin;
-		dist = sqrt(vecnorm[0]*vecnorm[0] +\
-					vecnorm[1]*vecnorm[1] +\
-					vecnorm[2]*vecnorm[2]);
-		maxdist = fmax(dist, maxdist);
+		maxdist = fmax(VEC3_LEN(object[i].pos - octree->origin), maxdist);
 	}
 	return bh_even_round(maxdist);
 }
@@ -860,8 +855,7 @@ void *thread_bhut(void *thread_setts)
 {
 	struct thread_config_bhut *t = thread_setts;
 	const double dt = option->dt;
-	vec3 accprev = (vec3){0,0,0}, vecnorm = (vec3){0,0,0};
-	double dist = 0.0;
+	vec3 accprev = (vec3){0,0,0};
 	
 	while (!*t->quit) {
 		unsigned int new_alloc = 0, new_cleaned = 0;
@@ -904,11 +898,7 @@ void *thread_bhut(void *thread_setts)
 			}
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 			/* Get updated maximum for root while we're at it. */
-			vecnorm = t->obj[i].pos - t->root->origin;
-			dist = sqrt(vecnorm[0]*vecnorm[0] +\
-						vecnorm[1]*vecnorm[1] +\
-						vecnorm[2]*vecnorm[2]);
-			maxdist = fmax(dist, maxdist);
+			maxdist = fmax(VEC3_LEN(t->obj[i].pos - t->root->origin), maxdist);
 		}
 		
 		/* Insert updated halfdim into root */

@@ -136,16 +136,12 @@ void *thread_stats(void *thread_setts)
 	struct thread_config_null *t = thread_setts;
 	/* We need to play along with the control thread, so continue running. */
 	while (!*t->quit) {
-		vec3 vecnorm = (vec3){0};
 		double dist = 0.0, avg_dist = 0.0, max_dist = 0.0;
 		for (unsigned int i = t->objs_low; i < t->objs_high + 1; i++) {
 			for (unsigned int j = 0; j < t->obj_num; j++) {
 				if (i==j)
 					continue;
-				vecnorm = t->obj[j].pos - t->obj[i].pos;
-				dist = sqrt(vecnorm[0]*vecnorm[0] +\
-							vecnorm[1]*vecnorm[1] +\
-							vecnorm[2]*vecnorm[2]);
+				dist = VEC3_LEN(t->obj[j].pos - t->obj[i].pos);
 				max_dist = fmax(max_dist, dist);
 				avg_dist = (dist + avg_dist)/2;
 			}

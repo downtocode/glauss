@@ -33,6 +33,12 @@ typedef double vec3 __attribute__ ((vector_size (32)));
 #error "Can't compile, compiler doesn't support _Generics and vectors. GCC 4.9(and above) or Clang 3.4(and above) will work fine."
 #endif
 
+/* Vector operations */
+#define VEC3_DET2(x) (x)[0]*(x)[0]+(x)[1]*(x)[1]+(x)[2]*(x)[2]
+#define VEC3_LEN(x) sqrt(VEC3_DET2(x))
+#define VEC3_NORM(x) x/VEC3_LEN(x)
+#define VEC3_NORM_DIV_DIST2(x) x/pow(VEC3_DET2(x), 3/2)
+
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>

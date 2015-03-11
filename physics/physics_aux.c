@@ -113,8 +113,6 @@ unsigned int phys_check_collisions(phys_obj *object,
 								   unsigned int low, unsigned int high)
 {
 	unsigned int collisions = 0;
-	vec3 vecnorm = {0};
-	double dist = 0.0;
 	for (unsigned int i = low; i < high; i++) {
 		if (!object[i].mass) {
 			pprint_err("Object %i has no mass!\n", i);
@@ -123,11 +121,7 @@ unsigned int phys_check_collisions(phys_obj *object,
 		for (unsigned int j = low; j < high; j++) {
 			if (i==j)
 				continue;
-			vecnorm = object[j].pos - object[i].pos;
-			dist = sqrt(vecnorm[0]*vecnorm[0] +\
-						vecnorm[1]*vecnorm[1] +\
-						vecnorm[2]*vecnorm[2]);
-			if (dist == 0.0) {
+			if (VEC3_LEN(object[j].pos - object[i].pos) == 0.0) {
 				collisions+=2;
 				pprint_err("Objects %i and %i share coordinates!\n", i, j);
 			}
@@ -138,9 +132,6 @@ unsigned int phys_check_collisions(phys_obj *object,
 
 struct phys_obj_collisions *phys_return_collisions(phys_obj *object, unsigned int count)
 {
-	vec3 vecnorm = {0};
-	double dist = 0.0;
-	
 	struct phys_obj_collisions *all_colls = NULL;
 	unsigned int colls_num = 0;
 	
@@ -158,11 +149,7 @@ struct phys_obj_collisions *phys_return_collisions(phys_obj *object, unsigned in
 		for (unsigned int j = 0; j < count; j++) {
 			if (i==j)
 				continue;
-			vecnorm = object[j].pos - object[i].pos;
-			dist = sqrt(vecnorm[0]*vecnorm[0] +\
-			vecnorm[1]*vecnorm[1] +\
-			vecnorm[2]*vecnorm[2]);
-			if (dist == 0.0 && i > j) {
+			if (VEC3_LEN(object[j].pos - object[i].pos) == 0.0 && i > j) {
 				if (!coll.tot_coll_local) {
 					coll.obj_ids = malloc(sizeof(unsigned int));
 					coll.obj_ids[0] = object[i].id;
@@ -193,15 +180,9 @@ struct phys_obj_collisions *phys_return_collisions(phys_obj *object, unsigned in
 bool phys_check_coords(vec3 *vec, phys_obj *object,
 					   unsigned int low, unsigned int high)
 {
-	vec3 vecnorm = {0};
-	double dist = 0.0;
 	for (unsigned int i = low; i < high; i++) {
 		for (unsigned int j = low; j < high; j++) {
-			vecnorm = object[j].pos - *vec;
-			dist = sqrt(vecnorm[0]*vecnorm[0] +\
-						vecnorm[1]*vecnorm[1] +\
-						vecnorm[2]*vecnorm[2]);
-			if (dist == 0.0) {
+			if (VEC3_LEN(object[j].pos - *vec) == 0.0) {
 				return 1;
 			}
 		}

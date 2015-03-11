@@ -77,8 +77,7 @@ void nbody_quit(struct glob_thread_config *cfg)
 void *thread_nbody(void *thread_setts)
 {
 	struct thread_config_nbody *t = thread_setts;
-	vec3 vecnorm, accprev;
-	double dist;
+	vec3 accprev = (vec3){0,0,0};
 	const double dt = option->dt;
 	const double gconst = option->gconst;
 	
@@ -99,12 +98,8 @@ void *thread_nbody(void *thread_setts)
 			for (unsigned int j = 0; j < t->obj_num; j++) {
 				if (i==j)
 					continue;
-				vecnorm = t->obj[j].pos - t->obj[i].pos;
-				dist = sqrt(vecnorm[0]*vecnorm[0] +\
-							vecnorm[1]*vecnorm[1] +\
-							vecnorm[2]*vecnorm[2]);
-				vecnorm /= dist;
-				t->obj[i].acc += vecnorm*(gconst*t->obj[j].mass)/(dist*dist);
+				t->obj[i].acc += VEC3_NORM_DIV_DIST2(t->obj[j].pos - t->obj[i].pos)*\
+								 (gconst*t->obj[j].mass);
 			}
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 		}
