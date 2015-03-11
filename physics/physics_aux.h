@@ -23,7 +23,6 @@
 extern struct atomic_cont {
 	char *name;
 	double mass;
-	double charge;
 	int number;
 	float color[4];
 } *atom_prop;

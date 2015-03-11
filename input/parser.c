@@ -92,38 +92,66 @@ static void conf_lua_get_color(lua_State *L, float color[4])
 /* Look header file to see why it's needed */
 int parser_lua_fill_table_hack(lua_State *L, unsigned int arr_size)
 {
+	/* I need to NOT forget to change this if the definition changes */
+	phys_obj empty = (phys_obj) {
+		.pos = {0},
+		.vel = {0},
+		.acc = {0},
+		.radius = 0,
+		.param1 = 0,
+		.param2 = 0,
+		.state = 0,
+		.atomnumber = 0,
+		.id = arr_size + 1,
+		.mass = 1,
+		.ignore = true,
+	};
+	
 	lua_newtable(L); /* Object */
+	
 	lua_newtable(L); /* Pos */
 	for (int j = 0; j < 3; j++) {
-		lua_pushnumber(L, 0);
+		lua_pushnumber(L, empty.pos[j]);
 		lua_rawseti(L, -2, j+1);
 	}
 	lua_setfield(L, -2, "pos");
+	
 	lua_newtable(L); /* Vel */
 	for (int j = 0; j < 3; j++) {
-		lua_pushnumber(L, 0);
+		lua_pushnumber(L, empty.vel[j]);
 		lua_rawseti(L, -2, j+1);
 	}
 	lua_setfield(L, -2, "vel");
+	
 	lua_newtable(L); /* Acc */
 	for (int j = 0; j < 3; j++) {
-		lua_pushnumber(L, 0);
+		lua_pushnumber(L, empty.acc[j]);
 		lua_rawseti(L, -2, j+1);
 	}
 	lua_setfield(L, -2, "acc");
-	lua_pushnumber(L, 1);
+	
+	lua_pushnumber(L, empty.mass);
 	lua_setfield(L, -2, "mass");
-	lua_pushnumber(L, 0);
-	lua_setfield(L, -2, "charge");
-	lua_pushnumber(L, 0);
+	
+	lua_pushnumber(L, empty.param1);
+	lua_setfield(L, -2, "param1");
+	
+	lua_pushnumber(L, empty.param2);
+	lua_setfield(L, -2, "param2");
+	
+	lua_pushnumber(L, empty.radius);
 	lua_setfield(L, -2, "radius");
-	lua_pushinteger(L, 0);
+	
+	lua_pushinteger(L, empty.atomnumber);
 	lua_setfield(L, -2, "atomnumber");
-	lua_pushinteger(L, arr_size+1);
+	
+	lua_pushinteger(L, empty.id);
 	lua_setfield(L, -2, "id");
-	lua_pushinteger(L, 0);
+	
+	lua_pushinteger(L, empty.state);
 	lua_setfield(L, -2, "state");
-	lua_pushboolean(L, true);
+	
+	lua_pushboolean(L, empty.ignore);
 	lua_setfield(L, -2, "ignore");
 	
 	lua_rawseti(L, -2, arr_size+1);
@@ -1106,18 +1134,25 @@ void parser_push_object_array(lua_State *L, phys_obj *obj,
 		/* Everything else */
 		lua_pushnumber(L, obj[i].mass);
 		lua_setfield(L, -2, "mass");
+		
 		lua_pushnumber(L, obj[i].param1);
 		lua_setfield(L, -2, "param1");
+		
 		lua_pushnumber(L, obj[i].param2);
 		lua_setfield(L, -2, "param2");
+		
 		lua_pushnumber(L, obj[i].radius);
 		lua_setfield(L, -2, "radius");
+		
 		lua_pushinteger(L, obj[i].atomnumber);
 		lua_setfield(L, -2, "atomnumber");
+		
 		lua_pushinteger(L, obj[i].id);
 		lua_setfield(L, -2, "id");
+		
 		lua_pushinteger(L, obj[i].state);
 		lua_setfield(L, -2, "state");
+		
 		lua_pushboolean(L, obj[i].ignore);
 		lua_setfield(L, -2, "ignore");
 		

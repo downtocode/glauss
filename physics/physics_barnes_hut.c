@@ -788,9 +788,9 @@ static void bh_force_periodic_bound(phys_obj *obj, bh_octree *root)
 
 void phys_lennard_jones_force(phys_obj *obj_local, phys_obj *obj_away)
 {
-	vec3 vecnorm = obj_local->pos - obj_away->pos;
+	//vec3 vecnorm = obj_local->pos - obj_away->pos;
 	
-	double dist = VEC3_DET(vecnorm*vecnorm);
+	//double dist = VEC3_DET(vecnorm*vecnorm);
 	
 	return;
 	//vecnorm /= dist;
