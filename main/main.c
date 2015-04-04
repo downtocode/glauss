@@ -157,12 +157,13 @@ int main(int argc, char *argv[])
 				{"file",		required_argument,		0, 'f'},
 				{"help",		optional_argument,		0, 'h'},
 				{"lua_val",		required_argument,		0, 'u'},
+				{"debug",		no_argument,			0, 'd'},
 				{0}
 			};
 			/* getopt_long stores the option index here. */
 			int option_index = 0;
 			
-			c = getopt_long(argc, argv, "a:f:l:t:r:u:v:h::V", long_options,
+			c = getopt_long(argc, argv, "a:f:l:t:r:u:v:h::Vd", long_options,
 							&option_index);
 			
 			/* Detect the end of the options. */
@@ -232,6 +233,10 @@ int main(int argc, char *argv[])
 						phys_list_opts(optarg);
 					}
 					exit(0);
+					break;
+				case 'd':
+					option->debug = true;
+					pprint_ok("Debug mode active\n");
 					break;
 				case '?':
 					exit(1);

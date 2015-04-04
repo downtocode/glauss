@@ -16,6 +16,9 @@ settings = {
 		bh_single_assign = true,
 		--Assign the octrees of the threads randomly.
 		bh_random_assign = true,
+		bh_viscosity = true,
+		bh_viscosity_cutoff = 10,
+		
 	},
 	lua_settings = {
 		spawn_funct = "spawn_objects",

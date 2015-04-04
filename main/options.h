@@ -26,7 +26,7 @@ extern struct option_struct {
 	unsigned short verbosity;
 	float def_radius;
 	int width, height, fontsize;
-	bool logenable;
+	bool logenable, debug;
 	FILE *logfile; //--
 	bool novid;
 	

@@ -190,9 +190,22 @@ bool phys_check_coords(vec3 *vec, phys_obj *object,
 	return 0;
 }
 
+void phys_lennard_jones_force(phys_obj *obj, phys_obj *end)
+{
+	if (!obj || !end)
+		return;
+	double dist = VEC3_LEN(obj->pos - end->pos);
+	double sigma = obj->param2 + end->param2;
+	double epsilon = obj->param1;
+	vec3 dir = VEC3_NORM_DIV_DIST2(obj->pos - end->pos);
+	obj->acc+= 24*epsilon*(2*(pow(sigma/dist, 12)) - pow(sigma/dist, 6))*dir;
+}
+
 /* We have to implement those here too as graphics may not be compiled */
 void rotate_vec(vec3 *vec, vec3 *rot1)
 {
+	if(!vec || !rot1)
+		return;
 	vec3 res = *vec, rot = *rot1;
 	if (rot[0]) {
 		double c = cos(rot[0]);

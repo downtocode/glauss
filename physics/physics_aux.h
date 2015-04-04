@@ -60,6 +60,9 @@ void phys_shuffle_algorithms(void);
 int getnumber(struct numbers_selection *numbers, int currentdigit,
 			  enum num_cmd status);
 
+/* Lennard-Jones potential force, see documentation */
+void phys_lennard_jones_force(phys_obj *obj, phys_obj *end);
+
 /* Rotate vector by angles specified in rot1 */
 void rotate_vec(vec3 *vec, vec3 *rot1);
 

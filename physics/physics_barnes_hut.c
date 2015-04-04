@@ -290,7 +290,7 @@ void **bhut_init(struct glob_thread_config *cfg)
 	root_octree->halfdim = bh_init_max_displacement(cfg->obj, root_octree);
 	
 	/* Create endpoints array pointing at the octree an object is in */
-	bh_octree **endpoints = calloc(cfg->obj_num, sizeof(bh_octree *));
+	bh_octree **endpoints = calloc(cfg->obj_num + 1, sizeof(bh_octree *));
 	
 	/* Create temporary assignment tree for threads */
 	bh_thread *thread_tree = calloc(1, sizeof(bh_thread));
@@ -781,48 +781,29 @@ static void bh_force_periodic_bound(phys_obj *obj, bh_octree *root)
 	obj->acc += vecnorm*(option->gconst*root->mass);
 }
 
-void phys_lennard_jones_force(phys_obj *obj_local, phys_obj *obj_away)
-{
-	//vec3 vecnorm = obj_local->pos - obj_away->pos;
-	
-	//double dist = VEC3_DET(vecnorm*vecnorm);
-	
-	return;
-	//vecnorm /= dist;
-	
-	//vecnorm *= 24*obj_local->param1*(2*(pow(obj_local->param2/dist, 12)) - (pow(obj_local->param2/dist, 6)))/dist*dist;
-	
-	//obj_local->acc += vecnorm/obj_local->mass;
-}
-
 /* Scan nearby trees and apply a LJ force to emulate viscosity/bonds */
-static void bh_neighbour_viscosity(void *prev, bh_octree *oct, phys_obj *obj, int i)
+void bh_neighbour_viscosity(phys_obj *obj, bh_octree *oct, int surface)
 {
-	if (!oct)
+	if (!oct || !oct->parent || !obj)
 		return;
 	
-	for (uint8_t s = 0; s < 8; s++) {
-		if (oct->cells[s]) {
-			if (oct->cells[s]->data && prev != oct->cells[s]->data) {
-				/* Object */
-				phys_lennard_jones_force(obj, oct->cells[s]->data);
+	for(uint8_t s = 0; s < 8; s++) {
+		bh_octree *sub = surface > 0 ? oct->parent->cells[s] : oct->cells[s];
+		if (sub && sub != oct) {
+			if (sub->data && sub->data != obj) {
+				phys_lennard_jones_force(obj, sub->data);
+			} else if(sub->cells[s] && surface) {
+				bh_neighbour_viscosity(obj, sub->cells[s], -(abs(surface)-1));
 			}
 		}
 	}
 	
-	if (++i > bh_viscosity_cutoff) /* Limit */
-		return; /* We went up too much */
-	else /* We can keep going up */
-		bh_neighbour_viscosity(oct, oct->parent, obj, i);
-}
-
-/*else if(prev != oct->cells[s]) {
-	if (1) {
-		bh_neighbour_viscosity(oct, oct->cells[s], obj, -abs(i-1));
-	} else {
-		phys_lennard_jones_force(obj, &oct->cells[s]->avg_obj_pos);
+	if (surface >= bh_viscosity_cutoff || surface == 0) { /* Stop */
+		return;
+	} else { /* Up */
+		bh_neighbour_viscosity(obj, oct->parent, surface++);
 	}
-}*/
+}
 
 /* Sets the origins and dimensions of any thread octrees and in between root. */
 void bh_cascade_position(bh_octree *target, bh_octree *root,
@@ -894,7 +875,7 @@ void *thread_bhut(void *thread_setts)
 				bh_force_periodic_bound(&t->obj[i], t->root);
 			}
 			if (bh_viscosity) { /* Viscosity */
-				bh_neighbour_viscosity(&t->obj[i], t->endpoints[i]->parent, &t->obj[i], 1);
+				bh_neighbour_viscosity(&t->obj[i], t->endpoints[i], 1);
 			}
 			t->obj[i].vel += (t->obj[i].acc + accprev)*((dt)/2);
 			/* Get updated maximum for root while we're at it. */

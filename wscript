@@ -62,6 +62,8 @@ def options(ctx):
 				help='Enables the \"-march=native\" compiler flag.')
 	ctx.add_option('--lua', action='store', default='luajit',
 				help='Specify Lua version to link against(lua5.1, luajit, lua5.2)', dest='lua_ver')
+	ctx.add_option('--cc-opt-level', action='store', default='-O2',
+				help='Specify the C compiler optimization level', dest='cc_opt_level')
 	ctx.add_option('--lua-dir', action='store', default='default',
 				help='Override Lua files location, work only for version less than 5.2', dest='lua_dir')
 	ctx.add_option('--lua-cflags', action='store', default='',
@@ -75,7 +77,7 @@ def configure(ctx):
 	if (ctx.options.no_deb == False):
 		ctx.env.CFLAGS += ['-g']
 	
-	ctx.env.append_unique('CFLAGS', ['-O2', '-Wall', '-pedantic', '-std=gnu11'])
+	ctx.env.append_unique('CFLAGS', [ctx.options.cc_opt_level, '-Wall', '-pedantic', '-std=gnu11'])
 
 	if (ctx.options.machine_opt == True):
 		ctx.env.CFLAGS += ['-march=native']

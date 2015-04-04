@@ -46,6 +46,11 @@ static bool cleanup = false;
 
 int input_thread_init(graph_window **win, phys_obj **object)
 {
+	if (option->debug) {
+		pprint_warn("Debugging mode active, disabling CMD interface!\n");
+		return 1;
+	}
+	
 	struct input_cfg *cfg = calloc(1, sizeof(struct input_cfg));
 	
 	cfg->obj = object;
