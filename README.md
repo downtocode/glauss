@@ -42,7 +42,7 @@ Run the program with the argument `-f (filename)`, with an appropriate file. A d
 
 Command line
 ------------
-A command line is included if libreadline is installed. It allows to change almost every aspect of the simulation. Type "help" to list all possible commands and variables(with values printed out). Typing a variable alone will print its current value. Typing `<variable> <value>` changes its current value. Note that for some options like `threads` a restart is needed in order for them to take effect. Using Lua to change a variable is possible as well using the `set_option("<variable>", value)` function inside Lua.
+A command line is included if libreadline is installed. It allows to change almost every aspect of the simulation. Type "help" to list all possible commands and variables(with values printed out). Typing a variable alone will print its current value. Typing `<variable> <value>` changes its current value. Note that for some options like `threads` a restart is needed in order for them to take effect. Using Lua to change a variable is possible as well using the `set_option("<variable>", value)` function.
 
 Input file
 ----------
