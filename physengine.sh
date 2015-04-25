@@ -2,11 +2,11 @@
 RUN="./build/physengine"
 DEBUG="gdb -ex=r --args"
 if [ ! -f $PROGRAM ]; then
-	PROGRAM="physengine"
+    PROGRAM="physengine"
 fi
 
 if [ "${@: -1}" = "--debug" ] || [ "${@: -1}" = "-d" ]; then
-	RUN=$DEBUG" "$RUN
+    RUN=$DEBUG" "$RUN
 fi
 
 $RUN $@

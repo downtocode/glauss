@@ -13,6 +13,6 @@ uniform vec4 objcolor;
 uniform float radius;
 
 void main() {
-	gl_Position = pos*translMat*rotationMat*scalingMat*perspectiveMat;
-	gl_PointSize = radius;
+    gl_Position = pos*translMat*rotationMat*scalingMat*perspectiveMat;
+    gl_PointSize = radius;
 }

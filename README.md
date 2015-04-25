@@ -85,4 +85,4 @@ Want to chat? Life counselling? Psychology? Classical/wooden philosophy? Need a 
 
 Contributing
 ------------
-Got a bug fix? New feature? Sent a pull request here on Github. Demo Lua project scripts are accepted. Just please use the project's coding style (pretty much the Linux kernel coding style, tabs are 4 spaces). You can use the `--bench` option to benchmark the performance and see how it's affected.
+Got a bug fix? New feature? Sent a pull request here on Github. Demo Lua project scripts are accepted. Just please use the project's coding style (pretty much the Linux kernel coding style, indents are 4 spaces). You can use the `--bench` option to benchmark the performance and see how it's affected.

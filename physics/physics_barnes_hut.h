@@ -1,17 +1,17 @@
 /*
  * This file is part of physengine.
  * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
- * 
+ *
  * physengine is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * physengine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -31,41 +31,41 @@
 
 /* Octree structure */
 typedef struct phys_barnes_hut_octree {
-	vec3 origin, avg_obj_pos;
-	double mass;
-	long double halfdim;
-	struct phys_barnes_hut_octree *parent, *cells[8];
-	phys_obj *data;
-	unsigned long int score, depth;
-	bool leaf;
+    vec3 origin, avg_obj_pos;
+    double mass;
+    long double halfdim;
+    struct phys_barnes_hut_octree *parent, *cells[8];
+    phys_obj *data;
+    unsigned long int score, depth;
+    bool leaf;
 } bh_octree;
 
 /* Thread assignment tree structure */
 typedef struct thread_alloc_tree {
-	int assigned;
-	bool leaf;
-	bh_octree *mapped;
-	struct thread_config_bhut *thread, *assign[9];
-	struct thread_alloc_tree *parent, *subdiv[8];
+    int assigned;
+    bool leaf;
+    bh_octree *mapped;
+    struct thread_config_bhut *thread, *assign[9];
+    struct thread_alloc_tree *parent, *subdiv[8];
 } bh_thread;
 
 struct bh_statistics {
-	unsigned int bh_total_alloc;
-	unsigned int bh_new_alloc;
-	unsigned int bh_new_cleaned;
-	size_t bh_heapsize;
+    unsigned int bh_total_alloc;
+    unsigned int bh_new_alloc;
+    unsigned int bh_new_cleaned;
+    size_t bh_heapsize;
 };
 
 /* Thread configuration struct */
 struct thread_config_bhut {
-	phys_obj *obj;
-	bh_octree *root, *octrees[8], **endpoints;
-	unsigned int id, objs_low, objs_high, obj_num, tot_octs, balance_timeout;
-	struct bh_statistics *glob_stats;
-	struct bh_statistics *stats;
-	pthread_barrier_t *ctrl, *barrier;
-	pthread_mutex_t *mute, *root_lock;
-	volatile bool *quit;
+    phys_obj *obj;
+    bh_octree *root, *octrees[8], **endpoints;
+    unsigned int id, objs_low, objs_high, obj_num, tot_octs, balance_timeout;
+    struct bh_statistics *glob_stats;
+    struct bh_statistics *stats;
+    pthread_barrier_t *ctrl, *barrier;
+    pthread_mutex_t *mute, *root_lock;
+    volatile bool *quit;
 };
 
 /* Returns flux of octrees */
@@ -85,7 +85,7 @@ void bh_init_center_of_mass(phys_obj *object, bh_octree *octree);
 
 /* Synchs positions */
 void bh_cascade_position(bh_octree *target, bh_octree *root,
-						 pthread_mutex_t *root_lock);
+                        pthread_mutex_t *root_lock);
 
 /* Init a tree(start of one - NOT A SUBCELL) */
 bh_octree *bh_init_tree(void);
