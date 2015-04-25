@@ -15,11 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_SIGHANDLE
-#define PHYSENGINE_SIGHANDLE
+#pragma once
 
 void on_usr1_signal(int signo);
 void on_quit_signal(int signo);
 void on_alrm_signal(int signo);
-
-#endif

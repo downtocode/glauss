@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PARS
-#define PHYSENGINE_PARS
+#pragma once
 
 #include "config.h"
 
@@ -140,5 +139,3 @@ unsigned int lua_exec_funct(const char *funct, phys_obj *object,
 
 /* Misc parsing */
 const char *parse_file_to_str(const char *filename);
-
-#endif

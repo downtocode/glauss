@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_FONTS
-#define PHYSENGINE_FONTS
+#pragma once
 
 #include "physics/physics.h"
 
@@ -27,5 +26,3 @@ void graph_stop_freetype(void);
 void graph_display_text(const char *text, GLfloat x, GLfloat y, GLfloat s,
 						const GLfloat *col);
 void graph_display_object_info(phys_obj *object, unsigned int num);
-
-#endif

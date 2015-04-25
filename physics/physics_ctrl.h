@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PHYS_CTRL
-#define PHYSENGINE_PHYS_CTRL
+#pragma once
 
 #include "physics.h"
 
@@ -36,5 +35,3 @@ struct glob_thread_config *ctrl_init(struct glob_thread_config *cfg);
 void ctrl_quit(struct glob_thread_config *cfg);
 
 void *thread_ctrl(void *thread_setts);
-
-#endif

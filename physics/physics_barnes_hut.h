@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PHYS_BARNES_HUT
-#define PHYSENGINE_PHYS_BARNES_HUT
+#pragma once
 
 #define PHYS_BARNES_HUT {                                                      \
         .name = "barnes-hut",                                                  \
@@ -97,5 +96,3 @@ void *bhut_preinit(struct glob_thread_config *cfg);
 void **bhut_init(struct glob_thread_config *cfg);
 void *thread_bhut(void *thread_setts);
 void bhut_quit(struct glob_thread_config *cfg);
-
-#endif

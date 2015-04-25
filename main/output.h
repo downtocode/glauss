@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_OUTPUT
-#define PHYSENGINE_OUTPUT
+#pragma once
 
 #include "physics/physics.h"
 
@@ -26,5 +25,3 @@ size_t out_write_array(phys_obj *object, const char *template_str,
 					   pthread_spinlock_t *io_halt);
 size_t in_write_array(phys_obj **object, const char *filename,
 					  pthread_spinlock_t *io_halt);
-
-#endif

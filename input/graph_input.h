@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_GRAPH_INPUT
-#define PHYSENGINE_GRAPH_INPUT
+#pragma once
 
 #include "graph/graph_sdl.h"
 
@@ -24,5 +23,3 @@ void graph_press_mouse(graph_window *win);
 void graph_release_mouse(graph_window *win);
 void graph_adj_zoom_mwheel(graph_window *win);
 int graph_scan_keypress(graph_window *win);
-
-#endif

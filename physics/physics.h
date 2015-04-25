@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PHYS
-#define PHYSENGINE_PHYS
+#pragma once
 
 #if (__clang_major__ >= 3) && (__clang_minor__ >= 4)
 /* Use OpenCL's vectors when compiling with Clang
@@ -215,5 +214,3 @@ int phys_buffer_forward_single_step(void);
 unsigned int phys_fwd_steps(unsigned int steps);
 
 enum phys_status phys_ctrl(enum phys_set_status status, phys_obj **object);
-
-#endif

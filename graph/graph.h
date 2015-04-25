@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_GRAPH
-#define PHYSENGINE_GRAPH
+#pragma once
 
 #include <GLES2/gl2.h>
 #include "graph_sdl.h"
@@ -39,5 +38,3 @@ int graph_set_draw_mode(graph_window *win, const char *mode);
 GLuint graph_load_c_png_texture(void *bin, size_t len, GLint *width, GLint *height);
 GLuint graph_load_png_texture(const char *filename, GLint *width, GLint *height);
 int graph_sshot(unsigned long long int total_steps);
-
-#endif

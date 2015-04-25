@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifdef PHYSENGINE_GRAPH
+#pragma once
 
 #include "physics/physics.h"
 #include "physics/physics_aux.h"
@@ -27,5 +27,3 @@ void draw_obj_packed_elements_draw(phys_obj *object, struct atomic_cont *element
 void draw_obj_col_points(phys_obj *object);
 void draw_objs_mode(phys_obj *object, enum draw_mode mode);
 GLuint graph_init_objects(void);
-
-#endif

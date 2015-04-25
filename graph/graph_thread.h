@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_GRAPH_THREAD
-#define PHYSENGINE_GRAPH_THREAD
+#pragma once
 
 #include "graph_sdl.h"
 
@@ -33,6 +32,4 @@ struct graph_cfg {
 graph_window **graph_thread_init(phys_obj *object);
 void graph_thread_quit(void);
 void *graph_thread(void *thread_setts);
-
-#endif
 

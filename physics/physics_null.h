@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PHYS_NULL
-#define PHYSENGINE_PHYS_NULL
+#pragma once
 
 #define PHYS_NULL {                                                            \
         .name = "null",                                                        \
@@ -65,5 +64,3 @@ void stats_runtime_fn(struct glob_thread_config *cfg);
 void *thread_stats(void *thread_setts);
 
 void null_quit(struct glob_thread_config *cfg);
-
-#endif

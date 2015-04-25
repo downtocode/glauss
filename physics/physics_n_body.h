@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PHYS_N_BODY
-#define PHYSENGINE_PHYS_N_BODY
+#pragma once
 
 #define PHYS_NBODY {                                                           \
         .name = "n-body",                                                      \
@@ -41,5 +40,3 @@ struct thread_config_nbody {
 void **nbody_init(struct glob_thread_config *cfg);
 void nbody_quit(struct glob_thread_config *cfg);
 void *thread_nbody(void *thread_setts);
-
-#endif

@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_INPUT_THREAD
-#define PHYSENGINE_INPUT_THREAD
+#pragma once
 
 #include <pthread.h>
 #include "graph/graph_sdl.h"
@@ -86,5 +85,3 @@ int input_change_element_col(const char *name, const char *col, const char *valu
 int input_call_system(const char *cmd);
 enum setall_ret input_token_setall(char *line, struct input_cfg *t);
 void *input_thread(void *thread_setts);
-
-#endif

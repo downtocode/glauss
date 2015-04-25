@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_PHYS_LUA
-#define PHYSENGINE_PHYS_LUA
+#pragma once
 
 #include "input/parser.h"
 
@@ -54,5 +53,3 @@ void **t_lua_init(struct glob_thread_config *cfg);
 void t_lua_runtime(struct glob_thread_config *cfg);
 void *t_lua(void *thread_setts);
 void t_lua_quit(struct glob_thread_config *cfg);
-
-#endif

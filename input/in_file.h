@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_INPUT
-#define PHYSENGINE_INPUT
+#pragma once
 
 #include "physics/physics.h"
 
@@ -37,5 +36,3 @@ typedef struct {
 enum ext_file in_file_ext(const char *filename);
 int in_probe_file(const char *filename);
 int in_read_file(phys_obj *object, int *i, in_file *file);
-
-#endif

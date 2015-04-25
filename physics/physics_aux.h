@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_AUX
-#define PHYSENGINE_AUX
+#pragma once
 
 #include "physics.h"
 
@@ -85,4 +84,3 @@ unsigned long long int phys_gettime_us(void);
 
 /* Miliseconds sleep, uses nanosleep(will also this), will carry over a second */
 int phys_sleep_msec(long unsigned int time);
-#endif

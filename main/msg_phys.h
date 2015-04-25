@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_MSG
-#define PHYSENGINE_MSG
+#pragma once
 
 enum MSG_PRIORITIY {
 	 PRI_ESSENTIAL = 1,
@@ -45,5 +44,3 @@ void pprintf(enum MSG_PRIORITIY priority, const char *format, ...);
 #define pprint_verb(...)   pprintf(PRI_LOWMED, __VA_ARGS__)
 #define pprint_deb(...)    pprintf(PRI_VERYLOW, __VA_ARGS__)
 #define pprint_input(...)  pprintf(PRI_INPUT, __VA_ARGS__)
-
-#endif

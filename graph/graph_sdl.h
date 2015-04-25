@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_GRAPH_SDL
-#define PHYSENGINE_GRAPH_SDL
+#pragma once
 
 /*	Dependencies	*/
 #include <stdbool.h>
@@ -65,5 +64,3 @@ int graph_sdl_toggle_fullscreen(graph_window *win);
 void graph_sdl_move_cam(graph_window *win);
 void graph_sdl_swapwin(graph_window *win);
 void graph_win_destroy(graph_window *win);
-
-#endif

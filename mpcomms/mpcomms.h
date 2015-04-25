@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef PHYSENGINE_MPCOMMS
-#define PHYSENGINE_MPCOMMS
+#pragma once
 
 #include "physics/physics.h"
 
@@ -52,5 +51,3 @@ struct phys_interface {
 
 int mpcomms_fetch_unique_client_id(unsigned int *id);
 int mpcomms_init(struct glob_thread_config *cfg, enum MPCOMMS_MODE mode, enum MPCOMMS_METHOD method);
-
-#endif
