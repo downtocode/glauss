@@ -2,7 +2,7 @@
 import sys, os, re
 from waflib.Build import BuildContext
 
-APPNAME='physengine'
+APPNAME='glauss'
 VERSION=''
 
 top = '.'
@@ -150,8 +150,8 @@ def build(ctx):
     #Generate manual page
     if (ctx.env.RST2MAN):
         ctx(name='manpage',
-            source = 'DOCS/physengine.rst',
-            target = 'physengine.1',
+            source = 'DOCS/' + APPNAME + '.rst',
+            target = APPNAME + '.1',
             rule = '${RST2MAN} ${SRC} ${TGT}',
         )
     #Generate included files.
@@ -329,7 +329,7 @@ def build(ctx):
         path=ctx.path,
         uselib=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
         use=['in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
-        target='physengine',
+        target=APPNAME + '_client',
         source='client/client.c',
         features  = ['c', 'cprogram'],
         includes='. .. ../../',
@@ -338,7 +338,7 @@ def build(ctx):
         path=ctx.path,
         uselib=['MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
         use=['in_file', 'msg_phys', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
-        target='physengine_server',
+        target=APPNAME + '_server',
         source='server/server.c',
         features  = ['c', 'cprogram'],
         includes='. .. ../../',

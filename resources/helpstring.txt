@@ -1,4 +1,4 @@
-Usage: physengine -f (file) (arguments)
+Usage: glauss_client -f (file) (arguments)
 		--novid			Will run the program without any video outputting enabled.
 		--bench			Will run the program in benchmark mode. timer flag sets duration.
 	-V	--version		Will report version and compile date.

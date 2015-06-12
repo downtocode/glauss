@@ -1,19 +1,19 @@
 /*
- * This file is part of physengine.
+ * This file is part of glauss.
  * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  *
- * physengine is free software: you can redistribute it and/or modify *
+ * glauss is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * physengine is distributed in the hope that it will be useful,
+ * glauss is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
+ * along with glauss.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
 
@@ -43,4 +43,4 @@ void pprintf(enum MSG_PRIORITIY priority, const char *format, ...);
 #define pprint(...)        pprintf(PRI_ESSENTIAL, __VA_ARGS__)
 #define pprint_verb(...)   pprintf(PRI_LOWMED, __VA_ARGS__)
 #define pprint_deb(...)    pprintf(PRI_VERYLOW, __VA_ARGS__)
-#define pprint_input(...)  pprintf(PRI_INPUT, __VA_ARGS__)
+#define pprint_input(...)  pprintf(PRI_ESSENTIAL, __VA_ARGS__)

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-RUN="./build/physengine"
+RUN="./build/glauss_client"
 DEBUG="gdb -ex=r --args"
 if [ ! -f $PROGRAM ]; then
-    PROGRAM="physengine"
+    PROGRAM="glauss_client"
 fi
 
 if [ "${@: -1}" = "--debug" ] || [ "${@: -1}" = "-d" ]; then

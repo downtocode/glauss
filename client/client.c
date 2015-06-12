@@ -1,19 +1,19 @@
 /*
- * This file is part of physengine.
+ * This file is part of glauss.
  * Copyright (c) 2013 Rostislav Pehlivanov <atomnuker@gmail.com>
  *
- * physengine is free software: you can redistribute it and/or modify *
+ * glauss is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * physengine is distributed in the hope that it will be useful,
+ * glauss is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with physengine.  If not, see <http://www.gnu.org/licenses/>.
+ * along with glauss.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*	Standard header files	*/
@@ -358,8 +358,15 @@ int main(int argc, char *argv[])
 
     /* Free options */
     parser_map_free_strings(opts_map);
+    free(option->fontname);
+    free(option->default_draw_mode);
+    free(option->spawn_funct);
+    free(option->algorithm);
+    free(option->thread_schedule_mode);
+    free(option->xyz_temp);
+    free(option->sshot_temp);
 
-    pprint("Done!\n");
+    fprintf(stderr, "Done!\n");
 
     return 0;
 }

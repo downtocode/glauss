@@ -1,5 +1,5 @@
-physengine
-==========
+glauss
+======
 
 Overview
 --------
@@ -26,7 +26,7 @@ All are available on any up-to-date Linux distribution's package repositories. T
 
 `./waf install`
 
-In case program has been installed, use the `physengine` command to run, with appropriate arguments. To uninstall, use `./waf uninstall` in the original project folder.
+In case program has been installed, use the `glauss_client` command to run, with appropriate arguments. To uninstall, use `./waf uninstall` in the original project folder.
 
 The program can also be run in any directory as it has no dependence on any external files. For developer convenience, it's possible to avoid program installation. Just build and run the shell script without installing.
 
@@ -34,7 +34,7 @@ This program **absolutely requires** the newest stable GCC or Clang releases to 
 
 Controls and Usage
 ------------------
-Run the program with the --help flag and/or consult the [manual](DOCS/physengine.rst#controls).
+Run the program with the --help flag and/or consult the [manual](DOCS/glauss.rst#controls).
 
 Running
 -------
@@ -52,7 +52,7 @@ Physengine reads the settings table first, then calls the spawn_objects function
 
 A function to be called on every timestep can be defined, with its frequency adjusted. The statistics and optionally, all objects will be sent as arguments. The objects send to this function have the exact same structure as the ones send from Lua to C during spawning except for the addition of their internal `id` variable. A non-nil table of objects returned by this function will be read back and will overwrite the internal objects, by using the `id` variable of each object's table. Use it to program your own algorithm entirely in Lua.
 
-For a list of all variables look in the appropriate section of the [manual](DOCS/physengine.rst#configuration-files).
+For a list of all variables look in the appropriate section of the [manual](DOCS/glauss.rst#configuration-files).
 
 Bug reports
 -----------
@@ -70,7 +70,7 @@ That's a hindsight of the way the threading works here. We subdivide octrees and
 
 >The program has crashes once physics is started with imported objects!
 
-Are you importing an `.obj` file? We interpret the vertices as points so you might get objects sharing the same coordinates. Use the Lua function `phys_check_coords` to get a table of the IDs of the matching positions of objects(check DOCS/physengine.rst for info on function) upon initialization and move them before the threads start.
+Are you importing an `.obj` file? We interpret the vertices as points so you might get objects sharing the same coordinates. Use the Lua function `phys_check_coords` to get a table of the IDs of the matching positions of objects(check DOCS/glauss.rst for info on function) upon initialization and move them before the threads start.
 
 >I'd like to spawn objects while the simulation is running, is that possible?
 
@@ -80,7 +80,7 @@ Contacts
 --------
 Want to chat? Life counselling? Psychology? Classical/wooden philosophy? Need a partner to rob a bank? Metaphysics? Pataphysics?
 
- * **IRC Channel**: `#physengine` on `chat.freenode.net`
+ * **IRC Channel**: `#glauss` on `chat.freenode.net`
  * **Email**: `atomnuker@gmail.com`
 
 Contributing
