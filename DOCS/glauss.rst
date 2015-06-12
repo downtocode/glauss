@@ -1,5 +1,5 @@
-physengine
-##########
+glauss
+######
 
 ############################
 a physics simulations engine
@@ -12,12 +12,12 @@ a physics simulations engine
 SYNOPSIS
 ========
 
-| **physengine** -f [file] [flags]
+| **glauss_client** -f [file] [flags]
 
 DESCRIPTION
 ===========
 
-**physengine** is a physics simulations engine written in C, capable of being
+**glauss** is a physics simulations engine written in C, capable of being
 used in a variety of situations, from n-body simulations on planetary orbits
 to barnes-hut galactical simulations. Configured and controlled using a Lua
 script. An API to create algorithms entirely in Lua is available.
@@ -188,7 +188,7 @@ See below to set other Lua function names.
 
 *Settings variables*
 --------------------
-Used to toggle and adjust options. Some may intersect with command line arguments, 
+Used to toggle and adjust options. Some may intersect with command line arguments,
 however most do not. For those that do, command line arguments take priority.
 All of the variables below are settable via the command line interpreter.
 
@@ -317,10 +317,10 @@ There exist several functions which you can call from Lua:
 ``phys_check_coords(*Table of objects as specified above*)``
     Checks the coordinates of every object for conflicts. Returns the following:
     ::
-    
+
     { { pos = *Table of 3 doubles*, id = {ID1, ID2, ID3, ...} },
     { pos = *Table of 3 doubles*, id = {ID4, ID5, ...} }, ...} --and so on
-    
+
     It's up to you where to move them, but not moving them will possibly cause problems.
 ``set_option()``
     Sets an option.
@@ -335,7 +335,7 @@ Note that the rng_seed here will reflect the rng_seed used, even if it is not su
 
 FILE IMPORTING
 ==============
-Work in progress, support for more files will be added in the future. In any case, 
+Work in progress, support for more files will be added in the future. In any case,
 the user can themselves write any reader in the Lua config file if needed.
 
 - Waveform 3D Obj files is supported. Only vertices will be imported.
@@ -379,25 +379,25 @@ EXAMPLES
 ========
 
 *Loading a standard simulation:*
-    ``physengine -f simconf.lua``
+    ``glauss_client -f simconf.lua``
 
 *Don't simulate anything, just display(default):*
-    ``physengine -f simconf.lua -a none``
+    ``glauss_client -f simconf.lua -a none``
 
 *Only the control thread running, Lua-only algorithm:*
-    ``physengine -f simconf.lua -a null``
+    ``glauss_client -f simconf.lua -a null``
 
 *Same as above, but pass an argument to the spawn function*
-    ``physengine -f simconf.lua -a null -u lua_custom_option=0.412``
+    ``glauss_client -f simconf.lua -a null -u lua_custom_option=0.412``
 
 *Dummy load sim, will use the n-body algorithm to display stats:*
-    ``physengine -f simconf.lua -a null_stats``
+    ``glauss_client -f simconf.lua -a null_stats``
 
 *Simulate using the n-body algorithm using 3 threads:*
-    ``physengine -f simconf.lua -t 3 -a n-body``
+    ``glauss_client -f simconf.lua -t 3 -a n-body``
 
 *Use the Barnes-Hut algorithm with 4 cores and create a logfile:*
-    ``physengine -f simconf.lua -t 4 -a barnes-hut -l phys.log``
+    ``glauss_client -f simconf.lua -t 4 -a barnes-hut -l phys.log``
 
 CONTACTS
 ========
@@ -406,7 +406,7 @@ For contact:
 
 *IRC*
 -----
-``#physengine`` on *Freenode*, look for atomnuker
+``#glauss`` on *Freenode*, look for atomnuker
 
 *E-mail*
 --------
@@ -415,5 +415,5 @@ For contact:
 AUTHORS
 =======
 
-physengine was written by Rostislav Pehlivanov.
+glauss was written by Rostislav Pehlivanov.
 This manpage was written by the author.
