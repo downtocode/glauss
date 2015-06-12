@@ -18,7 +18,7 @@
 #include <tgmath.h>
 #include "graph/graph.h"
 #include "graph_objects.h"
-#include "main/options.h"
+#include "shared/options.h"
 #include "resources/sprite_img.h"
 
 static GLuint texture_sprite;

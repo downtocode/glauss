@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <tgmath.h>
 #include <pthread.h>
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 #include "physics.h"
 #include "physics_n_body.h"
 

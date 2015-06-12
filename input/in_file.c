@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <tgmath.h>
 #include "input/in_file.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 #include "physics/physics_aux.h"
 
 enum ext_file in_file_ext(const char *filename)

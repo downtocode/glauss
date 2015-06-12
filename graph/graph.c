@@ -25,8 +25,8 @@
 #include "graph_sdl.h"
 #include "graph_objects.h"
 #include "graph_fonts.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 #include "input/parser.h"
 
 /* UI POSITIONS */
@@ -746,7 +746,7 @@ int graph_sshot(unsigned long long int total_steps)
     png_set_PLTE(png, info, palette, PNG_MAX_PALETTE_LENGTH);
     png_write_info(png, info);
     png_set_packing(png);
-    
+
     png_bytepp rows = png_malloc(png, h*sizeof(png_bytep));
     for (int r = 0; r < h; r++)
         rows[r] = (pixels + (h - r)*w*4);

@@ -23,7 +23,7 @@
 #include <pthread.h>
 #include "physics.h"
 #include "physics_null.h"
-#include "main/options.h"
+#include "shared/options.h"
 #include "input/parser.h"
 
 void *null_preinit(struct glob_thread_config *cfg)

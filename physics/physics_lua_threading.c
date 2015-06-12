@@ -25,8 +25,8 @@
 #include "physics.h"
 #include "physics_aux.h"
 #include "physics_lua_threading.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 
 static unsigned int t_lua_gc_freq = 10;
 
@@ -190,7 +190,7 @@ void *t_lua(void *thread_setts)
         if (!lua_isnil(t->L, -1)) {
             len = conf_lua_getlen(t->L, -1);
         }
-        
+
         struct lua_parser_state *parser_state = &(struct lua_parser_state){
             .i = 0,
             .nullswitch = 0,

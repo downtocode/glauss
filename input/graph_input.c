@@ -23,8 +23,8 @@
 #include "sighandle.h"
 #include "graph/graph.h"
 #include "graph/graph_sdl.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 
 /* Time constant scaling */
 #define DT_SCALE 0.5

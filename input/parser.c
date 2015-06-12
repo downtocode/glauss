@@ -23,8 +23,8 @@
 #include <signal.h>
 #include "parser.h"
 #include "physics/physics_aux.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 
 static bool lua_loaded = 0;
 static lua_State *Lp;

@@ -20,8 +20,8 @@
 #include FT_FREETYPE_H
 #include "graph.h"
 #include "graph_fonts.h"
-#include "main/msg_phys.h"
-#include "main/options.h"
+#include "shared/msg_phys.h"
+#include "shared/options.h"
 
 static const char text_vs[] =
 // Generated from text_vs.glsl

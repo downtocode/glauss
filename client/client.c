@@ -29,16 +29,18 @@
 
 /*	Functions	*/
 #include "config.h"
-#include "options.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 #include "physics/physics.h"
 #include "graph/graph_thread.h"
 #include "input/input_thread.h"
 #include "input/sighandle.h"
 #include "input/parser.h"
-#include "msg_phys.h"
-#include "mpcomms/mpcomms.h"
 
 #include "physics/physics_barnes_hut.h"
+
+/* Server */
+#include "server/server.h"
 
 #define WATCHDOG_OFFSET_SEC 20
 

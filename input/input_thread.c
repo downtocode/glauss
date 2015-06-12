@@ -25,9 +25,9 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "input/parser.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
-#include "main/output.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
+#include "shared/output.h"
 #include "physics/physics.h"
 #include "graph/graph.h"
 #include "graph/graph_thread.h"

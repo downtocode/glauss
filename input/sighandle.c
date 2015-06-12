@@ -21,8 +21,8 @@
 #include "physics/physics.h"
 #include "parser.h"
 #include "sighandle.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 #include "graph/graph_thread.h"
 #include "input_thread.h"
 

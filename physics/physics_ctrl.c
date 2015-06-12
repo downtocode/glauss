@@ -22,12 +22,12 @@
 #include <unistd.h>
 #include "input/parser.h"
 #include "input/input_thread.h"
-#include "main/options.h"
-#include "main/output.h"
+#include "shared/options.h"
+#include "shared/output.h"
+#include "shared/msg_phys.h"
 #include "physics.h"
 #include "physics_aux.h"
 #include "physics_ctrl.h"
-#include "main/msg_phys.h"
 
 struct glob_thread_config *ctrl_preinit(struct global_statistics *stats, phys_obj *obj)
 {

@@ -22,8 +22,8 @@
 #include <malloc.h>
 #include <signal.h>
 #include <limits.h>
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 #include "input/parser.h"
 #include "physics.h"
 #include "physics_barnes_hut.h"

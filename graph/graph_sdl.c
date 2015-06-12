@@ -21,8 +21,8 @@
 #include <signal.h>
 #include "graph.h"
 #include "graph_sdl.h"
-#include "main/options.h"
-#include "main/msg_phys.h"
+#include "shared/options.h"
+#include "shared/msg_phys.h"
 #include "input/sighandle.h"
 
 #include "config.h"

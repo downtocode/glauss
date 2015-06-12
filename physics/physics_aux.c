@@ -22,8 +22,8 @@
 #include <tgmath.h>
 #include <sys/time.h>
 #include "physics_aux.h"
-#include "main/msg_phys.h"
-#include "main/options.h"
+#include "shared/msg_phys.h"
+#include "shared/options.h"
 
 struct atomic_cont *atom_prop;
 

@@ -30,7 +30,7 @@ settings = {
         --Expose object array to the timestep_funct, slight performance decrease
         reset_stats_freq = 1;
         --Disable any averaging and reset global stats every cycle
-        step_back_buffer = 1000,
+        step_back_buffer = 0,
     },
     visual = {
         width = 1024,
@@ -50,21 +50,21 @@ settings = {
     },
 }
 
-tot_objects = 10000
+tot_objects = 100000
 stream_size = {300,300,1000}
 stream_pos = {0,0,-575}
 
 --Add molecules or any additional objects here
 objects = {
--- 	{
--- 		import = "ball.obj",
--- 		scale = 0.50,
--- 		pos = {0,0,0},
--- 		vel = {0,0,0},
--- 		mass = -1000000,
--- 		rot = {0,math.pi/2,math.pi/2},
--- 		ignore = true,
--- 	}
+ 	{
+ 		import = "ball.obj",
+ 		scale = 0.50,
+ 		pos = {0,0,0},
+ 		vel = {0,0,0},
+ 		mass = -1000000,
+ 		rot = {0,math.pi/2,math.pi/2},
+ 		ignore = true,
+ 	}
 }
 
 function spawn_objects(string_from_arg)
