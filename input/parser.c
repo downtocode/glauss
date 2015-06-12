@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include "parser.h"
+#include "sighandle.h"
 #include "physics/physics_aux.h"
 #include "shared/options.h"
 #include "shared/msg_phys.h"
@@ -751,6 +752,7 @@ int parse_lua_open_file(const char *filename)
     if(lua_loaded) {
         pprintf(PRI_WARN, "Closing previous Lua context\n");
         parse_lua_close();
+        sig_unload_destr_fn(parse_lua_close);
     }
     Lp = luaL_newstate();
     luaL_openlibs(Lp);
@@ -768,6 +770,8 @@ int parse_lua_open_file(const char *filename)
 
     lua_loaded = 1;
 
+    sig_load_destr_fn(parse_lua_close, "Lua");
+
     return 0;
 }
 
@@ -776,6 +780,7 @@ int parse_lua_open_string(const char *script)
     if(lua_loaded) {
         pprintf(PRI_WARN, "Closing previous Lua context\n");
         parse_lua_close();
+        sig_unload_destr_fn(parse_lua_close);
     } else
         lua_loaded = 1;
     Lp = luaL_newstate();
@@ -793,15 +798,16 @@ int parse_lua_open_string(const char *script)
     /* Execute script */
     lua_pcall(Lp, 0, 0, 0);
 
+    sig_load_destr_fn(parse_lua_close, "Lua");
+
     return 0;
 }
 
 /* Close lua file */
-int parse_lua_close(void)
+void parse_lua_close(void)
 {
     lua_close(Lp);
     lua_loaded = 0;
-    return 0;
 }
 
 void parser_map_free_strings(struct parser_map *map)

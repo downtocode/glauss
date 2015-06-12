@@ -39,6 +39,25 @@ void pprint_disable(void)
     disable_print = true;
 }
 
+void pprint_log_open(const char *filename)
+{
+    option->logfile = fopen(filename, "w");
+    if (!option->logfile) {
+        pprint_err("Error opening log file to write to\n");
+        return;
+    }
+    pprintf(PRI_ESSENTIAL, "Writing log to file %s.\n", filename);
+    option->logenable = true;
+}
+
+void pprint_log_close(void)
+{
+    if (!option->logenable)
+        return;
+    fclose(option->logfile);
+    option->logenable = false;
+}
+
 /* pprintf - a priority printing function. */
 void pprintf(enum MSG_PRIORITIY priority, const char *format, ...)
 {

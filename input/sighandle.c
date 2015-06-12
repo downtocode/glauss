@@ -26,6 +26,61 @@
 #include "graph/graph_thread.h"
 #include "input_thread.h"
 
+#define MAX_DESTRUCTORS 40
+
+static int tot_destructors = 0;
+static int ign_destructors = 0;
+
+struct signal_destructors {
+    void (*destr_fn)(void);
+    char description[56];
+    bool ignore;
+};
+
+static struct signal_destructors destructors[MAX_DESTRUCTORS];
+
+static void sig_clear_ignored_destructors()
+{
+    if (ign_destructors > (float)MAX_DESTRUCTORS*(3.0/4.0)) {
+        pprint_warn("Cleaning out unused destructors\n");
+        /* Will fix IF needed. This should never happen. */
+    }
+}
+
+int sig_unload_destr_fn(void (*destr_fn)(void))
+{
+    for (int i = 0; i < tot_destructors; i++) {
+        if (destructors[i].destr_fn == destr_fn) {
+            destructors[i].ignore = true;
+            ign_destructors++;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int sig_load_destr_fn(void (*destr_fn)(void), const char description[])
+{
+    if (tot_destructors > MAX_DESTRUCTORS) {
+        pprint_err("Max destructors reached! What are you doing?!?\n");
+        return 1;
+    }
+
+    destructors[tot_destructors].destr_fn = destr_fn;
+
+    if (tot_destructors > 0)
+        strcpy(destructors[tot_destructors].description, "&& ");
+
+    strncat(destructors[tot_destructors].description, description, 45);
+    strcat(destructors[tot_destructors].description, " ");
+
+    tot_destructors++;
+
+    sig_clear_ignored_destructors();
+
+    return 0;
+}
+
 /* Report stats on command line */
 void on_usr1_signal(int signo)
 {
@@ -64,33 +119,13 @@ void on_quit_signal(int signo)
     /* Physics */
     phys_ctrl(PHYS_SHUTDOWN, NULL);
 
-    /* Lua */
-    pprintf(PRI_ESSENTIAL, "Closing: Lua: ");
-    parse_lua_close();
-    free_input_parse_opts();
-    pprintf(PRI_OK, "");
+    pprintf(PRI_ESSENTIAL, "Closing: ");
 
-    /* Window */
-    if(!option->novid) {
-        pprintf(PRI_ESSENTIAL, "&& Window: ");
-        option->novid = true;
-        graph_thread_quit();
-        pprintf(PRI_OK, "");
-    }
-
-    /* Input thread */
-    if(option->input_thread_enable) {
-        pprintf(PRI_ESSENTIAL, "&& Input: ");
-        input_thread_quit();
-        input_thread_reset_term();
-        pprintf(PRI_OK, "");
-    }
-
-    /* Logfile */
-    if(option->logenable) {
-        pprintf(PRI_ESSENTIAL, "&& Log: ");
-        option->logenable = false;
-        fclose(option->logfile);
+    for (int i = 0; i < tot_destructors; i++) {
+        if (destructors[i].ignore)
+            continue;
+        pprintf(PRI_ESSENTIAL, "%s", destructors[i].description);
+        destructors[i].destr_fn();
         pprintf(PRI_OK, "");
     }
 

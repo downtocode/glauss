@@ -337,7 +337,7 @@ def build(ctx):
     ctx(name='server',
         path=ctx.path,
         uselib=['MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
-        use=['in_file', 'msg_phys', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
+        use=['in_file', 'msg_phys', 'parser', 'sighandle', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
         target=APPNAME + '_server',
         source='server/server.c',
         features  = ['c', 'cprogram'],

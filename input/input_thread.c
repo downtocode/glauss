@@ -25,6 +25,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "input/parser.h"
+#include "sighandle.h"
 #include "shared/options.h"
 #include "shared/msg_phys.h"
 #include "shared/output.h"
@@ -94,6 +95,9 @@ int input_thread_init(graph_window **win, phys_obj **object)
 
     pthread_create(&cfg->input, NULL, input_thread, cfg);
 
+    sig_load_destr_fn(input_thread_quit, "Input");
+    sig_load_destr_fn(input_thread_reset_term, "Terminal");
+
     return 0;
 }
 
@@ -125,6 +129,9 @@ void input_thread_quit(void)
     free(global_cfg);
 
     global_cfg = NULL;
+
+    sig_unload_destr_fn(input_thread_quit);
+    sig_unload_destr_fn(input_thread_reset_term);
 
     return;
 }
@@ -174,6 +181,9 @@ int input_call_system(const char *cmd)
 int input_change_cam_angle(graph_window *win, char mat, float val)
 {
     const char *usage = "Syntax: set_view <{X,Y,Z}> <value>\n";
+
+    if (!win)
+        return 1;
 
     switch(mat) {
         case 'X': case 'x':

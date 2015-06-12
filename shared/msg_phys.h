@@ -33,6 +33,8 @@ enum MSG_PRIORITIY {
     PRI_INPUT = 13,
 };
 
+void pprint_log_open(const char *filename);
+void pprint_log_close(void);
 void pprint_enable(void);
 void pprint_disable(void);
 void pprintf(enum MSG_PRIORITIY priority, const char *format, ...);

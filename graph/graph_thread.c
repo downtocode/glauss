@@ -27,6 +27,7 @@
 #include "graph_sdl.h"
 #include "graph_thread.h"
 #include "input/parser.h"
+#include "input/sighandle.h"
 #include "shared/options.h"
 #include "shared/msg_phys.h"
 #include "physics/physics.h"
@@ -53,6 +54,8 @@ graph_window **graph_thread_init(phys_obj *object)
 
     global_cfg = cfg;
 
+    sig_load_destr_fn(graph_thread_quit, "Graphics");
+
     return &cfg->win;
 }
 
@@ -72,6 +75,10 @@ void graph_thread_quit(void)
     free(global_cfg);
 
     global_cfg = NULL;
+
+    option->novid = true;
+
+    sig_unload_destr_fn(graph_thread_quit);
 
     return;
 }

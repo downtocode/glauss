@@ -81,7 +81,7 @@ struct lua_parser_state {
 /* General */
 int parse_lua_open_file(const char *filename);
 int parse_lua_open_string(const char *script);
-int parse_lua_close(void);
+void parse_lua_close(void);
 void free_input_parse_opts();
 
 /* Maps */

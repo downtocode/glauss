@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
             {0},
         };
         register_parser_map(opts_map, &total_opt_map);
+        sig_load_destr_fn(free_input_parse_opts, "Options");
     /*  Register parser options */
 
     /*  Main function vars  */
@@ -189,9 +190,8 @@ int main(int argc, char *argv[])
                     strcpy(option->algorithm, optarg);
                     break;
                 case 'l':
-                    option->logfile = fopen(optarg, "w");
-                    pprintf(PRI_ESSENTIAL, "Writing log to file %s.\n", optarg);
-                    option->logenable = 1;
+                    pprint_log_open(optarg);
+                    sig_load_destr_fn(pprint_log_close, "Logfile");
                     break;
                 case 't':
                     sscanf(optarg, "%hu", &option->threads);

@@ -17,6 +17,9 @@
  */
 #pragma once
 
+int sig_load_destr_fn(void (*destr_fn)(void), const char description[]);
+int sig_unload_destr_fn(void (*destr_fn)(void));
+
 void on_usr1_signal(int signo);
 void on_quit_signal(int signo);
 void on_alrm_signal(int signo);
