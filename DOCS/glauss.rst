@@ -17,7 +17,8 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
-**glauss** is a physics simulations engine written in C, capable of being
+`glauss`, or The `G`\ eneralized `L`\ ua-`AU`\ gmented `S`\ imulation `S`\ ystem,
+is a physics simulations engine written in C, capable of being
 used in a variety of situations, from n-body simulations on planetary orbits
 to barnes-hut galactical simulations. Configured and controlled using a Lua
 script. An API to create algorithms entirely in Lua is available.

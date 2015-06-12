@@ -1,5 +1,6 @@
 glauss
 ======
+The **G**eneralized **L**ua-**AU**gmented **S**imulation **S**ystem
 
 Overview
 --------
