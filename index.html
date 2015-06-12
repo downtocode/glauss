@@ -28,37 +28,120 @@
         </ul>
       </header>
       <section>
-        <h3>
-<a id="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <h1>
+<a id="glauss" class="anchor" href="#glauss" aria-hidden="true"><span class="octicon octicon-link"></span></a>glauss</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h2>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overview</h2>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<p>This program aims to implement a physics simulation engine capable of doing simulations on various scales, from molecular dynamics to planetary motion to Monte Carlo, all whilst maintaining maximum performance. A user-friendly Lua API is provided to experiment and quickly test and deploy algorithms. Implemented minimalistically using the SDL2, Freetype 2, Lua 5.2 and the OpenGL ES 2.0 libraries. Uses POSIX threads to implement multi-threading. Written in standard C and released under the GPLv3 License.</p>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<h2>
+<a id="compiling" class="anchor" href="#compiling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling</h2>
 
-<h3>
-<a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<p>Complete list of dependencies:</p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<ul>
+<li>gcc (4.9 or newer)  or clang (3.5 or newer)</li>
+<li>OpenGL ES 2.0 development libraries (Debian: libgles2-mesa-dev, Arch: libgles(mesa))</li>
+<li>Freetype 2 development library (Debian: libfreetype6-dev; Arch, Fedora: freetype2)</li>
+<li>Fontconfig development library(Debian: libfontconfig1-dev, Arch: fontconfig)</li>
+<li>SDL 2.0 development library (Debian: libsdl2-dev; Arch, Fedora: sdl2)</li>
+<li>Lua (Luajit recommended, Lua 5.2 supported, Lua 5.1 not recommended)</li>
+</ul>
 
-<h3>
-<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<p>All are available on any up-to-date Linux distribution's package repositories. To compile and install:</p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p><code>./bootstrap.py</code></p>
 
-<h3>
-<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<p><code>./waf configure</code></p>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p><code>./waf build</code></p>
 
-<h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<p><code>./waf install</code></p>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="https://help.github.com/pages">https://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>In case program has been installed, use the <code>glauss_client</code> command to run, with appropriate arguments. To uninstall, use <code>./waf uninstall</code> in the original project folder.</p>
+
+<p>The program can also be run in any directory as it has no dependence on any external files. For developer convenience, it's possible to avoid program installation. Just build and run the shell script without installing.</p>
+
+<p>This program <strong>absolutely requires</strong> the newest stable GCC or Clang releases to build. Vector extensions have always been a tricky things in C, but in the last few years the major compilers have roughly agreed on a standard. When using GCC, check that your processors has AVX extensions or performance will probably be degraded.</p>
+
+<h2>
+<a id="controls-and-usage" class="anchor" href="#controls-and-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Controls and Usage</h2>
+
+<p>Run the program with the --help flag and/or consult the <a href="DOCS/glauss.rst#controls">manual</a>.</p>
+
+<h2>
+<a id="running" class="anchor" href="#running" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running</h2>
+
+<p>Run the program with the argument <code>-f (filename)</code>, with an appropriate file. A demo file(usually it's for testing the latest feature) called simconf.lua is present. A demo scripts directory will be created at a later version. The executable needs to be ran into the root directory of the build. Modify the options in simconf.conf to change the system being simulated. Modify program behaviour with the arguments listed further below. Pressing 'z' will create an XYZ file snapshot of the current system, which you can open with any molecule viewer (like VMD or GDIS).</p>
+
+<h2>
+<a id="command-line" class="anchor" href="#command-line" aria-hidden="true"><span class="octicon octicon-link"></span></a>Command line</h2>
+
+<p>A command line is included if libreadline is installed. It allows to change almost every aspect of the simulation. Type "help" to list all possible commands and variables(with values printed out). Typing a variable alone will print its current value. Typing <code>&lt;variable&gt; &lt;value&gt;</code> changes its current value. Note that for some options like <code>threads</code> a restart is needed in order for them to take effect. Using Lua to change a variable is possible as well using the <code>set_option("&lt;variable&gt;", value)</code> function.</p>
+
+<h2>
+<a id="input-file" class="anchor" href="#input-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>Input file</h2>
+
+<p>The filepath/name specified through the <code>-f</code> flag determines the system to simulate. It's a Lua script, so make sure to follow the syntax. All Lua libraries(including math) are included and initialized, feel free to use them. Error handling is done by Lua interpreter. You'll probably want this to be the first argument, as any option put before will get overwritten if it exists in the file.</p>
+
+<p>Physengine reads the settings table first, then calls the spawn_objects function, which returns the objects table. That table is then read, counted and scanned for any files that need importing. Once the final count is known, memory is allocated and the table is read again, importing all objects.</p>
+
+<p>A function to be called on every timestep can be defined, with its frequency adjusted. The statistics and optionally, all objects will be sent as arguments. The objects send to this function have the exact same structure as the ones send from Lua to C during spawning except for the addition of their internal <code>id</code> variable. A non-nil table of objects returned by this function will be read back and will overwrite the internal objects, by using the <code>id</code> variable of each object's table. Use it to program your own algorithm entirely in Lua.</p>
+
+<p>For a list of all variables look in the appropriate section of the <a href="DOCS/glauss.rst#configuration-files">manual</a>.</p>
+
+<h2>
+<a id="bug-reports" class="anchor" href="#bug-reports" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bug reports</h2>
+
+<p>Use either the Github Issues section of this project or the contact section below.</p>
+
+<h2>
+<a id="faq" class="anchor" href="#faq" aria-hidden="true"><span class="octicon octicon-link"></span></a>FAQ</h2>
+
+<blockquote>
+<p>I've imported an object and now every ID has an offset and doesn't match the index!</p>
+</blockquote>
+
+<p>The <code>timestep_funct</code> is executed once on physics startup, just before the threads are online. Use this to get the internal IDs of the objects. Nothing will have moved, so by comparing the positions of all objects with the initial positions you can know which object is which.</p>
+
+<blockquote>
+<p>The Barnes-Hut algorithm has a bug! When having more than 8 threads, there's a thread with absolutely no octrees in it!</p>
+</blockquote>
+
+<p>That's a hindsight of the way the threading works here. We subdivide octrees and give them out once a layer gets filled. But if the slices are empty(for instance when simulating a galaxy we randomly give the upper part of the upper octree where there are no objects) then it's logical there would be no octrees since there are no objects. Bottomline is, to have every thread have octrees you need a uniform distribution of objects geometrically(e.g. in a cube). Or you can just wait patiently so that objects eventually creep up in the empty space and the thread gets a job. Don't like it? Turn off random slice allocation(look in options) or better yet, create an algorithm to better distribute the threads. Or better yet, turn on the EXPERIMENTAL auto-balancer which moves the octrees in threads above a certain ratio.</p>
+
+<blockquote>
+<p>The program has crashes once physics is started with imported objects!</p>
+</blockquote>
+
+<p>Are you importing an <code>.obj</code> file? We interpret the vertices as points so you might get objects sharing the same coordinates. Use the Lua function <code>phys_check_coords</code> to get a table of the IDs of the matching positions of objects(check DOCS/glauss.rst for info on function) upon initialization and move them before the threads start.</p>
+
+<blockquote>
+<p>I'd like to spawn objects while the simulation is running, is that possible?</p>
+</blockquote>
+
+<p>Work in progress on that feature. For now, you can just put the objects far far away, set the <code>ignore</code> flag to True, set their mass to close to 0 and bring them in action when their time comes.</p>
+
+<h2>
+<a id="contacts" class="anchor" href="#contacts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contacts</h2>
+
+<p>Want to chat? Life counselling? Psychology? Classical/wooden philosophy? Need a partner to rob a bank? Metaphysics? Pataphysics?</p>
+
+<ul>
+<li>
+<strong>IRC Channel</strong>: <code>#glauss</code> on <code>chat.freenode.net</code>
+</li>
+<li>
+<strong>Email</strong>: <code>atomnuker@gmail.com</code>
+</li>
+</ul>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>Got a bug fix? New feature? Sent a pull request here on Github. Demo Lua project scripts are accepted. Just please use the project's coding style (pretty much the Linux kernel coding style, indents are 4 spaces). You can use the <code>--bench</code> option to benchmark the performance and see how it's affected.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/atomnuker">atomnuker</a></p>
@@ -66,6 +149,16 @@ $ git checkout gh-pages
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-64063167-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
   </body>
 </html>
