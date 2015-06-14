@@ -33,7 +33,7 @@ static int ign_destructors = 0;
 
 struct signal_destructors {
     void (*destr_fn)(void);
-    char description[56];
+    char description[55];
     bool ignore;
 };
 
@@ -71,7 +71,7 @@ int sig_load_destr_fn(void (*destr_fn)(void), const char description[])
     if (tot_destructors > 0)
         strcpy(destructors[tot_destructors].description, "&& ");
 
-    strncat(destructors[tot_destructors].description, description, 45);
+    strncat(destructors[tot_destructors].description, description, 51);
     strcat(destructors[tot_destructors].description, " ");
 
     tot_destructors++;
