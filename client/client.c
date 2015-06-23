@@ -40,13 +40,13 @@
 #include "physics/physics_barnes_hut.h"
 
 /* Server */
-#include "server/server.h"
+#include "server/server_io.h"
 
 #define WATCHDOG_OFFSET_SEC 20
 
 static const char ARGSTRING[] =
 // Generated from helpstring.txt
-#include "resources/helpstring.h"
+#include "resources/helpstring_client.h"
 ;
 
 struct option_struct *option;

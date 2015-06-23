@@ -1,4 +1,3 @@
-#this script is horrible.
 import sys, os, re
 from waflib.Build import BuildContext
 
@@ -175,8 +174,11 @@ def build(ctx):
         source = "resources/elements.lua",
         target = "resources/elements.h")
     ctx.file2string(
-        source = "resources/helpstring.txt",
-        target = "resources/helpstring.h")
+        source = "resources/helpstring_client.txt",
+        target = "resources/helpstring_client.h")
+    ctx.file2string(
+        source = "resources/helpstring_server.txt",
+        target = "resources/helpstring_server.h")
     ctx(name='msg_phys',
         path=ctx.path,
         target='msg_phys',
@@ -325,10 +327,17 @@ def build(ctx):
         features  = ['c'],
         includes='. .. ../../',
     )
+    ctx(name='server_io',
+        path=ctx.path,
+        target='server_io',
+        source='server/server_io.c',
+        features  = ['c'],
+        includes='. .. ../../',
+    )
     ctx(name='client',
         path=ctx.path,
         uselib=['SDL', 'GL', 'MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
-        use=['in_file', 'msg_phys', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
+        use=['in_file', 'msg_phys', 'server_io', 'sighandle', 'graph', 'graph_sdl', 'graph_input', 'graph_objects', 'graph_fonts', 'graph_thread', 'input_thread', 'parser', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
         target=APPNAME + '_client',
         source='client/client.c',
         features  = ['c', 'cprogram'],
@@ -337,7 +346,7 @@ def build(ctx):
     ctx(name='server',
         path=ctx.path,
         uselib=['MATH', 'PTHRD', 'PNG', 'LUA', 'FT', 'FC', 'READLN', 'RT'],
-        use=['in_file', 'msg_phys', 'parser', 'sighandle', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
+        use=['in_file', 'msg_phys', 'server_io', 'parser', 'sighandle', 'output', 'physics', 'physics_aux', 'physics_ctrl', 'physics_null', 'physics_n_body', 'physics_barnes_hut', 'physics_lua_threading'],
         target=APPNAME + '_server',
         source='server/server.c',
         features  = ['c', 'cprogram'],
