@@ -21,10 +21,6 @@
 #include "options.h"
 #include "input/input_thread.h"
 
-static const char *okmsg = "[\033[032m Ok! \033[0m] ";
-static const char *warnmsg = "[\033[033m Warning! \033[0m] ";
-static const char *errmsg = "[\033[031m Error! \033[0m] ";
-
 static bool disable_print = 0;
 
 void pprint_enable(void)
@@ -62,6 +58,9 @@ void pprint_log_close(void)
 void pprintf(enum MSG_PRIORITIY priority, const char *format, ...)
 {
     va_list args;
+    const char okmsg[]   = "[\033[032m Ok! \033[0m] ";
+    const char warnmsg[] = "[\033[033m Warning! \033[0m] ";
+    const char errmsg[]  = "[\033[031m Error! \033[0m] ";
     if (option->logenable) {
         va_start(args, format);
         vfprintf(option->logfile, format, args);
