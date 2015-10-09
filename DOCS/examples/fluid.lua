@@ -57,7 +57,7 @@ stream_pos = {0,0,-575}
 --Add molecules or any additional objects here
 objects = {
  	{
- 		import = "ball.obj",
+ 		import = "resources/ball.obj",
  		scale = 0.50,
  		pos = {0,0,0},
  		vel = {0,0,0},
