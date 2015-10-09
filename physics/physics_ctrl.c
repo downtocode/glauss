@@ -247,6 +247,10 @@ void *thread_ctrl(void *thread_setts)
             pthread_cond_wait(t->step_cond, t->step_pause);
         }
 
+        if (option->final_frame && t->total_steps >= option->final_frame) {
+            t->paused = 1;
+        }
+
         /* Pause all threads by stalling unlocking t->ctrl */
         if (t->paused) {
             pthread_cond_wait(t->pause_cond, t->step_pause);

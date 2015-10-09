@@ -52,7 +52,7 @@ enum parser_var_type {
     unsigned int: VAR_UINT,           unsigned short int: VAR_USHORT,          \
     bool: VAR_BOOL,                   short int: VAR_SHORT,                    \
     char *: VAR_STRING,               long int: VAR_LONGINT,                   \
-    unsigned long int: VAR_LONGUINT,  long long unsigned int: VAR_LONGLONGUINT,\
+    unsigned long int: VAR_LONGUINT,  unsigned long long int: VAR_LONGLONGUINT,\
     float*: VAR_COLOR, default: VAR_NO_IDEA                                    \
 ), _Generic((x), bool: LUA_TBOOLEAN, char *: LUA_TSTRING,                      \
     float*: LUA_TTABLE, default: LUA_TNUMBER)

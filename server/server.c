@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
     struct parser_map opts_map[] = {
         {"threads",                P_TYPE(option->threads)                },
         {"dt",                     P_TYPE(option->dt)                     },
+        {"final_frame",            P_TYPE(option->final_frame)            },
         {"rng_seed",               P_TYPE(option->rng_seed)               },
         {"gconst",                 P_TYPE(option->gconst)                 },
         {"verbosity",              P_TYPE(option->verbosity)              },
@@ -130,6 +131,7 @@ int main(int argc, char *argv[])
             {"timer",       required_argument,      0, 'r'},
             {"verb",        required_argument,      0, 'v'},
             {"version",     no_argument,            0, 'V'},
+            {"final_frame", required_argument,      0, 'e'},
             {"file",        required_argument,      0, 'f'},
             {"help",        optional_argument,      0, 'h'},
             {"lua_val",     required_argument,      0, 'u'},
@@ -139,7 +141,7 @@ int main(int argc, char *argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long(argc, argv, "a:f:l:t:r:u:v:h::Vd", long_options,
+        c = getopt_long(argc, argv, "a:f:l:t:r:e:u:v:h::Vd", long_options,
                         &option_index);
 
         /* Detect the end of the options. */
@@ -175,6 +177,11 @@ int main(int argc, char *argv[])
                 break;
             case 'v':
                 sscanf(optarg, "%hu", &option->verbosity);
+                break;
+            case 'e':
+                sscanf(optarg, "%llu", &option->final_frame);
+                pprintf(PRI_ESSENTIAL, "Ending simulation at frame %llu\n",
+                        option->final_frame);
                 break;
             case 'V':
                 pprintf(PRI_ESSENTIAL, "%s\nCompiled on %s, %s\n", PACKAGE_STRING,

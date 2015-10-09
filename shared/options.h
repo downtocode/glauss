@@ -44,6 +44,7 @@ extern struct option_struct {
     unsigned int exec_funct_freq, skip_model_vec, lua_gc_sweep_freq;
     bool lua_expose_obj_array;
     bool input_thread_enable;
+    unsigned long long int final_frame;
 
     /* Physics */
     double dt;

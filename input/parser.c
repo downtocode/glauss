@@ -193,6 +193,9 @@ void parser_print_generic(struct parser_map *var)
         case VAR_LONGUINT:
             pprintf(PRI_ESSENTIAL, "%s = %lu\n", var->name, *(long unsigned *)var->val);
             break;
+        case VAR_LONGLONGUINT:
+            pprintf(PRI_ESSENTIAL, "%s = %llu\n", var->name, *(long unsigned *)var->val);
+            break;
         case VAR_STRING:
             pprintf(PRI_ESSENTIAL, "%s = %s\n", var->name, *(char **)var->val);
             break;

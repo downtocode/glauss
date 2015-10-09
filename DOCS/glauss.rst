@@ -105,6 +105,9 @@ The following flags can be used:
 ``--file``, ``-f`` - *String*
     Input file. See the section below for more information.
 
+``--final_frame``, ``-e-`` - *Unsigned Long Long Integer*
+    Sets the last frame to which to simulate until.
+
 ``--timer``, ``-r`` - *Float*
     Configures how often to update the frames per second and ``benchmark`` duration.
 
@@ -215,6 +218,8 @@ All of the variables below are settable via the command line interpreter.
     Template to use in state file(XYZ) creation. Standard sprintf syntax.
 ``fontname`` - *String*
     Specify the font type to be used. Example: "Liberation Sans".
+``final_frame`` - *Unsigned Long Long Integer*
+    Specifies the last frame to simulate to.
 ``fontsize`` - *Unsigned Integer*
     Fontsize adjustment.
 ``bgcolor`` - *Table of 4 integers*
